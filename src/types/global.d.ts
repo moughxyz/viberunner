@@ -39,6 +39,7 @@ interface Window {
       canceled: boolean;
       error?: string
     }>;
+    launchStandaloneVisualizer: (id: string) => Promise<any>;
   };
 
   // Node.js globals available with nodeIntegration: true

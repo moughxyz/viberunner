@@ -646,3 +646,20 @@ body {
     width: 100%;
   }
 }
+
+/* Standalone visualizer items */
+.standalone-item .item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+
+.standalone-item .item-title {
+  flex: 1;
+  margin-right: var(--space-2);
+}
+
+.standalone-item .btn {
+  flex-shrink: 0;
+}

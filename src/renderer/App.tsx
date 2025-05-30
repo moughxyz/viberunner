@@ -12,6 +12,7 @@ interface Visualizer {
   version: string;
   mimetypes: string[];
   author: string;
+  standalone?: boolean; // Optional standalone property
 }
 
 interface FileData {
@@ -22,6 +23,10 @@ interface FileData {
 
 // Helper function to get supported formats for a visualizer
 const getSupportedFormats = (viz: any): string => {
+  if (viz.standalone) {
+    return 'Standalone utility';
+  }
+
   if (viz.mimetypes && viz.mimetypes.length > 0) {
     return viz.mimetypes.join(', ');
   }
@@ -199,6 +204,53 @@ const App: React.FC = () => {
   const selectVisualizer = (visualizer: Visualizer) => {
     setCurrentVisualizer(visualizer);
     setShowVisualizerSelection(false);
+  };
+
+  const launchStandaloneVisualizer = async (visualizer: Visualizer) => {
+    try {
+      const visualizerData = await window.api.launchStandaloneVisualizer(visualizer.id);
+
+      // Set up standalone visualizer (no file data)
+      setCurrentVisualizer(visualizer);
+      setCurrentFile(null); // No file for standalone visualizers
+      setShowVisualizerSelection(false);
+
+      // Clear previous content
+      if (visualizerRootRef.current) {
+        visualizerRootRef.current.innerHTML = '';
+      }
+
+      // Create a new script element with the bundle content
+      const script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.textContent = visualizerData.bundleContent;
+
+      // Set up the visualizer's props (no fileData for standalone)
+      const props = {
+        fileData: null,
+        container: visualizerRootRef.current
+      };
+
+      // When the script loads, it will call this function
+      (window as any).__LOAD_VISUALIZER__ = (VisualizerComponent: any) => {
+        if (visualizerRootRef.current) {
+          const root = document.createElement('div');
+          visualizerRootRef.current.appendChild(root);
+
+          // Create a new React root
+          const reactRoot = createRoot(root);
+          reactRoot.render(
+            React.createElement(VisualizerComponent, props)
+          );
+        }
+      };
+
+      // Add the script to the document
+      document.head.appendChild(script);
+    } catch (error) {
+      console.error('Failed to launch standalone visualizer:', error);
+      alert(`Failed to launch ${visualizer.name}: ${error}`);
+    }
   };
 
   // Load and render the visualizer when currentFile or currentVisualizer changes
@@ -405,7 +457,7 @@ const App: React.FC = () => {
                 <span className="section-icon">🎨</span>
                 Visualizers
               </h4>
-              <span className="section-count">{visualizers.length}</span>
+              <span className="section-count">{visualizers.filter(v => !v.standalone).length}</span>
             </div>
 
             {isLoadingVisualizers ? (
@@ -413,14 +465,14 @@ const App: React.FC = () => {
                 <span className="loading-spinner">⟳</span>
                 Loading visualizers...
               </div>
-            ) : visualizers.length === 0 ? (
+            ) : visualizers.filter(v => !v.standalone).length === 0 ? (
               <div className="empty-state">
-                <p>No visualizers found</p>
+                <p>No file visualizers found</p>
                 <p className="empty-subtitle">Check your directory configuration</p>
               </div>
             ) : (
               <div className="visualizer-list">
-                {visualizers.map(viz => (
+                {visualizers.filter(v => !v.standalone).map(viz => (
                   <div key={viz.id} className="visualizer-item">
                     <div className="item-header">
                       <h5 className="item-title">{viz.name}</h5>
@@ -437,6 +489,38 @@ const App: React.FC = () => {
               </div>
             )}
           </div>
+
+          {visualizers.filter(v => v.standalone).length > 0 && (
+            <div className="sidebar-section">
+              <div className="section-header">
+                <h4 className="section-title">
+                  <span className="section-icon">⚡</span>
+                  Utilities
+                </h4>
+                <span className="section-count">{visualizers.filter(v => v.standalone).length}</span>
+              </div>
+
+              <div className="visualizer-list">
+                {visualizers.filter(v => v.standalone).map(viz => (
+                  <div key={viz.id} className="visualizer-item standalone-item">
+                    <div className="item-header">
+                      <h5 className="item-title">{viz.name}</h5>
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => launchStandaloneVisualizer(viz)}
+                      >
+                        Launch
+                      </button>
+                    </div>
+                    <p className="item-description">{viz.description}</p>
+                    <div className="item-formats">
+                      {getSupportedFormats(viz)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
       </div>
     </div>

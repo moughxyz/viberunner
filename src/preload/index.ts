@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld(
       title?: string;
       defaultPath?: string;
       filters?: Array<{ name: string; extensions: string[] }>
-    }) => ipcRenderer.invoke('save-file-dialog', options)
+    }) => ipcRenderer.invoke('save-file-dialog', options),
+    // Launch standalone visualizers
+    launchStandaloneVisualizer: (id: string) => ipcRenderer.invoke('launch-standalone-visualizer', id)
   }
 );

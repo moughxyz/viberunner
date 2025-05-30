@@ -46,6 +46,9 @@ interface VisualizerConfig {
 
   // Legacy support
   mimetypes?: string[];
+
+  // Standalone visualizers (no file input required)
+  standalone?: boolean;
 }
 
 interface FileAnalysis {
@@ -825,6 +828,39 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error('Error showing save dialog:', error);
       return { success: false, error: (error as Error).message, canceled: true };
+    }
+  });
+
+  // Launch standalone visualizer without file input
+  ipcMain.handle('launch-standalone-visualizer', async (event, id: string) => {
+    try {
+      const visualizers = await loadVisualizers();
+      const visualizer = visualizers.find(v => v.id === id);
+
+      if (!visualizer) {
+        throw new Error(`Visualizer ${id} not found`);
+      }
+
+      if (!visualizer.standalone) {
+        throw new Error(`Visualizer ${id} is not configured for standalone use`);
+      }
+
+      const visualizerDir = path.join(VISUALIZERS_DIR, visualizer.id);
+      const bundlePath = path.join(visualizerDir, 'dist', 'bundle.iife.js');
+
+      if (!fs.existsSync(bundlePath)) {
+        throw new Error(`Bundle not found: ${bundlePath}`);
+      }
+
+      const bundleContent = fs.readFileSync(bundlePath, 'utf-8');
+      return {
+        bundleContent,
+        config: visualizer,
+        standalone: true
+      };
+    } catch (error) {
+      console.error('Error launching standalone visualizer:', error);
+      throw error;
     }
   });
 }

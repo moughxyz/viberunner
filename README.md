@@ -510,6 +510,9 @@ This creates `dist/bundle.iife.js` that Vibeframe can load.
   // Legacy support (optional)
   "mimetypes": ["string"],
 
+  // Standalone visualizers (no file input required)
+  "standalone": "boolean (optional)",
+
   // Optional metadata
   "tags": ["string"],
   "homepage": "string",
@@ -517,6 +520,105 @@ This creates `dist/bundle.iife.js` that Vibeframe can load.
   "license": "string"
 }
 ```
+
+## 🚀 Standalone Visualizers
+
+Vibeframe supports standalone visualizers that don't require file input. These can be utilities, dashboards, or any application that operates independently.
+
+### Configuration
+
+To create a standalone visualizer, set `"standalone": true` in your `viz.json`:
+
+```json
+{
+  "name": "Weather Dashboard",
+  "description": "Real-time weather information and forecasts",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "standalone": true
+}
+```
+
+### Component Interface
+
+Standalone visualizers receive `null` as fileData:
+
+```typescript
+interface StandaloneVisualizerProps {
+  fileData: null; // Always null for standalone visualizers
+}
+
+const WeatherDashboard: React.FC<StandaloneVisualizerProps> = ({ fileData }) => {
+  // fileData will be null - this is a standalone utility
+  const [weather, setWeather] = useState(null);
+
+  useEffect(() => {
+    // Fetch weather data using Node.js APIs
+    const https = require('https');
+    // ... make API calls, read config files, etc.
+  }, []);
+
+  return (
+    <div style={{ padding: '20px' }}>
+      <h2>🌤️ Weather Dashboard</h2>
+      {/* Your utility UI here */}
+    </div>
+  );
+};
+
+export default WeatherDashboard;
+```
+
+### Example Standalone Visualizers
+
+**System Monitor**
+```json
+{
+  "name": "System Monitor",
+  "description": "Real-time CPU, memory, and disk usage",
+  "standalone": true
+}
+```
+
+**Calculator**
+```json
+{
+  "name": "Scientific Calculator",
+  "description": "Advanced calculator with programming functions",
+  "standalone": true
+}
+```
+
+**API Tester**
+```json
+{
+  "name": "REST API Tester",
+  "description": "Test and debug REST API endpoints",
+  "standalone": true
+}
+```
+
+**Clipboard Manager**
+```json
+{
+  "name": "Clipboard History",
+  "description": "Manage and search clipboard history",
+  "standalone": true
+}
+```
+
+### Launching Standalone Visualizers
+
+Standalone visualizers appear in the "Utilities" section of the sidebar with **Launch** buttons. They can:
+
+- Access full Node.js APIs via `require()`
+- Make HTTP requests to external services
+- Read/write files and configurations
+- Execute shell commands
+- Create persistent data stores
+- Build complex UI applications
+
+This enables Vibeframe to serve as a platform for any kind of utility or application, not just file visualizers!
 
 ## ⚛️ Component Development
 
