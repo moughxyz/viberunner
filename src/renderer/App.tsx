@@ -10,27 +10,27 @@ const { ipcRenderer } = require('electron');
 
 // Create API object for backward compatibility
 const api = {
-  getVisualizers: () => ipcRenderer.invoke('get-visualizers'),
-  loadVisualizer: (id: string) => ipcRenderer.invoke('load-visualizer', id),
+  getFrames: () => ipcRenderer.invoke('get-frames'),
+  loadFrame: (id: string) => ipcRenderer.invoke('load-frame', id),
   getMimetype: (filePath: string) => ipcRenderer.invoke('get-mimetype', filePath),
   readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
   handleFileDrop: (filePath: string) => ipcRenderer.invoke('handle-file-drop', filePath),
-  getVisualizersDirectory: () => ipcRenderer.invoke('get-visualizers-directory'),
-  changeVisualizersDirectory: () => ipcRenderer.invoke('change-visualizers-directory'),
-  reloadVisualizers: () => ipcRenderer.invoke('reload-visualizers'),
+  getFramesDirectory: () => ipcRenderer.invoke('get-frames-directory'),
+  changeFramesDirectory: () => ipcRenderer.invoke('change-frames-directory'),
+  reloadFrames: () => ipcRenderer.invoke('reload-frames'),
   readDirectory: (dirPath: string) => ipcRenderer.invoke('read-directory', dirPath),
-  findMatchingVisualizers: (filePath: string) => ipcRenderer.invoke('find-matching-visualizers', filePath),
+  findMatchingFrames: (filePath: string) => ipcRenderer.invoke('find-matching-frames', filePath),
   writeFile: (filePath: string, content: string, encoding?: 'utf8' | 'base64') =>
     ipcRenderer.invoke('write-file', filePath, content, encoding),
   backupFile: (filePath: string) => ipcRenderer.invoke('backup-file', filePath),
   saveFileDialog: (options?: any) => ipcRenderer.invoke('save-file-dialog', options),
-  launchStandaloneVisualizer: (id: string) => ipcRenderer.invoke('launch-standalone-visualizer', id)
+  launchStandaloneFrame: (id: string) => ipcRenderer.invoke('launch-standalone-frame', id)
 };
 
 // Make API available globally for visualizers
 (window as any).api = api;
 
-interface Visualizer {
+interface Frame {
   id: string;
   name: string;
   description: string;
@@ -46,20 +46,20 @@ interface FileData {
   content: string;
 }
 
-// Helper function to get supported formats for a visualizer
-const getSupportedFormats = (viz: any): string => {
-  if (viz.standalone) {
+// Helper function to get supported formats for a frame
+const getSupportedFormats = (frame: any): string => {
+  if (frame.standalone) {
     return 'Standalone utility';
   }
 
-  if (viz.mimetypes && viz.mimetypes.length > 0) {
-    return viz.mimetypes.join(', ');
+  if (frame.mimetypes && frame.mimetypes.length > 0) {
+    return frame.mimetypes.join(', ');
   }
 
-  if (viz.matchers && viz.matchers.length > 0) {
+  if (frame.matchers && frame.matchers.length > 0) {
     const formats = new Set<string>();
 
-    viz.matchers.forEach((matcher: any) => {
+    frame.matchers.forEach((matcher: any) => {
       if (matcher.type === 'mimetype' && matcher.mimetype) {
         formats.add(matcher.mimetype);
       } else if (matcher.type === 'filename' && matcher.pattern) {
@@ -83,74 +83,74 @@ const getSupportedFormats = (viz: any): string => {
 };
 
 const App: React.FC = () => {
-  const [visualizers, setVisualizers] = useState<Visualizer[]>([]);
+  const [frames, setFrames] = useState<Frame[]>([]);
   const [currentFile, setCurrentFile] = useState<FileData | null>(null);
-  const [currentVisualizer, setCurrentVisualizer] = useState<Visualizer | null>(null);
-  const [availableVisualizers, setAvailableVisualizers] = useState<Visualizer[]>([]);
-  const [showVisualizerSelection, setShowVisualizerSelection] = useState(false);
-  const [visualizersDirectory, setVisualizersDirectory] = useState<string>('');
-  const [isLoadingVisualizers, setIsLoadingVisualizers] = useState(false);
-  const visualizerRootRef = useRef<HTMLDivElement>(null);
+  const [currentFrame, setCurrentFrame] = useState<Frame | null>(null);
+  const [availableFrames, setAvailableFrames] = useState<Frame[]>([]);
+  const [showFrameSelection, setShowFrameSelection] = useState(false);
+  const [framesDirectory, setFramesDirectory] = useState<string>('');
+  const [isLoadingFrames, setIsLoadingFrames] = useState(false);
+  const frameRootRef = useRef<HTMLDivElement>(null);
 
-  // Load visualizers directory info
+  // Load frames directory info
   useEffect(() => {
     const loadDirectoryInfo = async () => {
       try {
-        const dir = await api.getVisualizersDirectory();
-        setVisualizersDirectory(dir || 'Not set');
+        const dir = await api.getFramesDirectory();
+        setFramesDirectory(dir || 'Not set');
       } catch (error) {
-        console.error('Error loading visualizers directory:', error);
+        console.error('Error loading frames directory:', error);
       }
     };
     loadDirectoryInfo();
   }, []);
 
-  const loadVisualizers = async () => {
+  const loadFrames = async () => {
     try {
-      setIsLoadingVisualizers(true);
-      const vizs = await api.getVisualizers();
-      setVisualizers(vizs);
+      setIsLoadingFrames(true);
+      const frames = await api.getFrames();
+      setFrames(frames);
     } catch (error) {
-      console.error('Error loading visualizers:', error);
-      alert('Failed to load visualizers. Please check your visualizers directory.');
+      console.error('Error loading frames:', error);
+      alert('Failed to load frames. Please check your frames directory.');
     } finally {
-      setIsLoadingVisualizers(false);
+      setIsLoadingFrames(false);
     }
   };
 
   useEffect(() => {
-    loadVisualizers();
+    loadFrames();
   }, []);
 
-  const handleChangeVisualizersDirectory = async () => {
+  const handleChangeFramesDirectory = async () => {
     try {
-      const result = await api.changeVisualizersDirectory();
+      const result = await api.changeFramesDirectory();
       if (result.success && result.directory) {
-        setVisualizersDirectory(result.directory);
-        await loadVisualizers();
-        alert(`Visualizers directory changed to: ${result.directory}`);
+        setFramesDirectory(result.directory);
+        await loadFrames();
+        alert(`Frames directory changed to: ${result.directory}`);
       }
     } catch (error) {
-      console.error('Error changing visualizers directory:', error);
-      alert('Failed to change visualizers directory.');
+      console.error('Error changing frames directory:', error);
+      alert('Failed to change frames directory.');
     }
   };
 
-  const handleReloadVisualizers = async () => {
+  const handleReloadFrames = async () => {
     try {
-      setIsLoadingVisualizers(true);
-      const result = await api.reloadVisualizers();
+      setIsLoadingFrames(true);
+      const result = await api.reloadFrames();
       if (result.success) {
-        setVisualizers(result.visualizers);
-        alert('Visualizers reloaded successfully!');
+        setFrames(result.frames);
+        alert('Frames reloaded successfully!');
       } else {
-        alert('Failed to reload visualizers.');
+        alert('Failed to reload frames.');
       }
     } catch (error) {
-      console.error('Error reloading visualizers:', error);
-      alert('Failed to reload visualizers.');
+      console.error('Error reloading frames:', error);
+      alert('Failed to reload frames.');
     } finally {
-      setIsLoadingVisualizers(false);
+      setIsLoadingFrames(false);
     }
   };
 
@@ -159,10 +159,10 @@ const App: React.FC = () => {
     const handleFileDrop = async (filePath: string) => {
       try {
         // Use the enhanced matching system
-        const matchingResult = await api.findMatchingVisualizers(filePath);
+        const matchingResult = await api.findMatchingFrames(filePath);
 
         if (!matchingResult.success) {
-          console.error('Error finding matching visualizers:', matchingResult.error);
+          console.error('Error finding matching frames:', matchingResult.error);
           alert(`Error analyzing file: ${matchingResult.error}`);
           return;
         }
@@ -173,30 +173,30 @@ const App: React.FC = () => {
         console.log('Enhanced matching results:', {
           fileAnalysis: matchingResult.fileAnalysis,
           matches: matches.map((m: any) => ({
-            name: m.visualizer.name,
+            name: m.frame.name,
             priority: m.priority
           }))
         });
 
         if (matches.length === 0) {
-          // Handle no visualizer found
-          console.log('No visualizer found for file:', filePath);
+          // Handle no frame found
+          console.log('No frame found for file:', filePath);
           const analysis = matchingResult.fileAnalysis;
-          alert(`No visualizer found for this file.\n\nFile: ${analysis.filename}\nType: ${analysis.mimetype}\nSize: ${(analysis.size / 1024).toFixed(1)} KB`);
+          alert(`No frame found for this file.\n\nFile: ${analysis.filename}\nType: ${analysis.mimetype}\nSize: ${(analysis.size / 1024).toFixed(1)} KB`);
         } else if (matches.length === 1) {
-          // Only one visualizer, use it directly
-          setCurrentVisualizer(matches[0].visualizer);
+          // Only one frame, use it directly
+          setCurrentFrame(matches[0].frame);
           setCurrentFile(fileData);
-          setShowVisualizerSelection(false);
+          setShowFrameSelection(false);
         } else {
-          // Multiple visualizers, show selection with priority info
+          // Multiple frames, show selection with priority info
           setCurrentFile(fileData);
-          setAvailableVisualizers(matches.map((m: any) => ({
-            ...m.visualizer,
+          setAvailableFrames(matches.map((m: any) => ({
+            ...m.frame,
             matchPriority: m.priority
           })));
-          setShowVisualizerSelection(true);
-          setCurrentVisualizer(null);
+          setShowFrameSelection(true);
+          setCurrentFrame(null);
         }
       } catch (error) {
         console.error('Error handling file drop:', error);
@@ -224,68 +224,68 @@ const App: React.FC = () => {
       window.removeEventListener('drop', onDrop);
       window.removeEventListener('dragover', onDragOver);
     };
-  }, [visualizers]);
+  }, [frames]);
 
-  const selectVisualizer = (visualizer: Visualizer) => {
-    setCurrentVisualizer(visualizer);
-    setShowVisualizerSelection(false);
+  const selectFrame = (frame: Frame) => {
+    setCurrentFrame(frame);
+    setShowFrameSelection(false);
   };
 
-  const launchStandaloneVisualizer = async (visualizer: Visualizer) => {
+  const launchStandaloneFrame = async (frame: Frame) => {
     try {
-      console.log('Launching standalone visualizer:', visualizer.name, visualizer.id);
+      console.log('Launching standalone frame:', frame.name, frame.id);
 
-      const visualizerData = await api.launchStandaloneVisualizer(visualizer.id);
-      console.log('Visualizer data received:', visualizerData);
+      const frameData = await api.launchStandaloneFrame(frame.id);
+      console.log('Frame data received:', frameData);
 
-      // Set up standalone visualizer (no file data) - this will trigger useEffect
-      setCurrentVisualizer(visualizer);
-      setCurrentFile(null); // No file for standalone visualizers
-      setShowVisualizerSelection(false);
+      // Set up standalone frame (no file data) - this will trigger useEffect
+      setCurrentFrame(frame);
+      setCurrentFile(null); // No file for standalone frames
+      setShowFrameSelection(false);
 
-      // Store visualizer data for useEffect to pick up
-      (window as any).__PENDING_STANDALONE_DATA__ = visualizerData;
+      // Store frame data for useEffect to pick up
+      (window as any).__PENDING_STANDALONE_DATA__ = frameData;
 
     } catch (error) {
-      console.error('Failed to launch standalone visualizer:', error);
-      alert(`Failed to launch ${visualizer.name}: ${error}`);
+      console.error('Failed to launch standalone frame:', error);
+      alert(`Failed to launch ${frame.name}: ${error}`);
     }
   };
 
-  // Load and render the visualizer when currentFile or currentVisualizer changes
+  // Load and render the frame when currentFile or currentFrame changes
   useEffect(() => {
-    if (currentVisualizer && visualizerRootRef.current) {
-      const loadVisualizer = async () => {
+    if (currentFrame && frameRootRef.current) {
+      const loadFrame = async () => {
         try {
           // Clear previous content
-          if (visualizerRootRef.current) {
-            visualizerRootRef.current.innerHTML = '';
+          if (frameRootRef.current) {
+            frameRootRef.current.innerHTML = '';
           }
 
-          let visualizerData;
+          let frameData;
           let props;
 
-          // Check if this is a standalone visualizer
+          // Check if this is a standalone frame
           if (!currentFile && (window as any).__PENDING_STANDALONE_DATA__) {
             // Use pending standalone data
-            visualizerData = (window as any).__PENDING_STANDALONE_DATA__;
+            frameData = (window as any).__PENDING_STANDALONE_DATA__;
             props = {
               fileData: null,
-              container: visualizerRootRef.current
+              container: frameRootRef.current
             };
             // Clear the pending data
             delete (window as any).__PENDING_STANDALONE_DATA__;
-            console.log('Loading standalone visualizer with pending data');
+            console.log('Loading standalone frame with pending data');
           } else if (currentFile) {
-            // Load the visualizer's main component for file-based visualizer
-            visualizerData = await api.loadVisualizer(currentVisualizer.id);
+            // Load the frame's main component for file-based frame
+            frameData = await api.loadFrame(currentFrame.id);
             props = {
               fileData: currentFile,
-              container: visualizerRootRef.current
+              container: frameRootRef.current
             };
-            console.log('Loading file-based visualizer');
+            console.log('Loading file-based frame');
           } else {
-            console.log('No file or pending standalone data - skipping visualizer load');
+            console.log('No file or pending standalone data - skipping frame load');
             return;
           }
 
@@ -294,18 +294,18 @@ const App: React.FC = () => {
           // Create a new script element with the bundle content
           const script = document.createElement('script');
           script.type = 'text/javascript';
-          script.textContent = visualizerData.bundleContent;
+          script.textContent = frameData.bundleContent;
 
-          console.log('Setting up __LOAD_VISUALIZER__ function...');
+          console.log('Setting up __LOAD_FRAME__ function...');
 
           // When the script loads, it will call this function
-          (window as any).__LOAD_VISUALIZER__ = (VisualizerComponent: any) => {
-            console.log('__LOAD_VISUALIZER__ called with component:', VisualizerComponent);
-            console.log('visualizerRootRef.current:', visualizerRootRef.current);
+          (window as any).__LOAD_FRAME__ = (FrameComponent: any) => {
+            console.log('__LOAD_FRAME__ called with component:', FrameComponent);
+            console.log('frameRootRef.current:', frameRootRef.current);
 
-            if (visualizerRootRef.current) {
+            if (frameRootRef.current) {
               const root = document.createElement('div');
-              visualizerRootRef.current.appendChild(root);
+              frameRootRef.current.appendChild(root);
               console.log('Created and appended root div:', root);
 
               // Create a new React root
@@ -314,14 +314,14 @@ const App: React.FC = () => {
                 console.log('Created React root successfully');
 
                 reactRoot.render(
-                  React.createElement(VisualizerComponent, props)
+                  React.createElement(FrameComponent, props)
                 );
-                console.log('Visualizer rendered successfully');
+                console.log('Frame rendered successfully');
               } catch (renderError) {
                 console.error('React rendering error:', renderError);
               }
             } else {
-              console.error('visualizerRootRef.current is null!');
+              console.error('frameRootRef.current is null!');
             }
           };
 
@@ -334,16 +334,16 @@ const App: React.FC = () => {
             if (document.head.contains(script)) {
               document.head.removeChild(script);
             }
-            delete (window as any).__LOAD_VISUALIZER__;
+            delete (window as any).__LOAD_FRAME__;
           };
         } catch (error) {
-          console.error('Failed to load visualizer:', error);
+          console.error('Failed to load frame:', error);
         }
       };
 
-      loadVisualizer();
+      loadFrame();
     }
-  }, [currentFile, currentVisualizer]);
+  }, [currentFile, currentFrame]);
 
   return (
     <div className="app">
@@ -364,35 +364,35 @@ const App: React.FC = () => {
 
       <div className="main-layout">
         <main className="content-area">
-          {showVisualizerSelection ? (
-            <div className="visualizer-selection">
+          {showFrameSelection ? (
+            <div className="frame-selection">
               <div className="selection-header">
-                <h2 className="selection-title">Choose visualizer</h2>
+                <h2 className="selection-title">Choose frame</h2>
                 <p className="selection-subtitle">
-                  Multiple visualizers available for <span className="filename">{currentFile?.path.split('/').pop()}</span>
+                  Multiple frames available for <span className="filename">{currentFile?.path.split('/').pop()}</span>
                 </p>
                 <div className="file-meta">
                   <span className="file-type">{currentFile?.mimetype}</span>
                 </div>
               </div>
 
-              <div className="visualizer-grid">
-                {availableVisualizers.map(viz => (
+              <div className="frame-grid">
+                {availableFrames.map(frame => (
                   <button
-                    key={viz.id}
-                    className="visualizer-card"
-                    onClick={() => selectVisualizer(viz)}
+                    key={frame.id}
+                    className="frame-card"
+                    onClick={() => selectFrame(frame)}
                   >
                     <div className="card-header">
-                      <h3 className="card-title">{viz.name}</h3>
+                      <h3 className="card-title">{frame.name}</h3>
                       <div className="card-badge">
                         <span className="badge-dot"></span>
                         Ready
                       </div>
                     </div>
-                    <p className="card-description">{viz.description}</p>
+                    <p className="card-description">{frame.description}</p>
                     <div className="card-footer">
-                      <span className="supported-formats">{getSupportedFormats(viz)}</span>
+                      <span className="supported-formats">{getSupportedFormats(frame)}</span>
                     </div>
                   </button>
                 ))}
@@ -402,28 +402,28 @@ const App: React.FC = () => {
                 <button
                   className="btn btn-secondary"
                   onClick={() => {
-                    setShowVisualizerSelection(false);
+                    setShowFrameSelection(false);
                     setCurrentFile(null);
-                    setCurrentVisualizer(null);
+                    setCurrentFrame(null);
                   }}
                 >
                   Cancel
                 </button>
               </div>
             </div>
-          ) : currentVisualizer ? (
-            <div className="visualizer-container">
-              <div className="visualizer-header">
-                <div className="visualizer-info">
-                  <h2 className="visualizer-title">
+          ) : currentFrame ? (
+            <div className="frame-container">
+              <div className="frame-header">
+                <div className="frame-info">
+                  <h2 className="frame-title">
                     <span className="file-icon">{currentFile ? '📄' : '⚡'}</span>
-                    {currentFile ? currentFile.path.split('/').pop() : currentVisualizer.name}
+                    {currentFile ? currentFile.path.split('/').pop() : currentFrame.name}
                   </h2>
-                  <p className="visualizer-subtitle">
+                  <p className="frame-subtitle">
                     {currentFile ? (
-                      <>Powered by <span className="visualizer-name">{currentVisualizer.name}</span></>
+                      <>Powered by <span className="frame-name">{currentFrame.name}</span></>
                     ) : (
-                      <span className="visualizer-name">Standalone Utility</span>
+                      <span className="frame-name">Standalone Utility</span>
                     )}
                   </p>
                 </div>
@@ -431,14 +431,14 @@ const App: React.FC = () => {
                   className="btn btn-ghost btn-sm"
                   onClick={() => {
                     setCurrentFile(null);
-                    setCurrentVisualizer(null);
+                    setCurrentFrame(null);
                   }}
                 >
                   <span className="btn-icon">✕</span>
                   Close
                 </button>
               </div>
-              <div ref={visualizerRootRef} className="visualizer-viewport" />
+              <div ref={frameRootRef} className="frame-viewport" />
             </div>
           ) : (
             <div className="drop-zone">
@@ -460,7 +460,7 @@ const App: React.FC = () => {
         </main>
 
         <aside className="sidebar">
-          {/* Visualizers Directory Section */}
+          {/* Frames Directory Section */}
           <div className="sidebar-section">
             <div className="section-header">
               <h4 className="section-title">
@@ -469,22 +469,22 @@ const App: React.FC = () => {
               </h4>
             </div>
             <div className="directory-path">
-              {visualizersDirectory}
+              {framesDirectory}
             </div>
             <div className="section-actions">
               <button
                 className="btn btn-outline btn-sm"
-                onClick={handleChangeVisualizersDirectory}
+                onClick={handleChangeFramesDirectory}
               >
                 <span className="btn-icon">📁</span>
                 Change
               </button>
               <button
                 className="btn btn-outline btn-sm"
-                onClick={handleReloadVisualizers}
-                disabled={isLoadingVisualizers}
+                onClick={handleReloadFrames}
+                disabled={isLoadingFrames}
               >
-                <span className="btn-icon">{isLoadingVisualizers ? '⟳' : '🔄'}</span>
+                <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
                 Reload
               </button>
             </div>
@@ -494,34 +494,34 @@ const App: React.FC = () => {
             <div className="section-header">
               <h4 className="section-title">
                 <span className="section-icon">🎨</span>
-                Visualizers
+                Frames
               </h4>
-              <span className="section-count">{visualizers.filter(v => !v.standalone).length}</span>
+              <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
             </div>
 
-            {isLoadingVisualizers ? (
+            {isLoadingFrames ? (
               <div className="loading-state">
                 <span className="loading-spinner">⟳</span>
-                Loading visualizers...
+                Loading frames...
               </div>
-            ) : visualizers.filter(v => !v.standalone).length === 0 ? (
+            ) : frames.filter(f => !f.standalone).length === 0 ? (
               <div className="empty-state">
-                <p>No file visualizers found</p>
+                <p>No file frames found</p>
                 <p className="empty-subtitle">Check your directory configuration</p>
               </div>
             ) : (
-              <div className="visualizer-list">
-                {visualizers.filter(v => !v.standalone).map(viz => (
-                  <div key={viz.id} className="visualizer-item">
+              <div className="frame-list">
+                {frames.filter(f => !f.standalone).map(frame => (
+                  <div key={frame.id} className="frame-item">
                     <div className="item-header">
-                      <h5 className="item-title">{viz.name}</h5>
+                      <h5 className="item-title">{frame.name}</h5>
                       <div className="item-status">
                         <span className="status-dot"></span>
                       </div>
                     </div>
-                    <p className="item-description">{viz.description}</p>
+                    <p className="item-description">{frame.description}</p>
                     <div className="item-formats">
-                      {getSupportedFormats(viz)}
+                      {getSupportedFormats(frame)}
                     </div>
                   </div>
                 ))}
@@ -529,31 +529,31 @@ const App: React.FC = () => {
             )}
           </div>
 
-          {visualizers.filter(v => v.standalone).length > 0 && (
+          {frames.filter(f => f.standalone).length > 0 && (
             <div className="sidebar-section">
               <div className="section-header">
                 <h4 className="section-title">
                   <span className="section-icon">⚡</span>
                   Utilities
                 </h4>
-                <span className="section-count">{visualizers.filter(v => v.standalone).length}</span>
+                <span className="section-count">{frames.filter(f => f.standalone).length}</span>
               </div>
 
-              <div className="visualizer-list">
-                {visualizers.filter(v => v.standalone).map(viz => (
-                  <div key={viz.id} className="visualizer-item standalone-item">
+              <div className="frame-list">
+                {frames.filter(f => f.standalone).map(frame => (
+                  <div key={frame.id} className="frame-item standalone-item">
                     <div className="item-header">
-                      <h5 className="item-title">{viz.name}</h5>
+                      <h5 className="item-title">{frame.name}</h5>
                       <button
                         className="btn btn-primary btn-sm"
-                        onClick={() => launchStandaloneVisualizer(viz)}
+                        onClick={() => launchStandaloneFrame(frame)}
                       >
                         Launch
                       </button>
                     </div>
-                    <p className="item-description">{viz.description}</p>
+                    <p className="item-description">{frame.description}</p>
                     <div className="item-formats">
-                      {getSupportedFormats(viz)}
+                      {getSupportedFormats(frame)}
                     </div>
                   </div>
                 ))}
