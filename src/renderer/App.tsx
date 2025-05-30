@@ -20,6 +20,38 @@ interface FileData {
   content: string;
 }
 
+// Helper function to get supported formats for a visualizer
+const getSupportedFormats = (viz: any): string => {
+  if (viz.mimetypes && viz.mimetypes.length > 0) {
+    return viz.mimetypes.join(', ');
+  }
+
+  if (viz.matchers && viz.matchers.length > 0) {
+    const formats = new Set<string>();
+
+    viz.matchers.forEach((matcher: any) => {
+      if (matcher.type === 'mimetype' && matcher.mimetype) {
+        formats.add(matcher.mimetype);
+      } else if (matcher.type === 'filename' && matcher.pattern) {
+        formats.add(`*.${matcher.pattern.split('.').pop() || 'file'}`);
+      } else if (matcher.type === 'filename-contains' && matcher.substring) {
+        const ext = matcher.extension ? `.${matcher.extension}` : '';
+        formats.add(`*${matcher.substring}*${ext}`);
+      } else if (matcher.type === 'content-json') {
+        formats.add('JSON');
+      } else if (matcher.type === 'file-size') {
+        formats.add('Size-based');
+      } else {
+        formats.add(matcher.type);
+      }
+    });
+
+    return Array.from(formats).join(', ') || 'Enhanced matching';
+  }
+
+  return 'All files';
+};
+
 const App: React.FC = () => {
   const [visualizers, setVisualizers] = useState<Visualizer[]>([]);
   const [currentFile, setCurrentFile] = useState<FileData | null>(null);
@@ -276,7 +308,7 @@ const App: React.FC = () => {
                     <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '1.2rem' }}>{viz.name}</h3>
                     <p style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5' }}>{viz.description}</p>
                     <p style={{ margin: '0 0 1rem 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      Supports: {viz.mimetypes.join(', ')}
+                      Supports: {getSupportedFormats(viz)}
                     </p>
                     <button style={{
                       width: '100%',
@@ -405,7 +437,7 @@ const App: React.FC = () => {
                   <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>{viz.name}</h4>
                   <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{viz.description}</p>
                   <p style={{ margin: '0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    📄 {viz.mimetypes.join(', ')}
+                    📄 {getSupportedFormats(viz)}
                   </p>
                 </li>
               ))}
