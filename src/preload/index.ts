@@ -1,7 +1,9 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import path from 'path';
-import fs from 'fs';
-import os from 'os';
+
+// Import Node.js modules using require
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
