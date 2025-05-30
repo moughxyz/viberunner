@@ -1,6 +1,6 @@
-# 🎨 Vizor - Advanced File Visualizer Platform
+# ⚡ Vibeframe - Advanced File Visualizer Platform
 
-Vizor is a powerful Electron-based platform that allows developers to create custom visualizers for any type of file. With an advanced matching system that goes far beyond simple MIME types, you can build sophisticated visualizers that target specific files based on filename patterns, content analysis, file size, and complex combinations of criteria.
+Vibeframe is a powerful Electron-based platform that allows developers to create custom visualizers for any type of file. With an advanced matching system that goes far beyond simple MIME types, you can build sophisticated visualizers that target specific files based on filename patterns, content analysis, file size, and complex combinations of criteria.
 
 ## 🌟 Key Features
 
@@ -30,7 +30,7 @@ Vizor is a powerful Electron-based platform that allows developers to create cus
 ### Prerequisites
 - Node.js 18+
 - npm or yarn
-- Vizor app installed
+- Vibeframe app installed
 
 ### Create a New Visualizer
 
@@ -67,8 +67,8 @@ my-awesome-visualizer/
 
 ### How Visualizers Work
 
-1. **File Drop**: User drops a file into Vizor
-2. **Analysis**: Vizor analyzes the file (path, content, metadata)
+1. **File Drop**: User drops a file into Vibeframe
+2. **Analysis**: Vibeframe analyzes the file (path, content, metadata)
 3. **Matching**: Enhanced matcher system finds compatible visualizers
 4. **Selection**: Best match or user selection if multiple options
 5. **Loading**: Visualizer component is dynamically loaded
@@ -456,7 +456,7 @@ const JsonFormatter: React.FC<JsonFormatterProps> = ({ fileData }) => {
   );
 };
 
-// Export the component for Vizor to load
+// Export the component for Vibeframe to load
 export default JsonFormatter;
 
 // Global registration for IIFE bundle
@@ -471,7 +471,7 @@ if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
 npm run build
 ```
 
-This creates `dist/bundle.iife.js` that Vizor can load.
+This creates `dist/bundle.iife.js` that Vibeframe can load.
 
 ## 📋 Configuration Reference
 
@@ -810,7 +810,7 @@ npm run dev
 npm run build
 
 # 4. Test the built visualizer
-# Copy to your visualizers directory and reload in Vizor
+# Copy to your visualizers directory and reload in Vibeframe
 ```
 
 ### Required Build Output
@@ -818,7 +818,7 @@ npm run build
 Your build process **must** generate:
 - `dist/bundle.iife.js` - IIFE format bundle
 - The bundle must be self-contained
-- External deps: `react` and `react-dom` (provided by Vizor)
+- External deps: `react` and `react-dom` (provided by Vibeframe)
 
 ### Vite Configuration Template
 
@@ -1025,7 +1025,7 @@ const checkLatestVersions = async (dependencies: Record<string, string>) => {
 
 ## 🎉 Conclusion
 
-You now have everything needed to create powerful, sophisticated visualizers for Vizor! The enhanced matching system allows for precise file targeting, while the React-based architecture provides a familiar development experience.
+You now have everything needed to create powerful, sophisticated visualizers for Vibeframe! The enhanced matching system allows for precise file targeting, while the React-based architecture provides a familiar development experience.
 
 Start with simple visualizers and gradually add complexity. The priority-based matching ensures your visualizers activate exactly when they should, creating a seamless user experience.
 

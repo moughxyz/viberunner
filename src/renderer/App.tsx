@@ -260,189 +260,178 @@ const App: React.FC = () => {
 
   return (
     <div className="app">
-      <header>
-        <h1>🎨 Vizor</h1>
-        <p>Drag & drop files to visualize them with stunning interfaces</p>
+      <header className="header">
+        <div className="header-content">
+          <h1 className="app-title">
+            <span className="app-icon">⚡</span>
+            Vibeframe
+          </h1>
+          <p className="app-subtitle">Modern file visualization platform</p>
+        </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '2rem', padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-        <main>
+      <div className="main-layout">
+        <main className="content-area">
           {showVisualizerSelection ? (
             <div className="visualizer-selection">
-              <h2>✨ Choose Your Visualizer</h2>
-              <p>Multiple visualizers are available for: <strong>{currentFile?.path.split('/').pop()}</strong></p>
-              <p style={{ fontSize: '0.9rem', opacity: 0.8 }}>File type: <strong>{currentFile?.mimetype}</strong></p>
+              <div className="selection-header">
+                <h2 className="selection-title">Choose visualizer</h2>
+                <p className="selection-subtitle">
+                  Multiple visualizers available for <span className="filename">{currentFile?.path.split('/').pop()}</span>
+                </p>
+                <div className="file-meta">
+                  <span className="file-type">{currentFile?.mimetype}</span>
+                </div>
+              </div>
 
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: '1.5rem',
-                margin: '2rem 0'
-              }}>
+              <div className="visualizer-grid">
                 {availableVisualizers.map(viz => (
-                  <div
+                  <button
                     key={viz.id}
-                    className="card"
-                    style={{
-                      background: 'rgba(42, 42, 42, 0.8)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid var(--border-color)',
-                      borderRadius: '16px',
-                      padding: '1.5rem',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}
+                    className="visualizer-card"
                     onClick={() => selectVisualizer(viz)}
                   >
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '3px',
-                      background: 'var(--gradient-primary)'
-                    }} />
-
-                    <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)', fontSize: '1.2rem' }}>{viz.name}</h3>
-                    <p style={{ margin: '0 0 1rem 0', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5' }}>{viz.description}</p>
-                    <p style={{ margin: '0 0 1rem 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      Supports: {getSupportedFormats(viz)}
-                    </p>
-                    <button style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      fontSize: '0.9rem',
-                      fontWeight: '500'
-                    }}>
-                      Launch Visualizer
-                    </button>
-                  </div>
+                    <div className="card-header">
+                      <h3 className="card-title">{viz.name}</h3>
+                      <div className="card-badge">
+                        <span className="badge-dot"></span>
+                        Ready
+                      </div>
+                    </div>
+                    <p className="card-description">{viz.description}</p>
+                    <div className="card-footer">
+                      <span className="supported-formats">{getSupportedFormats(viz)}</span>
+                    </div>
+                  </button>
                 ))}
               </div>
 
-              <button
-                className="secondary"
-                onClick={() => {
-                  setShowVisualizerSelection(false);
-                  setCurrentFile(null);
-                  setCurrentVisualizer(null);
-                }}
-                style={{ marginTop: '1rem' }}
-              >
-                Cancel
-              </button>
+              <div className="selection-actions">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowVisualizerSelection(false);
+                    setCurrentFile(null);
+                    setCurrentVisualizer(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           ) : currentFile && currentVisualizer ? (
             <div className="visualizer-container">
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '1.5rem',
-                padding: '1rem',
-                background: 'rgba(42, 42, 42, 0.5)',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)'
-              }}>
-                <div>
-                  <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.4rem' }}>
-                    📁 {currentFile.path.split('/').pop()}
+              <div className="visualizer-header">
+                <div className="visualizer-info">
+                  <h2 className="visualizer-title">
+                    <span className="file-icon">📄</span>
+                    {currentFile.path.split('/').pop()}
                   </h2>
-                  <p style={{ margin: '0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                    Visualizing with: <strong>{currentVisualizer.name}</strong>
+                  <p className="visualizer-subtitle">
+                    Powered by <span className="visualizer-name">{currentVisualizer.name}</span>
                   </p>
                 </div>
                 <button
-                  className="danger"
+                  className="btn btn-ghost btn-sm"
                   onClick={() => {
                     setCurrentFile(null);
                     setCurrentVisualizer(null);
                   }}
-                  style={{ padding: '0.5rem 1rem' }}
                 >
-                  ✕ Close
+                  <span className="btn-icon">✕</span>
+                  Close
                 </button>
               </div>
-              <div ref={visualizerRootRef} className="visualizer-root" style={{ minHeight: '400px' }} />
+              <div ref={visualizerRootRef} className="visualizer-viewport" />
             </div>
           ) : (
             <div className="drop-zone">
-              <h3>📁 Drop files or folders here</h3>
-              <p>Supports images, documents, folders, and more</p>
-              <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', opacity: 0.6 }}>
-                Available formats: Images (PNG, JPEG, GIF, WebP), Folders, and more
+              <div className="drop-zone-content">
+                <div className="drop-zone-icon">📂</div>
+                <h3 className="drop-zone-title">Drop files to visualize</h3>
+                <p className="drop-zone-description">
+                  Supports documents, images, data files, and more
+                </p>
+                <div className="drop-zone-formats">
+                  <span className="format-tag">JSON</span>
+                  <span className="format-tag">Images</span>
+                  <span className="format-tag">CSV</span>
+                  <span className="format-tag">Text</span>
+                </div>
               </div>
             </div>
           )}
         </main>
 
-        <aside style={{ position: 'relative' }}>
+        <aside className="sidebar">
           {/* Visualizers Directory Section */}
-          <div style={{
-            marginBottom: '2rem',
-            padding: '1.5rem',
-            background: 'rgba(42, 42, 42, 0.5)',
-            borderRadius: '16px',
-            border: '1px solid var(--border-color)'
-          }}>
-            <h4 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
-              🔧 <span style={{ marginLeft: '0.5rem' }}>Visualizers Directory</span>
-            </h4>
-            <p style={{
-              margin: '0 0 1rem 0',
-              fontSize: '0.8rem',
-              color: 'var(--text-secondary)',
-              wordBreak: 'break-all',
-              padding: '0.5rem',
-              background: 'rgba(0,0,0,0.3)',
-              borderRadius: '8px',
-              fontFamily: 'monospace'
-            }}>
+          <div className="sidebar-section">
+            <div className="section-header">
+              <h4 className="section-title">
+                <span className="section-icon">🔧</span>
+                Directory
+              </h4>
+            </div>
+            <div className="directory-path">
               {visualizersDirectory}
-            </p>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            </div>
+            <div className="section-actions">
               <button
+                className="btn btn-outline btn-sm"
                 onClick={handleChangeVisualizersDirectory}
-                style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem' }}
               >
-                📁 Change
+                <span className="btn-icon">📁</span>
+                Change
               </button>
               <button
-                className="success"
+                className="btn btn-outline btn-sm"
                 onClick={handleReloadVisualizers}
                 disabled={isLoadingVisualizers}
-                style={{ flex: 1, fontSize: '0.8rem', padding: '0.5rem' }}
               >
-                {isLoadingVisualizers ? '⟳' : '🔄'} Reload
+                <span className="btn-icon">{isLoadingVisualizers ? '⟳' : '🔄'}</span>
+                Reload
               </button>
             </div>
           </div>
 
-          <h3 style={{ margin: '0 0 1rem 0', color: 'var(--text-primary)', display: 'flex', alignItems: 'center' }}>
-            🎨 <span style={{ marginLeft: '0.5rem' }}>Available Visualizers ({visualizers.length})</span>
-          </h3>
+          <div className="sidebar-section">
+            <div className="section-header">
+              <h4 className="section-title">
+                <span className="section-icon">🎨</span>
+                Visualizers
+              </h4>
+              <span className="section-count">{visualizers.length}</span>
+            </div>
 
-          {isLoadingVisualizers ? (
-            <p className="loading" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>⟳ Loading visualizers...</p>
-          ) : visualizers.length === 0 ? (
-            <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '2rem', fontSize: '0.9rem' }}>
-              No visualizers found. Check your directory.
-            </p>
-          ) : (
-            <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {visualizers.map(viz => (
-                <li key={viz.id} style={{ padding: '1.5rem' }}>
-                  <h4 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>{viz.name}</h4>
-                  <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>{viz.description}</p>
-                  <p style={{ margin: '0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    📄 {getSupportedFormats(viz)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
+            {isLoadingVisualizers ? (
+              <div className="loading-state">
+                <span className="loading-spinner">⟳</span>
+                Loading visualizers...
+              </div>
+            ) : visualizers.length === 0 ? (
+              <div className="empty-state">
+                <p>No visualizers found</p>
+                <p className="empty-subtitle">Check your directory configuration</p>
+              </div>
+            ) : (
+              <div className="visualizer-list">
+                {visualizers.map(viz => (
+                  <div key={viz.id} className="visualizer-item">
+                    <div className="item-header">
+                      <h5 className="item-title">{viz.name}</h5>
+                      <div className="item-status">
+                        <span className="status-dot"></span>
+                      </div>
+                    </div>
+                    <p className="item-description">{viz.description}</p>
+                    <div className="item-formats">
+                      {getSupportedFormats(viz)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </aside>
       </div>
     </div>

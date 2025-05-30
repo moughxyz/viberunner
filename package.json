@@ -1,7 +1,7 @@
 {
-  "name": "vizor",
+  "name": "vibeframe",
   "version": "1.0.0",
-  "description": "Dynamic file visualizer system",
+  "description": "Modern file visualization platform",
   "main": "dist-electron/index.js",
   "scripts": {
     "start": "electron-forge start",
