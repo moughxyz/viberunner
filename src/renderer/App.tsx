@@ -535,11 +535,11 @@ const App: React.FC = () => {
           script.type = 'text/javascript';
           script.textContent = frameData.bundleContent;
 
-          console.log('Script element created, setting up __LOAD_FRAME__ function...');
+          console.log('Script element created, setting up frame loader functions...');
 
           // When the script loads, it will call this function
-          (window as any).__LOAD_FRAME__ = (FrameComponent: any) => {
-            console.log('__LOAD_FRAME__ called with component:', FrameComponent);
+          const frameLoader = (FrameComponent: any) => {
+            console.log('Frame loader called with component:', FrameComponent);
             console.log('frameRootRef.current:', frameRootRef.current);
             console.log('Props for frame:', props);
 
@@ -562,9 +562,14 @@ const App: React.FC = () => {
                 console.error('React rendering error:', renderError);
               }
             } else {
-              console.error('frameRootRef.current is null when __LOAD_FRAME__ called!');
+              console.error('frameRootRef.current is null when frame loader called!');
             }
           };
+
+          // Support both new and legacy patterns
+          (window as any).__LOAD_FRAME__ = frameLoader;
+          (window as any).__LOAD_VISUALIZER__ = frameLoader;
+          console.log('Set up both __LOAD_FRAME__ and __LOAD_VISUALIZER__ handlers');
 
           console.log('Adding script to document head...');
           // Add the script to the document
@@ -578,6 +583,7 @@ const App: React.FC = () => {
               document.head.removeChild(script);
             }
             delete (window as any).__LOAD_FRAME__;
+            delete (window as any).__LOAD_VISUALIZER__;
           };
         } catch (error) {
           console.error('Failed to load frame component:', error);
