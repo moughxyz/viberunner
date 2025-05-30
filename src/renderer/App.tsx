@@ -60,8 +60,29 @@ const api = {
 
 // Constants
 const getFramesDirectory = () => {
+  // Try to get the saved directory from preferences
+  try {
+    const { app } = require('@electron/remote');
+    const path = require('path');
+    const fs = require('fs');
+
+    const prefsPath = path.join(app.getPath('userData'), 'preferences.json');
+    if (fs.existsSync(prefsPath)) {
+      const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
+      if (prefs.visualizersDir && fs.existsSync(prefs.visualizersDir)) {
+        console.log('Using saved frames directory:', prefs.visualizersDir);
+        return prefs.visualizersDir;
+      }
+    }
+  } catch (error) {
+    console.warn('Could not load preferences:', error);
+  }
+
+  // Fallback to default location
   const userDataPath = app?.getPath('userData') || path.join(require('os').homedir(), '.vibeframe');
-  return path.join(userDataPath, 'visualizers');
+  const fallback = path.join(userDataPath, 'visualizers');
+  console.log('Using fallback frames directory:', fallback);
+  return fallback;
 };
 
 // Helper functions for direct file operations

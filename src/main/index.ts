@@ -242,11 +242,13 @@ function findMatchingVisualizers(visualizers: VisualizerConfig[], fileAnalysis: 
 }
 
 async function loadVisualizers(): Promise<VisualizerConfig[]> {
-  console.log('loadVisualizers: Starting to load visualizers from:', VISUALIZERS_DIR);
+  // Use the selected directory directly instead of copying
+  const VISUALIZERS_DIR = selectedVisualizersDir || path.join(app.getPath('userData'), 'visualizers');
+  console.log('loadVisualizers: Loading from directory:', VISUALIZERS_DIR);
 
   if (!fs.existsSync(VISUALIZERS_DIR)) {
-    console.log('loadVisualizers: Creating visualizers directory');
-    fs.mkdirSync(VISUALIZERS_DIR, { recursive: true });
+    console.log('loadVisualizers: Directory does not exist:', VISUALIZERS_DIR);
+    return [];
   }
 
   try {
@@ -552,14 +554,6 @@ app.on('ready', async () => {
     console.log('Saved visualizers directory preference:', selectedVisualizersDir);
   }
 
-  // Now ensure visualizers are copied
-  const success = await ensureVisualizers();
-  if (!success) {
-    dialog.showErrorBox('Visualizers Error', 'Failed to load visualizers. Please check the selected directory and try again.');
-    app.quit();
-    return;
-  }
-
   // Register IPC handlers BEFORE creating the window
   registerIpcHandlers();
 
@@ -611,6 +605,8 @@ function registerIpcHandlers() {
       throw new Error(`Visualizer ${id} not found`);
     }
 
+    // Use the selected directory directly
+    const VISUALIZERS_DIR = selectedVisualizersDir || path.join(app.getPath('userData'), 'visualizers');
     const visualizerDir = path.join(VISUALIZERS_DIR, visualizer.id);
     const bundlePath = path.join(visualizerDir, 'dist', 'bundle.iife.js');
 
@@ -668,10 +664,8 @@ function registerIpcHandlers() {
     if (newDir) {
       selectedVisualizersDir = newDir;
       savePreferences({ visualizersDir: newDir });
-
-      // Reload visualizers
-      const success = await ensureVisualizers();
-      return { success, directory: newDir };
+      console.log('Changed frames directory to:', newDir);
+      return { success: true, directory: newDir };
     }
     return { success: false, directory: null };
   });
@@ -852,6 +846,8 @@ function registerIpcHandlers() {
         throw new Error(`Visualizer ${id} is not configured for standalone use`);
       }
 
+      // Use the selected directory directly
+      const VISUALIZERS_DIR = selectedVisualizersDir || path.join(app.getPath('userData'), 'visualizers');
       const visualizerDir = path.join(VISUALIZERS_DIR, visualizer.id);
       const bundlePath = path.join(visualizerDir, 'dist', 'bundle.iife.js');
 
