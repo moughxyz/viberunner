@@ -18,7 +18,8 @@
     "mime-types": "^2.1.35",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.22.3"
+    "react-router-dom": "^6.22.3",
+    "robotjs": "^0.6.0"
   },
   "devDependencies": {
     "@electron-forge/cli": "^7.3.0",

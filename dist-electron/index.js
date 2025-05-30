@@ -33,35 +33,10 @@ const require$$0 = {
   "application/ace+cbor": {
     source: "iana"
   },
-  "application/ace+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/ace-groupcomm+cbor": {
-    source: "iana"
-  },
-  "application/ace-trl+cbor": {
-    source: "iana"
-  },
   "application/activemessage": {
     source: "iana"
   },
   "application/activity+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/aif+cbor": {
-    source: "iana"
-  },
-  "application/aif+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/alto-cdni+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/alto-cdnifilter+json": {
     source: "iana",
     compressible: true
   },
@@ -105,22 +80,6 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/alto-propmap+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/alto-propmapparams+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/alto-tips+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/alto-tipsparams+json": {
-    source: "iana",
-    compressible: true
-  },
   "application/alto-updatestreamcontrol+json": {
     source: "iana",
     compressible: true
@@ -138,12 +97,6 @@ const require$$0 = {
       "ez"
     ]
   },
-  "application/appinstaller": {
-    compressible: false,
-    extensions: [
-      "appinstaller"
-    ]
-  },
   "application/applefile": {
     source: "iana"
   },
@@ -151,18 +104,6 @@ const require$$0 = {
     source: "apache",
     extensions: [
       "aw"
-    ]
-  },
-  "application/appx": {
-    compressible: false,
-    extensions: [
-      "appx"
-    ]
-  },
-  "application/appxbundle": {
-    compressible: false,
-    extensions: [
-      "appxbundle"
     ]
   },
   "application/at+jwt": {
@@ -240,20 +181,6 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/automationml-aml+xml": {
-    source: "iana",
-    compressible: true,
-    extensions: [
-      "aml"
-    ]
-  },
-  "application/automationml-amlx+zip": {
-    source: "iana",
-    compressible: false,
-    extensions: [
-      "amlx"
-    ]
-  },
   "application/bacnet-xdd+zip": {
     source: "iana",
     compressible: false
@@ -271,12 +198,6 @@ const require$$0 = {
     source: "iana",
     charset: "UTF-8",
     compressible: true
-  },
-  "application/bufr": {
-    source: "iana"
-  },
-  "application/c2pa": {
-    source: "iana"
   },
   "application/calendar+json": {
     source: "iana",
@@ -319,11 +240,6 @@ const require$$0 = {
       "ccxml"
     ]
   },
-  "application/cda+xml": {
-    source: "iana",
-    charset: "UTF-8",
-    compressible: true
-  },
   "application/cdfx+xml": {
     source: "iana",
     compressible: true,
@@ -364,9 +280,6 @@ const require$$0 = {
   "application/cdni": {
     source: "iana"
   },
-  "application/ce+cbor": {
-    source: "iana"
-  },
   "application/cea": {
     source: "iana"
   },
@@ -381,15 +294,9 @@ const require$$0 = {
   "application/cfw": {
     source: "iana"
   },
-  "application/cid-edhoc+cbor-seq": {
-    source: "iana"
-  },
   "application/city+json": {
     source: "iana",
     compressible: true
-  },
-  "application/city+json-seq": {
-    source: "iana"
   },
   "application/clr": {
     source: "iana"
@@ -409,9 +316,6 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/coap-eap": {
-    source: "iana"
-  },
   "application/coap-group+json": {
     source: "iana",
     compressible: true
@@ -420,9 +324,6 @@ const require$$0 = {
     source: "iana"
   },
   "application/commonground": {
-    source: "iana"
-  },
-  "application/concise-problem-details+cbor": {
     source: "iana"
   },
   "application/conference-info+xml": {
@@ -436,9 +337,6 @@ const require$$0 = {
     source: "iana"
   },
   "application/cose-key-set": {
-    source: "iana"
-  },
-  "application/cose-x509": {
     source: "iana"
   },
   "application/cpl+xml": {
@@ -468,19 +366,6 @@ const require$$0 = {
     extensions: [
       "cu"
     ]
-  },
-  "application/cwl": {
-    source: "iana",
-    extensions: [
-      "cwl"
-    ]
-  },
-  "application/cwl+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/cwl+yaml": {
-    source: "iana"
   },
   "application/cwt": {
     source: "iana"
@@ -529,10 +414,7 @@ const require$$0 = {
     compressible: true
   },
   "application/dicom": {
-    source: "iana",
-    extensions: [
-      "dcm"
-    ]
+    source: "iana"
   },
   "application/dicom+json": {
     source: "iana",
@@ -568,9 +450,6 @@ const require$$0 = {
   "application/dots+cbor": {
     source: "iana"
   },
-  "application/dpop+jwt": {
-    source: "iana"
-  },
   "application/dskpp+xml": {
     source: "iana",
     compressible: true
@@ -591,35 +470,13 @@ const require$$0 = {
   "application/dvcs": {
     source: "iana"
   },
-  "application/eat+cwt": {
-    source: "iana"
-  },
-  "application/eat+jwt": {
-    source: "iana"
-  },
-  "application/eat-bun+cbor": {
-    source: "iana"
-  },
-  "application/eat-bun+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/eat-ucs+cbor": {
-    source: "iana"
-  },
-  "application/eat-ucs+json": {
-    source: "iana",
-    compressible: true
-  },
   "application/ecmascript": {
-    source: "apache",
+    source: "iana",
     compressible: true,
     extensions: [
+      "es",
       "ecma"
     ]
-  },
-  "application/edhoc+cbor-seq": {
-    source: "iana"
   },
   "application/edi-consent": {
     source: "iana"
@@ -664,10 +521,6 @@ const require$$0 = {
   "application/emergencycalldata.ecall.msd": {
     source: "iana"
   },
-  "application/emergencycalldata.legacyesn+json": {
-    source: "iana",
-    compressible: true
-  },
   "application/emergencycalldata.providerinfo+xml": {
     source: "iana",
     compressible: true
@@ -699,9 +552,6 @@ const require$$0 = {
     ]
   },
   "application/encaprtp": {
-    source: "iana"
-  },
-  "application/entity-statement+jwt": {
     source: "iana"
   },
   "application/epp+xml": {
@@ -739,12 +589,6 @@ const require$$0 = {
   },
   "application/fastsoap": {
     source: "iana"
-  },
-  "application/fdf": {
-    source: "iana",
-    extensions: [
-      "fdf"
-    ]
   },
   "application/fdt+xml": {
     source: "iana",
@@ -802,14 +646,6 @@ const require$$0 = {
   "application/geopackage+sqlite3": {
     source: "iana"
   },
-  "application/geopose+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/geoxacml+json": {
-    source: "iana",
-    compressible: true
-  },
   "application/geoxacml+xml": {
     source: "iana",
     compressible: true
@@ -824,27 +660,12 @@ const require$$0 = {
       "gml"
     ]
   },
-  "application/gnap-binding-jws": {
-    source: "iana"
-  },
-  "application/gnap-binding-jwsd": {
-    source: "iana"
-  },
-  "application/gnap-binding-rotation-jws": {
-    source: "iana"
-  },
-  "application/gnap-binding-rotation-jwsd": {
-    source: "iana"
-  },
   "application/gpx+xml": {
     source: "apache",
     compressible: true,
     extensions: [
       "gpx"
     ]
-  },
-  "application/grib": {
-    source: "iana"
   },
   "application/gxf": {
     source: "apache",
@@ -870,11 +691,6 @@ const require$$0 = {
     extensions: [
       "hjson"
     ]
-  },
-  "application/hl7v2+xml": {
-    source: "iana",
-    charset: "UTF-8",
-    compressible: true
   },
   "application/http": {
     source: "iana"
@@ -950,7 +766,7 @@ const require$$0 = {
     ]
   },
   "application/java-archive": {
-    source: "iana",
+    source: "apache",
     compressible: false,
     extensions: [
       "jar",
@@ -973,11 +789,12 @@ const require$$0 = {
     ]
   },
   "application/javascript": {
-    source: "apache",
+    source: "iana",
     charset: "UTF-8",
     compressible: true,
     extensions: [
-      "js"
+      "js",
+      "mjs"
     ]
   },
   "application/jf2feed+json": {
@@ -996,10 +813,6 @@ const require$$0 = {
     compressible: true
   },
   "application/jscalendar+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/jscontact+json": {
     source: "iana",
     compressible: true
   },
@@ -1031,9 +844,6 @@ const require$$0 = {
       "jsonml"
     ]
   },
-  "application/jsonpath": {
-    source: "iana"
-  },
   "application/jwk+json": {
     source: "iana",
     compressible: true
@@ -1041,9 +851,6 @@ const require$$0 = {
   "application/jwk-set+json": {
     source: "iana",
     compressible: true
-  },
-  "application/jwk-set+jwt": {
-    source: "iana"
   },
   "application/jwt": {
     source: "iana"
@@ -1073,19 +880,9 @@ const require$$0 = {
   "application/link-format": {
     source: "iana"
   },
-  "application/linkset": {
-    source: "iana"
-  },
-  "application/linkset+json": {
-    source: "iana",
-    compressible: true
-  },
   "application/load-control+xml": {
     source: "iana",
     compressible: true
-  },
-  "application/logout+jwt": {
-    source: "iana"
   },
   "application/lost+xml": {
     source: "iana",
@@ -1319,8 +1116,6 @@ const require$$0 = {
   "application/mp4": {
     source: "iana",
     extensions: [
-      "mp4",
-      "mpg4",
       "mp4s",
       "m4p"
     ]
@@ -1351,18 +1146,6 @@ const require$$0 = {
     source: "iana",
     charset: "UTF-8",
     compressible: true
-  },
-  "application/msix": {
-    compressible: false,
-    extensions: [
-      "msix"
-    ]
-  },
-  "application/msixbundle": {
-    compressible: false,
-    extensions: [
-      "msixbundle"
-    ]
   },
   "application/msword": {
     source: "iana",
@@ -1438,7 +1221,7 @@ const require$$0 = {
   },
   "application/octet-stream": {
     source: "iana",
-    compressible: true,
+    compressible: false,
     extensions: [
       "bin",
       "dms",
@@ -1491,9 +1274,6 @@ const require$$0 = {
       "ogx"
     ]
   },
-  "application/ohttp-keys": {
-    source: "iana"
-  },
   "application/omdoc+xml": {
     source: "apache",
     compressible: true,
@@ -1507,9 +1287,7 @@ const require$$0 = {
       "onetoc",
       "onetoc2",
       "onetmp",
-      "onepkg",
-      "one",
-      "onea"
+      "onepkg"
     ]
   },
   "application/opc-nodeset+xml": {
@@ -1581,8 +1359,8 @@ const require$$0 = {
   "application/pgp-signature": {
     source: "iana",
     extensions: [
-      "sig",
-      "asc"
+      "asc",
+      "sig"
     ]
   },
   "application/pics-rules": {
@@ -1687,15 +1465,6 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/private-token-issuer-directory": {
-    source: "iana"
-  },
-  "application/private-token-request": {
-    source: "iana"
-  },
-  "application/private-token-response": {
-    source: "iana"
-  },
   "application/problem+json": {
     source: "iana",
     compressible: true
@@ -1710,9 +1479,6 @@ const require$$0 = {
     extensions: [
       "provx"
     ]
-  },
-  "application/provided-claims+jwt": {
-    source: "iana"
   },
   "application/prs.alvestrand.titrax-sheet": {
     source: "iana"
@@ -1731,29 +1497,6 @@ const require$$0 = {
     source: "iana",
     compressible: false
   },
-  "application/prs.implied-document+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/prs.implied-executable": {
-    source: "iana"
-  },
-  "application/prs.implied-object+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/prs.implied-object+json-seq": {
-    source: "iana"
-  },
-  "application/prs.implied-object+yaml": {
-    source: "iana"
-  },
-  "application/prs.implied-structure": {
-    source: "iana"
-  },
-  "application/prs.mayfile": {
-    source: "iana"
-  },
   "application/prs.nprend": {
     source: "iana"
   },
@@ -1763,15 +1506,9 @@ const require$$0 = {
   "application/prs.rdf-xml-crypt": {
     source: "iana"
   },
-  "application/prs.vcfbzip2": {
-    source: "iana"
-  },
   "application/prs.xsf+xml": {
     source: "iana",
-    compressible: true,
-    extensions: [
-      "xsf"
-    ]
+    compressible: true
   },
   "application/pskc+xml": {
     source: "iana",
@@ -1822,14 +1559,11 @@ const require$$0 = {
     ]
   },
   "application/remote-printing": {
-    source: "apache"
+    source: "iana"
   },
   "application/reputon+json": {
     source: "iana",
     compressible: true
-  },
-  "application/resolve-response+jwt": {
-    source: "iana"
   },
   "application/resource-lists+xml": {
     source: "iana",
@@ -1884,9 +1618,6 @@ const require$$0 = {
       "rusd"
     ]
   },
-  "application/rpki-checklist": {
-    source: "iana"
-  },
   "application/rpki-ghostbusters": {
     source: "iana",
     extensions: [
@@ -1907,9 +1638,6 @@ const require$$0 = {
     extensions: [
       "roa"
     ]
-  },
-  "application/rpki-signed-tal": {
-    source: "iana"
   },
   "application/rpki-updown": {
     source: "iana"
@@ -2114,7 +1842,7 @@ const require$$0 = {
     source: "iana"
   },
   "application/smil": {
-    source: "apache"
+    source: "iana"
   },
   "application/smil+xml": {
     source: "iana",
@@ -2156,10 +1884,7 @@ const require$$0 = {
     compressible: true
   },
   "application/sql": {
-    source: "iana",
-    extensions: [
-      "sql"
-    ]
+    source: "iana"
   },
   "application/srgs": {
     source: "iana",
@@ -2188,9 +1913,6 @@ const require$$0 = {
       "ssdl"
     ]
   },
-  "application/sslkeylogfile": {
-    source: "iana"
-  },
   "application/ssml+xml": {
     source: "iana",
     compressible: true,
@@ -2198,18 +1920,9 @@ const require$$0 = {
       "ssml"
     ]
   },
-  "application/st2110-41": {
-    source: "iana"
-  },
   "application/stix+json": {
     source: "iana",
     compressible: true
-  },
-  "application/stratum": {
-    source: "iana"
-  },
-  "application/swid+cbor": {
-    source: "iana"
   },
   "application/swid+xml": {
     source: "iana",
@@ -2299,21 +2012,13 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/tm+json": {
-    source: "iana",
-    compressible: true
-  },
   "application/tnauthlist": {
-    source: "iana"
-  },
-  "application/toc+cbor": {
     source: "iana"
   },
   "application/token-introspection+jwt": {
     source: "iana"
   },
   "application/toml": {
-    source: "iana",
     compressible: true,
     extensions: [
       "toml"
@@ -2327,16 +2032,6 @@ const require$$0 = {
     extensions: [
       "trig"
     ]
-  },
-  "application/trust-chain+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/trust-mark+jwt": {
-    source: "iana"
-  },
-  "application/trust-mark-delegation+jwt": {
-    source: "iana"
   },
   "application/ttml+xml": {
     source: "iana",
@@ -2359,13 +2054,6 @@ const require$$0 = {
     extensions: [
       "ubj"
     ]
-  },
-  "application/uccs+cbor": {
-    source: "iana"
-  },
-  "application/ujcs+json": {
-    source: "iana",
-    compressible: true
   },
   "application/ulpfec": {
     source: "iana"
@@ -2392,15 +2080,6 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/vc": {
-    source: "iana"
-  },
-  "application/vc+cose": {
-    source: "iana"
-  },
-  "application/vc+jwt": {
-    source: "iana"
-  },
   "application/vcard+json": {
     source: "iana",
     compressible: true
@@ -2422,26 +2101,11 @@ const require$$0 = {
       "1km"
     ]
   },
-  "application/vnd.1ob": {
-    source: "iana"
-  },
   "application/vnd.3gpp-prose+xml": {
     source: "iana",
     compressible: true
   },
-  "application/vnd.3gpp-prose-pc3a+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp-prose-pc3ach+xml": {
-    source: "iana",
-    compressible: true
-  },
   "application/vnd.3gpp-prose-pc3ch+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp-prose-pc8+xml": {
     source: "iana",
     compressible: true
   },
@@ -2451,31 +2115,11 @@ const require$$0 = {
   "application/vnd.3gpp.5gnas": {
     source: "iana"
   },
-  "application/vnd.3gpp.5gsa2x": {
-    source: "iana"
-  },
-  "application/vnd.3gpp.5gsa2x-local-service-information": {
-    source: "iana"
-  },
-  "application/vnd.3gpp.5gsv2x": {
-    source: "iana"
-  },
-  "application/vnd.3gpp.5gsv2x-local-service-information": {
-    source: "iana"
-  },
   "application/vnd.3gpp.access-transfer-events+xml": {
     source: "iana",
     compressible: true
   },
   "application/vnd.3gpp.bsf+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.crs+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.current-location-discovery+xml": {
     source: "iana",
     compressible: true
   },
@@ -2503,16 +2147,8 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/vnd.3gpp.mcdata-msgstore-ctrl-request+xml": {
-    source: "iana",
-    compressible: true
-  },
   "application/vnd.3gpp.mcdata-payload": {
     source: "iana"
-  },
-  "application/vnd.3gpp.mcdata-regroup+xml": {
-    source: "iana",
-    compressible: true
   },
   "application/vnd.3gpp.mcdata-service-config+xml": {
     source: "iana",
@@ -2549,10 +2185,6 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/vnd.3gpp.mcptt-regroup+xml": {
-    source: "iana",
-    compressible: true
-  },
   "application/vnd.3gpp.mcptt-service-config+xml": {
     source: "iana",
     compressible: true
@@ -2577,6 +2209,10 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
+  "application/vnd.3gpp.mcvideo-affiliation-info+xml": {
+    source: "iana",
+    compressible: true
+  },
   "application/vnd.3gpp.mcvideo-info+xml": {
     source: "iana",
     compressible: true
@@ -2586,10 +2222,6 @@ const require$$0 = {
     compressible: true
   },
   "application/vnd.3gpp.mcvideo-mbms-usage-info+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.mcvideo-regroup+xml": {
     source: "iana",
     compressible: true
   },
@@ -2637,44 +2269,8 @@ const require$$0 = {
       "pvb"
     ]
   },
-  "application/vnd.3gpp.pinapp-info+xml": {
-    source: "iana",
-    compressible: true
-  },
   "application/vnd.3gpp.s1ap": {
     source: "iana"
-  },
-  "application/vnd.3gpp.seal-group-doc+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.seal-info+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.seal-location-info+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.seal-mbms-usage-info+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.seal-network-qos-management-info+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.seal-ue-config-info+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.seal-unicast-info+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.seal-user-profile-info+xml": {
-    source: "iana",
-    compressible: true
   },
   "application/vnd.3gpp.sms": {
     source: "iana"
@@ -2696,13 +2292,6 @@ const require$$0 = {
     compressible: true
   },
   "application/vnd.3gpp.ussd+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.3gpp.v2x": {
-    source: "iana"
-  },
-  "application/vnd.3gpp.vae-info+xml": {
     source: "iana",
     compressible: true
   },
@@ -2739,14 +2328,6 @@ const require$$0 = {
     extensions: [
       "imp"
     ]
-  },
-  "application/vnd.acm.addressxfer+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.acm.chatbot+json": {
-    source: "iana",
-    compressible: true
   },
   "application/vnd.acucobol": {
     source: "iana",
@@ -2795,7 +2376,7 @@ const require$$0 = {
     ]
   },
   "application/vnd.adobe.xfdf": {
-    source: "apache",
+    source: "iana",
     extensions: [
       "xfdf"
     ]
@@ -2849,7 +2430,7 @@ const require$$0 = {
     ]
   },
   "application/vnd.ah-barcode": {
-    source: "apache"
+    source: "iana"
   },
   "application/vnd.ahead.space": {
     source: "iana",
@@ -2935,9 +2516,6 @@ const require$$0 = {
   "application/vnd.apache.arrow.stream": {
     source: "iana"
   },
-  "application/vnd.apache.parquet": {
-    source: "iana"
-  },
   "application/vnd.apache.thrift.binary": {
     source: "iana"
   },
@@ -2945,9 +2523,6 @@ const require$$0 = {
     source: "iana"
   },
   "application/vnd.apache.thrift.json": {
-    source: "iana"
-  },
-  "application/vnd.apexlang": {
     source: "iana"
   },
   "application/vnd.api+json": {
@@ -3000,7 +2575,7 @@ const require$$0 = {
     ]
   },
   "application/vnd.arastra.swi": {
-    source: "apache"
+    source: "iana"
   },
   "application/vnd.aristanetworks.swi": {
     source: "iana",
@@ -3025,11 +2600,6 @@ const require$$0 = {
     source: "iana",
     extensions: [
       "aep"
-    ]
-  },
-  "application/vnd.autodesk.fbx": {
-    extensions: [
-      "fbx"
     ]
   },
   "application/vnd.autopackage": {
@@ -3069,14 +2639,6 @@ const require$$0 = {
   "application/vnd.bekitzur-stech+json": {
     source: "iana",
     compressible: true
-  },
-  "application/vnd.belightsoft.lhzd+zip": {
-    source: "iana",
-    compressible: false
-  },
-  "application/vnd.belightsoft.lhzl+zip": {
-    source: "iana",
-    compressible: false
   },
   "application/vnd.bint.med-content": {
     source: "iana"
@@ -3119,13 +2681,6 @@ const require$$0 = {
     ]
   },
   "application/vnd.byu.uapi+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.bzip3": {
-    source: "iana"
-  },
-  "application/vnd.c3voc.schedule+xml": {
     source: "iana",
     compressible: true
   },
@@ -3216,16 +2771,6 @@ const require$$0 = {
     extensions: [
       "c11amz"
     ]
-  },
-  "application/vnd.cncf.helm.chart.content.v1.tar+gzip": {
-    source: "iana"
-  },
-  "application/vnd.cncf.helm.chart.provenance.v1.prov": {
-    source: "iana"
-  },
-  "application/vnd.cncf.helm.config.v1+json": {
-    source: "iana",
-    compressible: true
   },
   "application/vnd.coffeescript": {
     source: "iana"
@@ -3423,9 +2968,6 @@ const require$$0 = {
       "rdz"
     ]
   },
-  "application/vnd.datalog": {
-    source: "iana"
-  },
   "application/vnd.datapackage+json": {
     source: "iana",
     compressible: true
@@ -3438,13 +2980,6 @@ const require$$0 = {
     source: "iana",
     extensions: [
       "dbf"
-    ]
-  },
-  "application/vnd.dcmp+xml": {
-    source: "iana",
-    compressible: true,
-    extensions: [
-      "dcmp"
     ]
   },
   "application/vnd.debian.binary-package": {
@@ -3679,10 +3214,6 @@ const require$$0 = {
   "application/vnd.efi.iso": {
     source: "iana"
   },
-  "application/vnd.eln+zip": {
-    source: "iana",
-    compressible: false
-  },
   "application/vnd.emclient.accessrequest+xml": {
     source: "iana",
     compressible: true
@@ -3731,9 +3262,6 @@ const require$$0 = {
     ]
   },
   "application/vnd.ericsson.quickcall": {
-    source: "iana"
-  },
-  "application/vnd.erofs": {
     source: "iana"
   },
   "application/vnd.espass-espass+zip": {
@@ -3879,7 +3407,7 @@ const require$$0 = {
     source: "iana"
   },
   "application/vnd.fdf": {
-    source: "apache",
+    source: "iana",
     extensions: [
       "fdf"
     ]
@@ -3896,11 +3424,6 @@ const require$$0 = {
       "seed",
       "dataless"
     ]
-  },
-  "application/vnd.fdsn.stationxml+xml": {
-    source: "iana",
-    charset: "XML-BASED",
-    compressible: true
   },
   "application/vnd.ffsns": {
     source: "iana"
@@ -3942,17 +3465,14 @@ const require$$0 = {
       "book"
     ]
   },
-  "application/vnd.freelog.comic": {
-    source: "iana"
-  },
   "application/vnd.frogans.fnc": {
-    source: "apache",
+    source: "iana",
     extensions: [
       "fnc"
     ]
   },
   "application/vnd.frogans.ltf": {
-    source: "apache",
+    source: "iana",
     extensions: [
       "ltf"
     ]
@@ -4052,51 +3572,22 @@ const require$$0 = {
       "fzs"
     ]
   },
-  "application/vnd.ga4gh.passport+jwt": {
-    source: "iana"
-  },
   "application/vnd.genomatix.tuxedo": {
     source: "iana",
     extensions: [
       "txd"
     ]
   },
-  "application/vnd.genozip": {
-    source: "iana"
-  },
   "application/vnd.gentics.grd+json": {
     source: "iana",
     compressible: true
   },
-  "application/vnd.gentoo.catmetadata+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.gentoo.ebuild": {
-    source: "iana"
-  },
-  "application/vnd.gentoo.eclass": {
-    source: "iana"
-  },
-  "application/vnd.gentoo.gpkg": {
-    source: "iana"
-  },
-  "application/vnd.gentoo.manifest": {
-    source: "iana"
-  },
-  "application/vnd.gentoo.pkgmetadata+xml": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.gentoo.xpak": {
-    source: "iana"
-  },
   "application/vnd.geo+json": {
-    source: "apache",
+    source: "iana",
     compressible: true
   },
   "application/vnd.geocube+xml": {
-    source: "apache",
+    source: "iana",
     compressible: true
   },
   "application/vnd.geogebra.file": {
@@ -4105,14 +3596,8 @@ const require$$0 = {
       "ggb"
     ]
   },
-  "application/vnd.geogebra.pinboard": {
-    source: "iana"
-  },
   "application/vnd.geogebra.slides": {
-    source: "iana",
-    extensions: [
-      "ggs"
-    ]
+    source: "iana"
   },
   "application/vnd.geogebra.tool": {
     source: "iana",
@@ -4160,72 +3645,16 @@ const require$$0 = {
       "gmx"
     ]
   },
-  "application/vnd.gnu.taler.exchange+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.gnu.taler.merchant+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.google-apps.audio": {},
   "application/vnd.google-apps.document": {
     compressible: false,
     extensions: [
       "gdoc"
     ]
   },
-  "application/vnd.google-apps.drawing": {
-    compressible: false,
-    extensions: [
-      "gdraw"
-    ]
-  },
-  "application/vnd.google-apps.drive-sdk": {
-    compressible: false
-  },
-  "application/vnd.google-apps.file": {},
-  "application/vnd.google-apps.folder": {
-    compressible: false
-  },
-  "application/vnd.google-apps.form": {
-    compressible: false,
-    extensions: [
-      "gform"
-    ]
-  },
-  "application/vnd.google-apps.fusiontable": {},
-  "application/vnd.google-apps.jam": {
-    compressible: false,
-    extensions: [
-      "gjam"
-    ]
-  },
-  "application/vnd.google-apps.mail-layout": {},
-  "application/vnd.google-apps.map": {
-    compressible: false,
-    extensions: [
-      "gmap"
-    ]
-  },
-  "application/vnd.google-apps.photo": {},
   "application/vnd.google-apps.presentation": {
     compressible: false,
     extensions: [
       "gslides"
-    ]
-  },
-  "application/vnd.google-apps.script": {
-    compressible: false,
-    extensions: [
-      "gscript"
-    ]
-  },
-  "application/vnd.google-apps.shortcut": {},
-  "application/vnd.google-apps.site": {
-    compressible: false,
-    extensions: [
-      "gsite"
     ]
   },
   "application/vnd.google-apps.spreadsheet": {
@@ -4234,8 +3663,6 @@ const require$$0 = {
       "gsheet"
     ]
   },
-  "application/vnd.google-apps.unknown": {},
-  "application/vnd.google-apps.video": {},
   "application/vnd.google-earth.kml+xml": {
     source: "iana",
     compressible: true,
@@ -4251,7 +3678,7 @@ const require$$0 = {
     ]
   },
   "application/vnd.gov.sk.e-form+xml": {
-    source: "apache",
+    source: "iana",
     compressible: true
   },
   "application/vnd.gov.sk.e-form+zip": {
@@ -4259,13 +3686,6 @@ const require$$0 = {
     compressible: false
   },
   "application/vnd.gov.sk.xmldatacontainer+xml": {
-    source: "iana",
-    compressible: true,
-    extensions: [
-      "xdcf"
-    ]
-  },
-  "application/vnd.gpxsee.map+xml": {
     source: "iana",
     compressible: true
   },
@@ -4365,6 +3785,16 @@ const require$$0 = {
       "les"
     ]
   },
+  "application/vnd.hl7cda+xml": {
+    source: "iana",
+    charset: "UTF-8",
+    compressible: true
+  },
+  "application/vnd.hl7v2+xml": {
+    source: "iana",
+    charset: "UTF-8",
+    compressible: true
+  },
   "application/vnd.hp-hpgl": {
     source: "iana",
     extensions: [
@@ -4401,9 +3831,6 @@ const require$$0 = {
       "pclxl"
     ]
   },
-  "application/vnd.hsl": {
-    source: "iana"
-  },
   "application/vnd.httphone": {
     source: "iana"
   },
@@ -4429,7 +3856,7 @@ const require$$0 = {
     source: "iana"
   },
   "application/vnd.ibm.afplinedata": {
-    source: "apache"
+    source: "iana"
   },
   "application/vnd.ibm.electronic-media": {
     source: "iana"
@@ -4441,7 +3868,7 @@ const require$$0 = {
     ]
   },
   "application/vnd.ibm.modcap": {
-    source: "apache",
+    source: "iana",
     extensions: [
       "afp",
       "listafp",
@@ -4534,7 +3961,7 @@ const require$$0 = {
     compressible: true
   },
   "application/vnd.informix-visionary": {
-    source: "apache"
+    source: "iana"
   },
   "application/vnd.infotech.project": {
     source: "iana"
@@ -4582,21 +4009,6 @@ const require$$0 = {
     extensions: [
       "qfx"
     ]
-  },
-  "application/vnd.ipfs.ipns-record": {
-    source: "iana"
-  },
-  "application/vnd.ipld.car": {
-    source: "iana"
-  },
-  "application/vnd.ipld.dag-cbor": {
-    source: "iana"
-  },
-  "application/vnd.ipld.dag-json": {
-    source: "iana"
-  },
-  "application/vnd.ipld.raw": {
-    source: "iana"
   },
   "application/vnd.iptc.g2.catalogitem+xml": {
     source: "iana",
@@ -4763,21 +4175,11 @@ const require$$0 = {
       "kwt"
     ]
   },
-  "application/vnd.kdl": {
-    source: "iana"
-  },
   "application/vnd.kenameaapp": {
     source: "iana",
     extensions: [
       "htke"
     ]
-  },
-  "application/vnd.keyman.kmp+zip": {
-    source: "iana",
-    compressible: false
-  },
-  "application/vnd.keyman.kmx": {
-    source: "iana"
   },
   "application/vnd.kidspiration": {
     source: "iana",
@@ -4822,9 +4224,6 @@ const require$$0 = {
     ]
   },
   "application/vnd.laszip": {
-    source: "iana"
-  },
-  "application/vnd.ldev.productlicensing": {
     source: "iana"
   },
   "application/vnd.leap+json": {
@@ -4941,12 +4340,6 @@ const require$$0 = {
       "mcd"
     ]
   },
-  "application/vnd.mdl": {
-    source: "iana"
-  },
-  "application/vnd.mdl-mbsdf": {
-    source: "iana"
-  },
   "application/vnd.medcalcdata": {
     source: "iana",
     extensions: [
@@ -4959,13 +4352,7 @@ const require$$0 = {
       "cdkey"
     ]
   },
-  "application/vnd.medicalholodeck.recordxr": {
-    source: "iana"
-  },
   "application/vnd.meridian-slingshot": {
-    source: "iana"
-  },
-  "application/vnd.mermaid": {
     source: "iana"
   },
   "application/vnd.mfer": {
@@ -5059,9 +4446,6 @@ const require$$0 = {
     extensions: [
       "txf"
     ]
-  },
-  "application/vnd.modl": {
-    source: "iana"
   },
   "application/vnd.mophun.application": {
     source: "iana",
@@ -5288,11 +4672,6 @@ const require$$0 = {
   "application/vnd.ms-tnef": {
     source: "iana"
   },
-  "application/vnd.ms-visio.viewer": {
-    extensions: [
-      "vdx"
-    ]
-  },
   "application/vnd.ms-windows.devicepairing": {
     source: "iana"
   },
@@ -5360,9 +4739,6 @@ const require$$0 = {
       "mseq"
     ]
   },
-  "application/vnd.msgpack": {
-    source: "iana"
-  },
   "application/vnd.msign": {
     source: "iana"
   },
@@ -5396,24 +4772,6 @@ const require$$0 = {
   "application/vnd.nacamar.ybrid+json": {
     source: "iana",
     compressible: true
-  },
-  "application/vnd.nato.bindingdataobject+cbor": {
-    source: "iana"
-  },
-  "application/vnd.nato.bindingdataobject+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.nato.bindingdataobject+xml": {
-    source: "iana",
-    compressible: true,
-    extensions: [
-      "bdo"
-    ]
-  },
-  "application/vnd.nato.openxmlformats-package.iepd+zip": {
-    source: "iana",
-    compressible: false
   },
   "application/vnd.ncd.control": {
     source: "iana"
@@ -5516,7 +4874,7 @@ const require$$0 = {
     ]
   },
   "application/vnd.nokia.n-gage.symbian.install": {
-    source: "apache",
+    source: "iana",
     extensions: [
       "n-gage"
     ]
@@ -5576,19 +4934,6 @@ const require$$0 = {
   "application/vnd.ntt-local.sip-ta_tcp_stream": {
     source: "iana"
   },
-  "application/vnd.oai.workflows": {
-    source: "iana"
-  },
-  "application/vnd.oai.workflows+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vnd.oai.workflows+yaml": {
-    source: "iana"
-  },
-  "application/vnd.oasis.opendocument.base": {
-    source: "iana"
-  },
   "application/vnd.oasis.opendocument.chart": {
     source: "iana",
     extensions: [
@@ -5602,7 +4947,7 @@ const require$$0 = {
     ]
   },
   "application/vnd.oasis.opendocument.database": {
-    source: "apache",
+    source: "iana",
     extensions: [
       "odb"
     ]
@@ -5682,9 +5027,6 @@ const require$$0 = {
     extensions: [
       "odm"
     ]
-  },
-  "application/vnd.oasis.opendocument.text-master-template": {
-    source: "iana"
   },
   "application/vnd.oasis.opendocument.text-template": {
     source: "iana",
@@ -5774,7 +5116,7 @@ const require$$0 = {
     compressible: true
   },
   "application/vnd.oma.bcast.drm-trigger+xml": {
-    source: "apache",
+    source: "iana",
     compressible: true
   },
   "application/vnd.oma.bcast.imd+xml": {
@@ -5805,7 +5147,7 @@ const require$$0 = {
     source: "iana"
   },
   "application/vnd.oma.bcast.smartcard-trigger+xml": {
-    source: "apache",
+    source: "iana",
     compressible: true
   },
   "application/vnd.oma.bcast.sprov+xml": {
@@ -5937,9 +5279,6 @@ const require$$0 = {
   "application/vnd.onepagertatx": {
     source: "iana"
   },
-  "application/vnd.onvif.metadata": {
-    source: "iana"
-  },
   "application/vnd.openblox.game+xml": {
     source: "iana",
     compressible: true,
@@ -5968,10 +5307,6 @@ const require$$0 = {
   },
   "application/vnd.opentimestamps.ots": {
     source: "iana"
-  },
-  "application/vnd.openvpi.dspx+json": {
-    source: "iana",
-    compressible: true
   },
   "application/vnd.openxmlformats-officedocument.custom-properties+xml": {
     source: "iana",
@@ -6425,21 +5760,6 @@ const require$$0 = {
       "box"
     ]
   },
-  "application/vnd.procrate.brushset": {
-    extensions: [
-      "brushset"
-    ]
-  },
-  "application/vnd.procreate.brush": {
-    extensions: [
-      "brush"
-    ]
-  },
-  "application/vnd.procreate.dream": {
-    extensions: [
-      "drm"
-    ]
-  },
   "application/vnd.proteus.magazine": {
     source: "iana",
     extensions: [
@@ -6447,9 +5767,6 @@ const require$$0 = {
     ]
   },
   "application/vnd.psfs": {
-    source: "iana"
-  },
-  "application/vnd.pt.mundusmundi": {
     source: "iana"
   },
   "application/vnd.publishare-delta-tree": {
@@ -6469,10 +5786,7 @@ const require$$0 = {
   },
   "application/vnd.pwg-xhtml-print+xml": {
     source: "iana",
-    compressible: true,
-    extensions: [
-      "xhtm"
-    ]
+    compressible: true
   },
   "application/vnd.qualcomm.brew-app-res": {
     source: "iana"
@@ -6584,9 +5898,6 @@ const require$$0 = {
     extensions: [
       "musicxml"
     ]
-  },
-  "application/vnd.relpipe": {
-    source: "iana"
   },
   "application/vnd.renlearn.rlprint": {
     source: "iana"
@@ -6772,9 +6083,6 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/vnd.sketchometry": {
-    source: "iana"
-  },
   "application/vnd.smaf": {
     source: "iana",
     extensions: [
@@ -6789,9 +6097,6 @@ const require$$0 = {
     extensions: [
       "teacher"
     ]
-  },
-  "application/vnd.smintio.portals.archive": {
-    source: "iana"
   },
   "application/vnd.snesdev-page-table": {
     source: "iana"
@@ -6973,9 +6278,6 @@ const require$$0 = {
   "application/vnd.swiftview-ics": {
     source: "iana"
   },
-  "application/vnd.sybyl.mol2": {
-    source: "iana"
-  },
   "application/vnd.sycle+xml": {
     source: "iana",
     compressible: true
@@ -7108,10 +6410,6 @@ const require$$0 = {
       "ufdl"
     ]
   },
-  "application/vnd.uic.osdm+json": {
-    source: "iana",
-    compressible: true
-  },
   "application/vnd.uiq.theme": {
     source: "iana",
     extensions: [
@@ -7134,8 +6432,7 @@ const require$$0 = {
     source: "iana",
     compressible: true,
     extensions: [
-      "uoml",
-      "uo"
+      "uoml"
     ]
   },
   "application/vnd.uplanet.alert": {
@@ -7199,13 +6496,6 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/vnd.veraison.tsm-report+cbor": {
-    source: "iana"
-  },
-  "application/vnd.veraison.tsm-report+json": {
-    source: "iana",
-    compressible: true
-  },
   "application/vnd.verimatrix.vcas": {
     source: "iana"
   },
@@ -7228,9 +6518,7 @@ const require$$0 = {
       "vsd",
       "vst",
       "vss",
-      "vsw",
-      "vsdx",
-      "vtx"
+      "vsw"
     ]
   },
   "application/vnd.visionary": {
@@ -7240,9 +6528,6 @@ const require$$0 = {
     ]
   },
   "application/vnd.vividence.scriptfile": {
-    source: "iana"
-  },
-  "application/vnd.vocalshaper.vsp4": {
     source: "iana"
   },
   "application/vnd.vsf": {
@@ -7275,9 +6560,6 @@ const require$$0 = {
     extensions: [
       "wmlsc"
     ]
-  },
-  "application/vnd.wasmflow.wafl": {
-    source: "iana"
   },
   "application/vnd.webturbo": {
     source: "iana",
@@ -7314,9 +6596,6 @@ const require$$0 = {
     extensions: [
       "nbp"
     ]
-  },
-  "application/vnd.wordlift": {
-    source: "iana"
   },
   "application/vnd.wordperfect": {
     source: "iana",
@@ -7359,12 +6638,6 @@ const require$$0 = {
     extensions: [
       "xar"
     ]
-  },
-  "application/vnd.xarin.cpj": {
-    source: "iana"
-  },
-  "application/vnd.xecrets-encrypted": {
-    source: "iana"
   },
   "application/vnd.xfdl": {
     source: "iana",
@@ -7455,6 +6728,9 @@ const require$$0 = {
       "cmp"
     ]
   },
+  "application/vnd.youtube.yt": {
+    source: "iana"
+  },
   "application/vnd.zul": {
     source: "iana",
     extensions: [
@@ -7479,19 +6755,6 @@ const require$$0 = {
   "application/voucher-cms+json": {
     source: "iana",
     compressible: true
-  },
-  "application/voucher-jws+json": {
-    source: "iana",
-    compressible: true
-  },
-  "application/vp": {
-    source: "iana"
-  },
-  "application/vp+cose": {
-    source: "iana"
-  },
-  "application/vp+jwt": {
-    source: "iana"
   },
   "application/vq-rtcpxr": {
     source: "iana"
@@ -7625,11 +6888,6 @@ const require$$0 = {
       "torrent"
     ]
   },
-  "application/x-blender": {
-    extensions: [
-      "blend"
-    ]
-  },
   "application/x-blorb": {
     source: "apache",
     extensions: [
@@ -7699,11 +6957,6 @@ const require$$0 = {
   },
   "application/x-compress": {
     source: "apache"
-  },
-  "application/x-compressed": {
-    extensions: [
-      "rar"
-    ]
   },
   "application/x-conference": {
     source: "apache",
@@ -7917,12 +7170,6 @@ const require$$0 = {
     source: "apache",
     extensions: [
       "install"
-    ]
-  },
-  "application/x-ipynb+json": {
-    compressible: true,
-    extensions: [
-      "ipynb"
     ]
   },
   "application/x-iso9660-image": {
@@ -8430,11 +7677,6 @@ const require$$0 = {
       "xz"
     ]
   },
-  "application/x-zip-compressed": {
-    extensions: [
-      "zip"
-    ]
-  },
   "application/x-zmachine": {
     source: "apache",
     extensions: [
@@ -8514,12 +7756,6 @@ const require$$0 = {
     compressible: true,
     extensions: [
       "xenc"
-    ]
-  },
-  "application/xfdf": {
-    source: "iana",
-    extensions: [
-      "xfdf"
     ]
   },
   "application/xhtml+xml": {
@@ -8608,17 +7844,11 @@ const require$$0 = {
       "xvm"
     ]
   },
-  "application/yaml": {
-    source: "iana"
-  },
   "application/yang": {
     source: "iana",
     extensions: [
       "yang"
     ]
-  },
-  "application/yang-data+cbor": {
-    source: "iana"
   },
   "application/yang-data+json": {
     source: "iana",
@@ -8636,10 +7866,6 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "application/yang-sid+json": {
-    source: "iana",
-    compressible: true
-  },
   "application/yin+xml": {
     source: "iana",
     compressible: true,
@@ -8652,11 +7878,6 @@ const require$$0 = {
     compressible: false,
     extensions: [
       "zip"
-    ]
-  },
-  "application/zip+dotlottie": {
-    extensions: [
-      "lottie"
     ]
   },
   "application/zlib": {
@@ -8682,11 +7903,7 @@ const require$$0 = {
     source: "iana"
   },
   "audio/aac": {
-    source: "iana",
-    extensions: [
-      "adts",
-      "aac"
-    ]
+    source: "iana"
   },
   "audio/ac3": {
     source: "iana"
@@ -8816,9 +8033,6 @@ const require$$0 = {
   "audio/evs": {
     source: "iana"
   },
-  "audio/flac": {
-    source: "iana"
-  },
   "audio/flexfec": {
     source: "iana"
   },
@@ -8901,9 +8115,6 @@ const require$$0 = {
   "audio/lpc": {
     source: "iana"
   },
-  "audio/matroska": {
-    source: "iana"
-  },
   "audio/melp": {
     source: "iana"
   },
@@ -8928,9 +8139,6 @@ const require$$0 = {
       "rmi"
     ]
   },
-  "audio/midi-clip": {
-    source: "iana"
-  },
   "audio/mobile-xmf": {
     source: "iana",
     extensions: [
@@ -8948,8 +8156,7 @@ const require$$0 = {
     compressible: false,
     extensions: [
       "m4a",
-      "mp4a",
-      "m4b"
+      "mp4a"
     ]
   },
   "audio/mp4a-latm": {
@@ -9237,7 +8444,7 @@ const require$$0 = {
     source: "iana"
   },
   "audio/vnd.qcelp": {
-    source: "apache"
+    source: "iana"
   },
   "audio/vnd.rhetorex.32kadpcm": {
     source: "iana"
@@ -9459,7 +8666,6 @@ const require$$0 = {
     ]
   },
   "image/apng": {
-    source: "iana",
     compressible: false,
     extensions: [
       "apng"
@@ -9488,8 +8694,7 @@ const require$$0 = {
     source: "iana",
     compressible: true,
     extensions: [
-      "bmp",
-      "dib"
+      "bmp"
     ]
   },
   "image/cgm": {
@@ -9502,12 +8707,6 @@ const require$$0 = {
     source: "iana",
     extensions: [
       "drle"
-    ]
-  },
-  "image/dpx": {
-    source: "iana",
-    extensions: [
-      "dpx"
     ]
   },
   "image/emf": {
@@ -9565,25 +8764,16 @@ const require$$0 = {
       "hej2"
     ]
   },
+  "image/hsj2": {
+    source: "iana",
+    extensions: [
+      "hsj2"
+    ]
+  },
   "image/ief": {
     source: "iana",
     extensions: [
       "ief"
-    ]
-  },
-  "image/j2c": {
-    source: "iana"
-  },
-  "image/jaii": {
-    source: "iana",
-    extensions: [
-      "jaii"
-    ]
-  },
-  "image/jais": {
-    source: "iana",
-    extensions: [
-      "jais"
     ]
   },
   "image/jls": {
@@ -9604,8 +8794,8 @@ const require$$0 = {
     source: "iana",
     compressible: false,
     extensions: [
-      "jpg",
       "jpeg",
+      "jpg",
       "jpe"
     ]
   },
@@ -9625,8 +8815,7 @@ const require$$0 = {
     source: "iana",
     compressible: false,
     extensions: [
-      "jpm",
-      "jpgm"
+      "jpm"
     ]
   },
   "image/jpx": {
@@ -9635,12 +8824,6 @@ const require$$0 = {
     extensions: [
       "jpx",
       "jpf"
-    ]
-  },
-  "image/jxl": {
-    source: "iana",
-    extensions: [
-      "jxl"
     ]
   },
   "image/jxr": {
@@ -9701,10 +8884,7 @@ const require$$0 = {
     source: "iana"
   },
   "image/pjpeg": {
-    compressible: false,
-    extensions: [
-      "jfif"
-    ]
+    compressible: false
   },
   "image/png": {
     source: "iana",
@@ -9716,8 +8896,7 @@ const require$$0 = {
   "image/prs.btif": {
     source: "iana",
     extensions: [
-      "btif",
-      "btf"
+      "btif"
     ]
   },
   "image/prs.pti": {
@@ -9775,9 +8954,6 @@ const require$$0 = {
     extensions: [
       "azv"
     ]
-  },
-  "image/vnd.clip": {
-    source: "iana"
   },
   "image/vnd.cns.inf2": {
     source: "iana"
@@ -9938,7 +9114,7 @@ const require$$0 = {
     ]
   },
   "image/webp": {
-    source: "iana",
+    source: "apache",
     extensions: [
       "webp"
     ]
@@ -9955,11 +9131,6 @@ const require$$0 = {
       "3ds"
     ]
   },
-  "image/x-adobe-dng": {
-    extensions: [
-      "dng"
-    ]
-  },
   "image/x-cmu-raster": {
     source: "apache",
     extensions: [
@@ -9971,9 +9142,6 @@ const require$$0 = {
     extensions: [
       "cmx"
     ]
-  },
-  "image/x-emf": {
-    source: "iana"
   },
   "image/x-freehand": {
     source: "apache",
@@ -10060,9 +9228,6 @@ const require$$0 = {
       "tga"
     ]
   },
-  "image/x-wmf": {
-    source: "iana"
-  },
   "image/x-xbitmap": {
     source: "apache",
     extensions: [
@@ -10083,9 +9248,6 @@ const require$$0 = {
     extensions: [
       "xwd"
     ]
-  },
-  "message/bhttp": {
-    source: "iana"
   },
   "message/cpim": {
     source: "iana"
@@ -10137,16 +9299,7 @@ const require$$0 = {
     source: "iana",
     compressible: true
   },
-  "message/mls": {
-    source: "iana"
-  },
   "message/news": {
-    source: "apache"
-  },
-  "message/ohttp-req": {
-    source: "iana"
-  },
-  "message/ohttp-res": {
     source: "iana"
   },
   "message/partial": {
@@ -10158,13 +9311,11 @@ const require$$0 = {
     compressible: true,
     extensions: [
       "eml",
-      "mime",
-      "mht",
-      "mhtml"
+      "mime"
     ]
   },
   "message/s-http": {
-    source: "apache"
+    source: "iana"
   },
   "message/sip": {
     source: "iana"
@@ -10176,7 +9327,7 @@ const require$$0 = {
     source: "iana"
   },
   "message/vnd.si.simp": {
-    source: "apache"
+    source: "iana"
   },
   "message/vnd.wfa.wsc": {
     source: "iana",
@@ -10215,12 +9366,6 @@ const require$$0 = {
       "iges"
     ]
   },
-  "model/jt": {
-    source: "iana",
-    extensions: [
-      "jt"
-    ]
-  },
   "model/mesh": {
     source: "iana",
     compressible: false,
@@ -10242,21 +9387,8 @@ const require$$0 = {
       "obj"
     ]
   },
-  "model/prc": {
-    source: "iana",
-    extensions: [
-      "prc"
-    ]
-  },
   "model/step": {
-    source: "iana",
-    extensions: [
-      "step",
-      "stp",
-      "stpnc",
-      "p21",
-      "210"
-    ]
+    source: "iana"
   },
   "model/step+xml": {
     source: "iana",
@@ -10283,24 +9415,6 @@ const require$$0 = {
     source: "iana",
     extensions: [
       "stl"
-    ]
-  },
-  "model/u3d": {
-    source: "iana",
-    extensions: [
-      "u3d"
-    ]
-  },
-  "model/vnd.bary": {
-    source: "iana",
-    extensions: [
-      "bary"
-    ]
-  },
-  "model/vnd.cld": {
-    source: "iana",
-    extensions: [
-      "cld"
     ]
   },
   "model/vnd.collada+xml": {
@@ -10366,11 +9480,7 @@ const require$$0 = {
     ]
   },
   "model/vnd.pytha.pyox": {
-    source: "iana",
-    extensions: [
-      "pyo",
-      "pyox"
-    ]
+    source: "iana"
   },
   "model/vnd.rosette.annotated-data-model": {
     source: "iana"
@@ -10379,12 +9489,6 @@ const require$$0 = {
     source: "iana",
     extensions: [
       "vds"
-    ]
-  },
-  "model/vnd.usda": {
-    source: "iana",
-    extensions: [
-      "usda"
     ]
   },
   "model/vnd.usdz+zip": {
@@ -10567,7 +9671,7 @@ const require$$0 = {
     source: "iana"
   },
   "text/ecmascript": {
-    source: "apache"
+    source: "iana"
   },
   "text/encaprtp": {
     source: "iana"
@@ -10590,9 +9694,6 @@ const require$$0 = {
   "text/grammar-ref-list": {
     source: "iana"
   },
-  "text/hl7v2": {
-    source: "iana"
-  },
   "text/html": {
     source: "iana",
     compressible: true,
@@ -10609,12 +9710,7 @@ const require$$0 = {
   },
   "text/javascript": {
     source: "iana",
-    charset: "UTF-8",
-    compressible: true,
-    extensions: [
-      "js",
-      "mjs"
-    ]
+    compressible: true
   },
   "text/jcr-cnd": {
     source: "iana"
@@ -10635,8 +9731,8 @@ const require$$0 = {
     source: "iana",
     compressible: true,
     extensions: [
-      "md",
-      "markdown"
+      "markdown",
+      "md"
     ]
   },
   "text/mathml": {
@@ -10697,9 +9793,6 @@ const require$$0 = {
     ]
   },
   "text/prs.prop.logic": {
-    source: "iana"
-  },
-  "text/prs.texi": {
     source: "iana"
   },
   "text/raptorfec": {
@@ -10868,9 +9961,6 @@ const require$$0 = {
     source: "iana",
     charset: "UTF-8"
   },
-  "text/vnd.exchangeable": {
-    source: "iana"
-  },
   "text/vnd.familysearch.gedcom": {
     source: "iana",
     extensions: [
@@ -10944,7 +10034,7 @@ const require$$0 = {
     source: "iana"
   },
   "text/vnd.si.uricatalogue": {
-    source: "apache"
+    source: "iana"
   },
   "text/vnd.sosi": {
     source: "iana"
@@ -10959,9 +10049,6 @@ const require$$0 = {
   "text/vnd.trolltech.linguist": {
     source: "iana",
     charset: "UTF-8"
-  },
-  "text/vnd.vcf": {
-    source: "iana"
   },
   "text/vnd.wap.si": {
     source: "iana"
@@ -10981,21 +10068,12 @@ const require$$0 = {
       "wmls"
     ]
   },
-  "text/vnd.zoo.kcl": {
-    source: "iana"
-  },
   "text/vtt": {
     source: "iana",
     charset: "UTF-8",
     compressible: true,
     extensions: [
       "vtt"
-    ]
-  },
-  "text/wgsl": {
-    source: "iana",
-    extensions: [
-      "wgsl"
     ]
   },
   "text/x-asm": {
@@ -11191,9 +10269,6 @@ const require$$0 = {
   "video/encaprtp": {
     source: "iana"
   },
-  "video/evc": {
-    source: "iana"
-  },
   "video/ffv1": {
     source: "iana"
   },
@@ -11233,9 +10308,6 @@ const require$$0 = {
   "video/h265": {
     source: "iana"
   },
-  "video/h266": {
-    source: "iana"
-  },
   "video/iso.segment": {
     source: "iana",
     extensions: [
@@ -11261,16 +10333,6 @@ const require$$0 = {
   "video/jxsv": {
     source: "iana"
   },
-  "video/lottie+json": {
-    source: "iana",
-    compressible: true
-  },
-  "video/matroska": {
-    source: "iana"
-  },
-  "video/matroska-3d": {
-    source: "iana"
-  },
   "video/mj2": {
     source: "iana",
     extensions: [
@@ -11287,10 +10349,7 @@ const require$$0 = {
   "video/mp2t": {
     source: "iana",
     extensions: [
-      "ts",
-      "m2t",
-      "m2ts",
-      "mts"
+      "ts"
     ]
   },
   "video/mp4": {
@@ -11493,14 +10552,11 @@ const require$$0 = {
   "video/vnd.objectvideo": {
     source: "iana"
   },
-  "video/vnd.planar": {
-    source: "iana"
-  },
   "video/vnd.radgamettools.bink": {
     source: "iana"
   },
   "video/vnd.radgamettools.smacker": {
-    source: "apache"
+    source: "iana"
   },
   "video/vnd.sealed.mpeg1": {
     source: "iana"
@@ -11659,40 +10715,6 @@ const require$$0 = {
  * MIT Licensed
  */
 var mimeDb = require$$0;
-var FACET_SCORES = {
-  "prs.": 100,
-  "x-": 200,
-  "x.": 300,
-  "vnd.": 400,
-  default: 900
-};
-var SOURCE_SCORES = {
-  nginx: 10,
-  apache: 20,
-  iana: 40,
-  default: 30
-  // definitions added by `jshttp/mime-db` project?
-};
-var TYPE_SCORES = {
-  // prefer application/xml over text/xml
-  // prefer application/rtf over text/rtf
-  application: 1,
-  // prefer font/woff over application/font-woff
-  font: 2,
-  default: 0
-};
-var mimeScore = function mimeScore2(mimeType, source = "default") {
-  if (mimeType === "application/octet-stream") {
-    return 0;
-  }
-  const [type, subtype] = mimeType.split("/");
-  const facet = subtype.replace(/(\.|x-).*/, "$1");
-  const facetScore = FACET_SCORES[facet] || FACET_SCORES.default;
-  const sourceScore = SOURCE_SCORES[source] || SOURCE_SCORES.default;
-  const typeScore = TYPE_SCORES[type] || TYPE_SCORES.default;
-  const lengthScore = 1 - mimeType.length / 100;
-  return facetScore + sourceScore + typeScore + lengthScore;
-};
 /*!
  * mime-types
  * Copyright(c) 2014 Jonathan Ong
@@ -11702,7 +10724,6 @@ var mimeScore = function mimeScore2(mimeType, source = "default") {
 (function(exports) {
   var db = mimeDb;
   var extname = path.extname;
-  var mimeScore$1 = mimeScore;
   var EXTRACT_TYPE_REGEXP = /^\s*([^;\s]*)(?:;|\s|$)/;
   var TEXT_TYPE_REGEXP = /^text\//i;
   exports.charset = charset;
@@ -11712,7 +10733,6 @@ var mimeScore = function mimeScore2(mimeType, source = "default") {
   exports.extensions = /* @__PURE__ */ Object.create(null);
   exports.lookup = lookup;
   exports.types = /* @__PURE__ */ Object.create(null);
-  exports._extensionConflicts = [];
   populateMaps(exports.extensions, exports.types);
   function charset(type) {
     if (!type || typeof type !== "string") {
@@ -11757,13 +10777,14 @@ var mimeScore = function mimeScore2(mimeType, source = "default") {
     if (!path2 || typeof path2 !== "string") {
       return false;
     }
-    var extension2 = extname("x." + path2).toLowerCase().slice(1);
+    var extension2 = extname("x." + path2).toLowerCase().substr(1);
     if (!extension2) {
       return false;
     }
     return exports.types[extension2] || false;
   }
   function populateMaps(extensions, types) {
+    var preference = ["nginx", "apache", void 0, "iana"];
     Object.keys(db).forEach(function forEachMimeType(type) {
       var mime2 = db[type];
       var exts = mime2.extensions;
@@ -11773,32 +10794,16 @@ var mimeScore = function mimeScore2(mimeType, source = "default") {
       extensions[type] = exts;
       for (var i = 0; i < exts.length; i++) {
         var extension2 = exts[i];
-        types[extension2] = _preferredType(extension2, types[extension2], type);
-        const legacyType = _preferredTypeLegacy(
-          extension2,
-          types[extension2],
-          type
-        );
-        if (legacyType !== types[extension2]) {
-          exports._extensionConflicts.push([extension2, legacyType, types[extension2]]);
+        if (types[extension2]) {
+          var from = preference.indexOf(db[types[extension2]].source);
+          var to = preference.indexOf(mime2.source);
+          if (types[extension2] !== "application/octet-stream" && (from > to || from === to && types[extension2].substr(0, 12) === "application/")) {
+            continue;
+          }
         }
+        types[extension2] = type;
       }
     });
-  }
-  function _preferredType(ext, type0, type1) {
-    var score0 = type0 ? mimeScore$1(type0, db[type0].source) : 0;
-    var score1 = type1 ? mimeScore$1(type1, db[type1].source) : 0;
-    return score0 > score1 ? type0 : type1;
-  }
-  function _preferredTypeLegacy(ext, type0, type1) {
-    var _a;
-    var SOURCE_RANK = ["nginx", "apache", void 0, "iana"];
-    var score0 = type0 ? SOURCE_RANK.indexOf(db[type0].source) : 0;
-    var score1 = type1 ? SOURCE_RANK.indexOf(db[type1].source) : 0;
-    if (exports.types[extension] !== "application/octet-stream" && (score0 > score1 || score0 === score1 && ((_a = exports.types[extension]) == null ? void 0 : _a.slice(0, 12)) === "application/")) {
-      return type0;
-    }
-    return score0 > score1 ? type0 : type1;
   }
 })(mimeTypes);
 const mime = /* @__PURE__ */ getDefaultExportFromCjs(mimeTypes);
