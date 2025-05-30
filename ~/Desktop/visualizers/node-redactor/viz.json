@@ -1,7 +1,0 @@
-{
-  "name": "Node Redactor",
-  "description": "Advanced image redactor with Node.js file operations",
-  "version": "1.0.0",
-  "mimetypes": ["image/jpeg", "image/png", "image/gif", "image/webp"],
-  "author": "Vizor Framework"
-}
