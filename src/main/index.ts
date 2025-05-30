@@ -16,6 +16,16 @@ const VISUALIZERS_DIR = path.join(app.getPath('userData'), 'visualizers');
 
 // Helper functions
 async function getMimetype(filePath: string): Promise<string> {
+  // Check if it's a directory first
+  try {
+    const stats = fs.statSync(filePath);
+    if (stats.isDirectory()) {
+      return 'inode/directory';
+    }
+  } catch (error) {
+    // If we can't stat the file, fall back to mime lookup
+  }
+
   const mimetype = mime.lookup(filePath);
   return mimetype || 'application/octet-stream';
 }
@@ -410,13 +420,25 @@ function registerIpcHandlers() {
 
   ipcMain.handle('handle-file-drop', async (event, filePath: string) => {
     const mimetype = await getMimetype(filePath);
-    const content = fs.readFileSync(filePath);
 
-    return {
-      path: filePath,
-      mimetype,
-      content: content.toString('base64')
-    };
+    // Check if the path is a directory
+    const stats = fs.statSync(filePath);
+    if (stats.isDirectory()) {
+      // For directories, don't try to read content as binary
+      return {
+        path: filePath,
+        mimetype,
+        content: '' // Empty content for directories
+      };
+    } else {
+      // For files, read the content as base64
+      const content = fs.readFileSync(filePath);
+      return {
+        path: filePath,
+        mimetype,
+        content: content.toString('base64')
+      };
+    }
   });
 
   ipcMain.handle('get-visualizers-directory', () => {

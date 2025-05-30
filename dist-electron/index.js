@@ -11808,6 +11808,13 @@ if (require("electron-squirrel-startup")) {
 let selectedVisualizersDir = null;
 const VISUALIZERS_DIR = path.join(electron.app.getPath("userData"), "visualizers");
 async function getMimetype(filePath) {
+  try {
+    const stats = fs.statSync(filePath);
+    if (stats.isDirectory()) {
+      return "inode/directory";
+    }
+  } catch (error) {
+  }
   const mimetype = mime.lookup(filePath);
   return mimetype || "application/octet-stream";
 }
@@ -12109,12 +12116,22 @@ function registerIpcHandlers() {
   });
   electron.ipcMain.handle("handle-file-drop", async (event, filePath) => {
     const mimetype = await getMimetype(filePath);
-    const content = fs.readFileSync(filePath);
-    return {
-      path: filePath,
-      mimetype,
-      content: content.toString("base64")
-    };
+    const stats = fs.statSync(filePath);
+    if (stats.isDirectory()) {
+      return {
+        path: filePath,
+        mimetype,
+        content: ""
+        // Empty content for directories
+      };
+    } else {
+      const content = fs.readFileSync(filePath);
+      return {
+        path: filePath,
+        mimetype,
+        content: content.toString("base64")
+      };
+    }
   });
   electron.ipcMain.handle("get-visualizers-directory", () => {
     return selectedVisualizersDir;
