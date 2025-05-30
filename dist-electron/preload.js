@@ -10,6 +10,7 @@ electron.contextBridge.exposeInMainWorld(
     handleFileDrop: (filePath) => electron.ipcRenderer.invoke("handle-file-drop", filePath),
     getVisualizersDirectory: () => electron.ipcRenderer.invoke("get-visualizers-directory"),
     changeVisualizersDirectory: () => electron.ipcRenderer.invoke("change-visualizers-directory"),
-    reloadVisualizers: () => electron.ipcRenderer.invoke("reload-visualizers")
+    reloadVisualizers: () => electron.ipcRenderer.invoke("reload-visualizers"),
+    readDirectory: (dirPath) => electron.ipcRenderer.invoke("read-directory", dirPath)
   }
 );

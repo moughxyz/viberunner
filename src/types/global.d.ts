@@ -8,5 +8,6 @@ interface Window {
     getVisualizersDirectory: () => Promise<string | null>;
     changeVisualizersDirectory: () => Promise<{ success: boolean; directory: string | null }>;
     reloadVisualizers: () => Promise<{ success: boolean; visualizers: any[] }>;
+    readDirectory: (dirPath: string) => Promise<{ success: boolean; files: any[]; error?: string }>;
   };
 }

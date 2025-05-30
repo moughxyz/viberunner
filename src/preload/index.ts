@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld(
     handleFileDrop: (filePath: string) => ipcRenderer.invoke('handle-file-drop', filePath),
     getVisualizersDirectory: () => ipcRenderer.invoke('get-visualizers-directory'),
     changeVisualizersDirectory: () => ipcRenderer.invoke('change-visualizers-directory'),
-    reloadVisualizers: () => ipcRenderer.invoke('reload-visualizers')
+    reloadVisualizers: () => ipcRenderer.invoke('reload-visualizers'),
+    readDirectory: (dirPath: string) => ipcRenderer.invoke('read-directory', dirPath)
   }
 );

@@ -466,4 +466,59 @@ function registerIpcHandlers() {
     }
     return { success: false, visualizers: [] };
   });
+
+  // Read directory contents for folder visualization
+  ipcMain.handle('read-directory', async (event, dirPath: string) => {
+    try {
+      console.log('Reading directory:', dirPath);
+
+      if (!fs.existsSync(dirPath)) {
+        throw new Error(`Directory does not exist: ${dirPath}`);
+      }
+
+      const stats = fs.statSync(dirPath);
+      if (!stats.isDirectory()) {
+        throw new Error(`Path is not a directory: ${dirPath}`);
+      }
+
+      const items = fs.readdirSync(dirPath);
+      const fileInfos = items.map(item => {
+        const itemPath = path.join(dirPath, item);
+        try {
+          const itemStats = fs.statSync(itemPath);
+          const isDirectory = itemStats.isDirectory();
+
+          let extension = '';
+          if (!isDirectory) {
+            extension = path.extname(item).toLowerCase().replace('.', '');
+          }
+
+          return {
+            name: item,
+            path: itemPath,
+            isDirectory,
+            size: isDirectory ? 0 : itemStats.size,
+            extension: extension || undefined,
+            modified: itemStats.mtime.toISOString()
+          };
+        } catch (error) {
+          console.warn(`Could not stat ${itemPath}:`, error);
+          return {
+            name: item,
+            path: itemPath,
+            isDirectory: false,
+            size: 0,
+            extension: '',
+            modified: new Date().toISOString()
+          };
+        }
+      });
+
+      console.log(`Found ${fileInfos.length} items in ${dirPath}`);
+      return { success: true, files: fileInfos };
+    } catch (error) {
+      console.error('Error reading directory:', error);
+      return { success: false, error: (error as Error).message, files: [] };
+    }
+  });
 }
