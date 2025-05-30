@@ -1,9 +1,34 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
+// Direct electron access with full Node.js integration
+const { ipcRenderer } = require('electron');
+
 // Expose React and ReactDOM globally for visualizers
 (window as any).React = React;
 (window as any).ReactDOM = { createRoot };
+
+// Create API object for backward compatibility
+const api = {
+  getVisualizers: () => ipcRenderer.invoke('get-visualizers'),
+  loadVisualizer: (id: string) => ipcRenderer.invoke('load-visualizer', id),
+  getMimetype: (filePath: string) => ipcRenderer.invoke('get-mimetype', filePath),
+  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
+  handleFileDrop: (filePath: string) => ipcRenderer.invoke('handle-file-drop', filePath),
+  getVisualizersDirectory: () => ipcRenderer.invoke('get-visualizers-directory'),
+  changeVisualizersDirectory: () => ipcRenderer.invoke('change-visualizers-directory'),
+  reloadVisualizers: () => ipcRenderer.invoke('reload-visualizers'),
+  readDirectory: (dirPath: string) => ipcRenderer.invoke('read-directory', dirPath),
+  findMatchingVisualizers: (filePath: string) => ipcRenderer.invoke('find-matching-visualizers', filePath),
+  writeFile: (filePath: string, content: string, encoding?: 'utf8' | 'base64') =>
+    ipcRenderer.invoke('write-file', filePath, content, encoding),
+  backupFile: (filePath: string) => ipcRenderer.invoke('backup-file', filePath),
+  saveFileDialog: (options?: any) => ipcRenderer.invoke('save-file-dialog', options),
+  launchStandaloneVisualizer: (id: string) => ipcRenderer.invoke('launch-standalone-visualizer', id)
+};
+
+// Make API available globally for visualizers
+(window as any).api = api;
 
 interface Visualizer {
   id: string;
@@ -71,7 +96,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const loadDirectoryInfo = async () => {
       try {
-        const dir = await window.api.getVisualizersDirectory();
+        const dir = await api.getVisualizersDirectory();
         setVisualizersDirectory(dir || 'Not set');
       } catch (error) {
         console.error('Error loading visualizers directory:', error);
@@ -83,7 +108,7 @@ const App: React.FC = () => {
   const loadVisualizers = async () => {
     try {
       setIsLoadingVisualizers(true);
-      const vizs = await window.api.getVisualizers();
+      const vizs = await api.getVisualizers();
       setVisualizers(vizs);
     } catch (error) {
       console.error('Error loading visualizers:', error);
@@ -99,7 +124,7 @@ const App: React.FC = () => {
 
   const handleChangeVisualizersDirectory = async () => {
     try {
-      const result = await window.api.changeVisualizersDirectory();
+      const result = await api.changeVisualizersDirectory();
       if (result.success && result.directory) {
         setVisualizersDirectory(result.directory);
         await loadVisualizers();
@@ -114,7 +139,7 @@ const App: React.FC = () => {
   const handleReloadVisualizers = async () => {
     try {
       setIsLoadingVisualizers(true);
-      const result = await window.api.reloadVisualizers();
+      const result = await api.reloadVisualizers();
       if (result.success) {
         setVisualizers(result.visualizers);
         alert('Visualizers reloaded successfully!');
@@ -134,7 +159,7 @@ const App: React.FC = () => {
     const handleFileDrop = async (filePath: string) => {
       try {
         // Use the enhanced matching system
-        const matchingResult = await window.api.findMatchingVisualizers(filePath);
+        const matchingResult = await api.findMatchingVisualizers(filePath);
 
         if (!matchingResult.success) {
           console.error('Error finding matching visualizers:', matchingResult.error);
@@ -142,12 +167,12 @@ const App: React.FC = () => {
           return;
         }
 
-        const fileData = await window.api.handleFileDrop(filePath);
+        const fileData = await api.handleFileDrop(filePath);
         const matches = matchingResult.matches;
 
         console.log('Enhanced matching results:', {
           fileAnalysis: matchingResult.fileAnalysis,
-          matches: matches.map(m => ({
+          matches: matches.map((m: any) => ({
             name: m.visualizer.name,
             priority: m.priority
           }))
@@ -166,7 +191,7 @@ const App: React.FC = () => {
         } else {
           // Multiple visualizers, show selection with priority info
           setCurrentFile(fileData);
-          setAvailableVisualizers(matches.map(m => ({
+          setAvailableVisualizers(matches.map((m: any) => ({
             ...m.visualizer,
             matchPriority: m.priority
           })));
@@ -208,7 +233,7 @@ const App: React.FC = () => {
 
   const launchStandaloneVisualizer = async (visualizer: Visualizer) => {
     try {
-      const visualizerData = await window.api.launchStandaloneVisualizer(visualizer.id);
+      const visualizerData = await api.launchStandaloneVisualizer(visualizer.id);
 
       // Set up standalone visualizer (no file data)
       setCurrentVisualizer(visualizer);
@@ -264,7 +289,7 @@ const App: React.FC = () => {
           }
 
           // Load the visualizer's main component
-          const visualizerData = await window.api.loadVisualizer(currentVisualizer.id);
+          const visualizerData = await api.loadVisualizer(currentVisualizer.id);
 
           // Create a new script element with the bundle content
           const script = document.createElement('script');

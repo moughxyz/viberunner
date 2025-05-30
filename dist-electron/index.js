@@ -12143,7 +12143,6 @@ const createWindow = () => {
       // Allow direct Node.js access in renderer
       contextIsolation: false,
       // Remove context isolation for full access
-      preload: path.join(__dirname, "preload.js"),
       webSecurity: false
       // Allow loading local resources
     }
@@ -12400,6 +12399,32 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error("Error showing save dialog:", error);
       return { success: false, error: error.message, canceled: true };
+    }
+  });
+  electron.ipcMain.handle("launch-standalone-visualizer", async (event, id) => {
+    try {
+      const visualizers = await loadVisualizers();
+      const visualizer = visualizers.find((v) => v.id === id);
+      if (!visualizer) {
+        throw new Error(`Visualizer ${id} not found`);
+      }
+      if (!visualizer.standalone) {
+        throw new Error(`Visualizer ${id} is not configured for standalone use`);
+      }
+      const visualizerDir = path.join(VISUALIZERS_DIR, visualizer.id);
+      const bundlePath = path.join(visualizerDir, "dist", "bundle.iife.js");
+      if (!fs.existsSync(bundlePath)) {
+        throw new Error(`Bundle not found: ${bundlePath}`);
+      }
+      const bundleContent = fs.readFileSync(bundlePath, "utf-8");
+      return {
+        bundleContent,
+        config: visualizer,
+        standalone: true
+      };
+    } catch (error) {
+      console.error("Error launching standalone visualizer:", error);
+      throw error;
     }
   });
 }

@@ -16,6 +16,8 @@ electron.contextBridge.exposeInMainWorld(
     // File writing and backup operations
     writeFile: (filePath, content, encoding) => electron.ipcRenderer.invoke("write-file", filePath, content, encoding),
     backupFile: (filePath) => electron.ipcRenderer.invoke("backup-file", filePath),
-    saveFileDialog: (options) => electron.ipcRenderer.invoke("save-file-dialog", options)
+    saveFileDialog: (options) => electron.ipcRenderer.invoke("save-file-dialog", options),
+    // Launch standalone visualizers
+    launchStandaloneVisualizer: (id) => electron.ipcRenderer.invoke("launch-standalone-visualizer", id)
   }
 );

@@ -502,7 +502,6 @@ const createWindow = (): void => {
     webPreferences: {
       nodeIntegration: true, // Allow direct Node.js access in renderer
       contextIsolation: false, // Remove context isolation for full access
-      preload: path.join(__dirname, 'preload.js'),
       webSecurity: false // Allow loading local resources
     },
   });
