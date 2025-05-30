@@ -162,12 +162,12 @@ const App: React.FC = () => {
           }
 
           // Load the visualizer's main component
-          const visualizer = await window.api.loadVisualizer(currentVisualizer.id);
+          const visualizerData = await window.api.loadVisualizer(currentVisualizer.id);
 
-          // Create a new script element to load the visualizer's bundle
+          // Create a new script element with the bundle content
           const script = document.createElement('script');
-          script.src = `file://${visualizer.path}/dist/bundle.iife.js`;
           script.type = 'text/javascript';
+          script.textContent = visualizerData.bundleContent;
 
           // Set up the visualizer's props
           const props = {
