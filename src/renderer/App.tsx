@@ -266,16 +266,27 @@ const App: React.FC = () => {
       // When the script loads, it will call this function
       (window as any).__LOAD_VISUALIZER__ = (VisualizerComponent: any) => {
         console.log('__LOAD_VISUALIZER__ called with component:', VisualizerComponent);
+        console.log('visualizerRootRef.current:', visualizerRootRef.current);
+
         if (visualizerRootRef.current) {
           const root = document.createElement('div');
           visualizerRootRef.current.appendChild(root);
+          console.log('Created and appended root div:', root);
 
           // Create a new React root
-          const reactRoot = createRoot(root);
-          reactRoot.render(
-            React.createElement(VisualizerComponent, props)
-          );
-          console.log('Standalone visualizer rendered successfully');
+          try {
+            const reactRoot = createRoot(root);
+            console.log('Created React root successfully');
+
+            reactRoot.render(
+              React.createElement(VisualizerComponent, props)
+            );
+            console.log('Standalone visualizer rendered successfully');
+          } catch (renderError) {
+            console.error('React rendering error:', renderError);
+          }
+        } else {
+          console.error('visualizerRootRef.current is null!');
         }
       };
 
