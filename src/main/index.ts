@@ -337,7 +337,7 @@ app.on('ready', async () => {
     return;
   }
 
-  // Register IPC handlers
+  // Register IPC handlers BEFORE creating the window
   registerIpcHandlers();
 
   createWindow();
