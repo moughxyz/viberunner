@@ -238,61 +238,13 @@ const App: React.FC = () => {
       const visualizerData = await api.launchStandaloneVisualizer(visualizer.id);
       console.log('Visualizer data received:', visualizerData);
 
-      // Set up standalone visualizer (no file data)
+      // Set up standalone visualizer (no file data) - this will trigger useEffect
       setCurrentVisualizer(visualizer);
       setCurrentFile(null); // No file for standalone visualizers
       setShowVisualizerSelection(false);
 
-      // Clear previous content
-      if (visualizerRootRef.current) {
-        visualizerRootRef.current.innerHTML = '';
-      }
-
-      console.log('Creating script element...');
-
-      // Create a new script element with the bundle content
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.textContent = visualizerData.bundleContent;
-
-      // Set up the visualizer's props (no fileData for standalone)
-      const props = {
-        fileData: null,
-        container: visualizerRootRef.current
-      };
-
-      console.log('Setting up __LOAD_VISUALIZER__ function...');
-
-      // When the script loads, it will call this function
-      (window as any).__LOAD_VISUALIZER__ = (VisualizerComponent: any) => {
-        console.log('__LOAD_VISUALIZER__ called with component:', VisualizerComponent);
-        console.log('visualizerRootRef.current:', visualizerRootRef.current);
-
-        if (visualizerRootRef.current) {
-          const root = document.createElement('div');
-          visualizerRootRef.current.appendChild(root);
-          console.log('Created and appended root div:', root);
-
-          // Create a new React root
-          try {
-            const reactRoot = createRoot(root);
-            console.log('Created React root successfully');
-
-            reactRoot.render(
-              React.createElement(VisualizerComponent, props)
-            );
-            console.log('Standalone visualizer rendered successfully');
-          } catch (renderError) {
-            console.error('React rendering error:', renderError);
-          }
-        } else {
-          console.error('visualizerRootRef.current is null!');
-        }
-      };
-
-      console.log('Adding script to document...');
-      // Add the script to the document
-      document.head.appendChild(script);
+      // Store visualizer data for useEffect to pick up
+      (window as any).__PENDING_STANDALONE_DATA__ = visualizerData;
 
     } catch (error) {
       console.error('Failed to launch standalone visualizer:', error);
@@ -302,7 +254,7 @@ const App: React.FC = () => {
 
   // Load and render the visualizer when currentFile or currentVisualizer changes
   useEffect(() => {
-    if (currentFile && currentVisualizer && visualizerRootRef.current) {
+    if (currentVisualizer && visualizerRootRef.current) {
       const loadVisualizer = async () => {
         try {
           // Clear previous content
@@ -310,34 +262,70 @@ const App: React.FC = () => {
             visualizerRootRef.current.innerHTML = '';
           }
 
-          // Load the visualizer's main component
-          const visualizerData = await api.loadVisualizer(currentVisualizer.id);
+          let visualizerData;
+          let props;
+
+          // Check if this is a standalone visualizer
+          if (!currentFile && (window as any).__PENDING_STANDALONE_DATA__) {
+            // Use pending standalone data
+            visualizerData = (window as any).__PENDING_STANDALONE_DATA__;
+            props = {
+              fileData: null,
+              container: visualizerRootRef.current
+            };
+            // Clear the pending data
+            delete (window as any).__PENDING_STANDALONE_DATA__;
+            console.log('Loading standalone visualizer with pending data');
+          } else if (currentFile) {
+            // Load the visualizer's main component for file-based visualizer
+            visualizerData = await api.loadVisualizer(currentVisualizer.id);
+            props = {
+              fileData: currentFile,
+              container: visualizerRootRef.current
+            };
+            console.log('Loading file-based visualizer');
+          } else {
+            console.log('No file or pending standalone data - skipping visualizer load');
+            return;
+          }
+
+          console.log('Creating script element...');
 
           // Create a new script element with the bundle content
           const script = document.createElement('script');
           script.type = 'text/javascript';
           script.textContent = visualizerData.bundleContent;
 
-          // Set up the visualizer's props
-          const props = {
-            fileData: currentFile,
-            container: visualizerRootRef.current
-          };
+          console.log('Setting up __LOAD_VISUALIZER__ function...');
 
           // When the script loads, it will call this function
           (window as any).__LOAD_VISUALIZER__ = (VisualizerComponent: any) => {
+            console.log('__LOAD_VISUALIZER__ called with component:', VisualizerComponent);
+            console.log('visualizerRootRef.current:', visualizerRootRef.current);
+
             if (visualizerRootRef.current) {
               const root = document.createElement('div');
               visualizerRootRef.current.appendChild(root);
+              console.log('Created and appended root div:', root);
 
               // Create a new React root
-              const reactRoot = createRoot(root);
-              reactRoot.render(
-                React.createElement(VisualizerComponent, props)
-              );
+              try {
+                const reactRoot = createRoot(root);
+                console.log('Created React root successfully');
+
+                reactRoot.render(
+                  React.createElement(VisualizerComponent, props)
+                );
+                console.log('Visualizer rendered successfully');
+              } catch (renderError) {
+                console.error('React rendering error:', renderError);
+              }
+            } else {
+              console.error('visualizerRootRef.current is null!');
             }
           };
 
+          console.log('Adding script to document...');
           // Add the script to the document
           document.head.appendChild(script);
 
