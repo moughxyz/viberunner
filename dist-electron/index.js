@@ -12136,6 +12136,8 @@ const createWindow = () => {
   const mainWindow = new electron.BrowserWindow({
     width: 1200,
     height: 800,
+    titleBarStyle: "hiddenInset",
+    // Keep native macOS controls, hide title bar
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,

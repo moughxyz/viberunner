@@ -263,10 +263,15 @@ const App: React.FC = () => {
       <header className="header">
         <div className="header-content">
           <h1 className="app-title">
-            <span className="app-icon">⚡</span>
+            <div className="app-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="20" height="20" rx="4" ry="4" stroke="currentColor" strokeWidth="2"/>
+                <path d="M6 8c2 0 2 4 4 4s2-4 4-4 2 4 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M6 16c2 0 2-4 4-4s2 4 4 4 2-4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
             Vibeframe
           </h1>
-          <p className="app-subtitle">Modern file visualization platform</p>
         </div>
       </header>
 

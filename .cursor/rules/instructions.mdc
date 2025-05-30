@@ -1,7 +1,7 @@
 ---
 description:
 globs:
-alwaysApply: false
+alwaysApply: true
 ---
-- commit changes after each set of changes.
+- ALWAYS commit changes after each change.
 - the visualizers directory is in ~/Desktop/visualizers
