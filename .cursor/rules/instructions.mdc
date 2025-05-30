@@ -5,3 +5,4 @@ alwaysApply: true
 ---
 - ALWAYS commit changes after each change.
 - the visualizers directory is in ~/Desktop/visualizers
+- DO NOT RUN THE APP YOURSELF. I WILL DO THIS SEPARATELY.

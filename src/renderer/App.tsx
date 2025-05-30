@@ -61,7 +61,7 @@ const api = {
 // Constants
 const getFramesDirectory = () => {
   const userDataPath = app?.getPath('userData') || path.join(require('os').homedir(), '.vibeframe');
-  return path.join(userDataPath, 'frames');
+  return path.join(userDataPath, 'visualizers');
 };
 
 // Helper functions for direct file operations
@@ -130,30 +130,40 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
 
 async function loadFrames(): Promise<Frame[]> {
   const FRAMES_DIR = getFramesDirectory();
+  console.log('loadFrames: Looking for frames in:', FRAMES_DIR);
 
   if (!fs.existsSync(FRAMES_DIR)) {
+    console.log('loadFrames: Directory does not exist, creating it');
     fs.mkdirSync(FRAMES_DIR, { recursive: true });
     return [];
   }
 
   try {
     const dirContents = fs.readdirSync(FRAMES_DIR);
+    console.log('loadFrames: Directory contents:', dirContents);
+
     const directories = dirContents.filter((dir: string) => {
       const fullPath = path.join(FRAMES_DIR, dir);
-      return fs.statSync(fullPath).isDirectory();
+      const isDir = fs.statSync(fullPath).isDirectory();
+      console.log(`loadFrames: ${dir} is directory: ${isDir}`);
+      return isDir;
     });
+    console.log('loadFrames: Found directories:', directories);
 
     const frames = directories.map((dir: string) => {
       const framePath = path.join(FRAMES_DIR, dir);
       const metadataPath = path.join(framePath, 'viz.json');
+      console.log(`loadFrames: Checking for metadata at: ${metadataPath}`);
 
       if (!fs.existsSync(metadataPath)) {
+        console.log(`loadFrames: No viz.json found for ${dir}`);
         return null;
       }
 
       try {
         const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
         const metadata = JSON.parse(metadataContent);
+        console.log(`loadFrames: Successfully loaded metadata for ${dir}:`, metadata);
         return {
           ...metadata,
           id: dir,
@@ -165,6 +175,7 @@ async function loadFrames(): Promise<Frame[]> {
     })
     .filter(Boolean) as Frame[];
 
+    console.log('loadFrames: Final frames array:', frames);
     return frames;
   } catch (error) {
     console.error('Error loading frames:', error);
