@@ -11812,27 +11812,55 @@ async function getMimetype(filePath) {
   return mimetype || "application/octet-stream";
 }
 async function loadVisualizers() {
+  console.log("loadVisualizers: Starting to load visualizers from:", VISUALIZERS_DIR);
   if (!fs.existsSync(VISUALIZERS_DIR)) {
+    console.log("loadVisualizers: Creating visualizers directory");
     fs.mkdirSync(VISUALIZERS_DIR, { recursive: true });
   }
-  const visualizers = fs.readdirSync(VISUALIZERS_DIR).filter((dir) => fs.statSync(path.join(VISUALIZERS_DIR, dir)).isDirectory()).map((dir) => {
-    const vizPath = path.join(VISUALIZERS_DIR, dir);
-    const metadataPath = path.join(vizPath, "viz.json");
-    if (!fs.existsSync(metadataPath)) {
-      return null;
-    }
-    try {
-      const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
-      return {
-        id: dir,
-        ...metadata,
-        path: vizPath
-      };
-    } catch {
-      return null;
-    }
-  }).filter(Boolean);
-  return visualizers;
+  try {
+    console.log("loadVisualizers: Reading directory contents");
+    const dirContents = fs.readdirSync(VISUALIZERS_DIR);
+    console.log("loadVisualizers: Directory contents:", dirContents);
+    const directories = dirContents.filter((dir) => {
+      const fullPath = path.join(VISUALIZERS_DIR, dir);
+      const isDir = fs.statSync(fullPath).isDirectory();
+      console.log(`loadVisualizers: ${dir} is directory: ${isDir}`);
+      return isDir;
+    });
+    console.log("loadVisualizers: Found directories:", directories);
+    const visualizers = directories.map((dir) => {
+      console.log(`loadVisualizers: Processing directory: ${dir}`);
+      const vizPath = path.join(VISUALIZERS_DIR, dir);
+      const metadataPath = path.join(vizPath, "viz.json");
+      console.log(`loadVisualizers: Looking for metadata at: ${metadataPath}`);
+      if (!fs.existsSync(metadataPath)) {
+        console.log(`loadVisualizers: No viz.json found for ${dir}`);
+        return null;
+      }
+      try {
+        console.log(`loadVisualizers: Reading metadata for ${dir}`);
+        const metadataContent = fs.readFileSync(metadataPath, "utf-8");
+        console.log(`loadVisualizers: Metadata content for ${dir}:`, metadataContent);
+        const metadata = JSON.parse(metadataContent);
+        console.log(`loadVisualizers: Parsed metadata for ${dir}:`, metadata);
+        const result = {
+          id: dir,
+          ...metadata,
+          path: vizPath
+        };
+        console.log(`loadVisualizers: Final visualizer object for ${dir}:`, result);
+        return result;
+      } catch (parseError) {
+        console.error(`loadVisualizers: Error parsing metadata for ${dir}:`, parseError);
+        return null;
+      }
+    }).filter(Boolean);
+    console.log("loadVisualizers: Final visualizers array:", visualizers);
+    return visualizers;
+  } catch (error) {
+    console.error("loadVisualizers: Error in loadVisualizers function:", error);
+    throw error;
+  }
 }
 async function selectVisualizersDirectory() {
   const result = await electron.dialog.showOpenDialog({
@@ -12048,7 +12076,15 @@ electron.app.on("open-file", (event, filePath) => {
 });
 function registerIpcHandlers() {
   electron.ipcMain.handle("get-visualizers", async () => {
-    return await loadVisualizers();
+    try {
+      console.log("IPC get-visualizers: Starting to get visualizers");
+      const visualizers = await loadVisualizers();
+      console.log("IPC get-visualizers: Successfully loaded visualizers:", visualizers.length);
+      return visualizers;
+    } catch (error) {
+      console.error("IPC get-visualizers: Error occurred:", error);
+      throw error;
+    }
   });
   electron.ipcMain.handle("load-visualizer", async (event, id) => {
     const visualizers = await loadVisualizers();
