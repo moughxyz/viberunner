@@ -12137,47 +12137,4 @@ function registerIpcHandlers() {
     }
     return { success: false, visualizers: [] };
   });
-  electron.ipcMain.handle("save-file-dialog", async (event, options) => {
-    const { defaultName, content } = options;
-    const result = await electron.dialog.showSaveDialog({
-      defaultPath: defaultName,
-      filters: [
-        { name: "All Files", extensions: ["*"] }
-      ]
-    });
-    if (result.canceled || !result.filePath) {
-      return { canceled: true };
-    }
-    try {
-      const buffer = typeof content === "string" ? Buffer.from(content, "base64") : content;
-      fs.writeFileSync(result.filePath, buffer);
-      return { success: true, path: result.filePath };
-    } catch (error) {
-      return { error: error.message };
-    }
-  });
-  electron.ipcMain.handle("open-file-dialog", async (event, options) => {
-    const result = await electron.dialog.showOpenDialog({
-      properties: ["openFile"],
-      filters: options.filters || [
-        { name: "All Files", extensions: ["*"] }
-      ]
-    });
-    if (result.canceled || !result.filePaths.length) {
-      return { canceled: true };
-    }
-    try {
-      const filePath = result.filePaths[0];
-      const content = fs.readFileSync(filePath);
-      const mimetype = await getMimetype(filePath);
-      return {
-        success: true,
-        path: filePath,
-        content: content.toString("base64"),
-        mimetype
-      };
-    } catch (error) {
-      return { error: error.message };
-    }
-  });
 }
