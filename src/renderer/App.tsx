@@ -423,16 +423,20 @@ const App: React.FC = () => {
                 </button>
               </div>
             </div>
-          ) : currentFile && currentVisualizer ? (
+          ) : currentVisualizer ? (
             <div className="visualizer-container">
               <div className="visualizer-header">
                 <div className="visualizer-info">
                   <h2 className="visualizer-title">
-                    <span className="file-icon">📄</span>
-                    {currentFile.path.split('/').pop()}
+                    <span className="file-icon">{currentFile ? '📄' : '⚡'}</span>
+                    {currentFile ? currentFile.path.split('/').pop() : currentVisualizer.name}
                   </h2>
                   <p className="visualizer-subtitle">
-                    Powered by <span className="visualizer-name">{currentVisualizer.name}</span>
+                    {currentFile ? (
+                      <>Powered by <span className="visualizer-name">{currentVisualizer.name}</span></>
+                    ) : (
+                      <span className="visualizer-name">Standalone Utility</span>
+                    )}
                   </p>
                 </div>
                 <button
