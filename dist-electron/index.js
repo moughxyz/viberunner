@@ -12084,14 +12084,22 @@ function registerIpcHandlers() {
     return selectedVisualizersDir;
   });
   electron.ipcMain.handle("change-visualizers-directory", async () => {
-    return await selectVisualizersDirectory();
+    const newDir = await selectVisualizersDirectory();
+    if (newDir) {
+      selectedVisualizersDir = newDir;
+      savePreferences({ visualizersDir: newDir });
+      const success = await ensureVisualizers();
+      return { success, directory: newDir };
+    }
+    return { success: false, directory: null };
   });
   electron.ipcMain.handle("reload-visualizers", async () => {
-    const visualizersDir = selectedVisualizersDir;
-    if (visualizersDir) {
-      await ensureVisualizers();
+    if (selectedVisualizersDir) {
+      const success = await ensureVisualizers();
+      const visualizers = await loadVisualizers();
+      return { success, visualizers };
     }
-    return await loadVisualizers();
+    return { success: false, visualizers: [] };
   });
   electron.ipcMain.handle("save-file-dialog", async (event, options) => {
     const { defaultName, content } = options;

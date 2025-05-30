@@ -9,29 +9,15 @@ interface Visualizer {
   id: string;
   name: string;
   description: string;
+  version: string;
   mimetypes: string[];
-  path: string;
+  author: string;
 }
 
 interface FileData {
   path: string;
   mimetype: string;
   content: string;
-}
-
-declare global {
-  interface Window {
-    api: {
-      getVisualizers: () => Promise<Visualizer[]>;
-      loadVisualizer: (id: string) => Promise<Visualizer>;
-      getMimetype: (filePath: string) => Promise<string>;
-      readFile: (filePath: string) => Promise<string>;
-      handleFileDrop: (filePath: string) => Promise<FileData>;
-      getVisualizersDirectory: () => Promise<string>;
-      changeVisualizersDirectory: () => Promise<{ success: boolean; directory: string | null }>;
-      reloadVisualizers: () => Promise<{ success: boolean }>;
-    }
-  }
 }
 
 const App: React.FC = () => {
@@ -93,7 +79,7 @@ const App: React.FC = () => {
       setIsLoadingVisualizers(true);
       const result = await window.api.reloadVisualizers();
       if (result.success) {
-        await loadVisualizers();
+        setVisualizers(result.visualizers);
         alert('Visualizers reloaded successfully!');
       } else {
         alert('Failed to reload visualizers.');
@@ -101,6 +87,8 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Error reloading visualizers:', error);
       alert('Failed to reload visualizers.');
+    } finally {
+      setIsLoadingVisualizers(false);
     }
   };
 

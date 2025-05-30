@@ -385,15 +385,25 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('change-visualizers-directory', async () => {
-    return await selectVisualizersDirectory();
+    const newDir = await selectVisualizersDirectory();
+    if (newDir) {
+      selectedVisualizersDir = newDir;
+      savePreferences({ visualizersDir: newDir });
+
+      // Reload visualizers
+      const success = await ensureVisualizers();
+      return { success, directory: newDir };
+    }
+    return { success: false, directory: null };
   });
 
   ipcMain.handle('reload-visualizers', async () => {
-    const visualizersDir = selectedVisualizersDir;
-    if (visualizersDir) {
-      await ensureVisualizers();
+    if (selectedVisualizersDir) {
+      const success = await ensureVisualizers();
+      const visualizers = await loadVisualizers();
+      return { success, visualizers };
     }
-    return await loadVisualizers();
+    return { success: false, visualizers: [] };
   });
 
   // File dialog handlers for visualizers

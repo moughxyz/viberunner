@@ -6,8 +6,8 @@ interface Window {
     readFile: (filePath: string) => Promise<string>;
     handleFileDrop: (filePath: string) => Promise<any>;
     getVisualizersDirectory: () => Promise<string | null>;
-    changeVisualizersDirectory: () => Promise<any>;
-    reloadVisualizers: () => Promise<any[]>;
+    changeVisualizersDirectory: () => Promise<{ success: boolean; directory: string | null }>;
+    reloadVisualizers: () => Promise<{ success: boolean; visualizers: any[] }>;
   };
 
   nodeUtils: {
