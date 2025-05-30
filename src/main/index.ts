@@ -3,6 +3,11 @@ import path from 'path';
 import fs from 'fs';
 import mime from 'mime-types';
 
+// Enable remote module for renderer access to app.getPath
+import '@electron/remote/main';
+const remoteMain = require('@electron/remote/main');
+remoteMain.initialize();
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -505,6 +510,9 @@ const createWindow = (): void => {
       webSecurity: false // Allow loading local resources
     },
   });
+
+  // Enable remote module for this window
+  remoteMain.enable(mainWindow.webContents);
 
   // and load the index.html of the app.
   if (process.env.VITE_DEV_SERVER_URL) {

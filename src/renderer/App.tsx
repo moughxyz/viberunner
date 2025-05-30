@@ -1,34 +1,194 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 
-// Direct electron access with full Node.js integration
+// Direct Node.js access with full integration
 const { ipcRenderer } = require('electron');
+const fs = require('fs');
+const path = require('path');
+const mime = require('mime-types');
+const { app } = require('@electron/remote') || require('electron').remote?.app;
 
 // Expose React and ReactDOM globally for visualizers
 (window as any).React = React;
 (window as any).ReactDOM = { createRoot };
 
-// Create API object for backward compatibility
+// Simplified API - only keep IPC for dialogs
 const api = {
-  getFrames: () => ipcRenderer.invoke('get-frames'),
-  loadFrame: (id: string) => ipcRenderer.invoke('load-frame', id),
-  getMimetype: (filePath: string) => ipcRenderer.invoke('get-mimetype', filePath),
-  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
-  handleFileDrop: (filePath: string) => ipcRenderer.invoke('handle-file-drop', filePath),
-  getFramesDirectory: () => ipcRenderer.invoke('get-frames-directory'),
+  // Dialog operations that need main process
   changeFramesDirectory: () => ipcRenderer.invoke('change-frames-directory'),
-  reloadFrames: () => ipcRenderer.invoke('reload-frames'),
-  readDirectory: (dirPath: string) => ipcRenderer.invoke('read-directory', dirPath),
-  findMatchingFrames: (filePath: string) => ipcRenderer.invoke('find-matching-frames', filePath),
-  writeFile: (filePath: string, content: string, encoding?: 'utf8' | 'base64') =>
-    ipcRenderer.invoke('write-file', filePath, content, encoding),
-  backupFile: (filePath: string) => ipcRenderer.invoke('backup-file', filePath),
   saveFileDialog: (options?: any) => ipcRenderer.invoke('save-file-dialog', options),
-  launchStandaloneFrame: (id: string) => ipcRenderer.invoke('launch-standalone-frame', id)
+
+  // Direct file operations using Node.js
+  readFile: (filePath: string, encoding: 'utf8' | 'base64' = 'utf8') => {
+    if (encoding === 'base64') {
+      return fs.readFileSync(filePath).toString('base64');
+    }
+    return fs.readFileSync(filePath, 'utf8');
+  },
+  writeFile: (filePath: string, content: string, encoding: 'utf8' | 'base64' = 'utf8') => {
+    if (encoding === 'base64') {
+      const buffer = Buffer.from(content, 'base64');
+      fs.writeFileSync(filePath, buffer);
+    } else {
+      fs.writeFileSync(filePath, content, 'utf8');
+    }
+  },
+  backupFile: (filePath: string) => {
+    if (fs.existsSync(filePath)) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupPath = `${filePath}.backup.${timestamp}`;
+      fs.copyFileSync(filePath, backupPath);
+      return backupPath;
+    }
+    return null;
+  },
+  exists: (filePath: string) => fs.existsSync(filePath),
+  stat: (filePath: string) => fs.statSync(filePath),
+  readDir: (dirPath: string) => fs.readdirSync(dirPath),
+
+  // Helper functions
+  path: path,
+  mime: mime,
+
+  // Exposed modules for advanced usage
+  fs: fs,
+  require: require
 };
 
 // Make API available globally for visualizers
 (window as any).api = api;
+
+// Constants
+const getFramesDirectory = () => {
+  const userDataPath = app?.getPath('userData') || path.join(require('os').homedir(), '.vibeframe');
+  return path.join(userDataPath, 'frames');
+};
+
+// Helper functions for direct file operations
+async function getMimetype(filePath: string): Promise<string> {
+  try {
+    const stats = fs.statSync(filePath);
+    if (stats.isDirectory()) {
+      return 'inode/directory';
+    }
+  } catch (error) {
+    // File doesn't exist or can't be accessed
+  }
+
+  const mimetype = mime.lookup(filePath);
+  return mimetype || 'application/octet-stream';
+}
+
+interface FileAnalysis {
+  path: string;
+  filename: string;
+  mimetype: string;
+  content: string;
+  size: number;
+  isJson?: boolean;
+  jsonContent?: any;
+}
+
+async function analyzeFile(filePath: string): Promise<FileAnalysis> {
+  const stats = fs.statSync(filePath);
+  const filename = path.basename(filePath);
+  const mimetype = await getMimetype(filePath);
+
+  let content = '';
+  let isJson = false;
+  let jsonContent = null;
+
+  // Only read content for non-directories and reasonably sized files
+  if (!stats.isDirectory() && stats.size < 10 * 1024 * 1024) { // < 10MB
+    try {
+      content = fs.readFileSync(filePath, 'utf-8');
+
+      // Try to parse as JSON
+      if (mimetype === 'application/json' || filename.endsWith('.json')) {
+        try {
+          jsonContent = JSON.parse(content);
+          isJson = true;
+        } catch {
+          // Not valid JSON, that's fine
+        }
+      }
+    } catch {
+      // File might be binary or unreadable, that's fine
+    }
+  }
+
+  return {
+    path: filePath,
+    filename,
+    mimetype,
+    content,
+    size: stats.size,
+    isJson,
+    jsonContent
+  };
+}
+
+async function loadFrames(): Promise<Frame[]> {
+  const FRAMES_DIR = getFramesDirectory();
+
+  if (!fs.existsSync(FRAMES_DIR)) {
+    fs.mkdirSync(FRAMES_DIR, { recursive: true });
+    return [];
+  }
+
+  try {
+    const dirContents = fs.readdirSync(FRAMES_DIR);
+    const directories = dirContents.filter((dir: string) => {
+      const fullPath = path.join(FRAMES_DIR, dir);
+      return fs.statSync(fullPath).isDirectory();
+    });
+
+    const frames = directories.map((dir: string) => {
+      const framePath = path.join(FRAMES_DIR, dir);
+      const metadataPath = path.join(framePath, 'viz.json');
+
+      if (!fs.existsSync(metadataPath)) {
+        return null;
+      }
+
+      try {
+        const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
+        const metadata = JSON.parse(metadataContent);
+        return {
+          ...metadata,
+          id: dir,
+        };
+      } catch (parseError) {
+        console.error(`Error parsing metadata for ${dir}:`, parseError);
+        return null;
+      }
+    })
+    .filter(Boolean) as Frame[];
+
+    return frames;
+  } catch (error) {
+    console.error('Error loading frames:', error);
+    throw error;
+  }
+}
+
+async function loadFrame(id: string) {
+  const FRAMES_DIR = getFramesDirectory();
+  const framePath = path.join(FRAMES_DIR, id);
+  const bundlePath = path.join(framePath, 'dist', 'bundle.iife.js');
+
+  if (!fs.existsSync(bundlePath)) {
+    throw new Error(`Bundle not found: ${bundlePath}`);
+  }
+
+  const bundleContent = fs.readFileSync(bundlePath, 'utf-8');
+
+  // Also load the config
+  const metadataPath = path.join(framePath, 'viz.json');
+  const config = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+
+  return { bundleContent, config };
+}
 
 interface Frame {
   id: string;
@@ -44,6 +204,7 @@ interface FileData {
   path: string;
   mimetype: string;
   content: string;
+  analysis?: FileAnalysis;
 }
 
 // Helper function to get supported formats for a frame
@@ -96,7 +257,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const loadDirectoryInfo = async () => {
       try {
-        const dir = await api.getFramesDirectory();
+        const dir = getFramesDirectory();
         setFramesDirectory(dir || 'Not set');
       } catch (error) {
         console.error('Error loading frames directory:', error);
@@ -105,10 +266,10 @@ const App: React.FC = () => {
     loadDirectoryInfo();
   }, []);
 
-  const loadFrames = async () => {
+  const reloadFrames = async () => {
     try {
       setIsLoadingFrames(true);
-      const frames = await api.getFrames();
+      const frames = await loadFrames();
       setFrames(frames);
     } catch (error) {
       console.error('Error loading frames:', error);
@@ -119,7 +280,7 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    loadFrames();
+    reloadFrames();
   }, []);
 
   const handleChangeFramesDirectory = async () => {
@@ -127,7 +288,7 @@ const App: React.FC = () => {
       const result = await api.changeFramesDirectory();
       if (result.success && result.directory) {
         setFramesDirectory(result.directory);
-        await loadFrames();
+        await reloadFrames();
         alert(`Frames directory changed to: ${result.directory}`);
       }
     } catch (error) {
@@ -137,41 +298,47 @@ const App: React.FC = () => {
   };
 
   const handleReloadFrames = async () => {
-    try {
-      setIsLoadingFrames(true);
-      const result = await api.reloadFrames();
-      if (result.success) {
-        setFrames(result.frames);
-        alert('Frames reloaded successfully!');
-      } else {
-        alert('Failed to reload frames.');
-      }
-    } catch (error) {
-      console.error('Error reloading frames:', error);
-      alert('Failed to reload frames.');
-    } finally {
-      setIsLoadingFrames(false);
-    }
+    await reloadFrames();
+    alert('Frames reloaded successfully!');
   };
 
   useEffect(() => {
     // Handle file drops
     const handleFileDrop = async (filePath: string) => {
       try {
-        // Use the enhanced matching system
-        const matchingResult = await api.findMatchingFrames(filePath);
+        // Use direct file analysis instead of IPC
+        const fileAnalysis = await analyzeFile(filePath);
 
-        if (!matchingResult.success) {
-          console.error('Error finding matching frames:', matchingResult.error);
-          alert(`Error analyzing file: ${matchingResult.error}`);
-          return;
+        // For directories, handle specially
+        let fileData;
+        if (fileAnalysis.mimetype === 'inode/directory') {
+          fileData = {
+            path: filePath,
+            mimetype: fileAnalysis.mimetype,
+            content: '', // Empty content for directories
+            analysis: fileAnalysis
+          };
+        } else {
+          // For files, read content as base64 if needed
+          let content = fileAnalysis.content;
+          if (!content && fs.existsSync(filePath)) {
+            const binaryContent = fs.readFileSync(filePath);
+            content = binaryContent.toString('base64');
+          }
+
+          fileData = {
+            path: filePath,
+            mimetype: fileAnalysis.mimetype,
+            content,
+            analysis: fileAnalysis
+          };
         }
 
-        const fileData = await api.handleFileDrop(filePath);
-        const matches = matchingResult.matches;
+        // Find matching frames directly
+        const matches = await findMatchingFrames(filePath);
 
         console.log('Enhanced matching results:', {
-          fileAnalysis: matchingResult.fileAnalysis,
+          fileAnalysis: fileAnalysis,
           matches: matches.map((m: any) => ({
             name: m.frame.name,
             priority: m.priority
@@ -181,8 +348,7 @@ const App: React.FC = () => {
         if (matches.length === 0) {
           // Handle no frame found
           console.log('No frame found for file:', filePath);
-          const analysis = matchingResult.fileAnalysis;
-          alert(`No frame found for this file.\n\nFile: ${analysis.filename}\nType: ${analysis.mimetype}\nSize: ${(analysis.size / 1024).toFixed(1)} KB`);
+          alert(`No frame found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
         } else if (matches.length === 1) {
           // Only one frame, use it directly
           setCurrentFrame(matches[0].frame);
@@ -235,7 +401,7 @@ const App: React.FC = () => {
     try {
       console.log('Launching standalone frame:', frame.name, frame.id);
 
-      const frameData = await api.launchStandaloneFrame(frame.id);
+      const frameData = await loadFrame(frame.id);
       console.log('Frame data received:', frameData);
 
       // Set up standalone frame (no file data) - this will trigger useEffect
@@ -255,7 +421,7 @@ const App: React.FC = () => {
   // Load and render the frame when currentFile or currentFrame changes
   useEffect(() => {
     if (currentFrame && frameRootRef.current) {
-      const loadFrame = async () => {
+      const loadFrameComponent = async () => {
         try {
           // Clear previous content
           if (frameRootRef.current) {
@@ -278,7 +444,7 @@ const App: React.FC = () => {
             console.log('Loading standalone frame with pending data');
           } else if (currentFile) {
             // Load the frame's main component for file-based frame
-            frameData = await api.loadFrame(currentFrame.id);
+            frameData = await loadFrame(currentFrame.id);
             props = {
               fileData: currentFile,
               container: frameRootRef.current
@@ -341,9 +507,102 @@ const App: React.FC = () => {
         }
       };
 
-      loadFrame();
+      loadFrameComponent();
     }
   }, [currentFile, currentFrame]);
+
+  // Enhanced file matching functions
+  function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {
+    switch (matcher.type) {
+      case 'mimetype':
+        return matcher.mimetype === fileAnalysis.mimetype;
+
+      case 'filename':
+        if (matcher.pattern) {
+          // Support exact match or glob pattern
+          if (matcher.pattern.includes('*') || matcher.pattern.includes('?')) {
+            // Simple glob pattern matching
+            const regexPattern = matcher.pattern
+              .replace(/\*/g, '.*')
+              .replace(/\?/g, '.');
+            return new RegExp(`^${regexPattern}$`).test(fileAnalysis.filename);
+          } else {
+            // Exact match
+            return matcher.pattern === fileAnalysis.filename;
+          }
+        }
+        return false;
+
+      case 'filename-contains':
+        if (matcher.substring) {
+          // Case-insensitive substring matching
+          const hasSubstring = fileAnalysis.filename.toLowerCase().includes(matcher.substring.toLowerCase());
+
+          // If extension is specified, also check that
+          if (matcher.extension) {
+            const fileExtension = path.extname(fileAnalysis.filename).toLowerCase();
+            const targetExtension = matcher.extension.startsWith('.')
+              ? matcher.extension.toLowerCase()
+              : `.${matcher.extension.toLowerCase()}`;
+            return hasSubstring && fileExtension === targetExtension;
+          }
+
+          return hasSubstring;
+        }
+        return false;
+
+      case 'content-json':
+        if (!fileAnalysis.isJson || !fileAnalysis.jsonContent) return false;
+        if (matcher.requiredProperties) {
+          return matcher.requiredProperties.every((prop: string) =>
+            fileAnalysis.jsonContent && fileAnalysis.jsonContent[prop] !== undefined
+          );
+        }
+        return true;
+
+      case 'file-size':
+        const size = fileAnalysis.size;
+        if (matcher.minSize !== undefined && size < matcher.minSize) return false;
+        if (matcher.maxSize !== undefined && size > matcher.maxSize) return false;
+        return true;
+
+      default:
+        return false;
+    }
+  }
+
+  async function findMatchingFrames(filePath: string): Promise<Array<{frame: Frame, priority: number}>> {
+    const frames = await loadFrames();
+    const fileAnalysis = await analyzeFile(filePath);
+    const matches: Array<{frame: Frame, priority: number}> = [];
+
+    for (const frame of frames) {
+      let bestPriority = -1;
+
+      // Check enhanced matchers first
+      if ((frame as any).matchers) {
+        for (const matcher of (frame as any).matchers) {
+          if (evaluateMatcher(matcher, fileAnalysis)) {
+            bestPriority = Math.max(bestPriority, matcher.priority);
+          }
+        }
+      }
+
+      // Fallback to legacy mimetype matching
+      if (bestPriority === -1 && frame.mimetypes) {
+        if (frame.mimetypes.includes(fileAnalysis.mimetype)) {
+          bestPriority = 50; // Default priority for legacy matchers
+        }
+      }
+
+      if (bestPriority > -1) {
+        matches.push({ frame, priority: bestPriority });
+      }
+    }
+
+    // Sort by priority (highest first)
+    return matches.sort((a, b) => b.priority - a.priority);
+  }
 
   return (
     <div className="app">
