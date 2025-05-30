@@ -11862,6 +11862,11 @@ function evaluateMatcher(matcher, fileAnalysis) {
         }
       }
       return false;
+    case "filename-contains":
+      if (matcher.substring) {
+        return fileAnalysis.filename.toLowerCase().includes(matcher.substring.toLowerCase());
+      }
+      return false;
     case "path-pattern":
       if (matcher.pattern) {
         const regexPattern = matcher.pattern.replace(/\*\*/g, ".*").replace(/\*/g, "[^/]*").replace(/\?/g, ".");

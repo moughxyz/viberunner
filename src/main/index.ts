@@ -16,12 +16,13 @@ const VISUALIZERS_DIR = path.join(app.getPath('userData'), 'visualizers');
 
 // Enhanced matcher types
 interface FileMatcher {
-  type: 'mimetype' | 'filename' | 'path-pattern' | 'content-json' | 'content-regex' | 'file-size' | 'combined';
+  type: 'mimetype' | 'filename' | 'filename-contains' | 'path-pattern' | 'content-json' | 'content-regex' | 'file-size' | 'combined';
   priority: number;
 
   // Type-specific properties
   mimetype?: string;
   pattern?: string;
+  substring?: string; // For filename-contains matcher
   requiredProperties?: string[];
   regex?: string;
   minSize?: number;
@@ -131,6 +132,13 @@ function evaluateMatcher(matcher: FileMatcher, fileAnalysis: FileAnalysis): bool
           // Exact match
           return matcher.pattern === fileAnalysis.filename;
         }
+      }
+      return false;
+
+    case 'filename-contains':
+      if (matcher.substring) {
+        // Case-insensitive substring matching
+        return fileAnalysis.filename.toLowerCase().includes(matcher.substring.toLowerCase());
       }
       return false;
 

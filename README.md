@@ -98,7 +98,21 @@ The new matching system supports multiple criteria types with priority-based sel
 - **Glob patterns**: `"*.config.js"`, `"test-*.json"`
 - **Wildcards**: `*` (any characters), `?` (single character)
 
-#### 2. **Path Pattern Matching**
+#### 2. **Filename Substring Matching**
+```json
+{
+  "type": "filename-contains",
+  "substring": "kanban",
+  "priority": 80
+}
+```
+- **Substring matching**: Matches if filename contains the specified text
+- **Case insensitive**: `"kanban"` matches `"Kanban"`, `"KANBAN"`, etc.
+- **Examples**:
+  - `"kanban"` matches: `foo-kanban.txt`, `my-kanban-board.json`, `kanban-data.csv`
+  - `"config"` matches: `app.config.js`, `webpack-config.dev.js`, `my-config.yaml`
+
+#### 3. **Path Pattern Matching**
 ```json
 {
   "type": "path-pattern",
@@ -110,7 +124,7 @@ The new matching system supports multiple criteria types with priority-based sel
 - **Directory patterns**: `src/**/*.js`
 - **Absolute paths**: `/Users/*/Desktop/*.md`
 
-#### 3. **Content Analysis - JSON**
+#### 4. **Content Analysis - JSON**
 ```json
 {
   "type": "content-json",
@@ -122,7 +136,7 @@ The new matching system supports multiple criteria types with priority-based sel
 - **Nested properties**: `"dependencies.react"`
 - **Array elements**: `"scripts[0]"`
 
-#### 4. **Content Analysis - Regex**
+#### 5. **Content Analysis - Regex**
 ```json
 {
   "type": "content-regex",
@@ -134,7 +148,7 @@ The new matching system supports multiple criteria types with priority-based sel
 - **Content patterns**: API keys, specific formats
 - **Multi-line matching**: Use appropriate regex flags
 
-#### 5. **File Size Filtering**
+#### 6. **File Size Filtering**
 ```json
 {
   "type": "file-size",
@@ -147,7 +161,7 @@ The new matching system supports multiple criteria types with priority-based sel
 - **Large file handling**: Different visualizers for different sizes
 - **Memory optimization**: Skip content reading for huge files
 
-#### 6. **Combined Matchers**
+#### 7. **Combined Matchers**
 ```json
 {
   "type": "combined",
@@ -171,7 +185,7 @@ The new matching system supports multiple criteria types with priority-based sel
 - **Complex conditions**: Combine any matcher types
 - **Nested logic**: Conditions can contain other combined matchers
 
-#### 7. **Legacy MIME Type Support**
+#### 8. **Legacy MIME Type Support**
 ```json
 {
   "type": "mimetype",
@@ -457,12 +471,13 @@ This creates `dist/bundle.iife.js` that Vizor can load.
 
   "matchers": [
     {
-      "type": "mimetype | filename | path-pattern | content-json | content-regex | file-size | combined",
+      "type": "mimetype | filename | filename-contains | path-pattern | content-json | content-regex | file-size | combined",
       "priority": "number (required, 1-100)",
 
       // Type-specific properties
       "mimetype": "string (for mimetype)",
       "pattern": "string (for filename/path-pattern)",
+      "substring": "string (for filename-contains)",
       "requiredProperties": ["string"] // (for content-json)
       "regex": "string (for content-regex)",
       "minSize": "number (for file-size)",
@@ -711,6 +726,49 @@ const MyVisualizer: React.FC<VisualizerProps> = ({ fileData }) => {
   ]
 }
 ```
+
+### Example 5: Kanban Board Visualizer
+
+```json
+{
+  "name": "Kanban Board Visualizer",
+  "description": "Visualize kanban boards from various file formats",
+  "matchers": [
+    {
+      "type": "filename-contains",
+      "substring": "kanban",
+      "priority": 85
+    },
+    {
+      "type": "filename-contains",
+      "substring": "board",
+      "priority": 80
+    },
+    {
+      "type": "combined",
+      "operator": "AND",
+      "priority": 90,
+      "conditions": [
+        {
+          "type": "filename-contains",
+          "substring": "project",
+          "priority": 50
+        },
+        {
+          "type": "mimetype",
+          "mimetype": "application/json",
+          "priority": 50
+        }
+      ]
+    }
+  ]
+}
+```
+This will match files like:
+- `team-kanban.txt` (substring: "kanban")
+- `project-board.json` (substring: "board")
+- `my-project-data.json` (combined: contains "project" AND is JSON)
+- `foo-kanban-board.csv` (would match both "kanban" and "board", highest priority wins)
 
 ## 🔧 Build & Distribution
 
