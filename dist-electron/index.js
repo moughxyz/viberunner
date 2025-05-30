@@ -12093,7 +12093,7 @@ function registerIpcHandlers() {
       throw new Error(`Visualizer ${id} not found`);
     }
     const visualizerDir = path.join(VISUALIZERS_DIR, visualizer.id);
-    const bundlePath = path.join(visualizerDir, "dist", "index.js");
+    const bundlePath = path.join(visualizerDir, "dist", "bundle.iife.js");
     if (!fs.existsSync(bundlePath)) {
       throw new Error(`Bundle not found: ${bundlePath}`);
     }
