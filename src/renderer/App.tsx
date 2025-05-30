@@ -205,19 +205,32 @@ async function loadFrames(): Promise<Frame[]> {
 }
 
 async function loadFrame(id: string) {
+  console.log('loadFrame: Loading frame with id:', id);
   const FRAMES_DIR = getFramesDirectory();
+  console.log('loadFrame: Frames directory:', FRAMES_DIR);
+
   const framePath = path.join(FRAMES_DIR, id);
   const bundlePath = path.join(framePath, 'dist', 'bundle.iife.js');
 
+  console.log('loadFrame: Frame path:', framePath);
+  console.log('loadFrame: Bundle path:', bundlePath);
+  console.log('loadFrame: Bundle exists:', fs.existsSync(bundlePath));
+
   if (!fs.existsSync(bundlePath)) {
+    console.error('loadFrame: Bundle not found at:', bundlePath);
     throw new Error(`Bundle not found: ${bundlePath}`);
   }
 
+  console.log('loadFrame: Reading bundle content...');
   const bundleContent = fs.readFileSync(bundlePath, 'utf-8');
+  console.log('loadFrame: Bundle content length:', bundleContent.length);
+  console.log('loadFrame: Bundle content preview:', bundleContent.slice(0, 200) + '...');
 
   // Also load the config
   const metadataPath = path.join(framePath, 'viz.json');
+  console.log('loadFrame: Loading config from:', metadataPath);
   const config = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+  console.log('loadFrame: Config loaded:', config);
 
   return { bundleContent, config };
 }
@@ -338,12 +351,17 @@ const App: React.FC = () => {
     // Handle file drops
     const handleFileDrop = async (filePath: string) => {
       try {
+        console.log('=== FILE DROP STARTED ===');
+        console.log('handleFileDrop: Processing file:', filePath);
+
         // Use direct file analysis instead of IPC
         const fileAnalysis = await analyzeFile(filePath);
+        console.log('handleFileDrop: File analysis:', fileAnalysis);
 
         // For directories, handle specially
         let fileData;
         if (fileAnalysis.mimetype === 'inode/directory') {
+          console.log('handleFileDrop: Handling directory');
           fileData = {
             path: filePath,
             mimetype: fileAnalysis.mimetype,
@@ -351,6 +369,7 @@ const App: React.FC = () => {
             analysis: fileAnalysis
           };
         } else {
+          console.log('handleFileDrop: Handling file');
           // For files, read content as base64 if needed
           let content = fileAnalysis.content;
           if (!content && fs.existsSync(filePath)) {
@@ -365,9 +384,11 @@ const App: React.FC = () => {
             analysis: fileAnalysis
           };
         }
+        console.log('handleFileDrop: File data prepared:', { path: fileData.path, mimetype: fileData.mimetype });
 
         // Find matching frames directly
         const matches = await findMatchingFrames(filePath);
+        console.log('handleFileDrop: Found matches:', matches);
 
         console.log('Enhanced matching results:', {
           fileAnalysis: fileAnalysis,
@@ -378,15 +399,19 @@ const App: React.FC = () => {
         });
 
         if (matches.length === 0) {
+          console.log('handleFileDrop: No matches found');
           // Handle no frame found
           console.log('No frame found for file:', filePath);
           alert(`No frame found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
         } else if (matches.length === 1) {
+          console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].frame.name);
           // Only one frame, use it directly
           setCurrentFrame(matches[0].frame);
           setCurrentFile(fileData);
           setShowFrameSelection(false);
+          console.log('handleFileDrop: State set for single match');
         } else {
+          console.log('handleFileDrop: Multiple matches found, showing selection');
           // Multiple frames, show selection with priority info
           setCurrentFile(fileData);
           setAvailableFrames(matches.map((m: any) => ({
@@ -395,7 +420,9 @@ const App: React.FC = () => {
           })));
           setShowFrameSelection(true);
           setCurrentFrame(null);
+          console.log('handleFileDrop: State set for multiple matches');
         }
+        console.log('=== FILE DROP COMPLETED ===');
       } catch (error) {
         console.error('Error handling file drop:', error);
         alert(`Error handling file: ${error}`);
@@ -452,12 +479,21 @@ const App: React.FC = () => {
 
   // Load and render the frame when currentFile or currentFrame changes
   useEffect(() => {
+    console.log('Frame loading useEffect triggered:', {
+      currentFrame: currentFrame?.name,
+      currentFile: currentFile?.path,
+      frameRootRef: !!frameRootRef.current
+    });
+
     if (currentFrame && frameRootRef.current) {
       const loadFrameComponent = async () => {
         try {
+          console.log('Starting frame component load for:', currentFrame.name);
+
           // Clear previous content
           if (frameRootRef.current) {
             frameRootRef.current.innerHTML = '';
+            console.log('Cleared previous frame content');
           }
 
           let frameData;
@@ -465,6 +501,7 @@ const App: React.FC = () => {
 
           // Check if this is a standalone frame
           if (!currentFile && (window as any).__PENDING_STANDALONE_DATA__) {
+            console.log('Loading standalone frame with pending data');
             // Use pending standalone data
             frameData = (window as any).__PENDING_STANDALONE_DATA__;
             props = {
@@ -473,33 +510,38 @@ const App: React.FC = () => {
             };
             // Clear the pending data
             delete (window as any).__PENDING_STANDALONE_DATA__;
-            console.log('Loading standalone frame with pending data');
           } else if (currentFile) {
+            console.log('Loading file-based frame for file:', currentFile.path);
             // Load the frame's main component for file-based frame
             frameData = await loadFrame(currentFrame.id);
+            console.log('Frame data loaded:', {
+              hasBundleContent: !!frameData.bundleContent,
+              bundleLength: frameData.bundleContent?.length,
+              config: frameData.config
+            });
             props = {
               fileData: currentFile,
               container: frameRootRef.current
             };
-            console.log('Loading file-based frame');
           } else {
             console.log('No file or pending standalone data - skipping frame load');
             return;
           }
 
-          console.log('Creating script element...');
+          console.log('Creating script element for frame execution...');
 
           // Create a new script element with the bundle content
           const script = document.createElement('script');
           script.type = 'text/javascript';
           script.textContent = frameData.bundleContent;
 
-          console.log('Setting up __LOAD_FRAME__ function...');
+          console.log('Script element created, setting up __LOAD_FRAME__ function...');
 
           // When the script loads, it will call this function
           (window as any).__LOAD_FRAME__ = (FrameComponent: any) => {
             console.log('__LOAD_FRAME__ called with component:', FrameComponent);
             console.log('frameRootRef.current:', frameRootRef.current);
+            console.log('Props for frame:', props);
 
             if (frameRootRef.current) {
               const root = document.createElement('div');
@@ -511,6 +553,7 @@ const App: React.FC = () => {
                 const reactRoot = createRoot(root);
                 console.log('Created React root successfully');
 
+                console.log('Rendering frame component...');
                 reactRoot.render(
                   React.createElement(FrameComponent, props)
                 );
@@ -519,15 +562,17 @@ const App: React.FC = () => {
                 console.error('React rendering error:', renderError);
               }
             } else {
-              console.error('frameRootRef.current is null!');
+              console.error('frameRootRef.current is null when __LOAD_FRAME__ called!');
             }
           };
 
-          console.log('Adding script to document...');
+          console.log('Adding script to document head...');
           // Add the script to the document
           document.head.appendChild(script);
+          console.log('Script added to document');
 
           return () => {
+            console.log('Cleaning up frame script');
             // Cleanup
             if (document.head.contains(script)) {
               document.head.removeChild(script);
@@ -535,11 +580,21 @@ const App: React.FC = () => {
             delete (window as any).__LOAD_FRAME__;
           };
         } catch (error) {
-          console.error('Failed to load frame:', error);
+          console.error('Failed to load frame component:', error);
+          console.error('Error details:', {
+            name: (error as Error).name,
+            message: (error as Error).message,
+            stack: (error as Error).stack
+          });
         }
       };
 
       loadFrameComponent();
+    } else {
+      console.log('Frame loading conditions not met:', {
+        hasCurrentFrame: !!currentFrame,
+        hasFrameRootRef: !!frameRootRef.current
+      });
     }
   }, [currentFile, currentFrame]);
 

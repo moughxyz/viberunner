@@ -11503,7 +11503,7 @@ if (require("electron-squirrel-startup")) {
   require$$3.app.quit();
 }
 let selectedVisualizersDir = null;
-const VISUALIZERS_DIR = path.join(require$$3.app.getPath("userData"), "visualizers");
+path.join(require$$3.app.getPath("userData"), "visualizers");
 async function getMimetype(filePath) {
   try {
     const stats = fs.statSync(filePath);
@@ -11629,17 +11629,18 @@ function findMatchingVisualizers(visualizers, fileAnalysis) {
   return matches.sort((a, b) => b.priority - a.priority);
 }
 async function loadVisualizers() {
-  console.log("loadVisualizers: Starting to load visualizers from:", VISUALIZERS_DIR);
-  if (!fs.existsSync(VISUALIZERS_DIR)) {
-    console.log("loadVisualizers: Creating visualizers directory");
-    fs.mkdirSync(VISUALIZERS_DIR, { recursive: true });
+  const VISUALIZERS_DIR2 = selectedVisualizersDir || path.join(require$$3.app.getPath("userData"), "visualizers");
+  console.log("loadVisualizers: Loading from directory:", VISUALIZERS_DIR2);
+  if (!fs.existsSync(VISUALIZERS_DIR2)) {
+    console.log("loadVisualizers: Directory does not exist:", VISUALIZERS_DIR2);
+    return [];
   }
   try {
     console.log("loadVisualizers: Reading directory contents");
-    const dirContents = fs.readdirSync(VISUALIZERS_DIR);
+    const dirContents = fs.readdirSync(VISUALIZERS_DIR2);
     console.log("loadVisualizers: Directory contents:", dirContents);
     const directories = dirContents.filter((dir) => {
-      const fullPath = path.join(VISUALIZERS_DIR, dir);
+      const fullPath = path.join(VISUALIZERS_DIR2, dir);
       const isDir = fs.statSync(fullPath).isDirectory();
       console.log(`loadVisualizers: ${dir} is directory: ${isDir}`);
       return isDir;
@@ -11647,7 +11648,7 @@ async function loadVisualizers() {
     console.log("loadVisualizers: Found directories:", directories);
     const visualizers = directories.map((dir) => {
       console.log(`loadVisualizers: Processing directory: ${dir}`);
-      const vizPath = path.join(VISUALIZERS_DIR, dir);
+      const vizPath = path.join(VISUALIZERS_DIR2, dir);
       const metadataPath = path.join(vizPath, "viz.json");
       console.log(`loadVisualizers: Looking for metadata at: ${metadataPath}`);
       if (!fs.existsSync(metadataPath)) {
@@ -11868,12 +11869,6 @@ require$$3.app.on("ready", async () => {
     savePreferences({ visualizersDir: selectedVisualizersDir });
     console.log("Saved visualizers directory preference:", selectedVisualizersDir);
   }
-  const success = await ensureVisualizers();
-  if (!success) {
-    require$$3.dialog.showErrorBox("Visualizers Error", "Failed to load visualizers. Please check the selected directory and try again.");
-    require$$3.app.quit();
-    return;
-  }
   registerIpcHandlers();
   createWindow();
 });
@@ -11912,7 +11907,8 @@ function registerIpcHandlers() {
     if (!visualizer) {
       throw new Error(`Visualizer ${id} not found`);
     }
-    const visualizerDir = path.join(VISUALIZERS_DIR, visualizer.id);
+    const VISUALIZERS_DIR2 = selectedVisualizersDir || path.join(require$$3.app.getPath("userData"), "visualizers");
+    const visualizerDir = path.join(VISUALIZERS_DIR2, visualizer.id);
     const bundlePath = path.join(visualizerDir, "dist", "bundle.iife.js");
     if (!fs.existsSync(bundlePath)) {
       throw new Error(`Bundle not found: ${bundlePath}`);
@@ -11959,8 +11955,8 @@ function registerIpcHandlers() {
     if (newDir) {
       selectedVisualizersDir = newDir;
       savePreferences({ visualizersDir: newDir });
-      const success = await ensureVisualizers();
-      return { success, directory: newDir };
+      console.log("Changed frames directory to:", newDir);
+      return { success: true, directory: newDir };
     }
     return { success: false, directory: null };
   });
@@ -12109,7 +12105,8 @@ function registerIpcHandlers() {
       if (!visualizer.standalone) {
         throw new Error(`Visualizer ${id} is not configured for standalone use`);
       }
-      const visualizerDir = path.join(VISUALIZERS_DIR, visualizer.id);
+      const VISUALIZERS_DIR2 = selectedVisualizersDir || path.join(require$$3.app.getPath("userData"), "visualizers");
+      const visualizerDir = path.join(VISUALIZERS_DIR2, visualizer.id);
       const bundlePath = path.join(visualizerDir, "dist", "bundle.iife.js");
       if (!fs.existsSync(bundlePath)) {
         throw new Error(`Bundle not found: ${bundlePath}`);
