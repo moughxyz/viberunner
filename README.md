@@ -577,6 +577,48 @@ const dialogResult = await window.api.saveFileDialog({
 });
 ```
 
+### Full Node.js Access
+
+Visualizers have complete access to Node.js modules via `require()`:
+
+```typescript
+// File system operations
+const fs = require('fs');
+const content = fs.readFileSync('/path/to/file', 'utf8');
+fs.writeFileSync('/path/to/output.txt', 'Hello World');
+
+// Path utilities
+const path = require('path');
+const filename = path.basename('/foo/bar/baz.txt'); // 'baz.txt'
+const dir = path.dirname('/foo/bar/baz.txt'); // '/foo/bar'
+
+// Operating system info
+const os = require('os');
+const homeDir = os.homedir();
+const platform = os.platform();
+
+// Child processes
+const { spawn, exec } = require('child_process');
+const result = exec('ls -la', (error, stdout, stderr) => {
+  console.log(stdout);
+});
+
+// Crypto operations
+const crypto = require('crypto');
+const hash = crypto.createHash('sha256').update('data').digest('hex');
+
+// HTTP requests
+const https = require('https');
+// ... make API calls
+
+// Any other Node.js module
+const util = require('util');
+const events = require('events');
+// ... etc
+```
+
+**Security Note**: Visualizers run with full Node.js privileges, so only load trusted visualizers.
+
 ### Dark Theme Integration
 
 Use these CSS variables for consistent theming:

@@ -497,8 +497,8 @@ const createWindow = (): void => {
     height: 800,
     titleBarStyle: 'hiddenInset', // Keep native macOS controls, hide title bar
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
+      nodeIntegration: true, // Allow direct Node.js access in renderer
+      contextIsolation: false, // Remove context isolation for full access
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: false // Allow loading local resources
     },

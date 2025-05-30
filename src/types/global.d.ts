@@ -40,4 +40,13 @@ interface Window {
       error?: string
     }>;
   };
+
+  // Node.js globals available with nodeIntegration: true
+  require: NodeRequire;
+  module: NodeModule;
+  exports: any;
+  __dirname: string;
+  __filename: string;
+  global: NodeJS.Global;
+  process: NodeJS.Process;
 }
