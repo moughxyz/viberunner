@@ -663,7 +663,7 @@ function registerIpcHandlers() {
     return selectedVisualizersDir;
   });
 
-  ipcMain.handle('change-visualizers-directory', async () => {
+  ipcMain.handle('change-frames-directory', async () => {
     const newDir = await selectVisualizersDirectory();
     if (newDir) {
       selectedVisualizersDir = newDir;

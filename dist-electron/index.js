@@ -11954,7 +11954,7 @@ function registerIpcHandlers() {
   require$$3.ipcMain.handle("get-visualizers-directory", () => {
     return selectedVisualizersDir;
   });
-  require$$3.ipcMain.handle("change-visualizers-directory", async () => {
+  require$$3.ipcMain.handle("change-frames-directory", async () => {
     const newDir = await selectVisualizersDirectory();
     if (newDir) {
       selectedVisualizersDir = newDir;
