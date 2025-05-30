@@ -1,0 +1,7 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+- commit changes after each set of changes.
+- the visualizers directory is in ~/Desktop/visualizers

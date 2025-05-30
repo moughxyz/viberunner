@@ -11818,6 +11818,108 @@ async function getMimetype(filePath) {
   const mimetype = mime.lookup(filePath);
   return mimetype || "application/octet-stream";
 }
+async function analyzeFile(filePath) {
+  const stats = fs.statSync(filePath);
+  const filename = path.basename(filePath);
+  const mimetype = await getMimetype(filePath);
+  let content = "";
+  let isJson = false;
+  let jsonContent = null;
+  if (!stats.isDirectory() && stats.size < 10 * 1024 * 1024) {
+    try {
+      content = fs.readFileSync(filePath, "utf-8");
+      if (mimetype === "application/json" || filename.endsWith(".json")) {
+        try {
+          jsonContent = JSON.parse(content);
+          isJson = true;
+        } catch {
+        }
+      }
+    } catch {
+    }
+  }
+  return {
+    path: filePath,
+    filename,
+    mimetype,
+    content,
+    size: stats.size,
+    isJson,
+    jsonContent
+  };
+}
+function evaluateMatcher(matcher, fileAnalysis) {
+  switch (matcher.type) {
+    case "mimetype":
+      return matcher.mimetype === fileAnalysis.mimetype;
+    case "filename":
+      if (matcher.pattern) {
+        if (matcher.pattern.includes("*") || matcher.pattern.includes("?")) {
+          const regexPattern = matcher.pattern.replace(/\*/g, ".*").replace(/\?/g, ".");
+          return new RegExp(`^${regexPattern}$`).test(fileAnalysis.filename);
+        } else {
+          return matcher.pattern === fileAnalysis.filename;
+        }
+      }
+      return false;
+    case "path-pattern":
+      if (matcher.pattern) {
+        const regexPattern = matcher.pattern.replace(/\*\*/g, ".*").replace(/\*/g, "[^/]*").replace(/\?/g, ".");
+        return new RegExp(`^${regexPattern}$`).test(fileAnalysis.path);
+      }
+      return false;
+    case "content-json":
+      if (!fileAnalysis.isJson || !fileAnalysis.jsonContent) return false;
+      if (matcher.requiredProperties) {
+        return matcher.requiredProperties.every(
+          (prop) => fileAnalysis.jsonContent && fileAnalysis.jsonContent[prop] !== void 0
+        );
+      }
+      return true;
+    case "content-regex":
+      if (matcher.regex) {
+        try {
+          return new RegExp(matcher.regex).test(fileAnalysis.content);
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    case "file-size":
+      const size = fileAnalysis.size;
+      if (matcher.minSize !== void 0 && size < matcher.minSize) return false;
+      if (matcher.maxSize !== void 0 && size > matcher.maxSize) return false;
+      return true;
+    case "combined":
+      if (!matcher.conditions) return false;
+      const results = matcher.conditions.map((condition) => evaluateMatcher(condition, fileAnalysis));
+      return matcher.operator === "OR" ? results.some(Boolean) : results.every(Boolean);
+    default:
+      return false;
+  }
+}
+function findMatchingVisualizers(visualizers, fileAnalysis) {
+  const matches = [];
+  for (const visualizer of visualizers) {
+    let bestPriority = -1;
+    if (visualizer.matchers) {
+      for (const matcher of visualizer.matchers) {
+        if (evaluateMatcher(matcher, fileAnalysis)) {
+          bestPriority = Math.max(bestPriority, matcher.priority);
+        }
+      }
+    }
+    if (bestPriority === -1 && visualizer.mimetypes) {
+      if (visualizer.mimetypes.includes(fileAnalysis.mimetype)) {
+        bestPriority = 50;
+      }
+    }
+    if (bestPriority > -1) {
+      matches.push({ visualizer, priority: bestPriority });
+    }
+  }
+  return matches.sort((a, b) => b.priority - a.priority);
+}
 async function loadVisualizers() {
   console.log("loadVisualizers: Starting to load visualizers from:", VISUALIZERS_DIR);
   if (!fs.existsSync(VISUALIZERS_DIR)) {
@@ -11851,9 +11953,8 @@ async function loadVisualizers() {
         const metadata = JSON.parse(metadataContent);
         console.log(`loadVisualizers: Parsed metadata for ${dir}:`, metadata);
         const result = {
-          id: dir,
           ...metadata,
-          path: vizPath
+          id: dir
         };
         console.log(`loadVisualizers: Final visualizer object for ${dir}:`, result);
         return result;
@@ -12115,21 +12216,26 @@ function registerIpcHandlers() {
     return content.toString("base64");
   });
   electron.ipcMain.handle("handle-file-drop", async (event, filePath) => {
-    const mimetype = await getMimetype(filePath);
-    const stats = fs.statSync(filePath);
-    if (stats.isDirectory()) {
+    const fileAnalysis = await analyzeFile(filePath);
+    if (fileAnalysis.mimetype === "inode/directory") {
       return {
         path: filePath,
-        mimetype,
-        content: ""
+        mimetype: fileAnalysis.mimetype,
+        content: "",
         // Empty content for directories
+        analysis: fileAnalysis
       };
     } else {
-      const content = fs.readFileSync(filePath);
+      let content = fileAnalysis.content;
+      if (!content && fs.existsSync(filePath)) {
+        const binaryContent = fs.readFileSync(filePath);
+        content = binaryContent.toString("base64");
+      }
       return {
         path: filePath,
-        mimetype,
-        content: content.toString("base64")
+        mimetype: fileAnalysis.mimetype,
+        content,
+        analysis: fileAnalysis
       };
     }
   });
@@ -12199,6 +12305,86 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error("Error reading directory:", error);
       return { success: false, error: error.message, files: [] };
+    }
+  });
+  electron.ipcMain.handle("find-matching-visualizers", async (event, filePath) => {
+    try {
+      const visualizers = await loadVisualizers();
+      const fileAnalysis = await analyzeFile(filePath);
+      const matches = findMatchingVisualizers(visualizers, fileAnalysis);
+      return {
+        success: true,
+        matches: matches.map((m) => ({
+          visualizer: m.visualizer,
+          priority: m.priority,
+          matchReasons: []
+          // Could add detailed match reasons here
+        })),
+        fileAnalysis
+      };
+    } catch (error) {
+      console.error("Error finding matching visualizers:", error);
+      return {
+        success: false,
+        error: error.message,
+        matches: [],
+        fileAnalysis: null
+      };
+    }
+  });
+  electron.ipcMain.handle("write-file", async (event, filePath, content, encoding = "utf8") => {
+    try {
+      if (!filePath || filePath.includes("..")) {
+        throw new Error("Invalid file path");
+      }
+      if (encoding === "base64") {
+        const buffer = Buffer.from(content, "base64");
+        fs.writeFileSync(filePath, buffer);
+      } else {
+        fs.writeFileSync(filePath, content, "utf8");
+      }
+      console.log(`File written successfully: ${filePath}`);
+      return { success: true };
+    } catch (error) {
+      console.error("Error writing file:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  electron.ipcMain.handle("backup-file", async (event, filePath) => {
+    try {
+      if (!filePath || filePath.includes("..")) {
+        throw new Error("Invalid file path");
+      }
+      if (!fs.existsSync(filePath)) {
+        throw new Error("File does not exist");
+      }
+      const timestamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
+      const backupPath = `${filePath}.backup.${timestamp}`;
+      fs.copyFileSync(filePath, backupPath);
+      console.log(`Backup created: ${backupPath}`);
+      return { success: true, backupPath };
+    } catch (error) {
+      console.error("Error creating backup:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  electron.ipcMain.handle("save-file-dialog", async (event, options = {}) => {
+    try {
+      const result = await electron.dialog.showSaveDialog({
+        title: options.title || "Save File",
+        defaultPath: options.defaultPath,
+        filters: options.filters || [
+          { name: "All Files", extensions: ["*"] }
+        ]
+      });
+      return {
+        success: !result.canceled,
+        filePath: result.filePath || null,
+        canceled: result.canceled
+      };
+    } catch (error) {
+      console.error("Error showing save dialog:", error);
+      return { success: false, error: error.message, canceled: true };
     }
   });
 }

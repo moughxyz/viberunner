@@ -96,31 +96,49 @@ const App: React.FC = () => {
     // Handle file drops
     const handleFileDrop = async (filePath: string) => {
       try {
+        // Use the enhanced matching system
+        const matchingResult = await window.api.findMatchingVisualizers(filePath);
+
+        if (!matchingResult.success) {
+          console.error('Error finding matching visualizers:', matchingResult.error);
+          alert(`Error analyzing file: ${matchingResult.error}`);
+          return;
+        }
+
         const fileData = await window.api.handleFileDrop(filePath);
+        const matches = matchingResult.matches;
 
-        // Find all appropriate visualizers
-        const matchingVisualizers = visualizers.filter(viz =>
-          viz.mimetypes.includes(fileData.mimetype)
-        );
+        console.log('Enhanced matching results:', {
+          fileAnalysis: matchingResult.fileAnalysis,
+          matches: matches.map(m => ({
+            name: m.visualizer.name,
+            priority: m.priority
+          }))
+        });
 
-        if (matchingVisualizers.length === 0) {
+        if (matches.length === 0) {
           // Handle no visualizer found
-          console.log('No visualizer found for mimetype:', fileData.mimetype);
-          alert(`No visualizer found for file type: ${fileData.mimetype}`);
-        } else if (matchingVisualizers.length === 1) {
+          console.log('No visualizer found for file:', filePath);
+          const analysis = matchingResult.fileAnalysis;
+          alert(`No visualizer found for this file.\n\nFile: ${analysis.filename}\nType: ${analysis.mimetype}\nSize: ${(analysis.size / 1024).toFixed(1)} KB`);
+        } else if (matches.length === 1) {
           // Only one visualizer, use it directly
-          setCurrentVisualizer(matchingVisualizers[0]);
+          setCurrentVisualizer(matches[0].visualizer);
           setCurrentFile(fileData);
           setShowVisualizerSelection(false);
         } else {
-          // Multiple visualizers, show selection
+          // Multiple visualizers, show selection with priority info
           setCurrentFile(fileData);
-          setAvailableVisualizers(matchingVisualizers);
+          setAvailableVisualizers(matches.map(m => ({
+            ...m.visualizer,
+            matchPriority: m.priority
+          })));
           setShowVisualizerSelection(true);
           setCurrentVisualizer(null);
         }
       } catch (error) {
         console.error('Error handling file drop:', error);
+        alert(`Error handling file: ${error}`);
       }
     };
 

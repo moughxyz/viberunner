@@ -14,6 +14,48 @@ let selectedVisualizersDir: string | null = null;
 // Constants
 const VISUALIZERS_DIR = path.join(app.getPath('userData'), 'visualizers');
 
+// Enhanced matcher types
+interface FileMatcher {
+  type: 'mimetype' | 'filename' | 'path-pattern' | 'content-json' | 'content-regex' | 'file-size' | 'combined';
+  priority: number;
+
+  // Type-specific properties
+  mimetype?: string;
+  pattern?: string;
+  requiredProperties?: string[];
+  regex?: string;
+  minSize?: number;
+  maxSize?: number;
+
+  // For combined matchers
+  conditions?: FileMatcher[];
+  operator?: 'AND' | 'OR';
+}
+
+interface VisualizerConfig {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+
+  // Enhanced matching
+  matchers?: FileMatcher[];
+
+  // Legacy support
+  mimetypes?: string[];
+}
+
+interface FileAnalysis {
+  path: string;
+  filename: string;
+  mimetype: string;
+  content: string;
+  size: number;
+  isJson?: boolean;
+  jsonContent?: any;
+}
+
 // Helper functions
 async function getMimetype(filePath: string): Promise<string> {
   // Check if it's a directory first
@@ -30,7 +72,148 @@ async function getMimetype(filePath: string): Promise<string> {
   return mimetype || 'application/octet-stream';
 }
 
-async function loadVisualizers(): Promise<any[]> {
+// Enhanced file analysis
+async function analyzeFile(filePath: string): Promise<FileAnalysis> {
+  const stats = fs.statSync(filePath);
+  const filename = path.basename(filePath);
+  const mimetype = await getMimetype(filePath);
+
+  let content = '';
+  let isJson = false;
+  let jsonContent = null;
+
+  // Only read content for non-directories and reasonably sized files
+  if (!stats.isDirectory() && stats.size < 10 * 1024 * 1024) { // < 10MB
+    try {
+      content = fs.readFileSync(filePath, 'utf-8');
+
+      // Try to parse as JSON
+      if (mimetype === 'application/json' || filename.endsWith('.json')) {
+        try {
+          jsonContent = JSON.parse(content);
+          isJson = true;
+        } catch {
+          // Not valid JSON, that's fine
+        }
+      }
+    } catch {
+      // File might be binary or unreadable, that's fine
+    }
+  }
+
+  return {
+    path: filePath,
+    filename,
+    mimetype,
+    content,
+    size: stats.size,
+    isJson,
+    jsonContent
+  };
+}
+
+// Enhanced matcher evaluation
+function evaluateMatcher(matcher: FileMatcher, fileAnalysis: FileAnalysis): boolean {
+  switch (matcher.type) {
+    case 'mimetype':
+      return matcher.mimetype === fileAnalysis.mimetype;
+
+    case 'filename':
+      if (matcher.pattern) {
+        // Support exact match or glob pattern
+        if (matcher.pattern.includes('*') || matcher.pattern.includes('?')) {
+          // Simple glob pattern matching
+          const regexPattern = matcher.pattern
+            .replace(/\*/g, '.*')
+            .replace(/\?/g, '.');
+          return new RegExp(`^${regexPattern}$`).test(fileAnalysis.filename);
+        } else {
+          // Exact match
+          return matcher.pattern === fileAnalysis.filename;
+        }
+      }
+      return false;
+
+    case 'path-pattern':
+      if (matcher.pattern) {
+        const regexPattern = matcher.pattern
+          .replace(/\*\*/g, '.*')
+          .replace(/\*/g, '[^/]*')
+          .replace(/\?/g, '.');
+        return new RegExp(`^${regexPattern}$`).test(fileAnalysis.path);
+      }
+      return false;
+
+    case 'content-json':
+      if (!fileAnalysis.isJson || !fileAnalysis.jsonContent) return false;
+      if (matcher.requiredProperties) {
+        return matcher.requiredProperties.every(prop =>
+          fileAnalysis.jsonContent && fileAnalysis.jsonContent[prop] !== undefined
+        );
+      }
+      return true;
+
+    case 'content-regex':
+      if (matcher.regex) {
+        try {
+          return new RegExp(matcher.regex).test(fileAnalysis.content);
+        } catch {
+          return false;
+        }
+      }
+      return false;
+
+    case 'file-size':
+      const size = fileAnalysis.size;
+      if (matcher.minSize !== undefined && size < matcher.minSize) return false;
+      if (matcher.maxSize !== undefined && size > matcher.maxSize) return false;
+      return true;
+
+    case 'combined':
+      if (!matcher.conditions) return false;
+      const results = matcher.conditions.map(condition => evaluateMatcher(condition, fileAnalysis));
+      return matcher.operator === 'OR'
+        ? results.some(Boolean)
+        : results.every(Boolean);
+
+    default:
+      return false;
+  }
+}
+
+// Find matching visualizers with enhanced criteria
+function findMatchingVisualizers(visualizers: VisualizerConfig[], fileAnalysis: FileAnalysis): Array<{visualizer: VisualizerConfig, priority: number}> {
+  const matches: Array<{visualizer: VisualizerConfig, priority: number}> = [];
+
+  for (const visualizer of visualizers) {
+    let bestPriority = -1;
+
+    // Check enhanced matchers first
+    if (visualizer.matchers) {
+      for (const matcher of visualizer.matchers) {
+        if (evaluateMatcher(matcher, fileAnalysis)) {
+          bestPriority = Math.max(bestPriority, matcher.priority);
+        }
+      }
+    }
+
+    // Fallback to legacy mimetype matching
+    if (bestPriority === -1 && visualizer.mimetypes) {
+      if (visualizer.mimetypes.includes(fileAnalysis.mimetype)) {
+        bestPriority = 50; // Default priority for legacy matchers
+      }
+    }
+
+    if (bestPriority > -1) {
+      matches.push({ visualizer, priority: bestPriority });
+    }
+  }
+
+  // Sort by priority (highest first)
+  return matches.sort((a, b) => b.priority - a.priority);
+}
+
+async function loadVisualizers(): Promise<VisualizerConfig[]> {
   console.log('loadVisualizers: Starting to load visualizers from:', VISUALIZERS_DIR);
 
   if (!fs.existsSync(VISUALIZERS_DIR)) {
@@ -67,13 +250,12 @@ async function loadVisualizers(): Promise<any[]> {
         const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
         console.log(`loadVisualizers: Metadata content for ${dir}:`, metadataContent);
 
-        const metadata = JSON.parse(metadataContent);
+        const metadata = JSON.parse(metadataContent) as VisualizerConfig;
         console.log(`loadVisualizers: Parsed metadata for ${dir}:`, metadata);
 
-        const result = {
-          id: dir,
+        const result: VisualizerConfig = {
           ...metadata,
-          path: vizPath
+          id: dir,
         };
         console.log(`loadVisualizers: Final visualizer object for ${dir}:`, result);
         return result;
@@ -82,7 +264,7 @@ async function loadVisualizers(): Promise<any[]> {
         return null;
       }
     })
-    .filter(Boolean);
+    .filter(Boolean) as VisualizerConfig[];
 
     console.log('loadVisualizers: Final visualizers array:', visualizers);
     return visualizers;
@@ -419,24 +601,29 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('handle-file-drop', async (event, filePath: string) => {
-    const mimetype = await getMimetype(filePath);
+    const fileAnalysis = await analyzeFile(filePath);
 
-    // Check if the path is a directory
-    const stats = fs.statSync(filePath);
-    if (stats.isDirectory()) {
-      // For directories, don't try to read content as binary
+    // For directories, don't try to read content as binary
+    if (fileAnalysis.mimetype === 'inode/directory') {
       return {
         path: filePath,
-        mimetype,
-        content: '' // Empty content for directories
+        mimetype: fileAnalysis.mimetype,
+        content: '', // Empty content for directories
+        analysis: fileAnalysis
       };
     } else {
-      // For files, read the content as base64
-      const content = fs.readFileSync(filePath);
+      // For files, read the content as base64 if it hasn't been read yet
+      let content = fileAnalysis.content;
+      if (!content && fs.existsSync(filePath)) {
+        const binaryContent = fs.readFileSync(filePath);
+        content = binaryContent.toString('base64');
+      }
+
       return {
         path: filePath,
-        mimetype,
-        content: content.toString('base64')
+        mimetype: fileAnalysis.mimetype,
+        content,
+        analysis: fileAnalysis
       };
     }
   });
@@ -519,6 +706,104 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error('Error reading directory:', error);
       return { success: false, error: (error as Error).message, files: [] };
+    }
+  });
+
+  // New enhanced visualizer matching endpoint
+  ipcMain.handle('find-matching-visualizers', async (event, filePath: string) => {
+    try {
+      const visualizers = await loadVisualizers();
+      const fileAnalysis = await analyzeFile(filePath);
+      const matches = findMatchingVisualizers(visualizers, fileAnalysis);
+
+      return {
+        success: true,
+        matches: matches.map(m => ({
+          visualizer: m.visualizer,
+          priority: m.priority,
+          matchReasons: [] // Could add detailed match reasons here
+        })),
+        fileAnalysis
+      };
+    } catch (error) {
+      console.error('Error finding matching visualizers:', error);
+      return {
+        success: false,
+        error: (error as Error).message,
+        matches: [],
+        fileAnalysis: null
+      };
+    }
+  });
+
+  // File writing and backup operations for visualizers
+  ipcMain.handle('write-file', async (event, filePath: string, content: string, encoding: 'utf8' | 'base64' = 'utf8') => {
+    try {
+      // Validate file path for security
+      if (!filePath || filePath.includes('..')) {
+        throw new Error('Invalid file path');
+      }
+
+      if (encoding === 'base64') {
+        const buffer = Buffer.from(content, 'base64');
+        fs.writeFileSync(filePath, buffer);
+      } else {
+        fs.writeFileSync(filePath, content, 'utf8');
+      }
+
+      console.log(`File written successfully: ${filePath}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error writing file:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  ipcMain.handle('backup-file', async (event, filePath: string) => {
+    try {
+      // Validate file path for security
+      if (!filePath || filePath.includes('..')) {
+        throw new Error('Invalid file path');
+      }
+
+      if (!fs.existsSync(filePath)) {
+        throw new Error('File does not exist');
+      }
+
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupPath = `${filePath}.backup.${timestamp}`;
+      fs.copyFileSync(filePath, backupPath);
+
+      console.log(`Backup created: ${backupPath}`);
+      return { success: true, backupPath };
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  ipcMain.handle('save-file-dialog', async (event, options: {
+    title?: string;
+    defaultPath?: string;
+    filters?: Array<{ name: string; extensions: string[] }>
+  } = {}) => {
+    try {
+      const result = await dialog.showSaveDialog({
+        title: options.title || 'Save File',
+        defaultPath: options.defaultPath,
+        filters: options.filters || [
+          { name: 'All Files', extensions: ['*'] }
+        ]
+      });
+
+      return {
+        success: !result.canceled,
+        filePath: result.filePath || null,
+        canceled: result.canceled
+      };
+    } catch (error) {
+      console.error('Error showing save dialog:', error);
+      return { success: false, error: (error as Error).message, canceled: true };
     }
   });
 }
