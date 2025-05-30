@@ -233,7 +233,10 @@ const App: React.FC = () => {
 
   const launchStandaloneVisualizer = async (visualizer: Visualizer) => {
     try {
+      console.log('Launching standalone visualizer:', visualizer.name, visualizer.id);
+
       const visualizerData = await api.launchStandaloneVisualizer(visualizer.id);
+      console.log('Visualizer data received:', visualizerData);
 
       // Set up standalone visualizer (no file data)
       setCurrentVisualizer(visualizer);
@@ -244,6 +247,8 @@ const App: React.FC = () => {
       if (visualizerRootRef.current) {
         visualizerRootRef.current.innerHTML = '';
       }
+
+      console.log('Creating script element...');
 
       // Create a new script element with the bundle content
       const script = document.createElement('script');
@@ -256,8 +261,11 @@ const App: React.FC = () => {
         container: visualizerRootRef.current
       };
 
+      console.log('Setting up __LOAD_VISUALIZER__ function...');
+
       // When the script loads, it will call this function
       (window as any).__LOAD_VISUALIZER__ = (VisualizerComponent: any) => {
+        console.log('__LOAD_VISUALIZER__ called with component:', VisualizerComponent);
         if (visualizerRootRef.current) {
           const root = document.createElement('div');
           visualizerRootRef.current.appendChild(root);
@@ -267,11 +275,14 @@ const App: React.FC = () => {
           reactRoot.render(
             React.createElement(VisualizerComponent, props)
           );
+          console.log('Standalone visualizer rendered successfully');
         }
       };
 
+      console.log('Adding script to document...');
       // Add the script to the document
       document.head.appendChild(script);
+
     } catch (error) {
       console.error('Failed to launch standalone visualizer:', error);
       alert(`Failed to launch ${visualizer.name}: ${error}`);
