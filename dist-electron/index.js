@@ -11864,7 +11864,13 @@ function evaluateMatcher(matcher, fileAnalysis) {
       return false;
     case "filename-contains":
       if (matcher.substring) {
-        return fileAnalysis.filename.toLowerCase().includes(matcher.substring.toLowerCase());
+        const hasSubstring = fileAnalysis.filename.toLowerCase().includes(matcher.substring.toLowerCase());
+        if (matcher.extension) {
+          const fileExtension = path.extname(fileAnalysis.filename).toLowerCase();
+          const targetExtension = matcher.extension.startsWith(".") ? matcher.extension.toLowerCase() : `.${matcher.extension.toLowerCase()}`;
+          return hasSubstring && fileExtension === targetExtension;
+        }
+        return hasSubstring;
       }
       return false;
     case "path-pattern":

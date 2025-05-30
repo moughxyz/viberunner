@@ -23,6 +23,7 @@ interface FileMatcher {
   mimetype?: string;
   pattern?: string;
   substring?: string; // For filename-contains matcher
+  extension?: string; // Optional extension filter for filename-contains matcher
   requiredProperties?: string[];
   regex?: string;
   minSize?: number;
@@ -138,7 +139,18 @@ function evaluateMatcher(matcher: FileMatcher, fileAnalysis: FileAnalysis): bool
     case 'filename-contains':
       if (matcher.substring) {
         // Case-insensitive substring matching
-        return fileAnalysis.filename.toLowerCase().includes(matcher.substring.toLowerCase());
+        const hasSubstring = fileAnalysis.filename.toLowerCase().includes(matcher.substring.toLowerCase());
+
+        // If extension is specified, also check that
+        if (matcher.extension) {
+          const fileExtension = path.extname(fileAnalysis.filename).toLowerCase();
+          const targetExtension = matcher.extension.startsWith('.')
+            ? matcher.extension.toLowerCase()
+            : `.${matcher.extension.toLowerCase()}`;
+          return hasSubstring && fileExtension === targetExtension;
+        }
+
+        return hasSubstring;
       }
       return false;
 

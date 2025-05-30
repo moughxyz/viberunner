@@ -108,9 +108,24 @@ The new matching system supports multiple criteria types with priority-based sel
 ```
 - **Substring matching**: Matches if filename contains the specified text
 - **Case insensitive**: `"kanban"` matches `"Kanban"`, `"KANBAN"`, etc.
+- **Optional extension filter**: Add `"extension"` to also check file extension
 - **Examples**:
   - `"kanban"` matches: `foo-kanban.txt`, `my-kanban-board.json`, `kanban-data.csv`
   - `"config"` matches: `app.config.js`, `webpack-config.dev.js`, `my-config.yaml`
+
+```json
+{
+  "type": "filename-contains",
+  "substring": "kanban",
+  "extension": "txt",
+  "priority": 85
+}
+```
+- **With extension**: Only matches files containing "kanban" AND having `.txt` extension
+- **Extension formats**: Use `"txt"` or `".txt"` (both work the same)
+- **Examples**:
+  - ✅ Matches: `team-kanban.txt`, `my-kanban-board.txt`
+  - ❌ Doesn't match: `team-kanban.json`, `kanban-data.csv`
 
 #### 3. **Path Pattern Matching**
 ```json
@@ -478,6 +493,7 @@ This creates `dist/bundle.iife.js` that Vizor can load.
       "mimetype": "string (for mimetype)",
       "pattern": "string (for filename/path-pattern)",
       "substring": "string (for filename-contains)",
+      "extension": "string (optional, for filename-contains)",
       "requiredProperties": ["string"] // (for content-json)
       "regex": "string (for content-regex)",
       "minSize": "number (for file-size)",
@@ -737,17 +753,24 @@ const MyVisualizer: React.FC<VisualizerProps> = ({ fileData }) => {
     {
       "type": "filename-contains",
       "substring": "kanban",
+      "extension": "txt",
+      "priority": 90
+    },
+    {
+      "type": "filename-contains",
+      "substring": "kanban",
+      "extension": "json",
       "priority": 85
     },
     {
       "type": "filename-contains",
       "substring": "board",
-      "priority": 80
+      "priority": 75
     },
     {
       "type": "combined",
       "operator": "AND",
-      "priority": 90,
+      "priority": 80,
       "conditions": [
         {
           "type": "filename-contains",
@@ -765,10 +788,12 @@ const MyVisualizer: React.FC<VisualizerProps> = ({ fileData }) => {
 }
 ```
 This will match files like:
-- `team-kanban.txt` (substring: "kanban")
-- `project-board.json` (substring: "board")
-- `my-project-data.json` (combined: contains "project" AND is JSON)
-- `foo-kanban-board.csv` (would match both "kanban" and "board", highest priority wins)
+- `team-kanban.txt` ✅ (substring: "kanban", extension: ".txt", priority: 90)
+- `my-kanban-data.json` ✅ (substring: "kanban", extension: ".json", priority: 85)
+- `project-board.csv` ✅ (substring: "board", priority: 75)
+- `team-kanban.csv` ❌ (contains "kanban" but wrong extension, doesn't contain "board")
+- `my-project-data.json` ✅ (combined: contains "project" AND is JSON, priority: 80)
+- `random-file.txt` ❌ (no matching substring)
 
 ## 🔧 Build & Distribution
 
