@@ -1118,11 +1118,12 @@ const App: React.FC = () => {
           {showFrameSelection ? (
             <div className="vf-frame-selection">
               <div className="selection-header">
-                <h2 className="selection-title">Choose app</h2>
+                <h2 className="selection-title">Choose an app</h2>
                 <p className="selection-subtitle">
-                  Multiple apps available for <span className="filename">{pendingFileInput?.path.split('/').pop()}</span>
+                  Multiple apps can handle this file type. Choose one to continue:
                 </p>
                 <div className="file-meta">
+                  <span className="filename">{path.basename(pendingFileInput?.path || '')}</span>
                   <span className="file-type">{pendingFileInput?.mimetype}</span>
                 </div>
               </div>
@@ -1169,206 +1170,206 @@ const App: React.FC = () => {
                 </button>
               </div>
             </div>
-          ) : (
-            <div className="frame-viewport-container">
-              {/* Always render frame viewport for tab containers */}
-              <div ref={frameRootRef} className="frame-viewport" />
+          ) : null}
 
-              {/* Unified new tab interface when active tab is new tab */}
-              {activeTab?.type === 'newtab' && (
-                <div className="vf-new-tab-unified">
-                  <div className="unified-content">
-                    {/* Show only directory setup if no frames directory is properly configured */}
-                    {!framesDirectory || framesDirectory === 'Not set' || frames.length === 0 ? (
-                      <div className="directory-setup-only">
-                        <div className="setup-header">
-                          <div className="setup-icon">📁</div>
-                          <h2 className="setup-title">Set up your apps directory</h2>
-                          <p className="setup-description">
-                            Choose a directory containing your visualization apps to get started.
-                          </p>
-                        </div>
+          <div className="frame-viewport-container">
+            {/* Always render frame viewport for tab containers */}
+            <div ref={frameRootRef} className="frame-viewport" />
 
-                        <div className="directory-card">
-                          <div className="directory-info">
-                            <h4 className="directory-label">Current Directory</h4>
-                            <div className="directory-path">
-                              {framesDirectory || 'No directory selected'}
-                            </div>
-                          </div>
-                          <div className="directory-actions">
-                            <button
-                              className="btn btn-primary"
-                              onClick={handleChangeFramesDirectory}
-                            >
-                              <span className="btn-icon">📁</span>
-                              Choose Directory
-                            </button>
-                            {framesDirectory && framesDirectory !== 'Not set' && (
-                              <button
-                                className="btn btn-outline"
-                                onClick={handleReloadFrames}
-                                disabled={isLoadingFrames}
-                              >
-                                <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
-                                Reload
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {framesDirectory && framesDirectory !== 'Not set' && frames.length === 0 && (
-                          <div className="setup-hint">
-                            <p>No visualization apps found in this directory.</p>
-                            <p>Make sure your directory contains properly configured apps with viz.json files.</p>
-                          </div>
-                        )}
+            {/* Unified new tab interface when active tab is new tab */}
+            {activeTab?.type === 'newtab' && !showFrameSelection && (
+              <div className="vf-new-tab-unified">
+                <div className="unified-content">
+                  {/* Show only directory setup if no frames directory is properly configured */}
+                  {!framesDirectory || framesDirectory === 'Not set' || frames.length === 0 ? (
+                    <div className="directory-setup-only">
+                      <div className="setup-header">
+                        <div className="setup-icon">📁</div>
+                        <h2 className="setup-title">Set up your apps directory</h2>
+                        <p className="setup-description">
+                          Choose a directory containing your visualization apps to get started.
+                        </p>
                       </div>
-                    ) : (
-                      <>
-                        {/* Main drop zone section */}
-                        <div className="drop-zone-section">
-                          <div className="drop-zone">
-                            <div className="drop-zone-content">
-                              <div className="drop-zone-icon">📂</div>
-                              <h3 className="drop-zone-title">Drop files to visualize</h3>
-                              <p className="drop-zone-description">
-                                Supports documents, images, data files, and more
-                              </p>
-                              <div className="drop-zone-formats">
-                                <span className="format-tag">JSON</span>
-                                <span className="format-tag">Images</span>
-                                <span className="format-tag">CSV</span>
-                                <span className="format-tag">Text</span>
-                              </div>
+
+                      <div className="directory-card">
+                        <div className="directory-info">
+                          <h4 className="directory-label">Current Directory</h4>
+                          <div className="directory-path">
+                            {framesDirectory || 'No directory selected'}
+                          </div>
+                        </div>
+                        <div className="directory-actions">
+                          <button
+                            className="btn btn-primary"
+                            onClick={handleChangeFramesDirectory}
+                          >
+                            <span className="btn-icon">📁</span>
+                            Choose Directory
+                          </button>
+                          {framesDirectory && framesDirectory !== 'Not set' && (
+                            <button
+                              className="btn btn-outline"
+                              onClick={handleReloadFrames}
+                              disabled={isLoadingFrames}
+                            >
+                              <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
+                              Reload
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {framesDirectory && framesDirectory !== 'Not set' && frames.length === 0 && (
+                        <div className="setup-hint">
+                          <p>No visualization apps found in this directory.</p>
+                          <p>Make sure your directory contains properly configured apps with viz.json files.</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Main drop zone section */}
+                      <div className="drop-zone-section">
+                        <div className="drop-zone">
+                          <div className="drop-zone-content">
+                            <div className="drop-zone-icon">📂</div>
+                            <h3 className="drop-zone-title">Drop files to visualize</h3>
+                            <p className="drop-zone-description">
+                              Supports documents, images, data files, and more
+                            </p>
+                            <div className="drop-zone-formats">
+                              <span className="format-tag">JSON</span>
+                              <span className="format-tag">Images</span>
+                              <span className="format-tag">CSV</span>
+                              <span className="format-tag">Text</span>
                             </div>
                           </div>
                         </div>
+                      </div>
 
-                        {/* Divider */}
-                        <div className="section-divider"></div>
+                      {/* Divider */}
+                      <div className="section-divider"></div>
 
-                        {/* Standalone frames section */}
-                        {frames.filter(f => f.standalone).length > 0 && (
-                          <div className="utilities-section">
-                            <div className="section-card">
-                              <div className="section-header">
-                                <h4 className="section-title">
-                                  <span className="section-icon">⚡</span>
-                                  Standalone Apps
-                                </h4>
-                                <span className="section-count">{frames.filter(f => f.standalone).length}</span>
-                              </div>
-                              <div className="utilities-grid">
-                                {frames.filter(f => f.standalone).map(frame => (
-                                  <button
-                                    key={frame.id}
-                                    className="utility-card"
-                                    onClick={() => launchStandaloneFrame(frame)}
-                                  >
-                                    <div className="utility-icon">
-                                      <img
-                                        src={getAppIcon(frame)}
-                                        alt={frame.name}
-                                        style={{ width: '24px', height: '24px', objectFit: 'contain' }}
-                                      />
-                                    </div>
-                                    <div className="utility-content">
-                                      <h5 className="utility-title">{frame.name}</h5>
-                                      <p className="utility-description">{frame.description}</p>
-                                    </div>
-                                    <div className="utility-action">Launch</div>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Directory controls section */}
-                        <div className="controls-section">
+                      {/* Standalone frames section */}
+                      {frames.filter(f => f.standalone).length > 0 && (
+                        <div className="utilities-section">
                           <div className="section-card">
                             <div className="section-header">
                               <h4 className="section-title">
-                                <span className="section-icon">🔧</span>
-                                Directory
+                                <span className="section-icon">⚡</span>
+                                Standalone Apps
                               </h4>
+                              <span className="section-count">{frames.filter(f => f.standalone).length}</span>
                             </div>
-                            <div className="directory-path">
-                              {framesDirectory}
-                            </div>
-                            <div className="section-actions">
-                              <button
-                                className="btn btn-outline btn-sm"
-                                onClick={handleChangeFramesDirectory}
-                              >
-                                <span className="btn-icon">📁</span>
-                                Change
-                              </button>
-                              <button
-                                className="btn btn-outline btn-sm"
-                                onClick={handleReloadFrames}
-                                disabled={isLoadingFrames}
-                              >
-                                <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
-                                Reload
-                              </button>
+                            <div className="utilities-grid">
+                              {frames.filter(f => f.standalone).map(frame => (
+                                <button
+                                  key={frame.id}
+                                  className="utility-card"
+                                  onClick={() => launchStandaloneFrame(frame)}
+                                >
+                                  <div className="utility-icon">
+                                    <img
+                                      src={getAppIcon(frame)}
+                                      alt={frame.name}
+                                      style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+                                    />
+                                  </div>
+                                  <div className="utility-content">
+                                    <h5 className="utility-title">{frame.name}</h5>
+                                    <p className="utility-description">{frame.description}</p>
+                                  </div>
+                                  <div className="utility-action">Launch</div>
+                                </button>
+                              ))}
                             </div>
                           </div>
                         </div>
+                      )}
 
-                        {/* File-based frames section - collapsible */}
-                        {frames.filter(f => !f.standalone).length > 0 && (
-                          <div className="frames-section">
-                            <div className="section-card">
-                              <div className="section-header">
-                                <button
-                                  className="section-header-button"
-                                  onClick={() => setShowFileFrames(!showFileFrames)}
-                                >
-                                  <h4 className="section-title">
-                                    <span className="section-icon">🎨</span>
-                                    File Apps
-                                  </h4>
-                                  <div className="section-meta">
-                                    <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
-                                    <span className="section-toggle">{showFileFrames ? '▼' : '▶'}</span>
-                                  </div>
-                                </button>
-                              </div>
-                              {showFileFrames && (
-                                isLoadingFrames ? (
-                                  <div className="loading-state">
-                                    <span className="loading-spinner">⟳</span>
-                                    Loading apps...
-                                  </div>
-                                ) : (
-                                  <div className="frames-grid">
-                                    {frames.filter(f => !f.standalone).map(frame => (
-                                      <div key={frame.id} className="frame-info-card">
-                                        <div className="frame-info-header">
-                                          <h5 className="frame-info-title">{frame.name}</h5>
-                                          <div className="frame-info-status">
-                                            <span className="status-dot"></span>
-                                          </div>
-                                        </div>
-                                        <p className="frame-info-description">{frame.description}</p>
-                                        <div className="frame-info-formats">
-                                          {getSupportedFormats(frame)}
+                      {/* Directory controls section */}
+                      <div className="controls-section">
+                        <div className="section-card">
+                          <div className="section-header">
+                            <h4 className="section-title">
+                              <span className="section-icon">🔧</span>
+                              Directory
+                            </h4>
+                          </div>
+                          <div className="directory-path">
+                            {framesDirectory}
+                          </div>
+                          <div className="section-actions">
+                            <button
+                              className="btn btn-outline btn-sm"
+                              onClick={handleChangeFramesDirectory}
+                            >
+                              <span className="btn-icon">📁</span>
+                              Change
+                            </button>
+                            <button
+                              className="btn btn-outline btn-sm"
+                              onClick={handleReloadFrames}
+                              disabled={isLoadingFrames}
+                            >
+                              <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
+                              Reload
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* File-based frames section - collapsible */}
+                      {frames.filter(f => !f.standalone).length > 0 && (
+                        <div className="frames-section">
+                          <div className="section-card">
+                            <div className="section-header">
+                              <button
+                                className="section-header-button"
+                                onClick={() => setShowFileFrames(!showFileFrames)}
+                              >
+                                <h4 className="section-title">
+                                  <span className="section-icon">🎨</span>
+                                  File Apps
+                                </h4>
+                                <div className="section-meta">
+                                  <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
+                                  <span className="section-toggle">{showFileFrames ? '▼' : '▶'}</span>
+                                </div>
+                              </button>
+                            </div>
+                            {showFileFrames && (
+                              isLoadingFrames ? (
+                                <div className="loading-state">
+                                  <span className="loading-spinner">⟳</span>
+                                  Loading apps...
+                                </div>
+                              ) : (
+                                <div className="frames-grid">
+                                  {frames.filter(f => !f.standalone).map(frame => (
+                                    <div key={frame.id} className="frame-info-card">
+                                      <div className="frame-info-header">
+                                        <h5 className="frame-info-title">{frame.name}</h5>
+                                        <div className="frame-info-status">
+                                          <span className="status-dot"></span>
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
-                                )
-                              )}
-                            </div>
+                                      <p className="frame-info-description">{frame.description}</p>
+                                      <div className="frame-info-formats">
+                                        {getSupportedFormats(frame)}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )
+                            )}
                           </div>
-                        )}
-                      </>
-                    )}
-                  </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </main>
