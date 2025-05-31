@@ -11903,6 +11903,7 @@ function registerIpcHandlers() {
   require$$3.ipcMain.removeAllListeners("backup-file");
   require$$3.ipcMain.removeAllListeners("save-file-dialog");
   require$$3.ipcMain.removeAllListeners("launch-standalone-app");
+  require$$3.ipcMain.removeAllListeners("get-app-icon");
   console.log("Registering IPC handlers...");
   require$$3.ipcMain.handle("get-apps", async () => {
     try {
@@ -12140,6 +12141,30 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error("Error launching standalone app:", error);
       throw error;
+    }
+  });
+  require$$3.ipcMain.handle("get-app-icon", async (event, appId, iconPath) => {
+    try {
+      if (!appId || !iconPath || iconPath.includes("..")) {
+        throw new Error("Invalid app ID or icon path");
+      }
+      const APPS_DIR2 = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+      const appDir = path.join(APPS_DIR2, appId);
+      const fullIconPath = path.join(appDir, iconPath);
+      if (!fullIconPath.startsWith(appDir)) {
+        throw new Error("Icon path must be within app directory");
+      }
+      if (!fs.existsSync(fullIconPath)) {
+        throw new Error(`Icon file not found: ${iconPath}`);
+      }
+      const iconBuffer = fs.readFileSync(fullIconPath);
+      const mimeType = mime.lookup(fullIconPath) || "application/octet-stream";
+      const iconData = `data:${mimeType};base64,${iconBuffer.toString("base64")}`;
+      console.log(`Icon loaded successfully for app ${appId}: ${iconPath}`);
+      return { success: true, iconData };
+    } catch (error) {
+      console.error("Error loading app icon:", error);
+      return { success: false, error: error.message };
     }
   });
   console.log("All IPC handlers registered successfully");

@@ -54,6 +54,9 @@ interface AppConfig {
 
   // Standalone apps (no file input required)
   standalone?: boolean;
+
+  // Custom icon (relative path to icon file in app directory)
+  icon?: string;
 }
 
 interface FileAnalysis {
@@ -601,6 +604,7 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('backup-file');
   ipcMain.removeAllListeners('save-file-dialog');
   ipcMain.removeAllListeners('launch-standalone-app');
+  ipcMain.removeAllListeners('get-app-icon');
 
   console.log('Registering IPC handlers...');
 
@@ -888,6 +892,40 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error('Error launching standalone app:', error);
       throw error;
+    }
+  });
+
+  // Load app icon from app directory
+  ipcMain.handle('get-app-icon', async (event, appId: string, iconPath: string) => {
+    try {
+      // Validate inputs for security
+      if (!appId || !iconPath || iconPath.includes('..')) {
+        throw new Error('Invalid app ID or icon path');
+      }
+
+      const APPS_DIR = selectedAppsDir || path.join(app.getPath('userData'), 'apps');
+      const appDir = path.join(APPS_DIR, appId);
+      const fullIconPath = path.join(appDir, iconPath);
+
+      // Ensure the icon path is within the app directory
+      if (!fullIconPath.startsWith(appDir)) {
+        throw new Error('Icon path must be within app directory');
+      }
+
+      if (!fs.existsSync(fullIconPath)) {
+        throw new Error(`Icon file not found: ${iconPath}`);
+      }
+
+      // Read the icon file as base64
+      const iconBuffer = fs.readFileSync(fullIconPath);
+      const mimeType = mime.lookup(fullIconPath) || 'application/octet-stream';
+      const iconData = `data:${mimeType};base64,${iconBuffer.toString('base64')}`;
+
+      console.log(`Icon loaded successfully for app ${appId}: ${iconPath}`);
+      return { success: true, iconData };
+    } catch (error) {
+      console.error('Error loading app icon:', error);
+      return { success: false, error: (error as Error).message };
     }
   });
 

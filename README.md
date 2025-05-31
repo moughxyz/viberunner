@@ -20,13 +20,76 @@ Viberunner is a powerful Electron-based platform that allows developers to creat
 4. [Enhanced Matching System](#-enhanced-matching-system)
 5. [Creating Your First Visualizer](#-creating-your-first-visualizer)
 6. [Configuration Reference](#-configuration-reference)
-7. [Component Development](#-component-development)
-8. [File Analysis & APIs](#-file-analysis--apis)
-9. [Advanced Examples](#-advanced-examples)
-10. [Build & Distribution](#-build--distribution)
-11. [Best Practices](#-best-practices)
-12. [Troubleshooting](#-troubleshooting)
-13. [Frame Cleanup API](#frame-cleanup-api)
+7. [Custom App Icons](#-custom-app-icons)
+8. [Component Development](#-component-development)
+9. [File Analysis & APIs](#-file-analysis--apis)
+10. [Advanced Examples](#-advanced-examples)
+11. [Build & Distribution](#-build--distribution)
+12. [Best Practices](#-best-practices)
+13. [Troubleshooting](#-troubleshooting)
+14. [Frame Cleanup API](#frame-cleanup-api)
+
+## 🎨 Custom App Icons
+
+Viberunner supports custom icons for your visualizers, making them easily recognizable in the launcher and tabs.
+
+### Adding Icons to Your Visualizer
+
+1. **Add an icon file** to your visualizer directory (PNG, SVG, JPG, etc.)
+2. **Reference it in viz.json** using the `icon` field with a relative path
+
+### Example Configuration
+
+```json
+{
+  "name": "JSON Formatter",
+  "description": "Pretty print and validate JSON files",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "icon": "icon.png",
+  "matchers": [
+    {
+      "type": "mimetype",
+      "mimetype": "application/json",
+      "priority": 60
+    }
+  ]
+}
+```
+
+### File Structure with Icon
+
+```
+my-json-formatter/
+├── viz.json              # Visualizer configuration
+├── icon.png              # Custom icon (32x32 recommended)
+├── package.json          # NPM dependencies
+├── src/
+│   └── App.tsx           # Main React component
+└── dist/
+    └── bundle.iife.js    # Built output
+```
+
+### Icon Guidelines
+
+- **Recommended size**: 32x32 pixels (will be scaled automatically)
+- **Supported formats**: PNG, SVG, JPG, GIF, WebP
+- **File location**: Must be within your visualizer directory
+- **Path**: Relative to your visualizer root (e.g., `"icon.png"`, `"assets/icon.svg"`)
+
+### Where Icons Appear
+
+Custom icons are displayed in:
+- **Launcher**: Standalone app cards and file app listings
+- **Tabs**: Tab icons for opened visualizers
+- **App Selection**: When multiple apps match a file
+
+### Fallback Behavior
+
+If no custom icon is provided, Viberunner uses emoji fallbacks:
+- **Standalone apps**: ⚡ (lightning bolt)
+- **File visualizers**: 📄 (document)
+- **New tabs**: ➕ (plus sign)
 
 ## 🚀 Quick Start
 
@@ -360,6 +423,7 @@ Let's create a **JSON Formatter** visualizer step by step:
   "description": "Pretty print and validate JSON files with syntax highlighting",
   "version": "1.0.0",
   "author": "Your Name",
+  "icon": "icon.png",
 
   "matchers": [
     {
@@ -637,6 +701,9 @@ This creates `dist/bundle.iife.js` that Viberunner can load.
 
   // Standalone visualizers (no file input required)
   "standalone": "boolean (optional)",
+
+  // Custom icon (relative path to icon file in app directory)
+  "icon": "string (optional)",
 
   // Optional metadata
   "tags": ["string"],

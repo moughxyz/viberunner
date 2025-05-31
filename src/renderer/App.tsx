@@ -18,6 +18,9 @@ const api = {
   changeFramesDirectory: () => ipcRenderer.invoke('change-frames-directory'),
   saveFileDialog: (options?: any) => ipcRenderer.invoke('save-file-dialog', options),
 
+  // Icon loading for apps
+  getAppIcon: (appId: string, iconPath: string) => ipcRenderer.invoke('get-app-icon', appId, iconPath),
+
   // Direct file operations using Node.js - exposed to frames
   readFile: (filePath: string, encoding: 'utf8' | 'base64' = 'utf8') => {
     if (encoding === 'base64') {
@@ -249,6 +252,7 @@ interface Frame {
   mimetypes: string[];
   author: string;
   standalone?: boolean; // Optional standalone property
+  icon?: string; // Custom icon path
 }
 
 interface OpenTab {
@@ -307,15 +311,63 @@ const getSupportedFormats = (frame: any): string => {
 
 const App: React.FC = () => {
   const [frames, setFrames] = useState<Frame[]>([]);
-  const [openTabs, setOpenTabs] = useState<OpenTab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [availableFrames, setAvailableFrames] = useState<Frame[]>([]);
-  const [showFrameSelection, setShowFrameSelection] = useState(false);
-  const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
   const [framesDirectory, setFramesDirectory] = useState<string>('');
   const [isLoadingFrames, setIsLoadingFrames] = useState(false);
-  const [showFileFrames, setShowFileFrames] = useState(false); // Collapsed by default
+  const [openTabs, setOpenTabs] = useState<OpenTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string>('');
+  const [showFrameSelection, setShowFrameSelection] = useState(false);
+  const [availableFrames, setAvailableFrames] = useState<Frame[]>([]);
+  const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
+  const [showFileFrames, setShowFileFrames] = useState(false);
+  const [appIcons, setAppIcons] = useState<Record<string, string>>({});
+
   const frameRootRef = useRef<HTMLDivElement>(null);
+
+  // Function to load app icon
+  const loadAppIcon = async (frame: Frame): Promise<string | null> => {
+    if (!frame.icon) return null;
+
+    // Check if already cached
+    if (appIcons[frame.id]) {
+      return appIcons[frame.id];
+    }
+
+    try {
+      const result = await api.getAppIcon(frame.id, frame.icon);
+      if (result.success && result.iconData) {
+        setAppIcons(prev => ({ ...prev, [frame.id]: result.iconData! }));
+        return result.iconData;
+      }
+    } catch (error) {
+      console.error(`Failed to load icon for ${frame.name}:`, error);
+    }
+
+    return null;
+  };
+
+  // Load icons for all frames when frames change
+  useEffect(() => {
+    frames.forEach(frame => {
+      if (frame.icon && !appIcons[frame.id]) {
+        loadAppIcon(frame);
+      }
+    });
+  }, [frames]);
+
+  // Function to get icon for display (returns emoji fallback if no custom icon)
+  const getAppIcon = (frame: Frame): string => {
+    if (appIcons[frame.id]) {
+      return appIcons[frame.id];
+    }
+
+    // Return emoji fallback based on app type
+    return frame.standalone ? '⚡' : '📄';
+  };
+
+  // Function to check if icon is custom (not emoji)
+  const isCustomIcon = (frame: Frame): boolean => {
+    return !!appIcons[frame.id];
+  };
 
   // Imperative tab management - outside React state
   const tabContainersRef = useRef<Map<string, {
@@ -970,7 +1022,17 @@ const App: React.FC = () => {
                   onClick={() => handleTabSwitch(tab.id)}
                 >
                   <div className="vf-tab-icon">
-                    {tab.type === 'newtab' ? '➕' : tab.type === 'standalone' ? '⚡' : '📄'}
+                    {tab.type === 'newtab' ? (
+                      '➕'
+                    ) : tab.frame && isCustomIcon(tab.frame) ? (
+                      <img
+                        src={getAppIcon(tab.frame)}
+                        alt={tab.frame.name}
+                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+                      />
+                    ) : (
+                      tab.type === 'standalone' ? '⚡' : '📄'
+                    )}
                   </div>
                   <div className="vf-tab-content">
                     <span className="vf-tab-title">{tab.title}</span>
@@ -1036,10 +1098,25 @@ const App: React.FC = () => {
                     onClick={() => selectFrame(frame)}
                   >
                     <div className="card-header">
-                      <h3 className="card-title">{frame.name}</h3>
-                      <div className="card-badge">
-                        <div className="badge-dot"></div>
-                        Ready
+                      <div className="card-icon">
+                        {isCustomIcon(frame) ? (
+                          <img
+                            src={getAppIcon(frame)}
+                            alt={frame.name}
+                            style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+                          />
+                        ) : (
+                          <span style={{ fontSize: '32px' }}>
+                            {frame.standalone ? '⚡' : '📄'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="card-title-section">
+                        <h3 className="card-title">{frame.name}</h3>
+                        <div className="card-badge">
+                          <div className="badge-dot"></div>
+                          Ready
+                        </div>
                       </div>
                     </div>
                     <p className="card-description">{frame.description}</p>
@@ -1158,7 +1235,17 @@ const App: React.FC = () => {
                                     className="utility-card"
                                     onClick={() => launchStandaloneFrame(frame)}
                                   >
-                                    <div className="utility-icon">⚡</div>
+                                    <div className="utility-icon">
+                                      {isCustomIcon(frame) ? (
+                                        <img
+                                          src={getAppIcon(frame)}
+                                          alt={frame.name}
+                                          style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+                                        />
+                                      ) : (
+                                        '⚡'
+                                      )}
+                                    </div>
                                     <div className="utility-content">
                                       <h5 className="utility-title">{frame.name}</h5>
                                       <p className="utility-description">{frame.description}</p>
