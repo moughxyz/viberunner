@@ -291,6 +291,7 @@ const App: React.FC = () => {
   const [framesDirectory, setFramesDirectory] = useState<string>('');
   const [isLoadingFrames, setIsLoadingFrames] = useState(false);
   const frameRootRef = useRef<HTMLDivElement>(null);
+  const currentReactRootRef = useRef<any>(null); // Track the current React root for cleanup
 
   // Load frames directory info
   useEffect(() => {
@@ -461,7 +462,17 @@ const App: React.FC = () => {
       hasFrameData: !!activeTab?.frameData
     });
 
-    // Always clear previous content first
+    // Always clear previous content and unmount previous React root first
+    if (currentReactRootRef.current) {
+      console.log('Unmounting previous React root');
+      try {
+        currentReactRootRef.current.unmount();
+      } catch (error) {
+        console.warn('Error unmounting React root:', error);
+      }
+      currentReactRootRef.current = null;
+    }
+
     if (frameRootRef.current) {
       frameRootRef.current.innerHTML = '';
       console.log('Cleared previous frame content');
@@ -532,6 +543,9 @@ const App: React.FC = () => {
               try {
                 const reactRoot = createRoot(root);
                 console.log('Created React root successfully');
+
+                // Store the React root for cleanup
+                currentReactRootRef.current = reactRoot;
 
                 console.log('Rendering frame component...');
                 reactRoot.render(
