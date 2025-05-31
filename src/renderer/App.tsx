@@ -446,12 +446,15 @@ const App: React.FC = () => {
   const [frames, setFrames] = useState<Frame[]>([]);
   const [framesDirectory, setFramesDirectory] = useState<string>('');
   const [isLoadingFrames, setIsLoadingFrames] = useState(false);
-  const [openTabs, setOpenTabs] = useState<OpenTab[]>([]);
-  const [activeTabId, setActiveTabId] = useState<string>('');
+  const [openTabs, setOpenTabs] = useState<OpenTab[]>([
+    { id: 'default-tab', title: 'New Tab', type: 'newtab' }
+  ]);
+  const [activeTabId, setActiveTabId] = useState('default-tab');
+  const [selectedFileData, setSelectedFileData] = useState<any>(null);
+  const [matchingFrames, setMatchingFrames] = useState<Frame[]>([]);
   const [showFrameSelection, setShowFrameSelection] = useState(false);
   const [availableFrames, setAvailableFrames] = useState<Frame[]>([]);
   const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
-  const [showFileFrames, setShowFileFrames] = useState(false);
   const [appIcons, setAppIcons] = useState<Record<string, string>>({});
 
   const frameRootRef = useRef<HTMLDivElement>(null);
@@ -564,15 +567,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     reloadFrames();
-
-    // Create the initial new tab
-    const newTab: OpenTab = {
-      id: 'initial-tab',
-      title: 'New Tab',
-      type: 'newtab'
-    };
-    setOpenTabs([newTab]);
-    setActiveTabId('initial-tab');
   }, []);
 
   const handleChangeFramesDirectory = async () => {
@@ -1472,49 +1466,39 @@ const App: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* File-based frames section - collapsible */}
+                      {/* File-based frames section - always visible */}
                       {frames.filter(f => !f.standalone).length > 0 && (
                         <div className="frames-section">
                           <div className="section-card">
                             <div className="section-header">
-                              <button
-                                className="section-header-button"
-                                onClick={() => setShowFileFrames(!showFileFrames)}
-                              >
-                                <h4 className="section-title">
-                                  <span className="section-icon">🎨</span>
-                                  File Apps
-                                </h4>
-                                <div className="section-meta">
-                                  <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
-                                  <span className="section-toggle">{showFileFrames ? '▼' : '▶'}</span>
-                                </div>
-                              </button>
+                              <h4 className="section-title">
+                                <span className="section-icon">🎨</span>
+                                File Apps
+                              </h4>
+                              <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
                             </div>
-                            {showFileFrames && (
-                              isLoadingFrames ? (
-                                <div className="loading-state">
-                                  <span className="loading-spinner">⟳</span>
-                                  Loading apps...
-                                </div>
-                              ) : (
-                                <div className="frames-grid">
-                                  {frames.filter(f => !f.standalone).map(frame => (
-                                    <div key={frame.id} className="frame-info-card">
-                                      <div className="frame-info-header">
-                                        <h5 className="frame-info-title">{frame.name}</h5>
-                                        <div className="frame-info-status">
-                                          <span className="status-dot"></span>
-                                        </div>
-                                      </div>
-                                      <p className="frame-info-description">{frame.description}</p>
-                                      <div className="frame-info-formats">
-                                        {getSupportedFormats(frame)}
+                            {isLoadingFrames ? (
+                              <div className="loading-state">
+                                <span className="loading-spinner">⟳</span>
+                                Loading apps...
+                              </div>
+                            ) : (
+                              <div className="frames-grid">
+                                {frames.filter(f => !f.standalone).map(frame => (
+                                  <div key={frame.id} className="frame-info-card">
+                                    <div className="frame-info-header">
+                                      <h5 className="frame-info-title">{frame.name}</h5>
+                                      <div className="frame-info-status">
+                                        <span className="status-dot"></span>
                                       </div>
                                     </div>
-                                  ))}
-                                </div>
-                              )
+                                    <p className="frame-info-description">{frame.description}</p>
+                                    <div className="frame-info-formats">
+                                      {getSupportedFormats(frame)}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             )}
                           </div>
                         </div>
