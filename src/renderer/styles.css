@@ -460,7 +460,7 @@ body {
   color: var(--text-primary);
 }
 
-.home-tab-content {
+.new-tab-content {
   height: 100%;
   display: flex;
   align-items: center;
@@ -468,7 +468,7 @@ body {
   padding: var(--space-8);
 }
 
-.home-tab-content .drop-zone {
+.new-tab-content .drop-zone {
   border: none;
   background: transparent;
   min-height: auto;

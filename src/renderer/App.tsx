@@ -231,10 +231,10 @@ interface Frame {
 
 interface OpenTab {
   id: string;
-  frame?: Frame; // Optional for home tab
-  fileInput?: FileInput; // undefined for standalone frames and home tab
+  frame?: Frame; // Optional for new tab
+  fileInput?: FileInput; // undefined for standalone frames and new tab
   title: string;
-  type: 'file' | 'standalone' | 'home';
+  type: 'file' | 'standalone' | 'newtab';
   frameData?: any; // Store the loaded frame data for reloading
 }
 
@@ -321,14 +321,14 @@ const App: React.FC = () => {
   useEffect(() => {
     reloadFrames();
 
-    // Create the initial home tab
-    const homeTab: OpenTab = {
-      id: 'home-tab',
-      title: 'Home',
-      type: 'home'
+    // Create the initial new tab
+    const newTab: OpenTab = {
+      id: 'initial-tab',
+      title: 'New Tab',
+      type: 'newtab'
     };
-    setOpenTabs([homeTab]);
-    setActiveTabId('home-tab');
+    setOpenTabs([newTab]);
+    setActiveTabId('initial-tab');
   }, []);
 
   const handleChangeFramesDirectory = async () => {
@@ -353,7 +353,6 @@ const App: React.FC = () => {
   const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput) => {
-    const tabId = generateTabId();
     const title = fileInput
       ? fileInput.path.split('/').pop() || 'Unknown File'
       : frame.name;
@@ -370,17 +369,38 @@ const App: React.FC = () => {
       return;
     }
 
-    const newTab: OpenTab = {
-      id: tabId,
-      frame,
-      fileInput,
-      title,
-      type: fileInput ? 'file' : 'standalone',
-      frameData // Store the frame data with the tab
-    };
+    // Check if we have an active new tab to transform, otherwise create a new one
+    const currentTab = openTabs.find(tab => tab.id === activeTabId);
+    if (currentTab && currentTab.type === 'newtab') {
+      // Transform the current new tab
+      const transformedTab: OpenTab = {
+        ...currentTab,
+        frame,
+        fileInput,
+        title,
+        type: fileInput ? 'file' : 'standalone',
+        frameData
+      };
 
-    setOpenTabs(prev => [...prev, newTab]);
-    setActiveTabId(tabId);
+      setOpenTabs(prev => prev.map(tab =>
+        tab.id === activeTabId ? transformedTab : tab
+      ));
+    } else {
+      // Create a new tab
+      const tabId = generateTabId();
+      const newTab: OpenTab = {
+        id: tabId,
+        frame,
+        fileInput,
+        title,
+        type: fileInput ? 'file' : 'standalone',
+        frameData
+      };
+
+      setOpenTabs(prev => [...prev, newTab]);
+      setActiveTabId(tabId);
+    }
+
     setShowFrameSelection(false);
     setPendingFileInput(null);
   };
@@ -397,7 +417,15 @@ const App: React.FC = () => {
           const newActiveIndex = Math.min(currentIndex, filtered.length - 1);
           setActiveTabId(filtered[newActiveIndex]?.id || null);
         } else {
-          setActiveTabId(null);
+          // If no tabs left, create a new tab
+          const newTab: OpenTab = {
+            id: generateTabId(),
+            title: 'New Tab',
+            type: 'newtab'
+          };
+          setOpenTabs([newTab]);
+          setActiveTabId(newTab.id);
+          return [newTab];
         }
       }
 
@@ -433,7 +461,7 @@ const App: React.FC = () => {
       hasFrameData: !!activeTab?.frameData
     });
 
-    if (activeTab && activeTab.type !== 'home' && frameRootRef.current && activeTab.frameData && activeTab.frame) {
+    if (activeTab && activeTab.type !== 'newtab' && frameRootRef.current && activeTab.frameData && activeTab.frame) {
       const loadFrameComponent = async () => {
         try {
           console.log('Starting frame component load for:', activeTab.frame!.name);
@@ -551,7 +579,7 @@ const App: React.FC = () => {
     } else {
       console.log('Frame loading conditions not met:', {
         hasActiveTab: !!activeTab,
-        isHomeTab: activeTab?.type === 'home',
+        isNewTab: activeTab?.type === 'newtab',
         hasFrameRootRef: !!frameRootRef.current,
         hasFrameData: !!activeTab?.frameData,
         hasFrame: !!activeTab?.frame
@@ -720,15 +748,15 @@ const App: React.FC = () => {
     };
   }, [frames]);
 
-  const createNewHomeTab = () => {
+  const createNewTab = () => {
     const tabId = generateTabId();
-    const newHomeTab: OpenTab = {
+    const newTab: OpenTab = {
       id: tabId,
-      title: 'Home',
-      type: 'home'
+      title: 'New Tab',
+      type: 'newtab'
     };
 
-    setOpenTabs(prev => [...prev, newHomeTab]);
+    setOpenTabs(prev => [...prev, newTab]);
     setActiveTabId(tabId);
     setShowFrameSelection(false);
     setPendingFileInput(null);
@@ -811,13 +839,13 @@ const App: React.FC = () => {
                       onClick={() => setActiveTabId(tab.id)}
                     >
                       <div className="tab-icon">
-                        {tab.type === 'home' ? '🏠' : tab.type === 'standalone' ? '⚡' : '📄'}
+                        {tab.type === 'newtab' ? '➕' : tab.type === 'standalone' ? '⚡' : '📄'}
                       </div>
                       <div className="tab-content">
                         <span className="tab-title">{tab.title}</span>
                         {tab.frame && <span className="tab-subtitle">{tab.frame.name}</span>}
                       </div>
-                      {tab.type !== 'home' && (
+                      {tab.type !== 'newtab' && (
                         <button
                           className="tab-close"
                           onClick={(e) => {
@@ -835,7 +863,7 @@ const App: React.FC = () => {
                   {/* New Tab Button */}
                   <button
                     className="new-tab-btn"
-                    onClick={createNewHomeTab}
+                    onClick={createNewTab}
                     title="New tab"
                   >
                     +
@@ -845,8 +873,8 @@ const App: React.FC = () => {
 
               {/* Active Tab Content */}
               <div className="frame-viewport-container">
-                {activeTab?.type === 'home' ? (
-                  <div className="home-tab-content">
+                {activeTab?.type === 'newtab' ? (
+                  <div className="new-tab-content">
                     <div className="drop-zone">
                       <div className="drop-zone-content">
                         <div className="drop-zone-icon">📂</div>
