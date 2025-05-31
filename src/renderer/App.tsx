@@ -487,39 +487,62 @@ const App: React.FC = () => {
   // Load startup app preferences
   const loadStartupApps = async () => {
     try {
-      const result = await api.getStartupApps();
-      if (result.success) {
-        setStartupApps(result.startupApps);
+      const { app } = require('@electron/remote');
+      const prefsPath = path.join(app.getPath('userData'), 'preferences.json');
+
+      if (fs.existsSync(prefsPath)) {
+        const prefsContent = fs.readFileSync(prefsPath, 'utf8');
+        const prefs = JSON.parse(prefsContent);
+        setStartupApps(prefs.startupApps || {});
       }
     } catch (error) {
       console.error('Error loading startup apps:', error);
     }
   };
 
+  // Save startup app preferences
+  const saveStartupApps = (newStartupApps: Record<string, { enabled: boolean; tabOrder: number }>) => {
+    try {
+      const { app } = require('@electron/remote');
+      const prefsPath = path.join(app.getPath('userData'), 'preferences.json');
+
+      // Load existing preferences
+      let prefs = {};
+      if (fs.existsSync(prefsPath)) {
+        const prefsContent = fs.readFileSync(prefsPath, 'utf8');
+        prefs = JSON.parse(prefsContent);
+      }
+
+      // Update startup apps
+      (prefs as any).startupApps = newStartupApps;
+
+      // Save back to file
+      fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2), 'utf8');
+
+      setStartupApps(newStartupApps);
+    } catch (error) {
+      console.error('Error saving startup apps:', error);
+    }
+  };
+
   // Toggle startup app enabled state
   const toggleStartupApp = async (appId: string, enabled: boolean) => {
     try {
-      const currentConfig = startupApps[appId] || { enabled: false, tabOrder: 1 };
-      const newConfig = { ...currentConfig, enabled };
+      const newStartupApps = { ...startupApps };
 
       if (enabled) {
         // If enabling, set a default tab order if not already set
+        const currentConfig = startupApps[appId] || { enabled: false, tabOrder: 1 };
         if (!currentConfig.tabOrder) {
           const maxTabOrder = Math.max(0, ...Object.values(startupApps).map(app => app.tabOrder));
-          newConfig.tabOrder = maxTabOrder + 1;
+          currentConfig.tabOrder = maxTabOrder + 1;
         }
-        const result = await api.setStartupApp(appId, newConfig);
-        if (result.success) {
-          setStartupApps(prev => ({ ...prev, [appId]: newConfig }));
-        }
+        newStartupApps[appId] = { ...currentConfig, enabled: true };
       } else {
-        await api.removeStartupApp(appId);
-        setStartupApps(prev => {
-          const updated = { ...prev };
-          delete updated[appId];
-          return updated;
-        });
+        delete newStartupApps[appId];
       }
+
+      saveStartupApps(newStartupApps);
     } catch (error) {
       console.error('Error toggling startup app:', error);
     }
@@ -531,11 +554,12 @@ const App: React.FC = () => {
       const currentConfig = startupApps[appId];
       if (!currentConfig || !currentConfig.enabled) return;
 
-      const newConfig = { ...currentConfig, tabOrder };
-      const result = await api.setStartupApp(appId, newConfig);
-      if (result.success) {
-        setStartupApps(prev => ({ ...prev, [appId]: newConfig }));
-      }
+      const newStartupApps = {
+        ...startupApps,
+        [appId]: { ...currentConfig, tabOrder }
+      };
+
+      saveStartupApps(newStartupApps);
     } catch (error) {
       console.error('Error updating startup app tab order:', error);
     }
@@ -553,23 +577,6 @@ const App: React.FC = () => {
   // Load startup apps when component mounts and when frames change
   useEffect(() => {
     loadStartupApps();
-  }, [frames]);
-
-  // Handle startup app launch events from main process
-  useEffect(() => {
-    const handleStartupAppLaunch = (_event: any, data: { appId: string; config: any }) => {
-      console.log('Received startup app launch event:', data);
-      const frame = frames.find(f => f.id === data.appId);
-      if (frame && frame.standalone) {
-        launchStandaloneFrame(frame);
-      }
-    };
-
-    api.onLaunchStartupApp(handleStartupAppLaunch);
-
-    return () => {
-      api.removeStartupAppListeners();
-    };
   }, [frames]);
 
   // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
