@@ -341,7 +341,7 @@ body {
   max-width: 100%;
   border: 2px dashed var(--border);
   border-radius: var(--radius-xl);
-  background: var(--surface);
+  background: transparent;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -1104,4 +1104,11 @@ body {
   .content-area:has(.new-tab-unified) {
     padding: var(--space-4);
   }
+}
+
+/* Section divider */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: var(--space-4) 0;
 }

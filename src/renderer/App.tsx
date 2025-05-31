@@ -938,6 +938,9 @@ const App: React.FC = () => {
                       </div>
                     </div>
 
+                    {/* Divider */}
+                    <div className="section-divider"></div>
+
                     {/* Directory controls section */}
                     <div className="controls-section">
                       <div className="section-card">
