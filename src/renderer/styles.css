@@ -343,6 +343,12 @@ body {
   max-height: calc(100vh - 40px);
 }
 
+/* Override container height for frame selection to allow natural sizing */
+.vf-content-area:has(.vf-frame-selection) .frame-viewport-container {
+  height: auto;
+  max-height: none;
+}
+
 .frame-viewport {
   height: 100%;
   background: var(--surface);
@@ -750,7 +756,6 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--space-6);
   margin-bottom: var(--space-8);
-  flex: 1;
 }
 
 .frame-card {
