@@ -1449,7 +1449,13 @@ body {
 .utility-card-container {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 0; /* Remove gap to connect borders */
+}
+
+.utility-card-container .utility-card {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
 }
 
 .startup-controls {
