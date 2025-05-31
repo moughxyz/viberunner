@@ -790,6 +790,48 @@ const App: React.FC = () => {
             </div>
             Vibeframe
           </h1>
+
+          {/* Tabs in Header */}
+          <div className="header-tabs">
+            <div className="tabs-list">
+              {openTabs.map(tab => (
+                <div
+                  key={tab.id}
+                  className={`tab ${tab.id === activeTabId ? 'tab-active' : ''}`}
+                  onClick={() => setActiveTabId(tab.id)}
+                >
+                  <div className="tab-icon">
+                    {tab.type === 'newtab' ? '➕' : tab.type === 'standalone' ? '⚡' : '📄'}
+                  </div>
+                  <div className="tab-content">
+                    <span className="tab-title">{tab.title}</span>
+                    {tab.frame && <span className="tab-subtitle">{tab.frame.name}</span>}
+                  </div>
+                  {tab.type !== 'newtab' && (
+                    <button
+                      className="tab-close"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        closeTab(tab.id);
+                      }}
+                      title="Close tab"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+
+              {/* New Tab Button */}
+              <button
+                className="new-tab-btn"
+                onClick={createNewTab}
+                title="New tab"
+              >
+                +
+              </button>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -842,101 +884,56 @@ const App: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="tabs-container">
-              {/* Tab Bar */}
-              <div className="tabs-bar">
-                <div className="tabs-list">
-                  {openTabs.map(tab => (
-                    <div
-                      key={tab.id}
-                      className={`tab ${tab.id === activeTabId ? 'tab-active' : ''}`}
-                      onClick={() => setActiveTabId(tab.id)}
-                    >
-                      <div className="tab-icon">
-                        {tab.type === 'newtab' ? '➕' : tab.type === 'standalone' ? '⚡' : '📄'}
+            <div className="frame-viewport-container">
+              {activeTab?.type === 'newtab' ? (
+                <div className="new-tab-content">
+                  <div className="drop-zone">
+                    <div className="drop-zone-content">
+                      <div className="drop-zone-icon">📂</div>
+                      <h3 className="drop-zone-title">Drop files to visualize</h3>
+                      <p className="drop-zone-description">
+                        Supports documents, images, data files, and more
+                      </p>
+                      <div className="drop-zone-formats">
+                        <span className="format-tag">JSON</span>
+                        <span className="format-tag">Images</span>
+                        <span className="format-tag">CSV</span>
+                        <span className="format-tag">Text</span>
                       </div>
-                      <div className="tab-content">
-                        <span className="tab-title">{tab.title}</span>
-                        {tab.frame && <span className="tab-subtitle">{tab.frame.name}</span>}
-                      </div>
-                      {tab.type !== 'newtab' && (
-                        <button
-                          className="tab-close"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            closeTab(tab.id);
-                          }}
-                          title="Close tab"
-                        >
-                          ✕
-                        </button>
+
+                      {/* Standalone Frames Section */}
+                      {frames.filter(f => f.standalone).length > 0 && (
+                        <div className="drop-zone-divider">
+                          <div className="divider-line"></div>
+                          <span className="divider-text">Or, launch these standalone utilities</span>
+                          <div className="divider-line"></div>
+                        </div>
+                      )}
+
+                      {frames.filter(f => f.standalone).length > 0 && (
+                        <div className="standalone-frames-grid">
+                          {frames.filter(f => f.standalone).map(frame => (
+                            <button
+                              key={frame.id}
+                              className="standalone-frame-card"
+                              onClick={() => launchStandaloneFrame(frame)}
+                            >
+                              <div className="standalone-frame-icon">⚡</div>
+                              <div className="standalone-frame-content">
+                                <h4 className="standalone-frame-title">{frame.name}</h4>
+                                <p className="standalone-frame-description">{frame.description}</p>
+                              </div>
+                              <div className="standalone-frame-action">Launch</div>
+                            </button>
+                          ))}
+                        </div>
                       )}
                     </div>
-                  ))}
-
-                  {/* New Tab Button */}
-                  <button
-                    className="new-tab-btn"
-                    onClick={createNewTab}
-                    title="New tab"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              {/* Active Tab Content */}
-              <div className="frame-viewport-container">
-                {activeTab?.type === 'newtab' ? (
-                  <div className="new-tab-content">
-                    <div className="drop-zone">
-                      <div className="drop-zone-content">
-                        <div className="drop-zone-icon">📂</div>
-                        <h3 className="drop-zone-title">Drop files to visualize</h3>
-                        <p className="drop-zone-description">
-                          Supports documents, images, data files, and more
-                        </p>
-                        <div className="drop-zone-formats">
-                          <span className="format-tag">JSON</span>
-                          <span className="format-tag">Images</span>
-                          <span className="format-tag">CSV</span>
-                          <span className="format-tag">Text</span>
-                        </div>
-
-                        {/* Standalone Frames Section */}
-                        {frames.filter(f => f.standalone).length > 0 && (
-                          <div className="drop-zone-divider">
-                            <div className="divider-line"></div>
-                            <span className="divider-text">Or, launch these standalone utilities</span>
-                            <div className="divider-line"></div>
-                          </div>
-                        )}
-
-                        {frames.filter(f => f.standalone).length > 0 && (
-                          <div className="standalone-frames-grid">
-                            {frames.filter(f => f.standalone).map(frame => (
-                              <button
-                                key={frame.id}
-                                className="standalone-frame-card"
-                                onClick={() => launchStandaloneFrame(frame)}
-                              >
-                                <div className="standalone-frame-icon">⚡</div>
-                                <div className="standalone-frame-content">
-                                  <h4 className="standalone-frame-title">{frame.name}</h4>
-                                  <p className="standalone-frame-description">{frame.description}</p>
-                                </div>
-                                <div className="standalone-frame-action">Launch</div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
-                ) : (
-                  <div ref={frameRootRef} className="frame-viewport" />
-                )}
-              </div>
+                </div>
+              ) : (
+                <div ref={frameRootRef} className="frame-viewport" />
+              )}
             </div>
           )}
         </main>
