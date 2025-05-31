@@ -7,22 +7,34 @@ module.exports = {
     executableName: 'Viberunner',
     appBundleId: 'com.viberunner.app',
     appCategoryType: 'public.app-category.productivity',
-    icon: './assets/icon', // Add your icon files (without extension)
+    // icon: './assets/icon', // Add your icon files (without extension)
     asar: true, // Enable asar packaging for AutoUnpackNatives plugin
+    // Point to the main entry in dist-electron (built by vite-plugin-electron)
+    out: 'out',
+    ignore: [
+      /^\/src\//,
+      /^\/\.vscode\//,
+      /^\/\.git\//,
+      /^\/\.gitignore$/,
+      /^\/README\.md$/,
+      /^\/vite\.config\.ts$/,
+      /^\/tsconfig.*\.json$/,
+      /^\/forge\.config\.js$/,
+    ],
     extraResource: [
       './assets'
     ],
-    osxSign: {
-      // Add your Apple Developer info when ready for distribution
-      // identity: 'Developer ID Application: Your Name (XXXXXXXXXX)',
-    },
-    osxNotarize: {
-      // Add your Apple ID info when ready for distribution
-      // tool: 'notarytool',
-      // appleId: process.env.APPLE_ID,
-      // appleIdPassword: process.env.APPLE_PASSWORD,
-      // teamId: process.env.APPLE_TEAM_ID,
-    }
+    // osxSign: {
+    //   // Add your Apple Developer info when ready for distribution
+    //   // identity: 'Developer ID Application: Your Name (XXXXXXXXXX)',
+    // },
+    // osxNotarize: {
+    //   // Add your Apple ID info when ready for distribution
+    //   // tool: 'notarytool',
+    //   // appleId: process.env.APPLE_ID,
+    //   // appleIdPassword: process.env.APPLE_PASSWORD,
+    //   // teamId: process.env.APPLE_TEAM_ID,
+    // }
   },
   rebuildConfig: {},
   makers: [
@@ -61,8 +73,6 @@ module.exports = {
       config: {
         name: 'Viberunner',
         title: 'Viberunner ${version}',
-        background: './assets/dmg-background.png', // Optional: create a custom DMG background
-        icon: './assets/icon.icns',
         overwrite: true
       },
       platforms: ['darwin']
@@ -86,24 +96,6 @@ module.exports = {
       name: '@electron-forge/plugin-auto-unpack-natives',
       config: {},
     },
-    {
-      name: '@electron-forge/plugin-vite',
-      config: {
-        // Vite config options
-        build: [
-          {
-            entry: 'src/main/index.ts',
-            config: 'vite.config.ts',
-          },
-        ],
-        renderer: [
-          {
-            name: 'main_window',
-            entry: 'index.html',
-          },
-        ],
-      },
-    },
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
     new FusesPlugin({
@@ -117,4 +109,12 @@ module.exports = {
       [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: false,
     }),
   ],
+  hooks: {
+    packageAfterCopy: async (config, buildPath) => {
+      // Build the app with Vite before packaging
+      const { execSync } = require('child_process');
+      console.log('Building app with Vite...');
+      execSync('npm run build', { stdio: 'inherit' });
+    }
+  }
 };
