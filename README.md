@@ -25,6 +25,10 @@ Viberunner is a single-player utility meant to be used by one person on their ow
 
 **Important:** Because Viberunner gives unrestricted system access to your apps (it's the only way to build a powerful utility), you should never run untrusted code. See the Security section at the end of this readme.
 
+## Pricing
+
+Viberunner is free during public alpha, but may be monetized in the future to support its development.
+
 ## 🎨 Key Features
 
 - **📱 Chrome-style Tabbed Interface**: Open multiple files and apps simultaneously with smooth tab switching
