@@ -612,8 +612,6 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('write-file');
   ipcMain.removeAllListeners('backup-file');
   ipcMain.removeAllListeners('save-file-dialog');
-  ipcMain.removeAllListeners('launch-standalone-app');
-  ipcMain.removeAllListeners('get-app-icon');
 
   console.log('Registering IPC handlers...');
 
