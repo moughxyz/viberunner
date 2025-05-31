@@ -706,7 +706,6 @@ body {
   position: relative;
   z-index: 20;
   background: var(--background);
-  min-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
 }
@@ -849,7 +848,6 @@ body {
 .selection-actions {
   display: flex;
   justify-content: center;
-  margin-top: auto;
   padding-top: var(--space-4);
 }
 
