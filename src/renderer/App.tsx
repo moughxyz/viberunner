@@ -452,11 +452,15 @@ const App: React.FC = () => {
       const frameLoader = (FrameComponent: any) => {
         console.log('Frame loader called for tab:', tab.id);
 
-        const root = document.createElement('div');
-        container.appendChild(root);
-
         try {
-          const reactRoot = createRoot(root);
+          // Render directly into the container instead of creating another div
+          const reactRoot = createRoot(container);
+
+          // Add containment attributes to the container
+          container.style.contain = 'layout style size';
+          container.style.isolation = 'isolate';
+          container.style.zIndex = '1';
+
           reactRoot.render(React.createElement(FrameComponent, props));
 
           // Store in our ref

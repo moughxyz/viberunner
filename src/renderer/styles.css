@@ -1046,6 +1046,7 @@ body {
   width: 100%;
   height: 100%;
   overflow: hidden; /* Prevent frames from breaking out */
+  z-index: 1; /* Ensure frames stay below UI elements */
 }
 
 /* Frame containment - ensure frames stay within their containers */
@@ -1058,9 +1059,29 @@ body {
   overflow: auto;
 }
 
-/* Override any frame styles that try to use viewport units */
-.tab-frame-container * {
+/* Override any frame styles that try to use viewport units or break containment */
+.tab-frame-container *,
+.tab-frame-container *::before,
+.tab-frame-container *::after {
   max-width: 100% !important;
+  position: relative !important;
+}
+
+/* Aggressively prevent frames from using fixed positioning */
+.tab-frame-container [style*="position: fixed"],
+.tab-frame-container [style*="position:fixed"] {
+  position: relative !important;
+}
+
+/* Reset body and html styles within frames */
+.tab-frame-container body,
+.tab-frame-container html {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  position: relative !important;
+  overflow: auto !important;
 }
 
 /* Specifically target common problematic patterns */
@@ -1068,22 +1089,38 @@ body {
 .tab-frame-container [class*="App"],
 .tab-frame-container [class*="app"],
 .tab-frame-container [class*="main"],
-.tab-frame-container [class*="container"] {
+.tab-frame-container [class*="container"],
+.tab-frame-container [class*="wrapper"],
+.tab-frame-container [class*="root"] {
   height: 100% !important;
   max-height: 100% !important;
   width: 100% !important;
   max-width: 100% !important;
   position: relative !important;
   box-sizing: border-box !important;
+  overflow: auto !important;
 }
 
 /* Reset any viewport units to 100% */
-.tab-frame-container [style*="100vh"] {
+.tab-frame-container [style*="100vh"],
+.tab-frame-container [style*="100VH"] {
   height: 100% !important;
 }
 
-.tab-frame-container [style*="100vw"] {
+.tab-frame-container [style*="100vw"],
+.tab-frame-container [style*="100VW"] {
   width: 100% !important;
+}
+
+/* Prevent z-index issues */
+.tab-frame-container * {
+  z-index: auto !important;
+}
+
+/* Override any min-height that could cause issues */
+.tab-frame-container [style*="min-height: 100vh"],
+.tab-frame-container [style*="min-height:100vh"] {
+  min-height: 100% !important;
 }
 
 /* Responsive layout */
