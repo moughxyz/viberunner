@@ -609,7 +609,8 @@ const App: React.FC = () => {
             });
             if (frame && frame.standalone) {
               console.log(`Auto-launching startup app: ${appId} (tab order: ${config.tabOrder})`);
-              launchStandaloneFrame(frame);
+              // Force new tab for startup apps to prevent them from overwriting each other
+              openFrameInNewTab(frame, undefined, true);
             } else {
               console.warn(`Could not launch ${appId}:`, {
                 frameFound: !!frame,
@@ -985,7 +986,7 @@ const App: React.FC = () => {
     setActiveTabId(tabId);
   };
 
-  const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput) => {
+  const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput, forceNewTab: boolean = false) => {
     const title = fileInput
       ? fileInput.path.split('/').pop() || 'Unknown File'
       : frame.name;
@@ -1001,10 +1002,10 @@ const App: React.FC = () => {
       return;
     }
 
-    // Check if we have an active new tab to transform
+    // Check if we have an active new tab to transform (but not if forceNewTab is true)
     const currentTab = openTabs.find(tab => tab.id === activeTabId);
 
-    if (currentTab && currentTab.type === 'newtab') {
+    if (!forceNewTab && currentTab && currentTab.type === 'newtab') {
       // Transform the current new tab
       const transformedTab: OpenTab = {
         ...currentTab,
