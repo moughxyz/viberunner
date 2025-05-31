@@ -18,7 +18,7 @@ const api = {
   changeFramesDirectory: () => ipcRenderer.invoke('change-frames-directory'),
   saveFileDialog: (options?: any) => ipcRenderer.invoke('save-file-dialog', options),
 
-  // Direct file operations using Node.js
+  // Direct file operations using Node.js - exposed to frames
   readFile: (filePath: string, encoding: 'utf8' | 'base64' = 'utf8') => {
     if (encoding === 'base64') {
       return fs.readFileSync(filePath).toString('base64');
@@ -115,37 +115,15 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
   const filename = path.basename(filePath);
   const mimetype = await getMimetype(filePath);
 
-  let content = '';
-  let isJson = false;
-  let jsonContent = null;
-
-  // Only read content for non-directories and reasonably sized files
-  if (!stats.isDirectory() && stats.size < 10 * 1024 * 1024) { // < 10MB
-    try {
-      content = fs.readFileSync(filePath, 'utf-8');
-
-      // Try to parse as JSON
-      if (mimetype === 'application/json' || filename.endsWith('.json')) {
-        try {
-          jsonContent = JSON.parse(content);
-          isJson = true;
-        } catch {
-          // Not valid JSON, that's fine
-        }
-      }
-    } catch {
-      // File might be binary or unreadable, that's fine
-    }
-  }
-
+  // Simplified analysis - just basic metadata for matching
   return {
     path: filePath,
     filename,
     mimetype,
-    content,
+    content: '', // Don't read content here anymore
     size: stats.size,
-    isJson,
-    jsonContent
+    isJson: mimetype === 'application/json' || filename.endsWith('.json'),
+    jsonContent: null // Don't parse JSON here anymore
   };
 }
 
@@ -235,6 +213,12 @@ async function loadFrame(id: string) {
   return { bundleContent, config };
 }
 
+interface FileInput {
+  path: string;
+  mimetype: string;
+  // Remove content and analysis - frames will handle these directly
+}
+
 interface Frame {
   id: string;
   name: string;
@@ -290,7 +274,7 @@ const getSupportedFormats = (frame: any): string => {
 
 const App: React.FC = () => {
   const [frames, setFrames] = useState<Frame[]>([]);
-  const [currentFile, setCurrentFile] = useState<FileData | null>(null);
+  const [currentFile, setCurrentFile] = useState<FileInput | null>(null);
   const [currentFrame, setCurrentFrame] = useState<Frame | null>(null);
   const [availableFrames, setAvailableFrames] = useState<Frame[]>([]);
   const [showFrameSelection, setShowFrameSelection] = useState(false);
@@ -354,66 +338,33 @@ const App: React.FC = () => {
         console.log('=== FILE DROP STARTED ===');
         console.log('handleFileDrop: Processing file:', filePath);
 
-        // Use direct file analysis instead of IPC
+        // Simplified file analysis for matching only
         const fileAnalysis = await analyzeFile(filePath);
         console.log('handleFileDrop: File analysis:', fileAnalysis);
 
-        // For directories, handle specially
-        let fileData;
-        if (fileAnalysis.mimetype === 'inode/directory') {
-          console.log('handleFileDrop: Handling directory');
-          fileData = {
-            path: filePath,
-            mimetype: fileAnalysis.mimetype,
-            content: '', // Empty content for directories
-            analysis: fileAnalysis
-          };
-        } else {
-          console.log('handleFileDrop: Handling file');
-          // For files, read content as base64 if needed
-          let content = fileAnalysis.content;
-          if (!content && fs.existsSync(filePath)) {
-            const binaryContent = fs.readFileSync(filePath);
-            content = binaryContent.toString('base64');
-          }
-
-          fileData = {
-            path: filePath,
-            mimetype: fileAnalysis.mimetype,
-            content,
-            analysis: fileAnalysis
-          };
-        }
-        console.log('handleFileDrop: File data prepared:', { path: fileData.path, mimetype: fileData.mimetype });
+        // Create simplified file input - just path and mimetype
+        const fileInput: FileInput = {
+          path: filePath,
+          mimetype: fileAnalysis.mimetype
+        };
+        console.log('handleFileDrop: File input prepared:', fileInput);
 
         // Find matching frames directly
         const matches = await findMatchingFrames(filePath);
         console.log('handleFileDrop: Found matches:', matches);
 
-        console.log('Enhanced matching results:', {
-          fileAnalysis: fileAnalysis,
-          matches: matches.map((m: any) => ({
-            name: m.frame.name,
-            priority: m.priority
-          }))
-        });
-
         if (matches.length === 0) {
           console.log('handleFileDrop: No matches found');
-          // Handle no frame found
-          console.log('No frame found for file:', filePath);
           alert(`No frame found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
         } else if (matches.length === 1) {
           console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].frame.name);
-          // Only one frame, use it directly
           setCurrentFrame(matches[0].frame);
-          setCurrentFile(fileData);
+          setCurrentFile(fileInput);
           setShowFrameSelection(false);
           console.log('handleFileDrop: State set for single match');
         } else {
           console.log('handleFileDrop: Multiple matches found, showing selection');
-          // Multiple frames, show selection with priority info
-          setCurrentFile(fileData);
+          setCurrentFile(fileInput);
           setAvailableFrames(matches.map((m: any) => ({
             ...m.frame,
             matchPriority: m.priority
@@ -505,7 +456,7 @@ const App: React.FC = () => {
             // Use pending standalone data
             frameData = (window as any).__PENDING_STANDALONE_DATA__;
             props = {
-              fileData: null,
+              // No fileData for standalone frames
               container: frameRootRef.current
             };
             // Clear the pending data
@@ -520,7 +471,20 @@ const App: React.FC = () => {
               config: frameData.config
             });
             props = {
-              fileData: currentFile,
+              // Pass simplified file input - just path and mimetype
+              fileInput: currentFile,
+              // Keep legacy fileData for backward compatibility during transition
+              fileData: {
+                path: currentFile.path,
+                mimetype: currentFile.mimetype,
+                content: '', // Empty - frames should read directly
+                analysis: {
+                  filename: path.basename(currentFile.path),
+                  size: 0, // Frames can get this via fs.stat
+                  isJson: currentFile.mimetype === 'application/json' || currentFile.path.endsWith('.json'),
+                  jsonContent: null
+                }
+              },
               container: frameRootRef.current
             };
           } else {
