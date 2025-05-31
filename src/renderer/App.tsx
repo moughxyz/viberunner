@@ -262,11 +262,11 @@ interface Frame {
 
 interface OpenTab {
   id: string;
-  frame?: Frame; // Optional for new tab
-  fileInput?: FileInput; // undefined for standalone frames and new tab
+  frame?: Frame; // Optional for new tab - represents the app/visualization
+  fileInput?: FileInput; // undefined for standalone apps and new tab
   title: string;
   type: 'file' | 'standalone' | 'newtab';
-  frameData?: any; // Store the loaded frame data for reloading
+  frameData?: any; // Store the loaded app data for reloading
   reactRoot?: any; // Store the React root for each tab
   domContainer?: HTMLDivElement; // Store the DOM container for each tab
 }
@@ -353,7 +353,7 @@ const App: React.FC = () => {
       setFrames(frames);
     } catch (error) {
       console.error('Error loading frames:', error);
-      alert('Failed to load frames. Please check your frames directory.');
+      alert('Failed to load apps. Please check your apps directory.');
     } finally {
       setIsLoadingFrames(false);
     }
@@ -378,17 +378,17 @@ const App: React.FC = () => {
       if (result.success && result.directory) {
         setFramesDirectory(result.directory);
         await reloadFrames();
-        alert(`Frames directory changed to: ${result.directory}`);
+        alert(`Apps directory changed to: ${result.directory}`);
       }
     } catch (error) {
       console.error('Error changing frames directory:', error);
-      alert('Failed to change frames directory.');
+      alert('Failed to change apps directory.');
     }
   };
 
   const handleReloadFrames = async () => {
     await reloadFrames();
-    alert('Frames reloaded successfully!');
+    alert('Apps reloaded successfully!');
   };
 
   const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -985,7 +985,7 @@ const App: React.FC = () => {
 
         if (matches.length === 0) {
           console.log('handleFileDrop: No matches found');
-          alert(`No frame found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
+          alert(`No app found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
         } else if (matches.length === 1) {
           console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].frame.name);
           await openFrameInNewTab(matches[0].frame, fileInput);
@@ -1098,7 +1098,7 @@ const App: React.FC = () => {
                 <path d="M6 16c2 0 2-4 4-4s2 4 4 4 2-4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </div>
-            Vibeframe
+            VibeApps
           </h1>
         </div>
       </header>
@@ -1108,9 +1108,9 @@ const App: React.FC = () => {
           {showFrameSelection ? (
             <div className="vf-frame-selection">
               <div className="selection-header">
-                <h2 className="selection-title">Choose frame</h2>
+                <h2 className="selection-title">Choose app</h2>
                 <p className="selection-subtitle">
-                  Multiple frames available for <span className="filename">{pendingFileInput?.path.split('/').pop()}</span>
+                  Multiple apps available for <span className="filename">{pendingFileInput?.path.split('/').pop()}</span>
                 </p>
                 <div className="file-meta">
                   <span className="file-type">{pendingFileInput?.mimetype}</span>
@@ -1164,9 +1164,9 @@ const App: React.FC = () => {
                       <div className="directory-setup-only">
                         <div className="setup-header">
                           <div className="setup-icon">📁</div>
-                          <h2 className="setup-title">Set up your visualizers directory</h2>
+                          <h2 className="setup-title">Set up your apps directory</h2>
                           <p className="setup-description">
-                            Choose a directory containing your visualization frames to get started.
+                            Choose a directory containing your visualization apps to get started.
                           </p>
                         </div>
 
@@ -1200,8 +1200,8 @@ const App: React.FC = () => {
 
                         {framesDirectory && framesDirectory !== 'Not set' && frames.length === 0 && (
                           <div className="setup-hint">
-                            <p>No visualization frames found in this directory.</p>
-                            <p>Make sure your directory contains properly configured frames with viz.json files.</p>
+                            <p>No visualization apps found in this directory.</p>
+                            <p>Make sure your directory contains properly configured apps with viz.json files.</p>
                           </div>
                         )}
                       </div>
@@ -1236,7 +1236,7 @@ const App: React.FC = () => {
                               <div className="section-header">
                                 <h4 className="section-title">
                                   <span className="section-icon">⚡</span>
-                                  Standalone Utilities
+                                  Standalone Apps
                                 </h4>
                                 <span className="section-count">{frames.filter(f => f.standalone).length}</span>
                               </div>
@@ -1303,7 +1303,7 @@ const App: React.FC = () => {
                                 >
                                   <h4 className="section-title">
                                     <span className="section-icon">🎨</span>
-                                    File Frames
+                                    File Apps
                                   </h4>
                                   <div className="section-meta">
                                     <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
@@ -1315,7 +1315,7 @@ const App: React.FC = () => {
                                 isLoadingFrames ? (
                                   <div className="loading-state">
                                     <span className="loading-spinner">⟳</span>
-                                    Loading frames...
+                                    Loading apps...
                                   </div>
                                 ) : (
                                   <div className="frames-grid">
