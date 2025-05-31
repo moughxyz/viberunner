@@ -1045,6 +1045,45 @@ body {
   bottom: 0;
   width: 100%;
   height: 100%;
+  overflow: hidden; /* Prevent frames from breaking out */
+}
+
+/* Frame containment - ensure frames stay within their containers */
+.tab-frame-container > div {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  position: relative !important;
+  overflow: auto;
+}
+
+/* Override any frame styles that try to use viewport units */
+.tab-frame-container * {
+  max-width: 100% !important;
+}
+
+/* Specifically target common problematic patterns */
+.tab-frame-container .dotfile-editor,
+.tab-frame-container [class*="App"],
+.tab-frame-container [class*="app"],
+.tab-frame-container [class*="main"],
+.tab-frame-container [class*="container"] {
+  height: 100% !important;
+  max-height: 100% !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+/* Reset any viewport units to 100% */
+.tab-frame-container [style*="100vh"] {
+  height: 100% !important;
+}
+
+.tab-frame-container [style*="100vw"] {
+  width: 100% !important;
 }
 
 /* Responsive layout */
