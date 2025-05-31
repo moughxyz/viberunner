@@ -1,23 +1,22 @@
 interface Window {
   api: {
-    getVisualizers: () => Promise<any[]>;
-    loadVisualizer: (id: string) => Promise<any>;
+    getApps: () => Promise<any[]>;
+    loadApp: (id: string) => Promise<any>;
     getMimetype: (filePath: string) => Promise<string>;
     readFile: (filePath: string) => Promise<string>;
     handleFileDrop: (filePath: string) => Promise<any>;
-    getVisualizersDirectory: () => Promise<string | null>;
-    changeVisualizersDirectory: () => Promise<{ success: boolean; directory: string | null }>;
-    reloadVisualizers: () => Promise<{ success: boolean; visualizers: any[] }>;
+    getAppsDirectory: () => Promise<string | null>;
+    changeAppsDirectory: () => Promise<{ success: boolean; directory: string | null }>;
+    reloadApps: () => Promise<{ success: boolean; apps: any[] }>;
     readDirectory: (dirPath: string) => Promise<{ success: boolean; files: any[]; error?: string }>;
-    findMatchingVisualizers: (filePath: string) => Promise<{
+    findMatchingApps: (filePath: string) => Promise<{
       success: boolean;
       matches: Array<{
-        visualizer: any;
+        app: any;
         priority: number;
         matchReasons: string[];
       }>;
       fileAnalysis: any;
-      error?: string;
     }>;
     // File writing and backup operations
     writeFile: (filePath: string, content: string, encoding?: 'utf8' | 'base64') => Promise<{
@@ -35,11 +34,17 @@ interface Window {
       filters?: Array<{ name: string; extensions: string[] }>
     }) => Promise<{
       success: boolean;
-      filePath?: string | null;
+      filePath: string | null;
       canceled: boolean;
       error?: string
     }>;
-    launchStandaloneVisualizer: (id: string) => Promise<any>;
+    launchStandaloneApp: (id: string) => Promise<any>;
+    // Node.js utilities
+    nodeUtils: {
+      fs: typeof import('fs');
+      path: typeof import('path');
+      os: typeof import('os');
+    };
   };
 
   // Node.js globals available with nodeIntegration: true

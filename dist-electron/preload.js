@@ -3,21 +3,21 @@ const electron = require("electron");
 electron.contextBridge.exposeInMainWorld(
   "api",
   {
-    getVisualizers: () => electron.ipcRenderer.invoke("get-visualizers"),
-    loadVisualizer: (id) => electron.ipcRenderer.invoke("load-visualizer", id),
+    getApps: () => electron.ipcRenderer.invoke("get-apps"),
+    loadApp: (id) => electron.ipcRenderer.invoke("load-app", id),
     getMimetype: (filePath) => electron.ipcRenderer.invoke("get-mimetype", filePath),
     readFile: (filePath) => electron.ipcRenderer.invoke("read-file", filePath),
     handleFileDrop: (filePath) => electron.ipcRenderer.invoke("handle-file-drop", filePath),
-    getVisualizersDirectory: () => electron.ipcRenderer.invoke("get-visualizers-directory"),
-    changeVisualizersDirectory: () => electron.ipcRenderer.invoke("change-visualizers-directory"),
-    reloadVisualizers: () => electron.ipcRenderer.invoke("reload-visualizers"),
+    getAppsDirectory: () => electron.ipcRenderer.invoke("get-apps-directory"),
+    changeAppsDirectory: () => electron.ipcRenderer.invoke("change-frames-directory"),
+    reloadApps: () => electron.ipcRenderer.invoke("reload-apps"),
     readDirectory: (dirPath) => electron.ipcRenderer.invoke("read-directory", dirPath),
-    findMatchingVisualizers: (filePath) => electron.ipcRenderer.invoke("find-matching-visualizers", filePath),
+    findMatchingApps: (filePath) => electron.ipcRenderer.invoke("find-matching-apps", filePath),
     // File writing and backup operations
     writeFile: (filePath, content, encoding) => electron.ipcRenderer.invoke("write-file", filePath, content, encoding),
     backupFile: (filePath) => electron.ipcRenderer.invoke("backup-file", filePath),
     saveFileDialog: (options) => electron.ipcRenderer.invoke("save-file-dialog", options),
-    // Launch standalone visualizers
-    launchStandaloneVisualizer: (id) => electron.ipcRenderer.invoke("launch-standalone-visualizer", id)
+    // Launch standalone apps
+    launchStandaloneApp: (id) => electron.ipcRenderer.invoke("launch-standalone-app", id)
   }
 );

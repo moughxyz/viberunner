@@ -4,16 +4,16 @@ import { contextBridge, ipcRenderer } from 'electron';
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld(
   'api', {
-    getVisualizers: () => ipcRenderer.invoke('get-visualizers'),
-    loadVisualizer: (id: string) => ipcRenderer.invoke('load-visualizer', id),
+    getApps: () => ipcRenderer.invoke('get-apps'),
+    loadApp: (id: string) => ipcRenderer.invoke('load-app', id),
     getMimetype: (filePath: string) => ipcRenderer.invoke('get-mimetype', filePath),
     readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
     handleFileDrop: (filePath: string) => ipcRenderer.invoke('handle-file-drop', filePath),
-    getVisualizersDirectory: () => ipcRenderer.invoke('get-visualizers-directory'),
-    changeVisualizersDirectory: () => ipcRenderer.invoke('change-visualizers-directory'),
-    reloadVisualizers: () => ipcRenderer.invoke('reload-visualizers'),
+    getAppsDirectory: () => ipcRenderer.invoke('get-apps-directory'),
+    changeAppsDirectory: () => ipcRenderer.invoke('change-frames-directory'),
+    reloadApps: () => ipcRenderer.invoke('reload-apps'),
     readDirectory: (dirPath: string) => ipcRenderer.invoke('read-directory', dirPath),
-    findMatchingVisualizers: (filePath: string) => ipcRenderer.invoke('find-matching-visualizers', filePath),
+    findMatchingApps: (filePath: string) => ipcRenderer.invoke('find-matching-apps', filePath),
     // File writing and backup operations
     writeFile: (filePath: string, content: string, encoding?: 'utf8' | 'base64') =>
       ipcRenderer.invoke('write-file', filePath, content, encoding),
@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld(
       defaultPath?: string;
       filters?: Array<{ name: string; extensions: string[] }>
     }) => ipcRenderer.invoke('save-file-dialog', options),
-    // Launch standalone visualizers
-    launchStandaloneVisualizer: (id: string) => ipcRenderer.invoke('launch-standalone-visualizer', id)
+    // Launch standalone apps
+    launchStandaloneApp: (id: string) => ipcRenderer.invoke('launch-standalone-app', id)
   }
 );

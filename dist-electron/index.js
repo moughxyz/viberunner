@@ -11502,8 +11502,8 @@ remoteMain.initialize();
 if (require("electron-squirrel-startup")) {
   require$$3.app.quit();
 }
-let selectedVisualizersDir = null;
-path.join(require$$3.app.getPath("userData"), "visualizers");
+let selectedAppsDir = null;
+path.join(require$$3.app.getPath("userData"), "apps");
 async function getMimetype(filePath) {
   try {
     const stats = fs.statSync(filePath);
@@ -11606,83 +11606,83 @@ function evaluateMatcher(matcher, fileAnalysis) {
       return false;
   }
 }
-function findMatchingVisualizers(visualizers, fileAnalysis) {
+function findMatchingApps(apps, fileAnalysis) {
   const matches = [];
-  for (const visualizer of visualizers) {
+  for (const app2 of apps) {
     let bestPriority = -1;
-    if (visualizer.matchers) {
-      for (const matcher of visualizer.matchers) {
+    if (app2.matchers) {
+      for (const matcher of app2.matchers) {
         if (evaluateMatcher(matcher, fileAnalysis)) {
           bestPriority = Math.max(bestPriority, matcher.priority);
         }
       }
     }
-    if (bestPriority === -1 && visualizer.mimetypes) {
-      if (visualizer.mimetypes.includes(fileAnalysis.mimetype)) {
+    if (bestPriority === -1 && app2.mimetypes) {
+      if (app2.mimetypes.includes(fileAnalysis.mimetype)) {
         bestPriority = 50;
       }
     }
     if (bestPriority > -1) {
-      matches.push({ visualizer, priority: bestPriority });
+      matches.push({ app: app2, priority: bestPriority });
     }
   }
   return matches.sort((a, b) => b.priority - a.priority);
 }
-async function loadVisualizers() {
-  const VISUALIZERS_DIR2 = selectedVisualizersDir || path.join(require$$3.app.getPath("userData"), "visualizers");
-  console.log("loadVisualizers: Loading from directory:", VISUALIZERS_DIR2);
-  if (!fs.existsSync(VISUALIZERS_DIR2)) {
-    console.log("loadVisualizers: Directory does not exist:", VISUALIZERS_DIR2);
+async function loadApps() {
+  const APPS_DIR2 = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+  console.log("loadApps: Loading from directory:", APPS_DIR2);
+  if (!fs.existsSync(APPS_DIR2)) {
+    console.log("loadApps: Directory does not exist:", APPS_DIR2);
     return [];
   }
   try {
-    console.log("loadVisualizers: Reading directory contents");
-    const dirContents = fs.readdirSync(VISUALIZERS_DIR2);
-    console.log("loadVisualizers: Directory contents:", dirContents);
+    console.log("loadApps: Reading directory contents");
+    const dirContents = fs.readdirSync(APPS_DIR2);
+    console.log("loadApps: Directory contents:", dirContents);
     const directories = dirContents.filter((dir) => {
-      const fullPath = path.join(VISUALIZERS_DIR2, dir);
+      const fullPath = path.join(APPS_DIR2, dir);
       const isDir = fs.statSync(fullPath).isDirectory();
-      console.log(`loadVisualizers: ${dir} is directory: ${isDir}`);
+      console.log(`loadApps: ${dir} is directory: ${isDir}`);
       return isDir;
     });
-    console.log("loadVisualizers: Found directories:", directories);
-    const visualizers = directories.map((dir) => {
-      console.log(`loadVisualizers: Processing directory: ${dir}`);
-      const vizPath = path.join(VISUALIZERS_DIR2, dir);
+    console.log("loadApps: Found directories:", directories);
+    const apps = directories.map((dir) => {
+      console.log(`loadApps: Processing directory: ${dir}`);
+      const vizPath = path.join(APPS_DIR2, dir);
       const metadataPath = path.join(vizPath, "viz.json");
-      console.log(`loadVisualizers: Looking for metadata at: ${metadataPath}`);
+      console.log(`loadApps: Looking for metadata at: ${metadataPath}`);
       if (!fs.existsSync(metadataPath)) {
-        console.log(`loadVisualizers: No viz.json found for ${dir}`);
+        console.log(`loadApps: No viz.json found for ${dir}`);
         return null;
       }
       try {
-        console.log(`loadVisualizers: Reading metadata for ${dir}`);
+        console.log(`loadApps: Reading metadata for ${dir}`);
         const metadataContent = fs.readFileSync(metadataPath, "utf-8");
-        console.log(`loadVisualizers: Metadata content for ${dir}:`, metadataContent);
+        console.log(`loadApps: Metadata content for ${dir}:`, metadataContent);
         const metadata = JSON.parse(metadataContent);
-        console.log(`loadVisualizers: Parsed metadata for ${dir}:`, metadata);
+        console.log(`loadApps: Parsed metadata for ${dir}:`, metadata);
         const result = {
           ...metadata,
           id: dir
         };
-        console.log(`loadVisualizers: Final visualizer object for ${dir}:`, result);
+        console.log(`loadApps: Final app object for ${dir}:`, result);
         return result;
       } catch (parseError) {
-        console.error(`loadVisualizers: Error parsing metadata for ${dir}:`, parseError);
+        console.error(`loadApps: Error parsing metadata for ${dir}:`, parseError);
         return null;
       }
     }).filter(Boolean);
-    console.log("loadVisualizers: Final visualizers array:", visualizers);
-    return visualizers;
+    console.log("loadApps: Final apps array:", apps);
+    return apps;
   } catch (error) {
-    console.error("loadVisualizers: Error in loadVisualizers function:", error);
+    console.error("loadApps: Error in loadApps function:", error);
     throw error;
   }
 }
-async function selectVisualizersDirectory() {
+async function selectAppsDirectory() {
   const result = await require$$3.dialog.showOpenDialog({
-    title: "Select Visualizers Directory",
-    message: "Choose the folder containing your visualizers",
+    title: "Select Apps Directory",
+    message: "Choose the folder containing your apps",
     buttonLabel: "Select Folder",
     properties: ["openDirectory"],
     defaultPath: path.join(require("os").homedir(), "Desktop")
@@ -11693,20 +11693,20 @@ async function selectVisualizersDirectory() {
   const selectedPath = result.filePaths[0];
   try {
     const contents = fs.readdirSync(selectedPath);
-    const visualizerFolders = contents.filter((item) => {
+    const appFolders = contents.filter((item) => {
       const itemPath = path.join(selectedPath, item);
       if (!fs.statSync(itemPath).isDirectory()) return false;
       const vizJsonPath = path.join(itemPath, "viz.json");
       return fs.existsSync(vizJsonPath);
     });
-    if (visualizerFolders.length === 0) {
-      require$$3.dialog.showErrorBox("Invalid Directory", "The selected directory does not contain any valid visualizers.\n\nVisualizers should be folders containing a viz.json file.");
+    if (appFolders.length === 0) {
+      require$$3.dialog.showErrorBox("Invalid Directory", "The selected directory does not contain any valid apps.\n\nApps should be folders containing a viz.json file.");
       return null;
     }
-    console.log(`Found ${visualizerFolders.length} visualizer(s):`, visualizerFolders);
+    console.log(`Found ${appFolders.length} app(s):`, appFolders);
     return selectedPath;
   } catch (error) {
-    console.error("Error validating visualizers directory:", error);
+    console.error("Error validating apps directory:", error);
     require$$3.dialog.showErrorBox("Error", "Could not read the selected directory.");
     return null;
   }
@@ -11734,31 +11734,31 @@ function savePreferences(prefs) {
     console.error("Error saving preferences:", error);
   }
 }
-async function ensureVisualizers() {
-  if (!selectedVisualizersDir) {
-    console.error("No visualizers directory selected");
+async function ensureApps() {
+  if (!selectedAppsDir) {
+    console.error("No apps directory selected");
     return false;
   }
-  const visualizersDir = path.join(require$$3.app.getPath("userData"), "visualizers");
-  console.log("Source visualizers dir:", selectedVisualizersDir);
-  console.log("Target visualizers dir:", visualizersDir);
+  const appsDir = path.join(require$$3.app.getPath("userData"), "apps");
+  console.log("Source apps dir:", selectedAppsDir);
+  console.log("Target apps dir:", appsDir);
   try {
-    if (!fs.existsSync(visualizersDir)) {
-      fs.mkdirSync(visualizersDir, { recursive: true });
-      console.log("Created visualizers directory:", visualizersDir);
+    if (!fs.existsSync(appsDir)) {
+      fs.mkdirSync(appsDir, { recursive: true });
+      console.log("Created apps directory:", appsDir);
     }
-    const sourceContents = fs.readdirSync(selectedVisualizersDir);
-    const visualizerFolders = sourceContents.filter((item) => {
-      const itemPath = path.join(selectedVisualizersDir, item);
+    const sourceContents = fs.readdirSync(selectedAppsDir);
+    const appFolders = sourceContents.filter((item) => {
+      const itemPath = path.join(selectedAppsDir, item);
       if (!fs.statSync(itemPath).isDirectory()) return false;
       const vizJsonPath = path.join(itemPath, "viz.json");
       return fs.existsSync(vizJsonPath);
     });
-    console.log(`Found ${visualizerFolders.length} visualizer(s) to copy:`, visualizerFolders);
-    for (const visualizer of visualizerFolders) {
-      const sourcePath = path.join(selectedVisualizersDir, visualizer);
-      const targetPath = path.join(visualizersDir, visualizer);
-      console.log(`Processing ${visualizer}:`);
+    console.log(`Found ${appFolders.length} app(s) to copy:`, appFolders);
+    for (const app2 of appFolders) {
+      const sourcePath = path.join(selectedAppsDir, app2);
+      const targetPath = path.join(appsDir, app2);
+      console.log(`Processing ${app2}:`);
       console.log("  Source:", sourcePath);
       console.log("  Target:", targetPath);
       const sourceVizJson = path.join(sourcePath, "viz.json");
@@ -11769,9 +11769,9 @@ async function ensureVisualizers() {
       if (fs.existsSync(targetPath)) {
         try {
           fs.rmSync(targetPath, { recursive: true, force: true });
-          console.log(`  Removed existing ${visualizer} directory`);
+          console.log(`  Removed existing ${app2} directory`);
         } catch (error) {
-          console.log(`  fs.rmSync failed for ${visualizer}, trying manual removal:`, error);
+          console.log(`  fs.rmSync failed for ${app2}, trying manual removal:`, error);
           const removeDir = (dir) => {
             if (fs.existsSync(dir)) {
               const files = fs.readdirSync(dir);
@@ -11795,7 +11795,7 @@ async function ensureVisualizers() {
             }
           };
           removeDir(targetPath);
-          console.log(`  Manual removal completed for ${visualizer}`);
+          console.log(`  Manual removal completed for ${app2}`);
         }
       }
       fs.mkdirSync(targetPath, { recursive: true });
@@ -11819,14 +11819,14 @@ async function ensureVisualizers() {
       }
       const targetVizJson = path.join(targetPath, "viz.json");
       if (fs.existsSync(targetVizJson)) {
-        console.log(`  viz.json successfully copied for ${visualizer}`);
+        console.log(`  viz.json successfully copied for ${app2}`);
       } else {
-        console.error(`  viz.json was not copied properly for ${visualizer}`);
+        console.error(`  viz.json was not copied properly for ${app2}`);
       }
     }
     return true;
   } catch (error) {
-    console.error("Failed to ensure visualizers:", error);
+    console.error("Failed to ensure apps:", error);
     return false;
   }
 }
@@ -11854,19 +11854,19 @@ const createWindow = () => {
 };
 require$$3.app.on("ready", async () => {
   const prefs = loadPreferences();
-  if (prefs.visualizersDir && fs.existsSync(prefs.visualizersDir)) {
-    selectedVisualizersDir = prefs.visualizersDir;
-    console.log("Using saved visualizers directory:", selectedVisualizersDir);
+  if (prefs.appsDir && fs.existsSync(prefs.appsDir)) {
+    selectedAppsDir = prefs.appsDir;
+    console.log("Using saved apps directory:", selectedAppsDir);
   } else {
-    console.log("No saved visualizers directory found, prompting user...");
-    selectedVisualizersDir = await selectVisualizersDirectory();
-    if (!selectedVisualizersDir) {
-      require$$3.dialog.showErrorBox("No Visualizers Directory", "You must select a valid visualizers directory to use the application.");
+    console.log("No saved apps directory found, prompting user...");
+    selectedAppsDir = await selectAppsDirectory();
+    if (!selectedAppsDir) {
+      require$$3.dialog.showErrorBox("No Apps Directory", "You must select a valid apps directory to use the application.");
       require$$3.app.quit();
       return;
     }
-    savePreferences({ visualizersDir: selectedVisualizersDir });
-    console.log("Saved visualizers directory preference:", selectedVisualizersDir);
+    savePreferences({ appsDir: selectedAppsDir });
+    console.log("Saved apps directory preference:", selectedAppsDir);
   }
   registerIpcHandlers();
   createWindow();
@@ -11889,46 +11889,46 @@ require$$3.app.on("open-file", (event, filePath) => {
   }
 });
 function registerIpcHandlers() {
-  require$$3.ipcMain.removeAllListeners("get-visualizers");
-  require$$3.ipcMain.removeAllListeners("load-visualizer");
+  require$$3.ipcMain.removeAllListeners("get-apps");
+  require$$3.ipcMain.removeAllListeners("load-app");
   require$$3.ipcMain.removeAllListeners("get-mimetype");
   require$$3.ipcMain.removeAllListeners("read-file");
   require$$3.ipcMain.removeAllListeners("handle-file-drop");
-  require$$3.ipcMain.removeAllListeners("get-visualizers-directory");
+  require$$3.ipcMain.removeAllListeners("get-apps-directory");
   require$$3.ipcMain.removeAllListeners("change-frames-directory");
-  require$$3.ipcMain.removeAllListeners("reload-visualizers");
+  require$$3.ipcMain.removeAllListeners("reload-apps");
   require$$3.ipcMain.removeAllListeners("read-directory");
-  require$$3.ipcMain.removeAllListeners("find-matching-visualizers");
+  require$$3.ipcMain.removeAllListeners("find-matching-apps");
   require$$3.ipcMain.removeAllListeners("write-file");
   require$$3.ipcMain.removeAllListeners("backup-file");
   require$$3.ipcMain.removeAllListeners("save-file-dialog");
-  require$$3.ipcMain.removeAllListeners("launch-standalone-visualizer");
+  require$$3.ipcMain.removeAllListeners("launch-standalone-app");
   console.log("Registering IPC handlers...");
-  require$$3.ipcMain.handle("get-visualizers", async () => {
+  require$$3.ipcMain.handle("get-apps", async () => {
     try {
-      console.log("IPC get-visualizers: Starting to get visualizers");
-      const visualizers = await loadVisualizers();
-      console.log("IPC get-visualizers: Successfully loaded visualizers:", visualizers.length);
-      return visualizers;
+      console.log("IPC get-apps: Starting to get apps");
+      const apps = await loadApps();
+      console.log("IPC get-apps: Successfully loaded apps:", apps.length);
+      return apps;
     } catch (error) {
-      console.error("IPC get-visualizers: Error occurred:", error);
+      console.error("IPC get-apps: Error occurred:", error);
       throw error;
     }
   });
-  require$$3.ipcMain.handle("load-visualizer", async (event, id) => {
-    const visualizers = await loadVisualizers();
-    const visualizer = visualizers.find((v) => v.id === id);
-    if (!visualizer) {
-      throw new Error(`Visualizer ${id} not found`);
+  require$$3.ipcMain.handle("load-app", async (event, id) => {
+    const apps = await loadApps();
+    const appInstance = apps.find((v) => v.id === id);
+    if (!appInstance) {
+      throw new Error(`App ${id} not found`);
     }
-    const VISUALIZERS_DIR2 = selectedVisualizersDir || path.join(require$$3.app.getPath("userData"), "visualizers");
-    const visualizerDir = path.join(VISUALIZERS_DIR2, visualizer.id);
-    const bundlePath = path.join(visualizerDir, "dist", "bundle.iife.js");
+    const APPS_DIR2 = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+    const appDir = path.join(APPS_DIR2, appInstance.id);
+    const bundlePath = path.join(appDir, "dist", "bundle.iife.js");
     if (!fs.existsSync(bundlePath)) {
       throw new Error(`Bundle not found: ${bundlePath}`);
     }
     const bundleContent = fs.readFileSync(bundlePath, "utf-8");
-    return { bundleContent, config: visualizer };
+    return { bundleContent, config: appInstance };
   });
   require$$3.ipcMain.handle("get-mimetype", async (event, filePath) => {
     return await getMimetype(filePath);
@@ -11961,16 +11961,16 @@ function registerIpcHandlers() {
       };
     }
   });
-  require$$3.ipcMain.handle("get-visualizers-directory", () => {
-    return selectedVisualizersDir;
+  require$$3.ipcMain.handle("get-apps-directory", () => {
+    return selectedAppsDir;
   });
   require$$3.ipcMain.handle("change-frames-directory", async () => {
     try {
       console.log("change-frames-directory handler called");
-      const newDir = await selectVisualizersDirectory();
+      const newDir = await selectAppsDirectory();
       if (newDir) {
-        selectedVisualizersDir = newDir;
-        savePreferences({ visualizersDir: newDir });
+        selectedAppsDir = newDir;
+        savePreferences({ appsDir: newDir });
         console.log("Changed frames directory to:", newDir);
         return { success: true, directory: newDir };
       }
@@ -11980,13 +11980,13 @@ function registerIpcHandlers() {
       throw error;
     }
   });
-  require$$3.ipcMain.handle("reload-visualizers", async () => {
-    if (selectedVisualizersDir) {
-      const success = await ensureVisualizers();
-      const visualizers = await loadVisualizers();
-      return { success, visualizers };
+  require$$3.ipcMain.handle("reload-apps", async () => {
+    if (selectedAppsDir) {
+      const success = await ensureApps();
+      const apps = await loadApps();
+      return { success, apps };
     }
-    return { success: false, visualizers: [] };
+    return { success: false, apps: [] };
   });
   require$$3.ipcMain.handle("read-directory", async (event, dirPath) => {
     try {
@@ -12035,15 +12035,15 @@ function registerIpcHandlers() {
       return { success: false, error: error.message, files: [] };
     }
   });
-  require$$3.ipcMain.handle("find-matching-visualizers", async (event, filePath) => {
+  require$$3.ipcMain.handle("find-matching-apps", async (event, filePath) => {
     try {
-      const visualizers = await loadVisualizers();
+      const apps = await loadApps();
       const fileAnalysis = await analyzeFile(filePath);
-      const matches = findMatchingVisualizers(visualizers, fileAnalysis);
+      const matches = findMatchingApps(apps, fileAnalysis);
       return {
         success: true,
         matches: matches.map((m) => ({
-          visualizer: m.visualizer,
+          app: m.app,
           priority: m.priority,
           matchReasons: []
           // Could add detailed match reasons here
@@ -12051,7 +12051,7 @@ function registerIpcHandlers() {
         fileAnalysis
       };
     } catch (error) {
-      console.error("Error finding matching visualizers:", error);
+      console.error("Error finding matching apps:", error);
       return {
         success: false,
         error: error.message,
@@ -12115,30 +12115,30 @@ function registerIpcHandlers() {
       return { success: false, error: error.message, canceled: true };
     }
   });
-  require$$3.ipcMain.handle("launch-standalone-visualizer", async (event, id) => {
+  require$$3.ipcMain.handle("launch-standalone-app", async (event, id) => {
     try {
-      const visualizers = await loadVisualizers();
-      const visualizer = visualizers.find((v) => v.id === id);
-      if (!visualizer) {
-        throw new Error(`Visualizer ${id} not found`);
+      const apps = await loadApps();
+      const appInstance = apps.find((v) => v.id === id);
+      if (!appInstance) {
+        throw new Error(`App ${id} not found`);
       }
-      if (!visualizer.standalone) {
-        throw new Error(`Visualizer ${id} is not configured for standalone use`);
+      if (!appInstance.standalone) {
+        throw new Error(`App ${id} is not configured for standalone use`);
       }
-      const VISUALIZERS_DIR2 = selectedVisualizersDir || path.join(require$$3.app.getPath("userData"), "visualizers");
-      const visualizerDir = path.join(VISUALIZERS_DIR2, visualizer.id);
-      const bundlePath = path.join(visualizerDir, "dist", "bundle.iife.js");
+      const APPS_DIR2 = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+      const appDir = path.join(APPS_DIR2, appInstance.id);
+      const bundlePath = path.join(appDir, "dist", "bundle.iife.js");
       if (!fs.existsSync(bundlePath)) {
         throw new Error(`Bundle not found: ${bundlePath}`);
       }
       const bundleContent = fs.readFileSync(bundlePath, "utf-8");
       return {
         bundleContent,
-        config: visualizer,
+        config: appInstance,
         standalone: true
       };
     } catch (error) {
-      console.error("Error launching standalone visualizer:", error);
+      console.error("Error launching standalone app:", error);
       throw error;
     }
   });

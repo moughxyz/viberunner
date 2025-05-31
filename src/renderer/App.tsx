@@ -8,7 +8,7 @@ const path = require('path');
 const mime = require('mime-types');
 const { app } = require('@electron/remote') || require('electron').remote?.app;
 
-// Expose React and ReactDOM globally for visualizers
+// Expose React and ReactDOM globally for apps
 (window as any).React = React;
 (window as any).ReactDOM = { createRoot };
 
@@ -55,7 +55,7 @@ const api = {
   require: require
 };
 
-// Make API available globally for visualizers
+// Make API available globally for apps
 (window as any).api = api;
 
 // Frame cleanup system
@@ -100,9 +100,9 @@ const getFramesDirectory = () => {
     const prefsPath = path.join(app.getPath('userData'), 'preferences.json');
     if (fs.existsSync(prefsPath)) {
       const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
-      if (prefs.visualizersDir && fs.existsSync(prefs.visualizersDir)) {
-        console.log('Using saved frames directory:', prefs.visualizersDir);
-        return prefs.visualizersDir;
+      if (prefs.appsDir && fs.existsSync(prefs.appsDir)) {
+        console.log('Using saved frames directory:', prefs.appsDir);
+        return prefs.appsDir;
       }
     }
   } catch (error) {
@@ -111,7 +111,7 @@ const getFramesDirectory = () => {
 
   // Fallback to default location
   const userDataPath = app?.getPath('userData') || path.join(require('os').homedir(), '.viberunner');
-  const fallback = path.join(userDataPath, 'visualizers');
+  const fallback = path.join(userDataPath, 'apps');
   console.log('Using fallback frames directory:', fallback);
   return fallback;
 };
@@ -208,38 +208,29 @@ async function loadFrames(): Promise<Frame[]> {
     console.log('loadFrames: Final frames array:', frames);
     return frames;
   } catch (error) {
-    console.error('Error loading frames:', error);
+    console.error('Error in loadFrames function:', error);
     throw error;
   }
 }
 
 async function loadFrame(id: string) {
-  console.log('loadFrame: Loading frame with id:', id);
   const FRAMES_DIR = getFramesDirectory();
-  console.log('loadFrame: Frames directory:', FRAMES_DIR);
-
   const framePath = path.join(FRAMES_DIR, id);
   const bundlePath = path.join(framePath, 'dist', 'bundle.iife.js');
 
-  console.log('loadFrame: Frame path:', framePath);
-  console.log('loadFrame: Bundle path:', bundlePath);
-  console.log('loadFrame: Bundle exists:', fs.existsSync(bundlePath));
-
   if (!fs.existsSync(bundlePath)) {
-    console.error('loadFrame: Bundle not found at:', bundlePath);
     throw new Error(`Bundle not found: ${bundlePath}`);
   }
 
-  console.log('loadFrame: Reading bundle content...');
   const bundleContent = fs.readFileSync(bundlePath, 'utf-8');
-  console.log('loadFrame: Bundle content length:', bundleContent.length);
-  console.log('loadFrame: Bundle content preview:', bundleContent.slice(0, 200) + '...');
 
-  // Also load the config
+  // Also load the metadata
   const metadataPath = path.join(framePath, 'viz.json');
-  console.log('loadFrame: Loading config from:', metadataPath);
-  const config = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
-  console.log('loadFrame: Config loaded:', config);
+  let config = null;
+  if (fs.existsSync(metadataPath)) {
+    const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
+    config = JSON.parse(metadataContent);
+  }
 
   return { bundleContent, config };
 }
@@ -572,121 +563,36 @@ const App: React.FC = () => {
           container.appendChild(isolationWrapper);
 
           // Render directly into the isolation wrapper
-          const reactRoot = createRoot(isolationWrapper);
-
-          // Add strong containment attributes to the container
-          container.style.contain = 'layout style size';
-          container.style.isolation = 'isolate';
-          container.style.zIndex = '1';
-
-          // Create a style element for frame-specific overrides
-          const frameStyleOverride = document.createElement('style');
-          frameStyleOverride.setAttribute('data-frame-style-override', tab.id);
-          frameStyleOverride.textContent = `
-            /* Auto-generated frame isolation for ${tab.frame?.name || 'Unknown'} */
-            [data-frame-id="${tab.id}"] {
-              position: relative !important;
-              width: 100% !important;
-              height: 100% !important;
-              max-width: 100% !important;
-              max-height: 100% !important;
-              overflow: auto !important;
-              contain: layout style size !important;
-              isolation: isolate !important;
-            }
-
-            /* Prevent global CSS pollution from frame */
-            [data-frame-id="${tab.id}"] * {
-              position: relative !important;
-              max-width: 100% !important;
-              max-height: 100% !important;
-            }
-
-            /* Override viewport units within frame */
-            [data-frame-id="${tab.id}"] [style*="100vh"],
-            [data-frame-id="${tab.id}"] [style*="100VH"] {
-              height: 100% !important;
-            }
-
-            [data-frame-id="${tab.id}"] [style*="100vw"],
-            [data-frame-id="${tab.id}"] [style*="100VW"] {
-              width: 100% !important;
-            }
-
-            /* Prevent fixed positioning */
-            [data-frame-id="${tab.id}"] [style*="position: fixed"],
-            [data-frame-id="${tab.id}"] [style*="position:fixed"] {
-              position: relative !important;
-            }
-
-            /* Ensure common frame root classes are contained */
-            [data-frame-id="${tab.id}"] .dotfile-editor,
-            [data-frame-id="${tab.id}"] [class*="App"],
-            [data-frame-id="${tab.id}"] [class*="app"],
-            [data-frame-id="${tab.id}"] [class*="main"],
-            [data-frame-id="${tab.id}"] [class*="container"],
-            [data-frame-id="${tab.id}"] [class*="wrapper"],
-            [data-frame-id="${tab.id}"] [class*="root"] {
-              position: relative !important;
-              width: 100% !important;
-              height: 100% !important;
-              max-width: 100% !important;
-              max-height: 100% !important;
-              overflow: auto !important;
-              box-sizing: border-box !important;
-            }
-          `;
-          document.head.appendChild(frameStyleOverride);
-
-          // Add frame identifier for CSS scoping
           isolationWrapper.setAttribute('data-frame-id', tab.id);
 
-          reactRoot.render(React.createElement(FrameComponent, props));
+          const root = createRoot(isolationWrapper);
+          root.render(React.createElement(FrameComponent, props));
 
-          // Store in our ref including the style element for cleanup
-          tabContainersRef.current.set(tab.id, {
-            domElement: container,
-            reactRoot,
-            styleElement: frameStyleOverride
-          });
+          // Show the container
+          container.style.display = 'block';
 
-          console.log('Frame loaded successfully for tab:', tab.id);
           resolve(true);
         } catch (error) {
-          console.error('Error rendering frame for tab:', tab.id, error);
+          console.error('Error in frame loader:', error);
           resolve(false);
         }
       };
 
-      (window as any).__LOAD_FRAME__ = frameLoader;
-      (window as any).__LOAD_VISUALIZER__ = frameLoader;
+      // Make the frame loader available globally
+      (window as any).__LOAD_APP__ = frameLoader;
+
+      script.onload = () => {
+        console.log('Frame script loaded successfully');
+        // Clean up after script loads
+        setTimeout(() => {
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+          delete (window as any).__LOAD_APP__;
+        }, 100);
+      };
 
       document.head.appendChild(script);
-
-      // Cleanup script after execution and clean up any frame-injected styles
-      setTimeout(() => {
-        if (document.head.contains(script)) {
-          document.head.removeChild(script);
-        }
-
-        // Clean up any style elements created by the frame that weren't scoped
-        const frameStyles = document.querySelectorAll(`style[data-frame-style="${tab.id}"]`);
-        frameStyles.forEach(style => {
-          if (!style.textContent?.includes(`[data-frame-id="${tab.id}"]`)) {
-            console.warn('Removing unscoped frame style element');
-            style.remove();
-          }
-        });
-
-        delete (window as any).__LOAD_FRAME__;
-        delete (window as any).__LOAD_VISUALIZER__;
-
-        // If frameLoader wasn't called, resolve with false
-        if (!tabContainersRef.current.has(tab.id)) {
-          console.warn('Frame loader was not called for tab:', tab.id);
-          resolve(false);
-        }
-      }, 1000); // Longer timeout to ensure frame loads
     });
   };
 
