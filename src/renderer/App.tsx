@@ -862,7 +862,7 @@ const App: React.FC = () => {
       </header>
 
       <div className="main-layout">
-        <main className="content-area">
+        <main className={`content-area ${activeTab?.type === 'newtab' ? 'with-sidebar' : 'full-width'}`}>
           {showFrameSelection ? (
             <div className="frame-selection">
               <div className="selection-header">
@@ -966,108 +966,111 @@ const App: React.FC = () => {
           )}
         </main>
 
-        <aside className="sidebar">
-          {/* Frames Directory Section */}
-          <div className="sidebar-section">
-            <div className="section-header">
-              <h4 className="section-title">
-                <span className="section-icon">🔧</span>
-                Directory
-              </h4>
-            </div>
-            <div className="directory-path">
-              {framesDirectory}
-            </div>
-            <div className="section-actions">
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={handleChangeFramesDirectory}
-              >
-                <span className="btn-icon">📁</span>
-                Change
-              </button>
-              <button
-                className="btn btn-outline btn-sm"
-                onClick={handleReloadFrames}
-                disabled={isLoadingFrames}
-              >
-                <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
-                Reload
-              </button>
-            </div>
-          </div>
-
-          <div className="sidebar-section">
-            <div className="section-header">
-              <h4 className="section-title">
-                <span className="section-icon">🎨</span>
-                Frames
-              </h4>
-              <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
-            </div>
-
-            {isLoadingFrames ? (
-              <div className="loading-state">
-                <span className="loading-spinner">⟳</span>
-                Loading frames...
-              </div>
-            ) : frames.filter(f => !f.standalone).length === 0 ? (
-              <div className="empty-state">
-                <p>No file frames found</p>
-                <p className="empty-subtitle">Check your directory configuration</p>
-              </div>
-            ) : (
-              <div className="frame-list">
-                {frames.filter(f => !f.standalone).map(frame => (
-                  <div key={frame.id} className="frame-item">
-                    <div className="item-header">
-                      <h5 className="item-title">{frame.name}</h5>
-                      <div className="item-status">
-                        <span className="status-dot"></span>
-                      </div>
-                    </div>
-                    <p className="item-description">{frame.description}</p>
-                    <div className="item-formats">
-                      {getSupportedFormats(frame)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {frames.filter(f => f.standalone).length > 0 && (
+        {/* Sidebar only shown on new tabs */}
+        {activeTab?.type === 'newtab' && (
+          <aside className="sidebar">
+            {/* Frames Directory Section */}
             <div className="sidebar-section">
               <div className="section-header">
                 <h4 className="section-title">
-                  <span className="section-icon">⚡</span>
-                  Utilities
+                  <span className="section-icon">🔧</span>
+                  Directory
                 </h4>
-                <span className="section-count">{frames.filter(f => f.standalone).length}</span>
               </div>
-
-              <div className="frame-list">
-                {frames.filter(f => f.standalone).map(frame => (
-                  <div key={frame.id} className="frame-item standalone-item">
-                    <div className="item-header">
-                      <h5 className="item-title">{frame.name}</h5>
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={() => launchStandaloneFrame(frame)}
-                      >
-                        Launch
-                      </button>
-                    </div>
-                    <p className="item-description">{frame.description}</p>
-                    <div className="item-formats">
-                      {getSupportedFormats(frame)}
-                    </div>
-                  </div>
-                ))}
+              <div className="directory-path">
+                {framesDirectory}
+              </div>
+              <div className="section-actions">
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={handleChangeFramesDirectory}
+                >
+                  <span className="btn-icon">📁</span>
+                  Change
+                </button>
+                <button
+                  className="btn btn-outline btn-sm"
+                  onClick={handleReloadFrames}
+                  disabled={isLoadingFrames}
+                >
+                  <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
+                  Reload
+                </button>
               </div>
             </div>
-          )}
-        </aside>
+
+            <div className="sidebar-section">
+              <div className="section-header">
+                <h4 className="section-title">
+                  <span className="section-icon">🎨</span>
+                  Frames
+                </h4>
+                <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
+              </div>
+
+              {isLoadingFrames ? (
+                <div className="loading-state">
+                  <span className="loading-spinner">⟳</span>
+                  Loading frames...
+                </div>
+              ) : frames.filter(f => !f.standalone).length === 0 ? (
+                <div className="empty-state">
+                  <p>No file frames found</p>
+                  <p className="empty-subtitle">Check your directory configuration</p>
+                </div>
+              ) : (
+                <div className="frame-list">
+                  {frames.filter(f => !f.standalone).map(frame => (
+                    <div key={frame.id} className="frame-item">
+                      <div className="item-header">
+                        <h5 className="item-title">{frame.name}</h5>
+                        <div className="item-status">
+                          <span className="status-dot"></span>
+                        </div>
+                      </div>
+                      <p className="item-description">{frame.description}</p>
+                      <div className="item-formats">
+                        {getSupportedFormats(frame)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {frames.filter(f => f.standalone).length > 0 && (
+              <div className="sidebar-section">
+                <div className="section-header">
+                  <h4 className="section-title">
+                    <span className="section-icon">⚡</span>
+                    Utilities
+                  </h4>
+                  <span className="section-count">{frames.filter(f => f.standalone).length}</span>
+                </div>
+
+                <div className="frame-list">
+                  {frames.filter(f => f.standalone).map(frame => (
+                    <div key={frame.id} className="frame-item standalone-item">
+                      <div className="item-header">
+                        <h5 className="item-title">{frame.name}</h5>
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={() => launchStandaloneFrame(frame)}
+                        >
+                          Launch
+                        </button>
+                      </div>
+                      <p className="item-description">{frame.description}</p>
+                      <div className="item-formats">
+                        {getSupportedFormats(frame)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </aside>
+        )}
       </div>
     </div>
   );
