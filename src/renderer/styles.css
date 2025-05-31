@@ -1128,8 +1128,8 @@ body {
   /* Create a new formatting context */
   display: block;
 
-  /* Prevent any inheritance */
-  all: initial;
+  /* Solid background to prevent bleed-through */
+  background: var(--background) !important;
 
   /* Reset essential properties */
   position: absolute;
@@ -1139,9 +1139,25 @@ body {
   bottom: 0;
   width: 100%;
   height: 100%;
-  background: var(--background);
   color: var(--text-primary);
   font-family: var(--font-family);
+
+  /* Ensure proper stacking when visible */
+  opacity: 1;
+}
+
+/* Hidden tab containers should be completely invisible */
+.tab-frame-container[style*="display: none"] {
+  visibility: hidden !important;
+  z-index: -1 !important;
+  opacity: 0 !important;
+}
+
+/* Active tab containers should be on top */
+.tab-frame-container[style*="display: block"] {
+  z-index: 10 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Scope ALL frame content to prevent global CSS pollution */

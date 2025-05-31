@@ -487,6 +487,10 @@ const App: React.FC = () => {
     container.style.width = '100%';
     container.style.height = '100%';
     container.style.display = 'none'; // Start hidden
+    container.style.visibility = 'hidden';
+    container.style.zIndex = '-1';
+    container.style.opacity = '0';
+    container.style.background = 'var(--background)';
     frameRootRef.current.appendChild(container);
 
     // Prepare props with cleanup support
@@ -648,8 +652,11 @@ const App: React.FC = () => {
             styleElement: undefined
           });
 
-          // Show the container
+          // Show the container with proper stacking
           container.style.display = 'block';
+          container.style.visibility = 'visible';
+          container.style.zIndex = '10';
+          container.style.opacity = '1';
 
           resolve(true);
         } catch (error) {
@@ -691,10 +698,14 @@ const App: React.FC = () => {
 
     console.log('Switching to tab:', tabId, 'type:', activeTab?.type);
 
-    // Hide all frame containers
+    // Hide all frame containers with enhanced visibility control
     tabContainersRef.current.forEach((container, id) => {
       console.log('Hiding container for tab:', id);
-      container.domElement.style.display = 'none';
+      const element = container.domElement;
+      element.style.display = 'none';
+      element.style.visibility = 'hidden';
+      element.style.zIndex = '-1';
+      element.style.opacity = '0';
     });
 
     // Show the active tab's container if it's not a new tab
@@ -702,7 +713,11 @@ const App: React.FC = () => {
       const container = tabContainersRef.current.get(tabId);
       if (container) {
         console.log('Showing container for tab:', tabId);
-        container.domElement.style.display = 'block';
+        const element = container.domElement;
+        element.style.display = 'block';
+        element.style.visibility = 'visible';
+        element.style.zIndex = '10';
+        element.style.opacity = '1';
       } else {
         console.warn('No container found for tab:', tabId);
       }
