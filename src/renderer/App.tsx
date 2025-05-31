@@ -780,18 +780,7 @@ const App: React.FC = () => {
     <div className="app">
       <header className="header">
         <div className="header-content">
-          <h1 className="app-title">
-            <div className="app-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="20" height="20" rx="4" ry="4" stroke="currentColor" strokeWidth="2"/>
-                <path d="M6 8c2 0 2 4 4 4s2-4 4-4 2 4 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <path d="M6 16c2 0 2-4 4-4s2 4 4 4 2-4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </div>
-            Vibeframe
-          </h1>
-
-          {/* Tabs in Header */}
+          {/* Tabs first, right after macOS traffic lights */}
           <div className="header-tabs">
             <div className="tabs-list">
               {openTabs.map(tab => (
@@ -832,6 +821,18 @@ const App: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Vibeframe logo on the right */}
+          <h1 className="app-title">
+            <div className="app-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="2" width="20" height="20" rx="4" ry="4" stroke="currentColor" strokeWidth="2"/>
+                <path d="M6 8c2 0 2 4 4 4s2-4 4-4 2 4 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <path d="M6 16c2 0 2-4 4-4s2 4 4 4 2-4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </div>
+            Vibeframe
+          </h1>
         </div>
       </header>
 
