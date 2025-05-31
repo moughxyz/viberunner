@@ -523,8 +523,8 @@ const createWindow = (): void => {
     mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
   }
 
-  // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // Open the DevTools only in development mode
+  // mainWindow.webContents.openDevTools();
 };
 
 // This method will be called when Electron has finished

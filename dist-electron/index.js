@@ -11851,7 +11851,6 @@ const createWindow = () => {
   } else {
     mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
-  mainWindow.webContents.openDevTools();
 };
 require$$3.app.on("ready", async () => {
   const prefs = loadPreferences();
