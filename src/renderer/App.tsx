@@ -354,19 +354,27 @@ const App: React.FC = () => {
     });
   }, [frames]);
 
-  // Function to get icon for display (returns emoji fallback if no custom icon)
+  // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
   const getAppIcon = (frame: Frame): string => {
     if (appIcons[frame.id]) {
       return appIcons[frame.id];
     }
 
-    // Return emoji fallback based on app type
-    return frame.standalone ? '⚡' : '📄';
+    // Return Viberunner SVG logo as fallback
+    return getViberunnerSvg();
   };
 
-  // Function to check if icon is custom (not emoji)
+  // Function to check if icon is custom (not the default Viberunner logo)
   const isCustomIcon = (frame: Frame): boolean => {
     return !!appIcons[frame.id];
+  };
+
+  // Generate Viberunner SVG logo as data URL
+  const getViberunnerSvg = (size: number = 24): string => {
+    const svg = `<svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
+      <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
   };
 
   // Imperative tab management - outside React state
@@ -1024,14 +1032,18 @@ const App: React.FC = () => {
                   <div className="vf-tab-icon">
                     {tab.type === 'newtab' ? (
                       '➕'
-                    ) : tab.frame && isCustomIcon(tab.frame) ? (
+                    ) : tab.frame ? (
                       <img
                         src={getAppIcon(tab.frame)}
                         alt={tab.frame.name}
                         style={{ width: '16px', height: '16px', objectFit: 'contain' }}
                       />
                     ) : (
-                      tab.type === 'standalone' ? '⚡' : '📄'
+                      <img
+                        src={getViberunnerSvg(16)}
+                        alt="Default"
+                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+                      />
                     )}
                   </div>
                   <div className="vf-tab-content">
@@ -1067,9 +1079,11 @@ const App: React.FC = () => {
           {/* Viberunner logo on the right */}
           <h1 className="vf-app-title">
             <div className="vf-app-icon">
-              <svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-                <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
+              <img
+                src={getViberunnerSvg()}
+                alt="Viberunner Logo"
+                style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+              />
             </div>
             Viberunner
           </h1>
@@ -1099,17 +1113,11 @@ const App: React.FC = () => {
                   >
                     <div className="card-header">
                       <div className="card-icon">
-                        {isCustomIcon(frame) ? (
-                          <img
-                            src={getAppIcon(frame)}
-                            alt={frame.name}
-                            style={{ width: '32px', height: '32px', objectFit: 'contain' }}
-                          />
-                        ) : (
-                          <span style={{ fontSize: '32px' }}>
-                            {frame.standalone ? '⚡' : '📄'}
-                          </span>
-                        )}
+                        <img
+                          src={getAppIcon(frame)}
+                          alt={frame.name}
+                          style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+                        />
                       </div>
                       <div className="card-title-section">
                         <h3 className="card-title">{frame.name}</h3>
@@ -1236,15 +1244,11 @@ const App: React.FC = () => {
                                     onClick={() => launchStandaloneFrame(frame)}
                                   >
                                     <div className="utility-icon">
-                                      {isCustomIcon(frame) ? (
-                                        <img
-                                          src={getAppIcon(frame)}
-                                          alt={frame.name}
-                                          style={{ width: '24px', height: '24px', objectFit: 'contain' }}
-                                        />
-                                      ) : (
-                                        '⚡'
-                                      )}
+                                      <img
+                                        src={getAppIcon(frame)}
+                                        alt={frame.name}
+                                        style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+                                      />
                                     </div>
                                     <div className="utility-content">
                                       <h5 className="utility-title">{frame.name}</h5>

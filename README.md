@@ -86,10 +86,7 @@ Custom icons are displayed in:
 
 ### Fallback Behavior
 
-If no custom icon is provided, Viberunner uses emoji fallbacks:
-- **Standalone apps**: ⚡ (lightning bolt)
-- **File visualizers**: 📄 (document)
-- **New tabs**: ➕ (plus sign)
+If no custom icon is provided, Viberunner uses the Viberunner logo as the default icon for all apps. This provides a consistent and professional appearance while maintaining visual distinction through custom icons when available.
 
 ## 🚀 Quick Start
 
