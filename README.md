@@ -477,13 +477,6 @@ The preferences system includes robust error handling:
 - **Write Errors**: Returns `false` for failed operations, `true` for success
 - **Type Safety**: Helper methods ensure correct data types are returned
 
-### Security & Isolation
-
-- **App Isolation**: Each app can only access its own preferences
-- **File Safety**: Preferences are stored in the app's own viz.json file
-- **Backup Safety**: The system doesn't modify other app configuration
-- **Read-Only Metadata**: Core app metadata (name, version, etc.) remains protected
-
 ## 🚀 Frame API - Direct Node.js Access
 
 ### Overview
@@ -1252,8 +1245,6 @@ const util = require('util');
 const events = require('events');
 // ... etc
 ```
-
-**Security Note**: Visualizers run with full Node.js privileges, so only load trusted visualizers.
 
 ### Dark Theme Integration
 
