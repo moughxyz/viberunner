@@ -1382,7 +1382,7 @@ const App: React.FC = () => {
                     <span className="vf-tab-title">{tab.title}</span>
                     {tab.frame && <span className="vf-tab-subtitle">{tab.frame.name}</span>}
                   </div>
-                  {tab.type !== 'newtab' && (
+                  {tab.type !== 'newtab' || openTabs.length > 1 ? (
                     <button
                       className="vf-tab-close"
                       onClick={(e) => {
@@ -1393,7 +1393,7 @@ const App: React.FC = () => {
                     >
                       ✕
                     </button>
-                  )}
+                  ) : null}
                 </div>
               ))}
 
