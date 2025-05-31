@@ -579,21 +579,42 @@ const App: React.FC = () => {
 
   // Auto-launch startup apps when frames are loaded
   useEffect(() => {
+    console.log('Auto-launch useEffect triggered:', {
+      framesLength: frames.length,
+      startupAppsCount: Object.keys(startupApps).length,
+      hasLaunched: hasLaunchedStartupApps.current,
+      startupApps
+    });
+
     if (frames.length > 0 && Object.keys(startupApps).length > 0 && !hasLaunchedStartupApps.current) {
       const enabledStartupApps = Object.entries(startupApps)
         .filter(([_, config]) => config.enabled)
         .sort(([, a], [, b]) => a.tabOrder - b.tabOrder);
+
+      console.log('Enabled startup apps:', enabledStartupApps);
 
       if (enabledStartupApps.length > 0) {
         console.log(`Auto-launching ${enabledStartupApps.length} startup apps...`);
 
         // Launch each app with a small delay
         enabledStartupApps.forEach(([appId, config], index) => {
+          console.log(`Scheduling launch for ${appId} with ${index * 500}ms delay`);
           setTimeout(() => {
             const frame = frames.find(f => f.id === appId);
+            console.log(`Attempting to launch ${appId}:`, {
+              frameFound: !!frame,
+              frameName: frame?.name,
+              isStandalone: frame?.standalone,
+              allFrameIds: frames.map(f => f.id)
+            });
             if (frame && frame.standalone) {
               console.log(`Auto-launching startup app: ${appId} (tab order: ${config.tabOrder})`);
               launchStandaloneFrame(frame);
+            } else {
+              console.warn(`Could not launch ${appId}:`, {
+                frameFound: !!frame,
+                isStandalone: frame?.standalone
+              });
             }
           }, index * 500); // 500ms delay between each app
         });
