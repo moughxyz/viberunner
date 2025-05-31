@@ -587,6 +587,13 @@ const App: React.FC = () => {
   // Keyboard shortcuts for tab/window management
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Cmd+T (macOS) or Ctrl+T (Windows/Linux) - Create new tab
+      if ((event.metaKey || event.ctrlKey) && event.key === 't') {
+        event.preventDefault();
+        createNewTab();
+        return;
+      }
+
       // Check for Cmd+W (macOS) or Ctrl+W (Windows/Linux)
       if ((event.metaKey || event.ctrlKey) && event.key === 'w') {
         event.preventDefault();
