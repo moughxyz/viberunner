@@ -502,7 +502,7 @@ body {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: transparent;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   cursor: pointer;
@@ -513,7 +513,7 @@ body {
 }
 
 .utility-card:hover {
-  background: var(--surface);
+  background: var(--surface-hover);
   border-color: var(--border-hover);
   transform: none;
   box-shadow: none;
@@ -545,14 +545,14 @@ body {
 
 .frame-info-card {
   padding: var(--space-3) var(--space-4);
-  background: transparent;
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   transition: all 0.15s ease;
 }
 
 .frame-info-card:hover {
-  background: var(--surface);
+  background: var(--surface-hover);
   border-color: var(--border-hover);
 }
 
@@ -1003,24 +1003,19 @@ body {
   padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.15s ease;
-  text-align: left;
-  font-family: inherit;
+  text-decoration: none;
   color: inherit;
+  min-height: 80px;
 }
 
 .standalone-frame-card:hover {
   background: var(--surface-hover);
   border-color: var(--border-hover);
   transform: translateY(-1px);
-  box-shadow: var(--shadow);
-}
-
-.standalone-frame-card:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .standalone-frame-icon {
