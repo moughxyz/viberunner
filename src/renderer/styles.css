@@ -283,15 +283,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   margin: auto var(--space-2);
   background: transparent;
   border: none;
   border-radius: 50%;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   transition: all 0.15s ease;
   flex-shrink: 0;
