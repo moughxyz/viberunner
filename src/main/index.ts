@@ -516,8 +516,8 @@ const createWindow = (): void => {
     height: 1000,
     width: 1600,
     webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
+      nodeIntegration: true,
+      contextIsolation: false,
       webSecurity: true
     },
     titleBarStyle: 'hiddenInset',
