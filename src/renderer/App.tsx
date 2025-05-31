@@ -511,23 +511,36 @@ const App: React.FC = () => {
               // Mark style elements created by this frame
               element.setAttribute('data-frame-style', frameId);
 
-              // Override textContent to auto-scope CSS
-              const originalTextContentSetter = Object.getOwnPropertyDescriptor(Element.prototype, 'textContent').set;
-              Object.defineProperty(element, 'textContent', {
-                set: function(value) {
-                  if (value && typeof value === 'string') {
-                    // Auto-scope the CSS
-                    const scopedCSS = value
-                      .replace(/^\\s*\\*\\s*\\{/gm, \`[data-frame-id="\${frameId}"] * {\`)
-                      .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
-                      .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
-                      .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`);
-                    originalTextContentSetter.call(this, scopedCSS);
-                  } else {
-                    originalTextContentSetter.call(this, value);
-                  }
+              // Override textContent to auto-scope CSS - with safety checks
+              try {
+                const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'textContent') ||
+                                 Object.getOwnPropertyDescriptor(Node.prototype, 'textContent') ||
+                                 Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'textContent');
+
+                if (descriptor && descriptor.set) {
+                  const originalTextContentSetter = descriptor.set;
+                  Object.defineProperty(element, 'textContent', {
+                    set: function(value) {
+                      if (value && typeof value === 'string') {
+                        // Auto-scope the CSS
+                        const scopedCSS = value
+                          .replace(/^\\s*\\*\\s*\\{/gm, \`[data-frame-id="\${frameId}"] * {\`)
+                          .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
+                          .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
+                          .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`);
+                        originalTextContentSetter.call(this, scopedCSS);
+                      } else {
+                        originalTextContentSetter.call(this, value);
+                      }
+                    },
+                    get: descriptor.get,
+                    enumerable: descriptor.enumerable,
+                    configurable: descriptor.configurable
+                  });
                 }
-              });
+              } catch (err) {
+                console.warn('Failed to intercept textContent for frame CSS scoping:', err);
+              }
             }
 
             return element;
