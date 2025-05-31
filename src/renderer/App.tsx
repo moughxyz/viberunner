@@ -215,34 +215,21 @@ async function loadFrames(): Promise<Frame[]> {
 
 async function loadFrame(id: string) {
   const FRAMES_DIR = getFramesDirectory();
-  console.log('loadFrame: Loading frame with id:', id);
-  console.log('loadFrame: Frames directory:', FRAMES_DIR);
-
   const framePath = path.join(FRAMES_DIR, id);
   const bundlePath = path.join(framePath, 'dist', 'bundle.iife.js');
 
-  console.log('loadFrame: Frame path:', framePath);
-  console.log('loadFrame: Bundle path:', bundlePath);
-  console.log('loadFrame: Bundle exists:', fs.existsSync(bundlePath));
-
   if (!fs.existsSync(bundlePath)) {
-    console.error('loadFrame: Bundle not found at:', bundlePath);
     throw new Error(`Bundle not found: ${bundlePath}`);
   }
 
-  console.log('loadFrame: Reading bundle content...');
   const bundleContent = fs.readFileSync(bundlePath, 'utf-8');
-  console.log('loadFrame: Bundle content length:', bundleContent.length);
-  console.log('loadFrame: Bundle content preview:', bundleContent.slice(0, 200) + '...');
 
   // Also load the metadata
   const metadataPath = path.join(framePath, 'viz.json');
-  console.log('loadFrame: Loading metadata from:', metadataPath);
   let config = null;
   if (fs.existsSync(metadataPath)) {
     const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
     config = JSON.parse(metadataContent);
-    console.log('loadFrame: Metadata loaded:', config);
   }
 
   return { bundleContent, config };
@@ -555,10 +542,6 @@ const App: React.FC = () => {
       script.textContent = frameStyleInterceptor + '\n' + processedBundleContent;
 
       const frameLoader = (FrameComponent: any) => {
-        console.log('frameLoader: Called with component:', !!FrameComponent);
-        console.log('frameLoader: Tab ID:', tab.id);
-        console.log('frameLoader: Props:', props);
-
         try {
           // Create an isolation wrapper div
           const isolationWrapper = document.createElement('div');
@@ -580,18 +563,15 @@ const App: React.FC = () => {
           // Render directly into the isolation wrapper
           isolationWrapper.setAttribute('data-frame-id', tab.id);
 
-          console.log('frameLoader: Creating React root');
           const root = createRoot(isolationWrapper);
-          console.log('frameLoader: Rendering component');
           root.render(React.createElement(FrameComponent, props));
 
           // Show the container
           container.style.display = 'block';
-          console.log('frameLoader: Frame rendered successfully');
 
           resolve(true);
         } catch (error) {
-          console.error('frameLoader: Error rendering frame:', error);
+          console.error('Error rendering frame:', error);
           resolve(false);
         }
       };
@@ -602,7 +582,6 @@ const App: React.FC = () => {
       (window as any).__LOAD_FRAME__ = frameLoader; // Backward compatibility
 
       script.onload = () => {
-        console.log('createFrameContainer: Script loaded successfully');
         // Clean up after script loads
         setTimeout(() => {
           if (script.parentNode) {
@@ -611,19 +590,14 @@ const App: React.FC = () => {
           delete (window as any).__LOAD_APP__;
           delete (window as any).__LOAD_VISUALIZER__;
           delete (window as any).__LOAD_FRAME__;
-
-          // If frameLoader wasn't called, resolve with false
-          console.log('createFrameContainer: Checking if frame was loaded');
-          // We'll resolve in the frameLoader itself now
-        }, 1000); // Give more time for the frame to load
+        }, 1000);
       };
 
       script.onerror = (error) => {
-        console.error('createFrameContainer: Script error:', error);
+        console.error('Script loading error:', error);
         resolve(false);
       };
 
-      console.log('createFrameContainer: Adding script to head');
       document.head.appendChild(script);
     });
   };
@@ -656,8 +630,6 @@ const App: React.FC = () => {
   };
 
   const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput) => {
-    console.log('openFrameInNewTab: Starting with frame:', frame.name, 'fileInput:', fileInput);
-
     const title = fileInput
       ? fileInput.path.split('/').pop() || 'Unknown File'
       : frame.name;
@@ -666,21 +638,17 @@ const App: React.FC = () => {
 
     // Load frame data
     try {
-      console.log('openFrameInNewTab: Loading frame data for:', frame.id);
       frameData = await loadFrame(frame.id);
-      console.log('openFrameInNewTab: Frame data loaded successfully:', !!frameData.bundleContent);
     } catch (error) {
-      console.error('openFrameInNewTab: Failed to load frame data:', error);
+      console.error('Failed to load frame data:', error);
       alert(`Failed to load ${frame.name}: ${error}`);
       return;
     }
 
     // Check if we have an active new tab to transform
     const currentTab = openTabs.find(tab => tab.id === activeTabId);
-    console.log('openFrameInNewTab: Current tab:', currentTab?.type, currentTab?.id);
 
     if (currentTab && currentTab.type === 'newtab') {
-      console.log('openFrameInNewTab: Transforming existing new tab');
       // Transform the current new tab
       const transformedTab: OpenTab = {
         ...currentTab,
@@ -696,9 +664,7 @@ const App: React.FC = () => {
       ));
 
       // Create the frame container and wait for it to be ready
-      console.log('openFrameInNewTab: Creating frame container for transformed tab');
       const success = await createFrameContainer(transformedTab);
-      console.log('openFrameInNewTab: Frame container creation result:', success);
 
       if (success) {
         // Switch to show this tab, passing the transformed tab data
@@ -708,7 +674,6 @@ const App: React.FC = () => {
         alert(`Failed to load ${frame.name}`);
       }
     } else {
-      console.log('openFrameInNewTab: Creating new tab');
       // Create a new tab
       const tabId = generateTabId();
       const newTab: OpenTab = {
@@ -723,9 +688,7 @@ const App: React.FC = () => {
       setOpenTabs(prev => [...prev, newTab]);
 
       // Create the frame container and wait for it to be ready
-      console.log('openFrameInNewTab: Creating frame container for new tab');
       const success = await createFrameContainer(newTab);
-      console.log('openFrameInNewTab: Frame container creation result:', success);
 
       if (success) {
         // Switch to show this tab, passing the new tab data
