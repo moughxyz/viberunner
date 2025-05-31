@@ -2,32 +2,39 @@
 
 Viberunner is a powerful Electron-based platform that allows developers to create custom visualizers for any type of file. With an advanced matching system that goes far beyond simple MIME types, you can create sophisticated file handlers that analyze content, file structure, and metadata to provide precise matching.
 
-## 🌟 Key Features
+## 🎨 Key Features
 
-- **Enhanced File Matching**: Go beyond MIME types with filename patterns, content analysis, and priority-based selection
-- **Direct Node.js Access**: Frames have full access to Node.js APIs for maximum flexibility and performance
-- **Modern Dark UI**: Beautiful glassmorphism interface with smooth animations
-- **React-Based Visualizers**: Build components using React 18+ with TypeScript support
-- **Hot Reloading**: Instant visualizer updates during development
-- **File Interaction**: Read, analyze, and even modify files with user permission
-- **Priority System**: Ensure the most specific visualizer wins for each file
+- **📱 Chrome-style Tabbed Interface**: Open multiple files and apps simultaneously with smooth tab switching
+- **🎨 Enhanced File Matching**: Go beyond MIME types with filename patterns, content analysis, and priority-based selection
+- **⚙️ User Preferences System**: Apps can store and retrieve user preferences with a powerful API
+- **🔧 Direct Node.js Access**: Frames have full access to Node.js APIs for maximum flexibility and performance
+- **🌙 Modern Dark UI**: Beautiful glassmorphism interface with smooth animations and native tab styling
+- **⚛️ React-Based Visualizers**: Build components using React 18+ with TypeScript support
+- **🔄 Hot Reloading**: Instant visualizer updates during development
+- **📂 File Interaction**: Read, analyze, and even modify files with user permission
+- **🎯 Priority System**: Ensure the most specific visualizer wins for each file
+- **🚀 Standalone Apps**: Create utility apps that don't require file input
+- **🔒 Frame Isolation**: Perfect CSS and JavaScript isolation between tabs
+- **🎭 Custom App Icons**: Personalize your apps with custom icons
 
 ## 📚 Table of Contents
 
 1. [Quick Start](#-quick-start)
 2. [Visualizer Architecture](#-visualizer-architecture)
-3. [Frame API - Direct Node.js Access](#-frame-api---direct-nodejs-access)
-4. [Enhanced Matching System](#-enhanced-matching-system)
-5. [Creating Your First Visualizer](#-creating-your-first-visualizer)
-6. [Configuration Reference](#-configuration-reference)
-7. [Custom App Icons](#-custom-app-icons)
-8. [Component Development](#-component-development)
-9. [File Analysis & APIs](#-file-analysis--apis)
-10. [Advanced Examples](#-advanced-examples)
-11. [Build & Distribution](#-build--distribution)
-12. [Best Practices](#-best-practices)
-13. [Troubleshooting](#-troubleshooting)
-14. [Frame Cleanup API](#frame-cleanup-api)
+3. [Tabbed Interface](#-tabbed-interface)
+4. [User Preferences System](#-user-preferences-system)
+5. [Frame API - Direct Node.js Access](#-frame-api---direct-nodejs-access)
+6. [Enhanced Matching System](#-enhanced-matching-system)
+7. [Creating Your First Visualizer](#-creating-your-first-visualizer)
+8. [Configuration Reference](#-configuration-reference)
+9. [Custom App Icons](#-custom-app-icons)
+10. [Component Development](#-component-development)
+11. [File Analysis & APIs](#-file-analysis--apis)
+12. [Advanced Examples](#-advanced-examples)
+13. [Build & Distribution](#-build--distribution)
+14. [Best Practices](#-best-practices)
+15. [Troubleshooting](#-troubleshooting)
+16. [Frame Cleanup API](#frame-cleanup-api)
 
 ## 🎨 Custom App Icons
 
@@ -143,6 +150,340 @@ my-awesome-visualizer/
 File Drop → File Analysis → Matcher Evaluation → Visualizer Selection → Component Loading → Rendering
 ```
 
+## 📱 Tabbed Interface
+
+### Overview
+
+Viberunner features a Chrome-style tabbed interface that allows users to work with multiple files and applications simultaneously. Each tab maintains its own state and can switch between different apps seamlessly.
+
+### Tab Management
+
+#### **Opening New Tabs**
+- **File Drop**: Dropping a file opens it in a new tab (or transforms the current "New Tab")
+- **Standalone Apps**: Launching standalone apps creates dedicated tabs
+- **New Tab Button**: Click the "+" button to create a new empty tab
+
+#### **Tab Switching**
+- **Click to Switch**: Click any tab to switch to it instantly
+- **Visual Feedback**: Active tab is highlighted with proper visual hierarchy
+- **Content Isolation**: Each tab maintains completely isolated content and state
+
+#### **Tab Closing**
+- **Close Button**: Hover over tabs to reveal the close button (✕)
+- **Auto-cleanup**: Closing tabs automatically cleans up resources and React components
+- **Last Tab Protection**: New tab is automatically created if you close the last tab
+
+### Tab Types
+
+1. **New Tab** 🌟
+   - Clean interface for launching apps or dropping files
+   - Shows directory controls and available apps
+   - Transforms into a file/app tab when content is loaded
+
+2. **File Tabs** 📄
+   - Display file-based visualizers
+   - Show filename and app name in tab title
+   - Include close button for easy management
+
+3. **Standalone App Tabs** ⚡
+   - Run utility applications that don't require file input
+   - Show app name and icon in tab title
+   - Independent of file operations
+
+### Visual Features
+
+- **Chrome-style Design**: Native-looking tabs with proper shadows and gradients
+- **Custom Icons**: Each tab displays the app's custom icon or Viberunner logo
+- **Smooth Animations**: Fluid transitions when switching between tabs
+- **Hover Effects**: Interactive feedback for better user experience
+- **Active State**: Clear visual distinction for the currently active tab
+
+### Frame Isolation
+
+Each tab runs in a completely isolated container:
+
+- **CSS Isolation**: Styles are scoped to prevent cross-tab interference
+- **JavaScript Isolation**: Each frame has its own execution context
+- **Memory Management**: Proper cleanup when tabs are closed
+- **Z-index Management**: Perfect stacking order prevents content bleed-through
+
+### Developer Considerations
+
+When building apps for the tabbed interface:
+
+```javascript
+function MyApp({ tabId, appId, fileInput }) {
+  // Each tab has a unique tabId for cleanup registration
+  React.useEffect(() => {
+    const cleanup = () => {
+      // Cleanup timers, listeners, etc.
+    };
+
+    // Register cleanup function for this tab
+    window.registerCleanup(tabId, cleanup);
+
+    return cleanup;
+  }, [tabId]);
+
+  return <div>Your app content</div>;
+}
+```
+
+## ⚙️ User Preferences System
+
+### Overview
+
+Viberunner provides a comprehensive user preferences system that allows apps to store and retrieve user settings persistently. Preferences are stored in each app's `viz.json` file and survive between sessions.
+
+### Storage Location
+
+Preferences are automatically stored in your app's configuration file:
+
+```json
+{
+  "name": "My Awesome App",
+  "description": "A great visualizer",
+  "version": "1.0.0",
+  "mimetypes": ["application/json"],
+  "author": "Developer",
+  "userPreferences": {
+    "theme": "dark",
+    "fontSize": 14,
+    "autoSave": true,
+    "recentFiles": ["file1.json", "file2.json"],
+    "customSettings": {
+      "nested": "values"
+    }
+  }
+}
+```
+
+### Basic API
+
+Access preferences through the global `api` object:
+
+```javascript
+// Get all preferences for your app
+const prefs = api.getAppPreferences(appId);
+
+// Get a specific preference with default fallback
+const theme = api.getAppPreference(appId, 'theme', 'light');
+
+// Set a single preference
+api.updateAppPreference(appId, 'theme', 'dark');
+
+// Replace all preferences
+api.setAppPreferences(appId, { theme: 'dark', fontSize: 16 });
+
+// Remove a preference
+api.removeAppPreference(appId, 'oldSetting');
+```
+
+### Enhanced Preferences Helper
+
+For easier usage, create a preferences helper with your app ID:
+
+```javascript
+function MyApp({ appId }) {
+  // Create preferences helper
+  const prefs = window.createPreferencesHelper(appId);
+
+  // Type-safe getters with defaults
+  const theme = prefs.getString('theme', 'light');
+  const fontSize = prefs.getNumber('fontSize', 12);
+  const autoSave = prefs.getBoolean('autoSave', false);
+  const settings = prefs.getObject('settings', {});
+
+  // Simple setters
+  const handleThemeChange = (newTheme) => {
+    prefs.set('theme', newTheme);
+  };
+
+  return (
+    <div className={`app-${theme}`}>
+      <button onClick={() => handleThemeChange('dark')}>
+        Dark Theme
+      </button>
+    </div>
+  );
+}
+```
+
+### Helper Methods
+
+#### **Type-Safe Getters**
+```javascript
+const prefs = window.createPreferencesHelper(appId);
+
+// String with default
+const theme = prefs.getString('theme', 'light');
+
+// Number with default
+const fontSize = prefs.getNumber('fontSize', 12);
+
+// Boolean with default
+const autoSave = prefs.getBoolean('autoSave', false);
+
+// Object with default
+const config = prefs.getObject('config', {});
+
+// Array with default
+const recentFiles = prefs.getArray('recentFiles', []);
+```
+
+#### **Array Operations**
+```javascript
+// Add item to array
+prefs.pushToArray('recentFiles', '/path/to/new/file.json');
+
+// Remove item from array
+prefs.removeFromArray('recentFiles', '/path/to/old/file.json');
+
+// Get array safely
+const files = prefs.getArray('recentFiles', []);
+```
+
+#### **Bulk Operations**
+```javascript
+// Get all preferences
+const allPrefs = prefs.getAll();
+
+// Replace all preferences
+prefs.setAll({
+  theme: 'dark',
+  fontSize: 14,
+  autoSave: true
+});
+
+// Clear all preferences
+prefs.clear();
+```
+
+### React Integration Examples
+
+#### **Theme Persistence**
+```javascript
+function ThemedApp({ appId }) {
+  const prefs = window.createPreferencesHelper(appId);
+  const [theme, setTheme] = React.useState(
+    prefs.getString('theme', 'light')
+  );
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
+    prefs.set('theme', newTheme);
+  };
+
+  return (
+    <div className={`app-${theme}`}>
+      <button onClick={toggleTheme}>
+        Switch to {theme === 'light' ? 'dark' : 'light'} theme
+      </button>
+    </div>
+  );
+}
+```
+
+#### **Settings Panel**
+```javascript
+function SettingsPanel({ appId }) {
+  const prefs = window.createPreferencesHelper(appId);
+
+  const [settings, setSettings] = React.useState(() => ({
+    fontSize: prefs.getNumber('fontSize', 14),
+    showLineNumbers: prefs.getBoolean('showLineNumbers', true),
+    autoSave: prefs.getBoolean('autoSave', false)
+  }));
+
+  const updateSetting = (key, value) => {
+    setSettings(prev => ({ ...prev, [key]: value }));
+    prefs.set(key, value);
+  };
+
+  return (
+    <div className="settings-panel">
+      <label>
+        Font Size:
+        <input
+          type="number"
+          value={settings.fontSize}
+          onChange={(e) => updateSetting('fontSize', parseInt(e.target.value))}
+        />
+      </label>
+
+      <label>
+        <input
+          type="checkbox"
+          checked={settings.showLineNumbers}
+          onChange={(e) => updateSetting('showLineNumbers', e.target.checked)}
+        />
+        Show Line Numbers
+      </label>
+    </div>
+  );
+}
+```
+
+#### **Recent Files List**
+```javascript
+function RecentFilesList({ appId }) {
+  const prefs = window.createPreferencesHelper(appId);
+  const [recentFiles, setRecentFiles] = React.useState(
+    prefs.getArray('recentFiles', [])
+  );
+
+  const addRecentFile = (filePath) => {
+    const updated = [filePath, ...recentFiles.filter(f => f !== filePath)].slice(0, 10);
+    setRecentFiles(updated);
+    prefs.set('recentFiles', updated);
+  };
+
+  const removeRecentFile = (filePath) => {
+    const updated = recentFiles.filter(f => f !== filePath);
+    setRecentFiles(updated);
+    prefs.set('recentFiles', updated);
+  };
+
+  return (
+    <div className="recent-files">
+      <h3>Recent Files</h3>
+      {recentFiles.map(file => (
+        <div key={file} className="recent-file">
+          <span>{file}</span>
+          <button onClick={() => removeRecentFile(file)}>✕</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Best Practices
+
+1. **Use Type-Safe Getters**: Always use the appropriate getter method (`getString`, `getNumber`, etc.)
+2. **Provide Defaults**: Always specify sensible default values
+3. **Group Related Settings**: Use objects for complex configuration
+4. **Validate Input**: Ensure preference values are valid before storing
+5. **Performance**: Cache frequently accessed preferences in component state
+6. **Error Handling**: The API includes built-in error handling and graceful fallbacks
+
+### Error Handling
+
+The preferences system includes robust error handling:
+
+- **File Access Errors**: Returns empty object/default values if file can't be read
+- **JSON Parse Errors**: Gracefully handles corrupted preference data
+- **Write Errors**: Returns `false` for failed operations, `true` for success
+- **Type Safety**: Helper methods ensure correct data types are returned
+
+### Security & Isolation
+
+- **App Isolation**: Each app can only access its own preferences
+- **File Safety**: Preferences are stored in the app's own viz.json file
+- **Backup Safety**: The system doesn't modify other app configuration
+- **Read-Only Metadata**: Core app metadata (name, version, etc.) remains protected
+
 ## 🚀 Frame API - Direct Node.js Access
 
 ### Overview
@@ -159,6 +500,8 @@ interface FrameProps {
     mimetype: string;  // Detected MIME type
   };
   container: HTMLElement; // Mount point
+  tabId: string;          // Unique tab identifier for cleanup
+  appId: string;          // App identifier for preferences access
 
   // Legacy support (deprecated - use fileInput instead)
   fileData?: {
@@ -174,6 +517,8 @@ interface FrameProps {
 ```typescript
 interface FrameProps {
   container: HTMLElement; // Mount point
+  tabId: string;          // Unique tab identifier for cleanup
+  appId: string;          // App identifier for preferences access
 }
 ```
 
