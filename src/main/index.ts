@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import mime from 'mime-types';
@@ -749,6 +749,104 @@ async function ensureApps(): Promise<boolean> {
   }
 }
 
+// Create the application menu bar
+const createMenuBar = (): void => {
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: 'File',
+      submenu: [
+        {
+          role: 'quit'
+        }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    {
+      label: 'Window',
+      submenu: [
+        { role: 'minimize' },
+        { role: 'close' }
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        {
+          label: 'Open Data Directory',
+          click: async () => {
+            const userDataPath = app.getPath('userData');
+            try {
+              await shell.openPath(userDataPath);
+              console.log('Opened data directory:', userDataPath);
+            } catch (error) {
+              console.error('Failed to open data directory:', error);
+              dialog.showErrorBox('Error', `Failed to open data directory: ${error}`);
+            }
+          }
+        }
+      ]
+    }
+  ];
+
+  // macOS specific adjustments
+  if (process.platform === 'darwin') {
+    template.unshift({
+      label: app.getName(),
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    });
+
+    // Window menu
+    const windowMenu = template.find(item => item.label === 'Window');
+    if (windowMenu && windowMenu.submenu && Array.isArray(windowMenu.submenu)) {
+      windowMenu.submenu = [
+        { role: 'close' },
+        { role: 'minimize' },
+        { role: 'zoom' },
+        { type: 'separator' },
+        { role: 'front' }
+      ];
+    }
+  }
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+};
+
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -798,6 +896,9 @@ app.whenReady().then(async () => {
   // NOTE: Removed automatic permission request on startup
   // Permissions will now be requested on-demand by individual apps
   // permissionManager.requestCommonDirectoryAccess();
+
+  // Create menu bar
+  createMenuBar();
 
   createWindow();
 });
