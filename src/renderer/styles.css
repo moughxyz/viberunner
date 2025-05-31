@@ -346,8 +346,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
-  padding: var(--space-6);
+  min-height: 120px;
+  padding: var(--space-4);
 }
 
 .drop-zone-section .drop-zone:hover {
@@ -905,21 +905,21 @@ body {
 }
 
 .drop-zone-icon {
-  font-size: 4rem;
-  margin-bottom: var(--space-6);
+  font-size: 2.5rem;
+  margin-bottom: var(--space-3);
   opacity: 0.5;
 }
 
 .drop-zone-title {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: 600;
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
   color: var(--text-primary);
 }
 
 .drop-zone-description {
   color: var(--text-secondary);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-4);
 }
 
 .drop-zone-formats {
