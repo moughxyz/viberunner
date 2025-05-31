@@ -941,6 +941,37 @@ const App: React.FC = () => {
                     {/* Divider */}
                     <div className="section-divider"></div>
 
+                    {/* Standalone frames section */}
+                    {frames.filter(f => f.standalone).length > 0 && (
+                      <div className="utilities-section">
+                        <div className="section-card">
+                          <div className="section-header">
+                            <h4 className="section-title">
+                              <span className="section-icon">⚡</span>
+                              Standalone Utilities
+                            </h4>
+                            <span className="section-count">{frames.filter(f => f.standalone).length}</span>
+                          </div>
+                          <div className="utilities-grid">
+                            {frames.filter(f => f.standalone).map(frame => (
+                              <button
+                                key={frame.id}
+                                className="utility-card"
+                                onClick={() => launchStandaloneFrame(frame)}
+                              >
+                                <div className="utility-icon">⚡</div>
+                                <div className="utility-content">
+                                  <h5 className="utility-title">{frame.name}</h5>
+                                  <p className="utility-description">{frame.description}</p>
+                                </div>
+                                <div className="utility-action">Launch</div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Directory controls section */}
                     <div className="controls-section">
                       <div className="section-card">
@@ -972,37 +1003,6 @@ const App: React.FC = () => {
                         </div>
                       </div>
                     </div>
-
-                    {/* Standalone frames section */}
-                    {frames.filter(f => f.standalone).length > 0 && (
-                      <div className="utilities-section">
-                        <div className="section-card">
-                          <div className="section-header">
-                            <h4 className="section-title">
-                              <span className="section-icon">⚡</span>
-                              Standalone Utilities
-                            </h4>
-                            <span className="section-count">{frames.filter(f => f.standalone).length}</span>
-                          </div>
-                          <div className="utilities-grid">
-                            {frames.filter(f => f.standalone).map(frame => (
-                              <button
-                                key={frame.id}
-                                className="utility-card"
-                                onClick={() => launchStandaloneFrame(frame)}
-                              >
-                                <div className="utility-icon">⚡</div>
-                                <div className="utility-content">
-                                  <h5 className="utility-title">{frame.name}</h5>
-                                  <p className="utility-description">{frame.description}</p>
-                                </div>
-                                <div className="utility-action">Launch</div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
 
                     {/* File-based frames section - collapsible */}
                     {frames.filter(f => !f.standalone).length > 0 && (
