@@ -216,6 +216,9 @@ body {
 }
 
 .vf-header-tabs .vf-tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: var(--font-size-sm);
   flex-shrink: 0;
   opacity: 0.9;
@@ -283,15 +286,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   margin: auto var(--space-2);
   background: transparent;
   border: none;
   border-radius: 50%;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 22px;
   font-weight: 400;
   transition: all 0.15s ease;
   flex-shrink: 0;
@@ -768,14 +771,31 @@ body {
   margin-bottom: var(--space-4);
 }
 
+.card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-title-section {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 .card-title {
   font-size: var(--font-size-lg);
   font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
 }
 
 .card-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-3);
@@ -784,6 +804,8 @@ body {
   font-size: var(--font-size-xs);
   border-radius: var(--radius-sm);
   font-weight: 500;
+  width: fit-content;
+  align-self: flex-start;
 }
 
 .badge-dot {

@@ -1050,7 +1050,11 @@ const App: React.FC = () => {
                 >
                   <div className="vf-tab-icon">
                     {tab.type === 'newtab' ? (
-                      '➕'
+                      <img
+                        src={getViberunnerLogoPath()}
+                        alt="New Tab"
+                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+                      />
                     ) : tab.frame ? (
                       <img
                         src={getAppIcon(tab.frame)}
