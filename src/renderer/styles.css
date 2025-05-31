@@ -161,16 +161,8 @@ body {
   margin-left: -8px;
   z-index: 1;
 
-  /* Chrome-like rounded corners and angled edges */
+  /* Simple rounded top corners like Chrome */
   border-radius: 8px 8px 0 0;
-
-  /* Create angled bottom edges */
-  clip-path: polygon(
-    0% 0%,
-    100% 0%,
-    calc(100% - 8px) 100%,
-    8px 100%
-  );
 
   /* Subtle shadow for depth */
   box-shadow:
@@ -180,12 +172,6 @@ body {
 
 .vf-header-tabs .vf-tab:first-child {
   margin-left: 0;
-  clip-path: polygon(
-    0% 0%,
-    100% 0%,
-    calc(100% - 8px) 100%,
-    0% 100%
-  );
 }
 
 /* Remove the complex pseudo-element approach */
