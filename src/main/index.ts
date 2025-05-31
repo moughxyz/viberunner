@@ -603,8 +603,6 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('load-app');
   ipcMain.removeAllListeners('get-mimetype');
   ipcMain.removeAllListeners('read-file');
-  ipcMain.removeAllListeners('handle-file-drop');
-  ipcMain.removeAllListeners('get-apps-directory');
   ipcMain.removeAllListeners('change-frames-directory');
   ipcMain.removeAllListeners('reload-apps');
   ipcMain.removeAllListeners('read-directory');
@@ -682,10 +680,6 @@ function registerIpcHandlers() {
         analysis: fileAnalysis
       };
     }
-  });
-
-  ipcMain.handle('get-apps-directory', () => {
-    return selectedAppsDir;
   });
 
   ipcMain.handle('change-frames-directory', async () => {

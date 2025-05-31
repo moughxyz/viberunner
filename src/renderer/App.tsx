@@ -1539,11 +1539,12 @@ const App: React.FC = () => {
                                     {/* Startup controls */}
                                     <div className="startup-controls" onClick={(e) => e.stopPropagation()}>
                                       <div className="startup-toggle">
-                                        <label className="toggle-label">
+                                        <label className="toggle-label" onClick={(e) => e.stopPropagation()}>
                                           <input
                                             type="checkbox"
                                             checked={isStartupEnabled}
                                             onChange={(e) => toggleStartupApp(frame.id, e.target.checked)}
+                                            onClick={(e) => e.stopPropagation()}
                                             className="toggle-checkbox"
                                           />
                                           <span className="toggle-slider"></span>
@@ -1561,6 +1562,7 @@ const App: React.FC = () => {
                                               max="99"
                                               value={tabOrder}
                                               onChange={(e) => updateStartupAppTabOrder(frame.id, parseInt(e.target.value) || 1)}
+                                              onClick={(e) => e.stopPropagation()}
                                               className="tab-order-input"
                                             />
                                           </label>

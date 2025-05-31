@@ -5,7 +5,6 @@ interface Window {
     getMimetype: (filePath: string) => Promise<string>;
     readFile: (filePath: string) => Promise<string>;
     handleFileDrop: (filePath: string) => Promise<any>;
-    getAppsDirectory: () => Promise<string | null>;
     changeAppsDirectory: () => Promise<{ success: boolean; directory: string | null }>;
     reloadApps: () => Promise<{ success: boolean; apps: any[] }>;
     readDirectory: (dirPath: string) => Promise<{ success: boolean; files: any[]; error?: string }>;

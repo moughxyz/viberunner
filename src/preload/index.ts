@@ -9,7 +9,6 @@ contextBridge.exposeInMainWorld(
     getMimetype: (filePath: string) => ipcRenderer.invoke('get-mimetype', filePath),
     readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
     handleFileDrop: (filePath: string) => ipcRenderer.invoke('handle-file-drop', filePath),
-    getAppsDirectory: () => ipcRenderer.invoke('get-apps-directory'),
     changeAppsDirectory: () => ipcRenderer.invoke('change-frames-directory'),
     reloadApps: () => ipcRenderer.invoke('reload-apps'),
     readDirectory: (dirPath: string) => ipcRenderer.invoke('read-directory', dirPath),
