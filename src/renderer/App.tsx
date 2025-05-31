@@ -910,8 +910,12 @@ const App: React.FC = () => {
             </div>
           ) : (
             <div className="frame-viewport-container">
-              {activeTab?.type === 'newtab' ? (
-                <div className="new-tab-content">
+              {/* Always render frame viewport for tab containers */}
+              <div ref={frameRootRef} className="frame-viewport" />
+
+              {/* Overlay new tab content when active tab is new tab */}
+              {activeTab?.type === 'newtab' && (
+                <div className="new-tab-overlay">
                   <div className="drop-zone">
                     <div className="drop-zone-content">
                       <div className="drop-zone-icon">📂</div>
@@ -956,8 +960,6 @@ const App: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              ) : (
-                <div ref={frameRootRef} className="frame-viewport" />
               )}
             </div>
           )}

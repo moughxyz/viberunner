@@ -576,6 +576,29 @@ body {
   min-height: auto;
 }
 
+/* New Tab Overlay - positioned over frame viewport */
+.new-tab-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+  background: var(--background);
+  z-index: 10;
+}
+
+.new-tab-overlay .drop-zone {
+  border: none;
+  background: transparent;
+  min-height: auto;
+}
+
 /* Sidebar */
 .sidebar-section {
   padding-bottom: var(--space-6);
