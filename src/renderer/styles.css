@@ -1047,44 +1047,100 @@ body {
   height: 100%;
   overflow: hidden; /* Prevent frames from breaking out */
   z-index: 1; /* Ensure frames stay below UI elements */
+
+  /* Complete CSS isolation */
+  contain: layout style size;
+  isolation: isolate;
+
+  /* Create a new formatting context */
+  display: block;
+
+  /* Prevent any inheritance */
+  all: initial;
+
+  /* Reset essential properties */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--background);
+  color: var(--text-primary);
+  font-family: var(--font-family);
 }
 
-/* Frame containment - ensure frames stay within their containers */
-.tab-frame-container > div {
+/* Scope ALL frame content to prevent global CSS pollution */
+.tab-frame-container * {
+  /* Prevent any styles from escaping the container */
+  max-width: 100% !important;
+  max-height: 100% !important;
+  position: relative !important;
+  z-index: auto !important;
+
+  /* Reset any viewport-based units */
+  width: auto !important;
+  height: auto !important;
+}
+
+/* Block universal selectors from frames */
+.tab-frame-container *,
+.tab-frame-container *::before,
+.tab-frame-container *::after {
+  /* Prevent frame CSS from affecting anything outside */
+  box-sizing: border-box !important;
+}
+
+/* Prevent global resets from frames */
+.tab-frame-container > * {
+  /* First child should take full space */
   width: 100% !important;
   height: 100% !important;
   max-width: 100% !important;
   max-height: 100% !important;
   position: relative !important;
-  overflow: auto;
+  display: block !important;
+  overflow: auto !important;
 }
 
-/* Override any frame styles that try to use viewport units or break containment */
-.tab-frame-container *,
-.tab-frame-container *::before,
-.tab-frame-container *::after {
-  max-width: 100% !important;
+/* Override any attempts to style body/html */
+.tab-frame-container body,
+.tab-frame-container html {
   position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: auto !important;
+  background: transparent !important;
 }
 
-/* Aggressively prevent frames from using fixed positioning */
+/* Prevent any fixed positioning */
 .tab-frame-container [style*="position: fixed"],
 .tab-frame-container [style*="position:fixed"] {
   position: relative !important;
 }
 
-/* Reset body and html styles within frames */
-.tab-frame-container body,
-.tab-frame-container html {
-  width: 100% !important;
+/* Override viewport units */
+.tab-frame-container [style*="100vh"],
+.tab-frame-container [style*="100VH"] {
   height: 100% !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  position: relative !important;
-  overflow: auto !important;
 }
 
-/* Specifically target common problematic patterns */
+.tab-frame-container [style*="100vw"],
+.tab-frame-container [style*="100VW"] {
+  width: 100% !important;
+}
+
+.tab-frame-container [style*="min-height: 100vh"],
+.tab-frame-container [style*="min-height:100vh"] {
+  min-height: 100% !important;
+}
+
+/* Force containment on common frame container classes */
 .tab-frame-container .dotfile-editor,
 .tab-frame-container [class*="App"],
 .tab-frame-container [class*="app"],
@@ -1092,13 +1148,15 @@ body {
 .tab-frame-container [class*="container"],
 .tab-frame-container [class*="wrapper"],
 .tab-frame-container [class*="root"] {
-  height: 100% !important;
-  max-height: 100% !important;
-  width: 100% !important;
-  max-width: 100% !important;
   position: relative !important;
-  box-sizing: border-box !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   overflow: auto !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 /* Reset any viewport units to 100% */

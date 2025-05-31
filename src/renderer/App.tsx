@@ -330,6 +330,7 @@ const App: React.FC = () => {
   const tabContainersRef = useRef<Map<string, {
     domElement: HTMLDivElement;
     reactRoot: any;
+    styleElement?: HTMLStyleElement;
   }>>(new Map());
 
   // Load frames directory info
@@ -453,20 +454,60 @@ const App: React.FC = () => {
         console.log('Frame loader called for tab:', tab.id);
 
         try {
-          // Render directly into the container instead of creating another div
-          const reactRoot = createRoot(container);
+          // Create an isolation wrapper div
+          const isolationWrapper = document.createElement('div');
+          isolationWrapper.style.cssText = `
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            position: relative !important;
+            overflow: auto !important;
+            display: block !important;
+            contain: layout style size !important;
+            isolation: isolate !important;
+            z-index: 1 !important;
+          `;
 
-          // Add containment attributes to the container
+          container.appendChild(isolationWrapper);
+
+          // Render directly into the isolation wrapper
+          const reactRoot = createRoot(isolationWrapper);
+
+          // Add strong containment attributes to the container
           container.style.contain = 'layout style size';
           container.style.isolation = 'isolate';
           container.style.zIndex = '1';
 
+          // Create a style element to override frame CSS within this container
+          const frameStyleOverride = document.createElement('style');
+          frameStyleOverride.textContent = `
+            /* Scope all frame styles to this container only */
+            .tab-frame-container [data-frame-id="${tab.id}"] * {
+              position: relative !important;
+              max-width: 100% !important;
+              max-height: 100% !important;
+            }
+
+            .tab-frame-container [data-frame-id="${tab.id}"] .dotfile-editor {
+              height: 100% !important;
+              width: 100% !important;
+              position: relative !important;
+              overflow: auto !important;
+            }
+          `;
+          document.head.appendChild(frameStyleOverride);
+
+          // Add frame identifier
+          isolationWrapper.setAttribute('data-frame-id', tab.id);
+
           reactRoot.render(React.createElement(FrameComponent, props));
 
-          // Store in our ref
+          // Store in our ref including the style element for cleanup
           tabContainersRef.current.set(tab.id, {
             domElement: container,
-            reactRoot
+            reactRoot,
+            styleElement: frameStyleOverride
           });
 
           console.log('Frame loaded successfully for tab:', tab.id);
@@ -611,6 +652,12 @@ const App: React.FC = () => {
       console.log('Cleaning up container for tab:', tabId);
       try {
         container.reactRoot.unmount();
+
+        // Remove the frame-specific style element
+        if (container.styleElement && document.head.contains(container.styleElement)) {
+          document.head.removeChild(container.styleElement);
+        }
+
         if (frameRootRef.current && frameRootRef.current.contains(container.domElement)) {
           frameRootRef.current.removeChild(container.domElement);
         }
