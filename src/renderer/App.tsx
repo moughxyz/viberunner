@@ -1147,6 +1147,9 @@ const App: React.FC = () => {
 
   // Handle tab switching
   const handleTabSwitch = (tabId: string) => {
+    // Reset frame selection state when switching tabs
+    setShowFrameSelection(false);
+    setPendingFileInput(null);
     switchToTab(tabId);
   };
 
@@ -1424,7 +1427,7 @@ const App: React.FC = () => {
 
       <div id="vf-main-layout">
         <main className="vf-content-area">
-          {showFrameSelection ? (
+          {showFrameSelection && activeTab?.type === 'newtab' ? (
             <div className="vf-frame-selection">
               <div className="selection-header">
                 <h2 className="selection-title">Choose an app</h2>
