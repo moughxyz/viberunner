@@ -26,6 +26,7 @@ Vibeframe is a powerful Electron-based platform that allows developers to create
 10. [Build & Distribution](#-build--distribution)
 11. [Best Practices](#-best-practices)
 12. [Troubleshooting](#-troubleshooting)
+13. [Frame Cleanup API](#frame-cleanup-api)
 
 ## 🚀 Quick Start
 
@@ -1287,6 +1288,108 @@ const checkLatestVersions = async (dependencies: Record<string, string>) => {
 
   return results;
 };
+```
+
+### Frame Cleanup API
+
+**⚠️ Important:** Frames should register cleanup callbacks to prevent memory leaks and ensure proper resource management when tabs are closed.
+
+#### Available Functions
+
+```javascript
+// Register a cleanup callback for the current tab
+registerCleanup(tabId, cleanupFunction)
+```
+
+#### Basic Usage
+
+```javascript
+function MyFrame({ tabId }) {
+  const [interval, setInterval] = useState(null);
+
+  useEffect(() => {
+    // Start some process
+    const intervalId = setInterval(() => {
+      console.log('Processing...');
+    }, 1000);
+    setInterval(intervalId);
+
+    // Register cleanup callback
+    registerCleanup(tabId, () => {
+      console.log('Cleaning up interval');
+      clearInterval(intervalId);
+    });
+
+    // Component cleanup (React unmount)
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [tabId]);
+
+  return <div>My Frame Content</div>;
+}
+```
+
+#### Advanced Usage Examples
+
+```javascript
+// Multiple cleanup callbacks
+function AdvancedFrame({ tabId }) {
+  useEffect(() => {
+    // WebSocket connection
+    const ws = new WebSocket('ws://localhost:8080');
+
+    // File watchers
+    const watchers = [];
+
+    // Register multiple cleanup callbacks
+    registerCleanup(tabId, () => {
+      console.log('Closing WebSocket connection');
+      ws.close();
+    });
+
+    registerCleanup(tabId, () => {
+      console.log('Stopping file watchers');
+      watchers.forEach(watcher => watcher.close());
+    });
+
+    registerCleanup(tabId, () => {
+      console.log('Clearing any pending operations');
+      // Clear any other resources
+    });
+
+  }, [tabId]);
+}
+```
+
+#### When Cleanup is Called
+
+Cleanup callbacks are automatically executed when:
+- A tab is closed by the user
+- The application is shutting down
+- A tab is being replaced (rare edge cases)
+
+#### Best Practices
+
+1. **Always register cleanup**: Even if you think your frame doesn't need it
+2. **Multiple callbacks**: Register separate callbacks for different types of cleanup
+3. **Error handling**: Cleanup callbacks are wrapped in try-catch, but handle your own errors when possible
+4. **Immediate cleanup**: Also implement React's `useEffect` cleanup for immediate component unmounting
+
+```javascript
+useEffect(() => {
+  const resource = createResource();
+
+  // Register for tab cleanup
+  registerCleanup(tabId, () => {
+    resource.cleanup();
+  });
+
+  // Also handle React unmount
+  return () => {
+    resource.cleanup();
+  };
+}, [tabId]);
 ```
 
 ---

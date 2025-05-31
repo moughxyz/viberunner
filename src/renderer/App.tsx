@@ -58,6 +58,37 @@ const api = {
 // Make API available globally for visualizers
 (window as any).api = api;
 
+// Frame cleanup system
+const frameCleanupCallbacks = new Map<string, (() => void)[]>();
+
+// Global cleanup registration function for frames
+const registerCleanup = (tabId: string, cleanupFn: () => void) => {
+  if (!frameCleanupCallbacks.has(tabId)) {
+    frameCleanupCallbacks.set(tabId, []);
+  }
+  frameCleanupCallbacks.get(tabId)!.push(cleanupFn);
+};
+
+// Global cleanup execution function
+const executeCleanup = (tabId: string) => {
+  const callbacks = frameCleanupCallbacks.get(tabId);
+  if (callbacks) {
+    console.log(`Executing ${callbacks.length} cleanup callbacks for tab ${tabId}`);
+    callbacks.forEach(callback => {
+      try {
+        callback();
+      } catch (error) {
+        console.error('Error in frame cleanup callback:', error);
+      }
+    });
+    frameCleanupCallbacks.delete(tabId);
+  }
+};
+
+// Make cleanup functions available globally for frames
+(window as any).registerCleanup = registerCleanup;
+(window as any).executeCleanup = executeCleanup;
+
 // Constants
 const getFramesDirectory = () => {
   // Try to get the saved directory from preferences
@@ -387,10 +418,13 @@ const App: React.FC = () => {
     container.style.display = 'none'; // Start hidden
     frameRootRef.current.appendChild(container);
 
-    // Prepare props
+    // Prepare props with cleanup support
     let props;
     if (!tab.fileInput) {
-      props = { container };
+      props = {
+        container,
+        tabId: tab.id
+      };
     } else {
       props = {
         fileInput: tab.fileInput,
@@ -405,7 +439,8 @@ const App: React.FC = () => {
             jsonContent: null
           }
         },
-        container
+        container,
+        tabId: tab.id
       };
     }
 
@@ -561,6 +596,11 @@ const App: React.FC = () => {
   };
 
   const closeTab = (tabId: string) => {
+    console.log('Closing tab:', tabId);
+
+    // Execute cleanup callbacks for this tab
+    executeCleanup(tabId);
+
     // Cleanup the tab's container
     const container = tabContainersRef.current.get(tabId);
     if (container) {
