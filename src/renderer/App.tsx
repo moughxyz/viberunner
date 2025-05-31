@@ -619,6 +619,17 @@ const App: React.FC = () => {
             }
           }, index * 500); // 500ms delay between each app
         });
+
+        // After all startup apps are launched, reorder tabs to put "New Tab" at the end
+        const reorderDelay = enabledStartupApps.length * 500 + 200; // Extra 200ms buffer
+        setTimeout(() => {
+          console.log('Reordering tabs to put New Tab at the end');
+          setOpenTabs(prev => {
+            const newTabTabs = prev.filter(tab => tab.type === 'newtab');
+            const otherTabs = prev.filter(tab => tab.type !== 'newtab');
+            return [...otherTabs, ...newTabTabs];
+          });
+        }, reorderDelay);
       }
       hasLaunchedStartupApps.current = true;
     }
