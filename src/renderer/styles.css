@@ -344,6 +344,11 @@ body {
   border-radius: var(--radius-xl);
   background: var(--surface);
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  padding: var(--space-8);
 }
 
 .drop-zone-section .drop-zone:hover {
@@ -897,6 +902,7 @@ body {
 .drop-zone-content {
   text-align: center;
   max-width: 400px;
+  width: 100%;
 }
 
 .drop-zone-icon {
