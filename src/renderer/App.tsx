@@ -461,16 +461,16 @@ const App: React.FC = () => {
       hasFrameData: !!activeTab?.frameData
     });
 
+    // Always clear previous content first
+    if (frameRootRef.current) {
+      frameRootRef.current.innerHTML = '';
+      console.log('Cleared previous frame content');
+    }
+
     if (activeTab && activeTab.type !== 'newtab' && frameRootRef.current && activeTab.frameData && activeTab.frame) {
       const loadFrameComponent = async () => {
         try {
           console.log('Starting frame component load for:', activeTab.frame!.name);
-
-          // Clear previous content
-          if (frameRootRef.current) {
-            frameRootRef.current.innerHTML = '';
-            console.log('Cleared previous frame content');
-          }
 
           const frameData = activeTab.frameData;
           let props;
