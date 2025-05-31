@@ -568,7 +568,10 @@ const App: React.FC = () => {
     // Update visibility of existing tab containers
     openTabs.forEach(tab => {
       if (tab.domContainer) {
-        tab.domContainer.style.display = tab.id === activeTabId ? 'block' : 'none';
+        // Hide all containers if active tab is a new tab, otherwise show only the active tab's container
+        const shouldShow = activeTabId && tab.id === activeTabId &&
+                          openTabs.find(t => t.id === activeTabId)?.type !== 'newtab';
+        tab.domContainer.style.display = shouldShow ? 'block' : 'none';
       }
     });
 
