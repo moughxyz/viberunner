@@ -110,7 +110,7 @@ const getFramesDirectory = () => {
   }
 
   // Fallback to default location
-  const userDataPath = app?.getPath('userData') || path.join(require('os').homedir(), '.vibeframe');
+  const userDataPath = app?.getPath('userData') || path.join(require('os').homedir(), '.viberunner');
   const fallback = path.join(userDataPath, 'visualizers');
   console.log('Using fallback frames directory:', fallback);
   return fallback;
@@ -1089,7 +1089,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* Vibeframe logo on the right */}
+          {/* Viberunner logo on the right */}
           <h1 className="vf-app-title">
             <div className="vf-app-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1098,7 +1098,7 @@ const App: React.FC = () => {
                 <path d="M6 16c2 0 2-4 4-4s2 4 4 4 2-4 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </div>
-            VibeApps
+            Viberunner
           </h1>
         </div>
       </header>

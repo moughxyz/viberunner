@@ -1,6 +1,6 @@
-# ⚡ Vibeframe - Advanced File Visualizer Platform
+# ⚡ Viberunner - Advanced File Visualizer Platform
 
-Vibeframe is a powerful Electron-based platform that allows developers to create custom visualizers for any type of file. With an advanced matching system that goes far beyond simple MIME types, you can build sophisticated visualizers that target specific files based on filename patterns, content analysis, file size, and complex combinations of criteria.
+Viberunner is a powerful Electron-based platform that allows developers to create custom visualizers for any type of file. With an advanced matching system that goes far beyond simple MIME types, you can create sophisticated file handlers that analyze content, file structure, and metadata to provide precise matching.
 
 ## 🌟 Key Features
 
@@ -33,7 +33,7 @@ Vibeframe is a powerful Electron-based platform that allows developers to create
 ### Prerequisites
 - Node.js 18+
 - npm or yarn
-- Vibeframe app installed
+- Viberunner app installed
 
 ### Create a New Visualizer
 
@@ -70,8 +70,8 @@ my-awesome-visualizer/
 
 ### How Visualizers Work
 
-1. **File Drop**: User drops a file into Vibeframe
-2. **Analysis**: Vibeframe analyzes the file (path, content, metadata)
+1. **File Drop**: User drops a file into Viberunner
+2. **Analysis**: Viberunner analyzes the file (path, content, metadata)
 3. **Matching**: Enhanced matcher system finds compatible visualizers
 4. **Selection**: Best match or user selection if multiple options
 5. **Loading**: Visualizer component is dynamically loaded
@@ -581,7 +581,7 @@ const JsonFormatter: React.FC<JsonFormatterProps> = ({ fileData }) => {
   );
 };
 
-// Export the component for Vibeframe to load
+// Export the component for Viberunner to load
 export default JsonFormatter;
 
 // Global registration for IIFE bundle
@@ -596,7 +596,7 @@ if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
 npm run build
 ```
 
-This creates `dist/bundle.iife.js` that Vibeframe can load.
+This creates `dist/bundle.iife.js` that Viberunner can load.
 
 ## 📋 Configuration Reference
 
@@ -648,7 +648,7 @@ This creates `dist/bundle.iife.js` that Vibeframe can load.
 
 ## 🚀 Standalone Visualizers
 
-Vibeframe supports standalone visualizers that don't require file input. These can be utilities, dashboards, or any application that operates independently.
+Viberunner supports standalone visualizers that don't require file input. These can be utilities, dashboards, or any application that operates independently.
 
 ### Configuration
 
@@ -743,7 +743,7 @@ Standalone visualizers appear in the "Utilities" section of the sidebar with **L
 - Create persistent data stores
 - Build complex UI applications
 
-This enables Vibeframe to serve as a platform for any kind of utility or application, not just file visualizers!
+This enables Viberunner to serve as a platform for any kind of utility or application, not just file visualizers!
 
 ## ⚛️ Component Development
 
@@ -1079,7 +1079,7 @@ npm run dev
 npm run build
 
 # 4. Test the built visualizer
-# Copy to your visualizers directory and reload in Vibeframe
+# Copy to your visualizers directory and reload in Viberunner
 ```
 
 ### Required Build Output
@@ -1087,7 +1087,7 @@ npm run build
 Your build process **must** generate:
 - `dist/bundle.iife.js` - IIFE format bundle
 - The bundle must be self-contained
-- External deps: `react` and `react-dom` (provided by Vibeframe)
+- External deps: `react` and `react-dom` (provided by Viberunner)
 
 ### Vite Configuration Template
 
@@ -1396,7 +1396,7 @@ useEffect(() => {
 
 ## 🎉 Conclusion
 
-You now have everything needed to create powerful, sophisticated visualizers for Vibeframe! The enhanced matching system allows for precise file targeting, while the React-based architecture provides a familiar development experience.
+You now have everything needed to create powerful, sophisticated visualizers for Viberunner! The enhanced matching system allows for precise file targeting, while the React-based architecture provides a familiar development experience.
 
 Start with simple visualizers and gradually add complexity. The priority-based matching ensures your visualizers activate exactly when they should, creating a seamless user experience.
 
