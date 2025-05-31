@@ -150,7 +150,7 @@ body {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
-  background: linear-gradient(to bottom, #2a2a2a 0%, #1e1e1e 100%);
+  background: linear-gradient(to bottom, var(--background) 0%, #0a0a0a 100%);
   border: none;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -171,8 +171,8 @@ body {
 
   /* Subtle shadow for depth */
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.3);
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .vf-header-tabs .vf-tab:first-child {
@@ -186,20 +186,20 @@ body {
 }
 
 .vf-header-tabs .vf-tab:hover {
-  background: linear-gradient(to bottom, #3a3a3a 0%, #2e2e2e 100%);
+  background: linear-gradient(to bottom, #1a1a1a 0%, #141414 100%);
   z-index: 2;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    0 2px 4px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
 .vf-header-tabs .vf-tab-active {
-  background: linear-gradient(to bottom, var(--background) 0%, var(--background) 100%);
+  background: linear-gradient(to bottom, #2a2a2a 0%, #1e1e1e 100%);
   z-index: 10;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    -2px 0 4px rgba(0, 0, 0, 0.1),
-    2px 0 4px rgba(0, 0, 0, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    -2px 0 4px rgba(0, 0, 0, 0.2),
+    2px 0 4px rgba(0, 0, 0, 0.2);
 
   /* Active tab extends slightly above the header */
   margin-top: -2px;
@@ -213,12 +213,12 @@ body {
   left: 0;
   right: 0;
   height: 2px;
-  background: var(--background);
+  background: #2a2a2a;
   z-index: 1;
 }
 
 .vf-header-tabs .vf-tab-active:hover {
-  background: linear-gradient(to bottom, var(--background) 0%, var(--background) 100%);
+  background: linear-gradient(to bottom, #2a2a2a 0%, #1e1e1e 100%);
 }
 
 .vf-header-tabs .vf-tab-icon {
