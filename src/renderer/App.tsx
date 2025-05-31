@@ -1044,28 +1044,28 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="app">
-      <header className="header">
-        <div className="header-content">
+    <div className="vf-app">
+      <header id="vf-header">
+        <div className="vf-header-content">
           {/* Tabs first, right after macOS traffic lights */}
-          <div className="header-tabs">
-            <div className="tabs-list">
+          <div className="vf-header-tabs">
+            <div className="vf-tabs-list">
               {openTabs.map(tab => (
                 <div
                   key={tab.id}
-                  className={`tab ${tab.id === activeTabId ? 'tab-active' : ''}`}
+                  className={`vf-tab ${tab.id === activeTabId ? 'vf-tab-active' : ''}`}
                   onClick={() => handleTabSwitch(tab.id)}
                 >
-                  <div className="tab-icon">
+                  <div className="vf-tab-icon">
                     {tab.type === 'newtab' ? '➕' : tab.type === 'standalone' ? '⚡' : '📄'}
                   </div>
-                  <div className="tab-content">
-                    <span className="tab-title">{tab.title}</span>
-                    {tab.frame && <span className="tab-subtitle">{tab.frame.name}</span>}
+                  <div className="vf-tab-content">
+                    <span className="vf-tab-title">{tab.title}</span>
+                    {tab.frame && <span className="vf-tab-subtitle">{tab.frame.name}</span>}
                   </div>
                   {tab.type !== 'newtab' && (
                     <button
-                      className="tab-close"
+                      className="vf-tab-close"
                       onClick={(e) => {
                         e.stopPropagation();
                         closeTab(tab.id);
@@ -1080,7 +1080,7 @@ const App: React.FC = () => {
 
               {/* New Tab Button */}
               <button
-                className="new-tab-btn"
+                className="vf-new-tab-btn"
                 onClick={createNewTab}
                 title="New tab"
               >
@@ -1090,8 +1090,8 @@ const App: React.FC = () => {
           </div>
 
           {/* Vibeframe logo on the right */}
-          <h1 className="app-title">
-            <div className="app-icon">
+          <h1 className="vf-app-title">
+            <div className="vf-app-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="2" y="2" width="20" height="20" rx="4" ry="4" stroke="currentColor" strokeWidth="2"/>
                 <path d="M6 8c2 0 2 4 4 4s2-4 4-4 2 4 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -1103,10 +1103,10 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <div className="main-layout">
-        <main className="content-area">
+      <div id="vf-main-layout">
+        <main className="vf-content-area">
           {showFrameSelection ? (
-            <div className="frame-selection">
+            <div className="vf-frame-selection">
               <div className="selection-header">
                 <h2 className="selection-title">Choose frame</h2>
                 <p className="selection-subtitle">
@@ -1119,7 +1119,7 @@ const App: React.FC = () => {
 
               <div className="frame-grid">
                 {availableFrames.map(frame => (
-                  <button
+                  <div
                     key={frame.id}
                     className="frame-card"
                     onClick={() => selectFrame(frame)}
@@ -1127,25 +1127,24 @@ const App: React.FC = () => {
                     <div className="card-header">
                       <h3 className="card-title">{frame.name}</h3>
                       <div className="card-badge">
-                        <span className="badge-dot"></span>
+                        <div className="badge-dot"></div>
                         Ready
                       </div>
                     </div>
                     <p className="card-description">{frame.description}</p>
                     <div className="card-footer">
-                      {getSupportedFormats(frame)}
+                      <div className="supported-formats">
+                        {getSupportedFormats(frame)}
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
 
               <div className="selection-actions">
                 <button
                   className="btn btn-secondary"
-                  onClick={() => {
-                    setShowFrameSelection(false);
-                    setPendingFileInput(null);
-                  }}
+                  onClick={() => setShowFrameSelection(false)}
                 >
                   Cancel
                 </button>
@@ -1158,7 +1157,7 @@ const App: React.FC = () => {
 
               {/* Unified new tab interface when active tab is new tab */}
               {activeTab?.type === 'newtab' && (
-                <div className="new-tab-unified">
+                <div className="vf-new-tab-unified">
                   <div className="unified-content">
                     {/* Main drop zone section */}
                     <div className="drop-zone-section">
