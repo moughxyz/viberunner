@@ -1159,137 +1159,187 @@ const App: React.FC = () => {
               {activeTab?.type === 'newtab' && (
                 <div className="vf-new-tab-unified">
                   <div className="unified-content">
-                    {/* Main drop zone section */}
-                    <div className="drop-zone-section">
-                      <div className="drop-zone">
-                        <div className="drop-zone-content">
-                          <div className="drop-zone-icon">📂</div>
-                          <h3 className="drop-zone-title">Drop files to visualize</h3>
-                          <p className="drop-zone-description">
-                            Supports documents, images, data files, and more
+                    {/* Show only directory setup if no frames directory is properly configured */}
+                    {!framesDirectory || framesDirectory === 'Not set' || frames.length === 0 ? (
+                      <div className="directory-setup-only">
+                        <div className="setup-header">
+                          <div className="setup-icon">📁</div>
+                          <h2 className="setup-title">Set up your visualizers directory</h2>
+                          <p className="setup-description">
+                            Choose a directory containing your visualization frames to get started.
                           </p>
-                          <div className="drop-zone-formats">
-                            <span className="format-tag">JSON</span>
-                            <span className="format-tag">Images</span>
-                            <span className="format-tag">CSV</span>
-                            <span className="format-tag">Text</span>
+                        </div>
+
+                        <div className="directory-card">
+                          <div className="directory-info">
+                            <h4 className="directory-label">Current Directory</h4>
+                            <div className="directory-path">
+                              {framesDirectory || 'No directory selected'}
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Divider */}
-                    <div className="section-divider"></div>
-
-                    {/* Standalone frames section */}
-                    {frames.filter(f => f.standalone).length > 0 && (
-                      <div className="utilities-section">
-                        <div className="section-card">
-                          <div className="section-header">
-                            <h4 className="section-title">
-                              <span className="section-icon">⚡</span>
-                              Standalone Utilities
-                            </h4>
-                            <span className="section-count">{frames.filter(f => f.standalone).length}</span>
-                          </div>
-                          <div className="utilities-grid">
-                            {frames.filter(f => f.standalone).map(frame => (
-                              <button
-                                key={frame.id}
-                                className="utility-card"
-                                onClick={() => launchStandaloneFrame(frame)}
-                              >
-                                <div className="utility-icon">⚡</div>
-                                <div className="utility-content">
-                                  <h5 className="utility-title">{frame.name}</h5>
-                                  <p className="utility-description">{frame.description}</p>
-                                </div>
-                                <div className="utility-action">Launch</div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Directory controls section */}
-                    <div className="controls-section">
-                      <div className="section-card">
-                        <div className="section-header">
-                          <h4 className="section-title">
-                            <span className="section-icon">🔧</span>
-                            Directory
-                          </h4>
-                        </div>
-                        <div className="directory-path">
-                          {framesDirectory}
-                        </div>
-                        <div className="section-actions">
-                          <button
-                            className="btn btn-outline btn-sm"
-                            onClick={handleChangeFramesDirectory}
-                          >
-                            <span className="btn-icon">📁</span>
-                            Change
-                          </button>
-                          <button
-                            className="btn btn-outline btn-sm"
-                            onClick={handleReloadFrames}
-                            disabled={isLoadingFrames}
-                          >
-                            <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
-                            Reload
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* File-based frames section - collapsible */}
-                    {frames.filter(f => !f.standalone).length > 0 && (
-                      <div className="frames-section">
-                        <div className="section-card">
-                          <div className="section-header">
+                          <div className="directory-actions">
                             <button
-                              className="section-header-button"
-                              onClick={() => setShowFileFrames(!showFileFrames)}
+                              className="btn btn-primary"
+                              onClick={handleChangeFramesDirectory}
                             >
-                              <h4 className="section-title">
-                                <span className="section-icon">🎨</span>
-                                File Frames
-                              </h4>
-                              <div className="section-meta">
-                                <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
-                                <span className="section-toggle">{showFileFrames ? '▼' : '▶'}</span>
-                              </div>
+                              <span className="btn-icon">📁</span>
+                              Choose Directory
                             </button>
+                            {framesDirectory && framesDirectory !== 'Not set' && (
+                              <button
+                                className="btn btn-outline"
+                                onClick={handleReloadFrames}
+                                disabled={isLoadingFrames}
+                              >
+                                <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
+                                Reload
+                              </button>
+                            )}
                           </div>
-                          {showFileFrames && (
-                            isLoadingFrames ? (
-                              <div className="loading-state">
-                                <span className="loading-spinner">⟳</span>
-                                Loading frames...
+                        </div>
+
+                        {framesDirectory && framesDirectory !== 'Not set' && frames.length === 0 && (
+                          <div className="setup-hint">
+                            <p>No visualization frames found in this directory.</p>
+                            <p>Make sure your directory contains properly configured frames with viz.json files.</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        {/* Main drop zone section */}
+                        <div className="drop-zone-section">
+                          <div className="drop-zone">
+                            <div className="drop-zone-content">
+                              <div className="drop-zone-icon">📂</div>
+                              <h3 className="drop-zone-title">Drop files to visualize</h3>
+                              <p className="drop-zone-description">
+                                Supports documents, images, data files, and more
+                              </p>
+                              <div className="drop-zone-formats">
+                                <span className="format-tag">JSON</span>
+                                <span className="format-tag">Images</span>
+                                <span className="format-tag">CSV</span>
+                                <span className="format-tag">Text</span>
                               </div>
-                            ) : (
-                              <div className="frames-grid">
-                                {frames.filter(f => !f.standalone).map(frame => (
-                                  <div key={frame.id} className="frame-info-card">
-                                    <div className="frame-info-header">
-                                      <h5 className="frame-info-title">{frame.name}</h5>
-                                      <div className="frame-info-status">
-                                        <span className="status-dot"></span>
-                                      </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Divider */}
+                        <div className="section-divider"></div>
+
+                        {/* Standalone frames section */}
+                        {frames.filter(f => f.standalone).length > 0 && (
+                          <div className="utilities-section">
+                            <div className="section-card">
+                              <div className="section-header">
+                                <h4 className="section-title">
+                                  <span className="section-icon">⚡</span>
+                                  Standalone Utilities
+                                </h4>
+                                <span className="section-count">{frames.filter(f => f.standalone).length}</span>
+                              </div>
+                              <div className="utilities-grid">
+                                {frames.filter(f => f.standalone).map(frame => (
+                                  <button
+                                    key={frame.id}
+                                    className="utility-card"
+                                    onClick={() => launchStandaloneFrame(frame)}
+                                  >
+                                    <div className="utility-icon">⚡</div>
+                                    <div className="utility-content">
+                                      <h5 className="utility-title">{frame.name}</h5>
+                                      <p className="utility-description">{frame.description}</p>
                                     </div>
-                                    <p className="frame-info-description">{frame.description}</p>
-                                    <div className="frame-info-formats">
-                                      {getSupportedFormats(frame)}
-                                    </div>
-                                  </div>
+                                    <div className="utility-action">Launch</div>
+                                  </button>
                                 ))}
                               </div>
-                            )
-                          )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Directory controls section */}
+                        <div className="controls-section">
+                          <div className="section-card">
+                            <div className="section-header">
+                              <h4 className="section-title">
+                                <span className="section-icon">🔧</span>
+                                Directory
+                              </h4>
+                            </div>
+                            <div className="directory-path">
+                              {framesDirectory}
+                            </div>
+                            <div className="section-actions">
+                              <button
+                                className="btn btn-outline btn-sm"
+                                onClick={handleChangeFramesDirectory}
+                              >
+                                <span className="btn-icon">📁</span>
+                                Change
+                              </button>
+                              <button
+                                className="btn btn-outline btn-sm"
+                                onClick={handleReloadFrames}
+                                disabled={isLoadingFrames}
+                              >
+                                <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
+                                Reload
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+
+                        {/* File-based frames section - collapsible */}
+                        {frames.filter(f => !f.standalone).length > 0 && (
+                          <div className="frames-section">
+                            <div className="section-card">
+                              <div className="section-header">
+                                <button
+                                  className="section-header-button"
+                                  onClick={() => setShowFileFrames(!showFileFrames)}
+                                >
+                                  <h4 className="section-title">
+                                    <span className="section-icon">🎨</span>
+                                    File Frames
+                                  </h4>
+                                  <div className="section-meta">
+                                    <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
+                                    <span className="section-toggle">{showFileFrames ? '▼' : '▶'}</span>
+                                  </div>
+                                </button>
+                              </div>
+                              {showFileFrames && (
+                                isLoadingFrames ? (
+                                  <div className="loading-state">
+                                    <span className="loading-spinner">⟳</span>
+                                    Loading frames...
+                                  </div>
+                                ) : (
+                                  <div className="frames-grid">
+                                    {frames.filter(f => !f.standalone).map(frame => (
+                                      <div key={frame.id} className="frame-info-card">
+                                        <div className="frame-info-header">
+                                          <h5 className="frame-info-title">{frame.name}</h5>
+                                          <div className="frame-info-status">
+                                            <span className="status-dot"></span>
+                                          </div>
+                                        </div>
+                                        <p className="frame-info-description">{frame.description}</p>
+                                        <div className="frame-info-formats">
+                                          {getSupportedFormats(frame)}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

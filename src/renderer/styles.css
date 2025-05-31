@@ -1313,3 +1313,101 @@ body {
   background: var(--accent-light);
   border-color: var(--accent);
 }
+
+/* Directory Setup Only Interface */
+.directory-setup-only {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+  gap: var(--space-8);
+}
+
+.setup-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.setup-icon {
+  font-size: 4rem;
+  opacity: 0.6;
+  margin-bottom: var(--space-2);
+}
+
+.setup-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.setup-description {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.directory-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.directory-info {
+  text-align: left;
+}
+
+.directory-label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+
+.directory-setup-only .directory-path {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  background: var(--background);
+  padding: var(--space-3);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  word-break: break-all;
+}
+
+.directory-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+}
+
+.setup-hint {
+  background: var(--warning);
+  background: rgba(255, 159, 10, 0.1);
+  border: 1px solid rgba(255, 159, 10, 0.2);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  color: var(--warning);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.setup-hint p {
+  margin: 0;
+}
+
+.setup-hint p + p {
+  margin-top: var(--space-2);
+}
