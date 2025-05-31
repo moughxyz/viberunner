@@ -413,6 +413,118 @@ body {
   max-width: 100%;
 }
 
+/* Tabs System */
+.tabs-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: calc(100vh - 140px);
+}
+
+.tabs-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 var(--space-4);
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tabs-list {
+  display: flex;
+  gap: 0;
+  min-height: 48px;
+  align-items: flex-end;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  min-width: 200px;
+  max-width: 280px;
+  position: relative;
+  margin-top: var(--space-2);
+}
+
+.tab:hover {
+  background: var(--surface-hover);
+}
+
+.tab-active {
+  background: var(--background);
+  border-color: var(--accent);
+  border-bottom: 1px solid var(--background);
+  margin-bottom: -1px;
+  z-index: 10;
+}
+
+.tab-active:hover {
+  background: var(--background);
+}
+
+.tab-icon {
+  font-size: var(--font-size-base);
+  flex-shrink: 0;
+}
+
+.tab-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.tab-title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.tab-close:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.frame-viewport-container {
+  flex: 1;
+  overflow: hidden;
+}
+
 .frame-header {
   display: flex;
   align-items: center;
@@ -453,7 +565,7 @@ body {
 }
 
 .frame-viewport {
-  min-height: 600px;
+  height: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);

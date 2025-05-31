@@ -229,6 +229,14 @@ interface Frame {
   standalone?: boolean; // Optional standalone property
 }
 
+interface OpenTab {
+  id: string;
+  frame: Frame;
+  fileInput?: FileInput; // undefined for standalone frames
+  title: string;
+  type: 'file' | 'standalone';
+}
+
 interface FileData {
   path: string;
   mimetype: string;
@@ -274,10 +282,11 @@ const getSupportedFormats = (frame: any): string => {
 
 const App: React.FC = () => {
   const [frames, setFrames] = useState<Frame[]>([]);
-  const [currentFile, setCurrentFile] = useState<FileInput | null>(null);
-  const [currentFrame, setCurrentFrame] = useState<Frame | null>(null);
+  const [openTabs, setOpenTabs] = useState<OpenTab[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [availableFrames, setAvailableFrames] = useState<Frame[]>([]);
   const [showFrameSelection, setShowFrameSelection] = useState(false);
+  const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
   const [framesDirectory, setFramesDirectory] = useState<string>('');
   const [isLoadingFrames, setIsLoadingFrames] = useState(false);
   const frameRootRef = useRef<HTMLDivElement>(null);
@@ -331,80 +340,52 @@ const App: React.FC = () => {
     alert('Frames reloaded successfully!');
   };
 
-  useEffect(() => {
-    // Handle file drops
-    const handleFileDrop = async (filePath: string) => {
-      try {
-        console.log('=== FILE DROP STARTED ===');
-        console.log('handleFileDrop: Processing file:', filePath);
+  const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        // Simplified file analysis for matching only
-        const fileAnalysis = await analyzeFile(filePath);
-        console.log('handleFileDrop: File analysis:', fileAnalysis);
+  const openFrameInNewTab = (frame: Frame, fileInput?: FileInput) => {
+    const tabId = generateTabId();
+    const title = fileInput
+      ? fileInput.path.split('/').pop() || 'Unknown File'
+      : frame.name;
 
-        // Create simplified file input - just path and mimetype
-        const fileInput: FileInput = {
-          path: filePath,
-          mimetype: fileAnalysis.mimetype
-        };
-        console.log('handleFileDrop: File input prepared:', fileInput);
+    const newTab: OpenTab = {
+      id: tabId,
+      frame,
+      fileInput,
+      title,
+      type: fileInput ? 'file' : 'standalone'
+    };
 
-        // Find matching frames directly
-        const matches = await findMatchingFrames(filePath);
-        console.log('handleFileDrop: Found matches:', matches);
+    setOpenTabs(prev => [...prev, newTab]);
+    setActiveTabId(tabId);
+    setShowFrameSelection(false);
+    setPendingFileInput(null);
+  };
 
-        if (matches.length === 0) {
-          console.log('handleFileDrop: No matches found');
-          alert(`No frame found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
-        } else if (matches.length === 1) {
-          console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].frame.name);
-          setCurrentFrame(matches[0].frame);
-          setCurrentFile(fileInput);
-          setShowFrameSelection(false);
-          console.log('handleFileDrop: State set for single match');
+  const closeTab = (tabId: string) => {
+    setOpenTabs(prev => {
+      const filtered = prev.filter(tab => tab.id !== tabId);
+
+      // If we closed the active tab, activate another one
+      if (activeTabId === tabId) {
+        const currentIndex = prev.findIndex(tab => tab.id === tabId);
+        if (filtered.length > 0) {
+          // Activate the tab to the right, or the rightmost if we closed the last tab
+          const newActiveIndex = Math.min(currentIndex, filtered.length - 1);
+          setActiveTabId(filtered[newActiveIndex]?.id || null);
         } else {
-          console.log('handleFileDrop: Multiple matches found, showing selection');
-          setCurrentFile(fileInput);
-          setAvailableFrames(matches.map((m: any) => ({
-            ...m.frame,
-            matchPriority: m.priority
-          })));
-          setShowFrameSelection(true);
-          setCurrentFrame(null);
-          console.log('handleFileDrop: State set for multiple matches');
+          setActiveTabId(null);
         }
-        console.log('=== FILE DROP COMPLETED ===');
-      } catch (error) {
-        console.error('Error handling file drop:', error);
-        alert(`Error handling file: ${error}`);
       }
-    };
 
-    // Listen for file drops
-    const onDrop = (event: DragEvent) => {
-      event.preventDefault();
-      const filePath = event.dataTransfer?.files[0]?.path;
-      if (filePath) {
-        handleFileDrop(filePath);
-      }
-    };
-
-    const onDragOver = (event: DragEvent) => {
-      event.preventDefault();
-    };
-
-    window.addEventListener('drop', onDrop);
-    window.addEventListener('dragover', onDragOver);
-
-    return () => {
-      window.removeEventListener('drop', onDrop);
-      window.removeEventListener('dragover', onDragOver);
-    };
-  }, [frames]);
+      return filtered;
+    });
+  };
 
   const selectFrame = (frame: Frame) => {
-    setCurrentFrame(frame);
-    setShowFrameSelection(false);
+    if (pendingFileInput) {
+      openFrameInNewTab(frame, pendingFileInput);
+    }
   };
 
   const launchStandaloneFrame = async (frame: Frame) => {
@@ -414,10 +395,8 @@ const App: React.FC = () => {
       const frameData = await loadFrame(frame.id);
       console.log('Frame data received:', frameData);
 
-      // Set up standalone frame (no file data) - this will trigger useEffect
-      setCurrentFrame(frame);
-      setCurrentFile(null); // No file for standalone frames
-      setShowFrameSelection(false);
+      // Create new tab for standalone frame
+      openFrameInNewTab(frame);
 
       // Store frame data for useEffect to pick up
       (window as any).__PENDING_STANDALONE_DATA__ = frameData;
@@ -428,18 +407,20 @@ const App: React.FC = () => {
     }
   };
 
-  // Load and render the frame when currentFile or currentFrame changes
+  // Get the currently active tab
+  const activeTab = openTabs.find(tab => tab.id === activeTabId);
+
+  // Load and render the frame when activeTab changes
   useEffect(() => {
     console.log('Frame loading useEffect triggered:', {
-      currentFrame: currentFrame?.name,
-      currentFile: currentFile?.path,
+      activeTab: activeTab?.frame.name,
       frameRootRef: !!frameRootRef.current
     });
 
-    if (currentFrame && frameRootRef.current) {
+    if (activeTab && frameRootRef.current) {
       const loadFrameComponent = async () => {
         try {
-          console.log('Starting frame component load for:', currentFrame.name);
+          console.log('Starting frame component load for:', activeTab.frame.name);
 
           // Clear previous content
           if (frameRootRef.current) {
@@ -451,7 +432,7 @@ const App: React.FC = () => {
           let props;
 
           // Check if this is a standalone frame
-          if (!currentFile && (window as any).__PENDING_STANDALONE_DATA__) {
+          if (!activeTab.fileInput && (window as any).__PENDING_STANDALONE_DATA__) {
             console.log('Loading standalone frame with pending data');
             // Use pending standalone data
             frameData = (window as any).__PENDING_STANDALONE_DATA__;
@@ -461,10 +442,10 @@ const App: React.FC = () => {
             };
             // Clear the pending data
             delete (window as any).__PENDING_STANDALONE_DATA__;
-          } else if (currentFile) {
-            console.log('Loading file-based frame for file:', currentFile.path);
+          } else if (activeTab.fileInput) {
+            console.log('Loading file-based frame for file:', activeTab.fileInput.path);
             // Load the frame's main component for file-based frame
-            frameData = await loadFrame(currentFrame.id);
+            frameData = await loadFrame(activeTab.frame.id);
             console.log('Frame data loaded:', {
               hasBundleContent: !!frameData.bundleContent,
               bundleLength: frameData.bundleContent?.length,
@@ -472,16 +453,16 @@ const App: React.FC = () => {
             });
             props = {
               // Pass simplified file input - just path and mimetype
-              fileInput: currentFile,
+              fileInput: activeTab.fileInput,
               // Keep legacy fileData for backward compatibility during transition
               fileData: {
-                path: currentFile.path,
-                mimetype: currentFile.mimetype,
+                path: activeTab.fileInput.path,
+                mimetype: activeTab.fileInput.mimetype,
                 content: '', // Empty - frames should read directly
                 analysis: {
-                  filename: path.basename(currentFile.path),
+                  filename: path.basename(activeTab.fileInput.path),
                   size: 0, // Frames can get this via fs.stat
-                  isJson: currentFile.mimetype === 'application/json' || currentFile.path.endsWith('.json'),
+                  isJson: activeTab.fileInput.mimetype === 'application/json' || activeTab.fileInput.path.endsWith('.json'),
                   jsonContent: null
                 }
               },
@@ -562,11 +543,11 @@ const App: React.FC = () => {
       loadFrameComponent();
     } else {
       console.log('Frame loading conditions not met:', {
-        hasCurrentFrame: !!currentFrame,
+        hasActiveTab: !!activeTab,
         hasFrameRootRef: !!frameRootRef.current
       });
     }
-  }, [currentFile, currentFrame]);
+  }, [activeTab]);
 
   // Enhanced file matching functions
   function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {
@@ -661,6 +642,74 @@ const App: React.FC = () => {
     return matches.sort((a, b) => b.priority - a.priority);
   }
 
+  useEffect(() => {
+    // Handle file drops
+    const handleFileDrop = async (filePath: string) => {
+      try {
+        console.log('=== FILE DROP STARTED ===');
+        console.log('handleFileDrop: Processing file:', filePath);
+
+        // Simplified file analysis for matching only
+        const fileAnalysis = await analyzeFile(filePath);
+        console.log('handleFileDrop: File analysis:', fileAnalysis);
+
+        // Create simplified file input - just path and mimetype
+        const fileInput: FileInput = {
+          path: filePath,
+          mimetype: fileAnalysis.mimetype
+        };
+        console.log('handleFileDrop: File input prepared:', fileInput);
+
+        // Find matching frames directly
+        const matches = await findMatchingFrames(filePath);
+        console.log('handleFileDrop: Found matches:', matches);
+
+        if (matches.length === 0) {
+          console.log('handleFileDrop: No matches found');
+          alert(`No frame found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
+        } else if (matches.length === 1) {
+          console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].frame.name);
+          openFrameInNewTab(matches[0].frame, fileInput);
+          console.log('handleFileDrop: Opened in new tab');
+        } else {
+          console.log('handleFileDrop: Multiple matches found, showing selection');
+          setPendingFileInput(fileInput);
+          setAvailableFrames(matches.map((m: any) => ({
+            ...m.frame,
+            matchPriority: m.priority
+          })));
+          setShowFrameSelection(true);
+          console.log('handleFileDrop: State set for multiple matches');
+        }
+        console.log('=== FILE DROP COMPLETED ===');
+      } catch (error) {
+        console.error('Error handling file drop:', error);
+        alert(`Error handling file: ${error}`);
+      }
+    };
+
+    // Listen for file drops
+    const onDrop = (event: DragEvent) => {
+      event.preventDefault();
+      const filePath = event.dataTransfer?.files[0]?.path;
+      if (filePath) {
+        handleFileDrop(filePath);
+      }
+    };
+
+    const onDragOver = (event: DragEvent) => {
+      event.preventDefault();
+    };
+
+    window.addEventListener('drop', onDrop);
+    window.addEventListener('dragover', onDragOver);
+
+    return () => {
+      window.removeEventListener('drop', onDrop);
+      window.removeEventListener('dragover', onDragOver);
+    };
+  }, [frames]);
+
   return (
     <div className="app">
       <header className="header">
@@ -685,10 +734,10 @@ const App: React.FC = () => {
               <div className="selection-header">
                 <h2 className="selection-title">Choose frame</h2>
                 <p className="selection-subtitle">
-                  Multiple frames available for <span className="filename">{currentFile?.path.split('/').pop()}</span>
+                  Multiple frames available for <span className="filename">{pendingFileInput?.path.split('/').pop()}</span>
                 </p>
                 <div className="file-meta">
-                  <span className="file-type">{currentFile?.mimetype}</span>
+                  <span className="file-type">{pendingFileInput?.mimetype}</span>
                 </div>
               </div>
 
@@ -708,7 +757,7 @@ const App: React.FC = () => {
                     </div>
                     <p className="card-description">{frame.description}</p>
                     <div className="card-footer">
-                      {getSupportedFormats(frame)}
+                      <span className="supported-formats">{getSupportedFormats(frame)}</span>
                     </div>
                   </button>
                 ))}
@@ -719,42 +768,50 @@ const App: React.FC = () => {
                   className="btn btn-secondary"
                   onClick={() => {
                     setShowFrameSelection(false);
-                    setCurrentFile(null);
-                    setCurrentFrame(null);
+                    setPendingFileInput(null);
                   }}
                 >
                   Cancel
                 </button>
               </div>
             </div>
-          ) : currentFrame ? (
-            <div className="frame-container">
-              <div className="frame-header">
-                <div className="frame-info">
-                  <h2 className="frame-title">
-                    <span className="file-icon">{currentFile ? '📄' : '⚡'}</span>
-                    {currentFile ? currentFile.path.split('/').pop() : currentFrame.name}
-                  </h2>
-                  <p className="frame-subtitle">
-                    {currentFile ? (
-                      <>Powered by <span className="frame-name">{currentFrame.name}</span></>
-                    ) : (
-                      <span className="frame-name">Standalone Utility</span>
-                    )}
-                  </p>
+          ) : openTabs.length > 0 ? (
+            <div className="tabs-container">
+              {/* Tab Bar */}
+              <div className="tabs-bar">
+                <div className="tabs-list">
+                  {openTabs.map(tab => (
+                    <div
+                      key={tab.id}
+                      className={`tab ${tab.id === activeTabId ? 'tab-active' : ''}`}
+                      onClick={() => setActiveTabId(tab.id)}
+                    >
+                      <div className="tab-icon">
+                        {tab.type === 'standalone' ? '⚡' : '📄'}
+                      </div>
+                      <div className="tab-content">
+                        <span className="tab-title">{tab.title}</span>
+                        <span className="tab-subtitle">{tab.frame.name}</span>
+                      </div>
+                      <button
+                        className="tab-close"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          closeTab(tab.id);
+                        }}
+                        title="Close tab"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <button
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => {
-                    setCurrentFile(null);
-                    setCurrentFrame(null);
-                  }}
-                >
-                  <span className="btn-icon">✕</span>
-                  Close
-                </button>
               </div>
-              <div ref={frameRootRef} className="frame-viewport" />
+
+              {/* Active Frame Content */}
+              <div className="frame-viewport-container">
+                <div ref={frameRootRef} className="frame-viewport" />
+              </div>
             </div>
           ) : (
             <div className="drop-zone">
