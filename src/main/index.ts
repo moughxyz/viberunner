@@ -795,8 +795,9 @@ app.whenReady().then(async () => {
   // Register IPC handlers BEFORE creating the window
   registerIpcHandlers();
 
-  // Request access to common directories on startup
-  permissionManager.requestCommonDirectoryAccess();
+  // NOTE: Removed automatic permission request on startup
+  // Permissions will now be requested on-demand by individual apps
+  // permissionManager.requestCommonDirectoryAccess();
 
   createWindow();
 });

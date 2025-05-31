@@ -1623,9 +1623,9 @@ const App: React.FC = () => {
                     <div className="directory-setup-only">
                       <div className="setup-header">
                         <div className="setup-icon">📁</div>
-                        <h2 className="setup-title">Set up your apps directory</h2>
+                        <h2 className="setup-title">Choose your apps directory</h2>
                         <p className="setup-description">
-                          Choose a directory containing your visualization apps to get started.
+                          Select the directory where your apps are located to get started.
                         </p>
                       </div>
 
