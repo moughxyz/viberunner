@@ -1006,150 +1006,6 @@ body {
   font-weight: 500;
 }
 
-/* Right column sections */
-.controls-section,
-.utilities-section,
-.frames-section {
-  margin-bottom: 0; /* Remove bottom margin since flex gap handles spacing */
-}
-
-/* Section cards */
-.section-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  transition: all 0.15s ease;
-}
-
-.section-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-}
-
-/* Utilities grid */
-.utilities-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.utility-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: left;
-  font-family: inherit;
-  color: inherit;
-}
-
-.utility-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
-}
-
-.utility-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--accent-light);
-  color: var(--accent);
-  border-radius: var(--radius);
-  font-size: var(--font-size-base);
-  flex-shrink: 0;
-}
-
-.utility-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.utility-title {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 var(--space-1) 0;
-}
-
-.utility-description {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.utility-action {
-  color: var(--accent);
-  font-size: var(--font-size-xs);
-  font-weight: 500;
-  padding: var(--space-1) var(--space-2);
-  background: var(--accent-light);
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-}
-
-/* Frames grid */
-.frames-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
-.frame-info-card {
-  padding: var(--space-3);
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  transition: all 0.15s ease;
-}
-
-.frame-info-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-}
-
-.frame-info-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-2);
-}
-
-.frame-info-title {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.frame-info-status {
-  display: flex;
-  align-items: center;
-}
-
-.frame-info-description {
-  color: var(--text-secondary);
-  font-size: var(--font-size-xs);
-  line-height: 1.4;
-  margin-bottom: var(--space-2);
-}
-
-.frame-info-formats {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-}
-
 /* Tab Frame Containers - for background tab persistence */
 .tab-frame-container {
   position: absolute;
@@ -1170,5 +1026,26 @@ body {
 
   .content-area:has(.new-tab-unified) {
     padding: var(--space-4);
+  }
+
+  .main-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .frame-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-content,
+  .content-area {
+    padding: var(--space-4);
+  }
+
+  .section-actions {
+    flex-direction: column;
+  }
+
+  .section-actions .btn {
+    width: 100%;
   }
 }
