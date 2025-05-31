@@ -1368,10 +1368,10 @@ const App: React.FC = () => {
                       )}
                     </>
                   )}
-                </div>
               </div>
             </div>
           )}
+          </div>
         </main>
       </div>
     </div>
