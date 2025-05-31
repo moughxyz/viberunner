@@ -445,6 +445,9 @@ const App: React.FC = () => {
   const frameRootRef = useRef<HTMLDivElement>(null);
   const hasLaunchedStartupApps = useRef<boolean>(false);
 
+  // Get the currently active tab
+  const activeTab = openTabs.find(tab => tab.id === activeTabId);
+
   // Function to load app icon
   const loadAppIcon = async (frame: Frame): Promise<string | null> => {
     if (!frame.icon) return null;
@@ -576,6 +579,38 @@ const App: React.FC = () => {
   useEffect(() => {
     loadStartupApps();
   }, [frames]);
+
+  // Keyboard shortcuts for tab/window management
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Cmd+W (macOS) or Ctrl+W (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === 'w') {
+        event.preventDefault();
+
+        // If multiple tabs or active tab is not a new tab, close the active tab
+        if (openTabs.length > 1 || (activeTab && activeTab.type !== 'newtab')) {
+          if (activeTabId) {
+            closeTab(activeTabId);
+          }
+        } else {
+          // Only a new tab remains or no tabs, close the window
+          try {
+            ipcRenderer.invoke('close-window');
+          } catch (error) {
+            console.error('Failed to close window:', error);
+            // Fallback: try to close via window object
+            window.close();
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [openTabs, activeTabId, activeTab]);
 
   // Auto-launch startup apps when frames are loaded
   useEffect(() => {
@@ -1168,9 +1203,6 @@ const App: React.FC = () => {
       alert(`Failed to launch ${frame.name}: ${error}`);
     }
   };
-
-  // Get the currently active tab
-  const activeTab = openTabs.find(tab => tab.id === activeTabId);
 
   // Enhanced file matching functions
   function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {

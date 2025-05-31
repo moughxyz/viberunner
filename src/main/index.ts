@@ -861,5 +861,20 @@ function registerIpcHandlers() {
     }
   });
 
+  // Close window handler for keyboard shortcuts
+  ipcMain.handle('close-window', async () => {
+    try {
+      const focusedWindow = BrowserWindow.getFocusedWindow();
+      if (focusedWindow) {
+        focusedWindow.close();
+        return { success: true };
+      }
+      return { success: false, error: 'No focused window found' };
+    } catch (error) {
+      console.error('Error closing window:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
   console.log('All IPC handlers registered successfully');
 }

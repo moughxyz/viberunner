@@ -12106,5 +12106,18 @@ function registerIpcHandlers() {
       return { success: false, error: error.message, canceled: true };
     }
   });
+  require$$3.ipcMain.handle("close-window", async () => {
+    try {
+      const focusedWindow = require$$3.BrowserWindow.getFocusedWindow();
+      if (focusedWindow) {
+        focusedWindow.close();
+        return { success: true };
+      }
+      return { success: false, error: "No focused window found" };
+    } catch (error) {
+      console.error("Error closing window:", error);
+      return { success: false, error: error.message };
+    }
+  });
   console.log("All IPC handlers registered successfully");
 }
