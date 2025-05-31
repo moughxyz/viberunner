@@ -231,10 +231,10 @@ interface Frame {
 
 interface OpenTab {
   id: string;
-  frame: Frame;
-  fileInput?: FileInput; // undefined for standalone frames
+  frame?: Frame; // Optional for home tab
+  fileInput?: FileInput; // undefined for standalone frames and home tab
   title: string;
-  type: 'file' | 'standalone';
+  type: 'file' | 'standalone' | 'home';
   frameData?: any; // Store the loaded frame data for reloading
 }
 
@@ -320,6 +320,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     reloadFrames();
+
+    // Create the initial home tab
+    const homeTab: OpenTab = {
+      id: 'home-tab',
+      title: 'Home',
+      type: 'home'
+    };
+    setOpenTabs([homeTab]);
+    setActiveTabId('home-tab');
   }, []);
 
   const handleChangeFramesDirectory = async () => {
@@ -419,15 +428,15 @@ const App: React.FC = () => {
   // Load and render the frame when activeTab changes
   useEffect(() => {
     console.log('Frame loading useEffect triggered:', {
-      activeTab: activeTab?.frame.name,
+      activeTab: activeTab?.frame?.name || activeTab?.title,
       frameRootRef: !!frameRootRef.current,
       hasFrameData: !!activeTab?.frameData
     });
 
-    if (activeTab && frameRootRef.current && activeTab.frameData) {
+    if (activeTab && activeTab.type !== 'home' && frameRootRef.current && activeTab.frameData && activeTab.frame) {
       const loadFrameComponent = async () => {
         try {
-          console.log('Starting frame component load for:', activeTab.frame.name);
+          console.log('Starting frame component load for:', activeTab.frame!.name);
 
           // Clear previous content
           if (frameRootRef.current) {
@@ -542,8 +551,10 @@ const App: React.FC = () => {
     } else {
       console.log('Frame loading conditions not met:', {
         hasActiveTab: !!activeTab,
+        isHomeTab: activeTab?.type === 'home',
         hasFrameRootRef: !!frameRootRef.current,
-        hasFrameData: !!activeTab?.frameData
+        hasFrameData: !!activeTab?.frameData,
+        hasFrame: !!activeTab?.frame
       });
     }
   }, [activeTab]);
@@ -709,6 +720,20 @@ const App: React.FC = () => {
     };
   }, [frames]);
 
+  const createNewHomeTab = () => {
+    const tabId = generateTabId();
+    const newHomeTab: OpenTab = {
+      id: tabId,
+      title: 'Home',
+      type: 'home'
+    };
+
+    setOpenTabs(prev => [...prev, newHomeTab]);
+    setActiveTabId(tabId);
+    setShowFrameSelection(false);
+    setPendingFileInput(null);
+  };
+
   return (
     <div className="app">
       <header className="header">
@@ -774,7 +799,7 @@ const App: React.FC = () => {
                 </button>
               </div>
             </div>
-          ) : openTabs.length > 0 ? (
+          ) : (
             <div className="tabs-container">
               {/* Tab Bar */}
               <div className="tabs-bar">
@@ -786,73 +811,88 @@ const App: React.FC = () => {
                       onClick={() => setActiveTabId(tab.id)}
                     >
                       <div className="tab-icon">
-                        {tab.type === 'standalone' ? '⚡' : '📄'}
+                        {tab.type === 'home' ? '🏠' : tab.type === 'standalone' ? '⚡' : '📄'}
                       </div>
                       <div className="tab-content">
                         <span className="tab-title">{tab.title}</span>
-                        <span className="tab-subtitle">{tab.frame.name}</span>
+                        {tab.frame && <span className="tab-subtitle">{tab.frame.name}</span>}
                       </div>
-                      <button
-                        className="tab-close"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          closeTab(tab.id);
-                        }}
-                        title="Close tab"
-                      >
-                        ✕
-                      </button>
+                      {tab.type !== 'home' && (
+                        <button
+                          className="tab-close"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            closeTab(tab.id);
+                          }}
+                          title="Close tab"
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   ))}
+
+                  {/* New Tab Button */}
+                  <button
+                    className="new-tab-btn"
+                    onClick={createNewHomeTab}
+                    title="New tab"
+                  >
+                    +
+                  </button>
                 </div>
               </div>
 
-              {/* Active Frame Content */}
+              {/* Active Tab Content */}
               <div className="frame-viewport-container">
-                <div ref={frameRootRef} className="frame-viewport" />
-              </div>
-            </div>
-          ) : (
-            <div className="drop-zone">
-              <div className="drop-zone-content">
-                <div className="drop-zone-icon">📂</div>
-                <h3 className="drop-zone-title">Drop files to visualize</h3>
-                <p className="drop-zone-description">
-                  Supports documents, images, data files, and more
-                </p>
-                <div className="drop-zone-formats">
-                  <span className="format-tag">JSON</span>
-                  <span className="format-tag">Images</span>
-                  <span className="format-tag">CSV</span>
-                  <span className="format-tag">Text</span>
-                </div>
-
-                {/* Standalone Frames Section */}
-                {frames.filter(f => f.standalone).length > 0 && (
-                  <div className="drop-zone-divider">
-                    <div className="divider-line"></div>
-                    <span className="divider-text">Or, launch these standalone utilities</span>
-                    <div className="divider-line"></div>
-                  </div>
-                )}
-
-                {frames.filter(f => f.standalone).length > 0 && (
-                  <div className="standalone-frames-grid">
-                    {frames.filter(f => f.standalone).map(frame => (
-                      <button
-                        key={frame.id}
-                        className="standalone-frame-card"
-                        onClick={() => launchStandaloneFrame(frame)}
-                      >
-                        <div className="standalone-frame-icon">⚡</div>
-                        <div className="standalone-frame-content">
-                          <h4 className="standalone-frame-title">{frame.name}</h4>
-                          <p className="standalone-frame-description">{frame.description}</p>
+                {activeTab?.type === 'home' ? (
+                  <div className="home-tab-content">
+                    <div className="drop-zone">
+                      <div className="drop-zone-content">
+                        <div className="drop-zone-icon">📂</div>
+                        <h3 className="drop-zone-title">Drop files to visualize</h3>
+                        <p className="drop-zone-description">
+                          Supports documents, images, data files, and more
+                        </p>
+                        <div className="drop-zone-formats">
+                          <span className="format-tag">JSON</span>
+                          <span className="format-tag">Images</span>
+                          <span className="format-tag">CSV</span>
+                          <span className="format-tag">Text</span>
                         </div>
-                        <div className="standalone-frame-action">Launch</div>
-                      </button>
-                    ))}
+
+                        {/* Standalone Frames Section */}
+                        {frames.filter(f => f.standalone).length > 0 && (
+                          <div className="drop-zone-divider">
+                            <div className="divider-line"></div>
+                            <span className="divider-text">Or, launch these standalone utilities</span>
+                            <div className="divider-line"></div>
+                          </div>
+                        )}
+
+                        {frames.filter(f => f.standalone).length > 0 && (
+                          <div className="standalone-frames-grid">
+                            {frames.filter(f => f.standalone).map(frame => (
+                              <button
+                                key={frame.id}
+                                className="standalone-frame-card"
+                                onClick={() => launchStandaloneFrame(frame)}
+                              >
+                                <div className="standalone-frame-icon">⚡</div>
+                                <div className="standalone-frame-content">
+                                  <h4 className="standalone-frame-title">{frame.name}</h4>
+                                  <p className="standalone-frame-description">{frame.description}</p>
+                                </div>
+                                <div className="standalone-frame-action">Launch</div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
+                ) : (
+                  <div ref={frameRootRef} className="frame-viewport" />
                 )}
               </div>
             </div>

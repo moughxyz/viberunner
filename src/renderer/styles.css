@@ -436,6 +436,44 @@ body {
   align-items: flex-end;
 }
 
+.new-tab-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 32px;
+  margin: var(--space-2) 0 var(--space-2) var(--space-2);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  font-weight: 300;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.new-tab-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.home-tab-content {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.home-tab-content .drop-zone {
+  border: none;
+  background: transparent;
+  min-height: auto;
+}
+
 .tab {
   display: flex;
   align-items: center;
