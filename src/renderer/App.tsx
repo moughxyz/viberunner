@@ -515,21 +515,17 @@ const App: React.FC = () => {
       };
     }
 
-    return new Promise((resolve) => {
+    return new Promise<boolean>((resolve) => {
       // Create script and load frame
       const script = document.createElement('script');
+      script.type = 'text/javascript';
 
-      // AUTO-SCOPE CSS: Process the frame bundle to automatically scope CSS
       let processedBundleContent = tab.frameData.bundleContent;
 
-      // Pattern to match CSS strings in the bundle (CSS-in-JS or template literals)
+      // CSS scoping patterns for auto-scoping
       const cssPatterns = [
-        // CSS template literals or strings that start with selectors
-        /(`|"|')([^`"']*(?:\*\s*\{|\.[\w-]+\s*\{|#[\w-]+\s*\{|[a-zA-Z][a-zA-Z0-9]*\s*\{)[^`"']*)\1/g,
-        // Inline style objects that might contain CSS
-        /style\s*:\s*`([^`]*(?:\{[^}]*\}[^`]*)*)`/g,
-        // CSS strings in createGlobalStyle or similar
-        /createGlobalStyle`([^`]*)`/g
+        /(['"`])([^'"`]*\.css[^'"`]*)\1/g,
+        /(['"`])([^'"`]*{[^}]*}[^'"`]*)\1/g
       ];
 
       cssPatterns.forEach(pattern => {
@@ -644,6 +640,13 @@ const App: React.FC = () => {
 
           const root = createRoot(isolationWrapper);
           root.render(React.createElement(FrameComponent, props));
+
+          // Store container reference in tabContainersRef for tab switching
+          tabContainersRef.current.set(tab.id, {
+            domElement: container,
+            reactRoot: root,
+            styleElement: undefined
+          });
 
           // Show the container
           container.style.display = 'block';
