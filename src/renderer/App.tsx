@@ -361,8 +361,15 @@ const App: React.FC = () => {
   const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   // Imperative function to create a frame container
-  const createFrameContainer = async (tab: OpenTab) => {
-    if (!frameRootRef.current || !tab.frame || !tab.frameData) return;
+  const createFrameContainer = async (tab: OpenTab): Promise<boolean> => {
+    if (!frameRootRef.current || !tab.frame || !tab.frameData) {
+      console.error('Cannot create frame container:', {
+        hasFrameRoot: !!frameRootRef.current,
+        hasFrame: !!tab.frame,
+        hasFrameData: !!tab.frameData
+      });
+      return false;
+    }
 
     console.log('Creating frame container for tab:', tab.id);
 
@@ -401,47 +408,66 @@ const App: React.FC = () => {
       };
     }
 
-    // Create script and load frame
-    const script = document.createElement('script');
-    script.textContent = tab.frameData.bundleContent;
+    return new Promise((resolve) => {
+      // Create script and load frame
+      const script = document.createElement('script');
+      script.textContent = tab.frameData.bundleContent;
 
-    const frameLoader = (FrameComponent: any) => {
-      const root = document.createElement('div');
-      container.appendChild(root);
+      const frameLoader = (FrameComponent: any) => {
+        console.log('Frame loader called for tab:', tab.id);
 
-      const reactRoot = createRoot(root);
-      reactRoot.render(React.createElement(FrameComponent, props));
+        const root = document.createElement('div');
+        container.appendChild(root);
 
-      // Store in our ref
-      tabContainersRef.current.set(tab.id, {
-        domElement: container,
-        reactRoot
-      });
+        try {
+          const reactRoot = createRoot(root);
+          reactRoot.render(React.createElement(FrameComponent, props));
 
-      console.log('Frame loaded for tab:', tab.id);
-    };
+          // Store in our ref
+          tabContainersRef.current.set(tab.id, {
+            domElement: container,
+            reactRoot
+          });
 
-    (window as any).__LOAD_FRAME__ = frameLoader;
-    (window as any).__LOAD_VISUALIZER__ = frameLoader;
+          console.log('Frame loaded successfully for tab:', tab.id);
+          resolve(true);
+        } catch (error) {
+          console.error('Error rendering frame for tab:', tab.id, error);
+          resolve(false);
+        }
+      };
 
-    document.head.appendChild(script);
+      (window as any).__LOAD_FRAME__ = frameLoader;
+      (window as any).__LOAD_VISUALIZER__ = frameLoader;
 
-    // Cleanup
-    setTimeout(() => {
-      if (document.head.contains(script)) {
-        document.head.removeChild(script);
-      }
-      delete (window as any).__LOAD_FRAME__;
-      delete (window as any).__LOAD_VISUALIZER__;
-    }, 100);
+      document.head.appendChild(script);
+
+      // Cleanup script after execution
+      setTimeout(() => {
+        if (document.head.contains(script)) {
+          document.head.removeChild(script);
+        }
+        delete (window as any).__LOAD_FRAME__;
+        delete (window as any).__LOAD_VISUALIZER__;
+
+        // If frameLoader wasn't called, resolve with false
+        if (!tabContainersRef.current.has(tab.id)) {
+          console.warn('Frame loader was not called for tab:', tab.id);
+          resolve(false);
+        }
+      }, 1000); // Longer timeout to ensure frame loads
+    });
   };
 
   // Imperative function to switch tab visibility
   const switchToTab = (tabId: string) => {
     const activeTab = openTabs.find(tab => tab.id === tabId);
 
+    console.log('Switching to tab:', tabId, 'type:', activeTab?.type);
+
     // Hide all frame containers
-    tabContainersRef.current.forEach((container) => {
+    tabContainersRef.current.forEach((container, id) => {
+      console.log('Hiding container for tab:', id);
       container.domElement.style.display = 'none';
     });
 
@@ -449,7 +475,10 @@ const App: React.FC = () => {
     if (activeTab && activeTab.type !== 'newtab') {
       const container = tabContainersRef.current.get(tabId);
       if (container) {
+        console.log('Showing container for tab:', tabId);
         container.domElement.style.display = 'block';
+      } else {
+        console.warn('No container found for tab:', tabId);
       }
     }
 
@@ -489,11 +518,16 @@ const App: React.FC = () => {
         tab.id === activeTabId ? transformedTab : tab
       ));
 
-      // Create the frame container
-      await createFrameContainer(transformedTab);
+      // Create the frame container and wait for it to be ready
+      const success = await createFrameContainer(transformedTab);
 
-      // Switch to show this tab
-      switchToTab(transformedTab.id);
+      if (success) {
+        // Switch to show this tab
+        switchToTab(transformedTab.id);
+      } else {
+        console.error('Failed to create frame container for transformed tab');
+        alert(`Failed to load ${frame.name}`);
+      }
     } else {
       // Create a new tab
       const tabId = generateTabId();
@@ -508,11 +542,16 @@ const App: React.FC = () => {
 
       setOpenTabs(prev => [...prev, newTab]);
 
-      // Create the frame container
-      await createFrameContainer(newTab);
+      // Create the frame container and wait for it to be ready
+      const success = await createFrameContainer(newTab);
 
-      // Switch to show this tab
-      switchToTab(tabId);
+      if (success) {
+        // Switch to show this tab
+        switchToTab(tabId);
+      } else {
+        console.error('Failed to create frame container for new tab');
+        alert(`Failed to load ${frame.name}`);
+      }
     }
 
     setShowFrameSelection(false);
