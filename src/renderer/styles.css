@@ -449,7 +449,7 @@ body {
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
   background: transparent;
-  border: none;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -460,6 +460,7 @@ body {
 
 .utility-card:hover {
   background: var(--surface);
+  border-color: var(--border-hover);
   transform: none;
   box-shadow: none;
 }
