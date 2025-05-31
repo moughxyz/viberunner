@@ -339,8 +339,8 @@ body {
 .drop-zone-section .drop-zone {
   width: 100%;
   max-width: 100%;
-  border: 2px dashed var(--border);
-  border-radius: var(--radius-xl);
+  border: none;
+  border-radius: 0;
   background: transparent;
   transition: all 0.2s ease;
   display: flex;
@@ -351,8 +351,8 @@ body {
 }
 
 .drop-zone-section .drop-zone:hover {
-  border-color: var(--border-hover);
   background: var(--surface-hover);
+  border-radius: var(--radius-xl);
 }
 
 .sidebar {
