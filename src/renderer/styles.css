@@ -161,12 +161,15 @@ body {
   margin-left: -8px;
   z-index: 1;
 
-  /* Chrome-like trapezoid shape using clip-path */
+  /* Chrome-like rounded corners and angled edges */
+  border-radius: 8px 8px 0 0;
+
+  /* Create angled bottom edges */
   clip-path: polygon(
-    8px 0%,
-    calc(100% - 8px) 0%,
-    100% 100%,
-    0% 100%
+    0% 0%,
+    100% 0%,
+    calc(100% - 8px) 100%,
+    8px 100%
   );
 
   /* Subtle shadow for depth */
@@ -179,10 +182,16 @@ body {
   margin-left: 0;
   clip-path: polygon(
     0% 0%,
-    calc(100% - 8px) 0%,
-    100% 100%,
+    100% 0%,
+    calc(100% - 8px) 100%,
     0% 100%
   );
+}
+
+/* Remove the complex pseudo-element approach */
+.vf-header-tabs .vf-tab::before,
+.vf-header-tabs .vf-tab::after {
+  display: none;
 }
 
 .vf-header-tabs .vf-tab:hover {
