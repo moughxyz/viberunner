@@ -332,9 +332,9 @@ body {
   padding: var(--space-8);
 }
 
-/* Frame selection gets standard padding */
+/* Frame selection gets full viewport */
 .vf-content-area:has(.vf-frame-selection) {
-  padding: var(--space-8);
+  padding: 0;
 }
 
 /* Frame viewport gets full space when frames are active */
@@ -360,6 +360,12 @@ body {
 
 /* Hide frame viewport completely when on new tab */
 .vf-content-area:has(.vf-new-tab-unified) .frame-viewport {
+  border: none;
+  background: transparent;
+}
+
+/* Hide frame viewport completely when on frame selection */
+.vf-content-area:has(.vf-frame-selection) .frame-viewport {
   border: none;
   background: transparent;
 }
@@ -695,6 +701,14 @@ body {
 /* App Selection */
 .vf-frame-selection {
   max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-8);
+  position: relative;
+  z-index: 20;
+  background: var(--background);
+  min-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
 }
 
 .selection-header {
@@ -737,6 +751,7 @@ body {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--space-6);
   margin-bottom: var(--space-8);
+  flex: 1;
 }
 
 .frame-card {
@@ -833,7 +848,9 @@ body {
 
 .selection-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: var(--space-4);
 }
 
 /* Sidebar */
