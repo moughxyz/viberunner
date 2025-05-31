@@ -460,8 +460,9 @@ const App: React.FC = () => {
   };
 
   // Imperative function to switch tab visibility
-  const switchToTab = (tabId: string) => {
-    const activeTab = openTabs.find(tab => tab.id === tabId);
+  const switchToTab = (tabId: string, tabData?: OpenTab) => {
+    // Use provided tab data or look up from state
+    const activeTab = tabData || openTabs.find(tab => tab.id === tabId);
 
     console.log('Switching to tab:', tabId, 'type:', activeTab?.type);
 
@@ -522,8 +523,8 @@ const App: React.FC = () => {
       const success = await createFrameContainer(transformedTab);
 
       if (success) {
-        // Switch to show this tab
-        switchToTab(transformedTab.id);
+        // Switch to show this tab, passing the transformed tab data
+        switchToTab(transformedTab.id, transformedTab);
       } else {
         console.error('Failed to create frame container for transformed tab');
         alert(`Failed to load ${frame.name}`);
@@ -546,8 +547,8 @@ const App: React.FC = () => {
       const success = await createFrameContainer(newTab);
 
       if (success) {
-        // Switch to show this tab
-        switchToTab(tabId);
+        // Switch to show this tab, passing the new tab data
+        switchToTab(tabId, newTab);
       } else {
         console.error('Failed to create frame container for new tab');
         alert(`Failed to load ${frame.name}`);
