@@ -127,12 +127,14 @@ body {
   margin: 0;
 }
 
-/* Header Tabs - Chrome style */
+/* Header Tabs - Chrome-like native styling */
 .vf-header-tabs {
   display: flex;
   align-items: stretch;
   margin-left: 80px;
   -webkit-app-region: no-drag;
+  height: 100%;
+  overflow: hidden;
 }
 
 .vf-header-tabs .vf-tabs-list {
@@ -140,6 +142,7 @@ body {
   align-items: stretch;
   height: 100%;
   gap: 0;
+  padding-left: 8px;
 }
 
 .vf-header-tabs .vf-tab {
@@ -147,40 +150,81 @@ body {
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: var(--radius) var(--radius) 0 0;
+  background: linear-gradient(to bottom, #2a2a2a 0%, #1e1e1e 100%);
+  border: none;
   cursor: pointer;
   transition: all 0.15s ease;
-  min-width: 180px;
+  min-width: 200px;
   max-width: 240px;
   position: relative;
   height: 100%;
-  margin-top: var(--space-1);
-  margin-right: -1px;
+  margin-left: -8px;
+  z-index: 1;
+
+  /* Chrome-like trapezoid shape using clip-path */
+  clip-path: polygon(
+    8px 0%,
+    calc(100% - 8px) 0%,
+    100% 100%,
+    0% 100%
+  );
+
+  /* Subtle shadow for depth */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.vf-header-tabs .vf-tab:first-child {
+  margin-left: 0;
+  clip-path: polygon(
+    0% 0%,
+    calc(100% - 8px) 0%,
+    100% 100%,
+    0% 100%
+  );
 }
 
 .vf-header-tabs .vf-tab:hover {
-  background: var(--surface-hover);
-  z-index: 1;
+  background: linear-gradient(to bottom, #3a3a3a 0%, #2e2e2e 100%);
+  z-index: 2;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 2px 4px rgba(0, 0, 0, 0.4);
 }
 
 .vf-header-tabs .vf-tab-active {
+  background: linear-gradient(to bottom, var(--background) 0%, var(--background) 100%);
+  z-index: 10;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    -2px 0 4px rgba(0, 0, 0, 0.1),
+    2px 0 4px rgba(0, 0, 0, 0.1);
+
+  /* Active tab extends slightly above the header */
+  margin-top: -2px;
+  padding-top: calc(var(--space-2) + 2px);
+}
+
+.vf-header-tabs .vf-tab-active::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
   background: var(--background);
-  border-color: var(--accent);
-  z-index: 2;
-  margin-top: 0;
-  height: calc(100% + 1px);
+  z-index: 1;
 }
 
 .vf-header-tabs .vf-tab-active:hover {
-  background: var(--background);
+  background: linear-gradient(to bottom, var(--background) 0%, var(--background) 100%);
 }
 
 .vf-header-tabs .vf-tab-icon {
   font-size: var(--font-size-sm);
   flex-shrink: 0;
+  opacity: 0.9;
 }
 
 .vf-header-tabs .vf-tab-content {
@@ -198,6 +242,7 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .vf-header-tabs .vf-tab-subtitle {
@@ -206,6 +251,8 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.1;
+  opacity: 0.8;
 }
 
 .vf-header-tabs .vf-tab-close {
@@ -218,39 +265,49 @@ body {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: 50%;
   font-size: 10px;
   transition: all 0.15s ease;
   flex-shrink: 0;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.vf-header-tabs .vf-tab:hover .vf-tab-close,
+.vf-header-tabs .vf-tab-active .vf-tab-close {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .vf-header-tabs .vf-tab-close:hover {
-  background: var(--danger-light);
-  color: var(--danger);
+  background: var(--danger);
+  color: white;
+  transform: scale(1.1);
 }
 
 .vf-header-tabs .vf-new-tab-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 24px;
-  margin: var(--space-2) var(--space-2) var(--space-2) var(--space-1);
+  width: 28px;
+  height: 28px;
+  margin: auto var(--space-2);
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: none;
+  border-radius: 50%;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: var(--font-size-sm);
-  font-weight: 300;
+  font-size: 14px;
+  font-weight: 400;
   transition: all 0.15s ease;
   flex-shrink: 0;
+  z-index: 5;
 }
 
 .vf-header-tabs .vf-new-tab-btn:hover {
   background: var(--surface-hover);
-  border-color: var(--border-hover);
   color: var(--text-primary);
+  transform: scale(1.1);
 }
 
 /* Main Layout */
