@@ -443,6 +443,7 @@ const App: React.FC = () => {
   const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
 
   const frameRootRef = useRef<HTMLDivElement>(null);
+  const hasLaunchedStartupApps = useRef<boolean>(false);
 
   // Function to load app icon
   const loadAppIcon = async (frame: Frame): Promise<string | null> => {
@@ -578,7 +579,7 @@ const App: React.FC = () => {
 
   // Auto-launch startup apps when frames are loaded
   useEffect(() => {
-    if (frames.length > 0 && Object.keys(startupApps).length > 0) {
+    if (frames.length > 0 && Object.keys(startupApps).length > 0 && !hasLaunchedStartupApps.current) {
       const enabledStartupApps = Object.entries(startupApps)
         .filter(([_, config]) => config.enabled)
         .sort(([, a], [, b]) => a.tabOrder - b.tabOrder);
@@ -597,6 +598,7 @@ const App: React.FC = () => {
           }, index * 500); // 500ms delay between each app
         });
       }
+      hasLaunchedStartupApps.current = true;
     }
   }, [frames, startupApps]);
 
@@ -660,6 +662,8 @@ const App: React.FC = () => {
   const reloadFrames = async () => {
     try {
       setIsLoadingFrames(true);
+      // Reset startup apps launch flag so they can launch again after reload
+      hasLaunchedStartupApps.current = false;
       const frames = await loadFrames();
       setFrames(frames);
     } catch (error) {
