@@ -294,6 +294,9 @@ const App: React.FC = () => {
   const [isLoadingFrames, setIsLoadingFrames] = useState(false);
   const frameRootRef = useRef<HTMLDivElement>(null);
 
+  // Track which tabs have been loaded to avoid reloading
+  const loadedTabsRef = useRef<Set<string>>(new Set());
+
   // Load frames directory info
   useEffect(() => {
     const loadDirectoryInfo = async () => {
@@ -419,6 +422,9 @@ const App: React.FC = () => {
       }
     }
 
+    // Remove from loaded tabs tracking
+    loadedTabsRef.current.delete(tabId);
+
     setOpenTabs(prev => {
       const filtered = prev.filter(tab => tab.id !== tabId);
 
@@ -472,26 +478,31 @@ const App: React.FC = () => {
 
     if (!frameRootRef.current) return;
 
-    // If the active tab is a new tab, hide all frame containers
-    const activeTab = openTabs.find(tab => tab.id === activeTabId);
-    if (activeTab && activeTab.type === 'newtab') {
-      // Hide all existing frame containers
-      openTabs.forEach(tab => {
-        if (tab.domContainer) {
-          tab.domContainer.style.display = 'none';
-        }
-      });
-      return; // Don't process frame loading for new tabs
-    }
+    // Update visibility of existing tab containers
+    openTabs.forEach(tab => {
+      if (tab.domContainer) {
+        const shouldShow = activeTabId === tab.id && tab.type !== 'newtab';
+        tab.domContainer.style.display = shouldShow ? 'block' : 'none';
+      }
+    });
 
-    // Process each tab that needs a frame loaded
+  }, [activeTabId]); // Only depend on activeTabId for visibility updates
+
+  // Separate effect for loading new frame containers
+  useEffect(() => {
+    if (!frameRootRef.current) return;
+
     openTabs.forEach(async (tab) => {
-      // Skip if it's a new tab or already has a container
-      if (tab.type === 'newtab' || tab.domContainer || !tab.frameData || !tab.frame) {
+      // Skip if it's a new tab, already loaded, or missing frame data
+      if (tab.type === 'newtab' ||
+          loadedTabsRef.current.has(tab.id) ||
+          !tab.frameData ||
+          !tab.frame) {
         return;
       }
 
       console.log('Loading frame for tab:', tab.id, tab.frame.name);
+      loadedTabsRef.current.add(tab.id);
 
       try {
         // Create a dedicated container for this tab
@@ -500,6 +511,12 @@ const App: React.FC = () => {
         tabContainer.style.display = tab.id === activeTabId ? 'block' : 'none';
         tabContainer.style.height = '100%';
         frameRootRef.current!.appendChild(tabContainer);
+
+        // Store the container directly on the tab object (mutation for immediate effect)
+        const tabIndex = openTabs.findIndex(t => t.id === tab.id);
+        if (tabIndex !== -1) {
+          (openTabs[tabIndex] as any).domContainer = tabContainer;
+        }
 
         // Prepare props for the frame
         let props;
@@ -543,12 +560,10 @@ const App: React.FC = () => {
             const reactRoot = createRoot(root);
             reactRoot.render(React.createElement(FrameComponent, props));
 
-            // Store the React root and container with the tab
-            setOpenTabs(prev => prev.map(t =>
-              t.id === tab.id
-                ? { ...t, reactRoot, domContainer: tabContainer }
-                : t
-            ));
+            // Store the React root directly on the tab object (mutation for immediate effect)
+            if (tabIndex !== -1) {
+              (openTabs[tabIndex] as any).reactRoot = reactRoot;
+            }
 
             console.log('Frame rendered successfully for tab:', tab.id);
           } catch (renderError) {
@@ -574,19 +589,11 @@ const App: React.FC = () => {
 
       } catch (error) {
         console.error('Failed to load frame for tab:', tab.id, error);
+        loadedTabsRef.current.delete(tab.id); // Remove from loaded set on error
       }
     });
 
-    // Update visibility of existing tab containers for non-new tabs
-    if (activeTab && activeTab.type !== 'newtab') {
-      openTabs.forEach(tab => {
-        if (tab.domContainer) {
-          tab.domContainer.style.display = tab.id === activeTabId ? 'block' : 'none';
-        }
-      });
-    }
-
-  }, [openTabs, activeTabId]);
+  }, [openTabs]); // Only run when tabs are added/removed
 
   // Get the currently active tab
   const activeTab = openTabs.find(tab => tab.id === activeTabId);
