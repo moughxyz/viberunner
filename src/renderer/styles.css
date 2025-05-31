@@ -330,7 +330,7 @@ body {
   padding: 4rem var(--space-8) var(--space-6) var(--space-8);
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-8);
   min-height: 100%;
 }
 
@@ -360,6 +360,167 @@ body {
   border-radius: var(--radius-xl);
 }
 
+/* Section divider */
+.section-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0;
+}
+
+/* Clean section headers without boxes */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.section-header-button {
+  background: none;
+  border: none;
+  color: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: var(--space-4);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.section-icon {
+  font-size: var(--font-size-base);
+  color: var(--accent);
+}
+
+.section-count {
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+.section-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.section-toggle {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* Remove section card backgrounds */
+.section-card {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  transition: none;
+}
+
+.section-card:hover {
+  background: none;
+  border-color: transparent;
+}
+
+/* Utilities - clean list without boxes */
+.utilities-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.utility-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+}
+
+.utility-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+/* Directory controls - clean inline layout */
+.directory-path {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  background: var(--surface);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--border);
+}
+
+.section-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* File frames - simple list without heavy containers */
+.frames-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.frame-info-card {
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+}
+
+.frame-info-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+/* Loading state */
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  padding: var(--space-4) 0;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Sidebar */
 .sidebar {
   width: 320px;
   padding: var(--space-8) var(--space-6);
@@ -582,86 +743,6 @@ body {
   margin-bottom: var(--space-6);
 }
 
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-}
-
-.section-header-button {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  font-family: inherit;
-  color: inherit;
-  transition: all 0.15s ease;
-}
-
-.section-header-button:hover {
-  opacity: 0.8;
-}
-
-.section-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-}
-
-.section-toggle {
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  transition: transform 0.15s ease;
-}
-
-.section-title {
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.section-icon {
-  font-size: var(--font-size-base);
-}
-
-.section-count {
-  padding: var(--space-1) var(--space-2);
-  background: var(--surface-hover);
-  color: var(--text-secondary);
-  font-size: var(--font-size-xs);
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-}
-
-.directory-path {
-  padding: var(--space-3);
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
-  font-size: var(--font-size-xs);
-  color: var(--text-secondary);
-  word-break: break-all;
-  margin-bottom: var(--space-4);
-}
-
-.section-actions {
-  display: flex;
-  gap: var(--space-2);
-}
-
-.section-actions .btn {
-  flex: 1;
-}
-
 /* Frame List */
 .frame-list {
   display: flex;
@@ -719,26 +800,7 @@ body {
   color: var(--text-muted);
 }
 
-/* Loading and Empty States */
-.loading-state {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  padding: var(--space-6);
-  text-align: center;
-}
-
-.loading-spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
+/* Empty state */
 .empty-state {
   text-align: center;
   padding: var(--space-8) var(--space-4);
@@ -1109,11 +1171,4 @@ body {
   .content-area:has(.new-tab-unified) {
     padding: var(--space-4);
   }
-}
-
-/* Section divider */
-.section-divider {
-  height: 1px;
-  background: var(--border);
-  margin: var(--space-4) 0;
 }
