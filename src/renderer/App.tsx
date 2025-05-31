@@ -49,6 +49,89 @@ const api = {
   stat: (filePath: string) => fs.statSync(filePath),
   readDir: (dirPath: string) => fs.readdirSync(dirPath),
 
+  // User Preferences API for apps
+  getAppPreferences: (appId: string) => {
+    try {
+      const FRAMES_DIR = getFramesDirectory();
+      const framePath = path.join(FRAMES_DIR, appId);
+      const metadataPath = path.join(framePath, 'viz.json');
+
+      if (!fs.existsSync(metadataPath)) {
+        console.warn(`No viz.json found for app ${appId}`);
+        return {};
+      }
+
+      const metadataContent = fs.readFileSync(metadataPath, 'utf8');
+      const metadata = JSON.parse(metadataContent);
+
+      return metadata.userPreferences || {};
+    } catch (error) {
+      console.error(`Failed to read preferences for app ${appId}:`, error);
+      return {};
+    }
+  },
+
+  setAppPreferences: (appId: string, preferences: any) => {
+    try {
+      const FRAMES_DIR = getFramesDirectory();
+      const framePath = path.join(FRAMES_DIR, appId);
+      const metadataPath = path.join(framePath, 'viz.json');
+
+      if (!fs.existsSync(metadataPath)) {
+        throw new Error(`No viz.json found for app ${appId}`);
+      }
+
+      // Read current metadata
+      const metadataContent = fs.readFileSync(metadataPath, 'utf8');
+      const metadata = JSON.parse(metadataContent);
+
+      // Update preferences
+      metadata.userPreferences = preferences;
+
+      // Write back to file with pretty formatting
+      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf8');
+
+      console.log(`Updated preferences for app ${appId}`);
+      return true;
+    } catch (error) {
+      console.error(`Failed to write preferences for app ${appId}:`, error);
+      return false;
+    }
+  },
+
+  updateAppPreference: (appId: string, key: string, value: any) => {
+    try {
+      const currentPreferences = api.getAppPreferences(appId);
+      const updatedPreferences = { ...currentPreferences, [key]: value };
+      return api.setAppPreferences(appId, updatedPreferences);
+    } catch (error) {
+      console.error(`Failed to update preference ${key} for app ${appId}:`, error);
+      return false;
+    }
+  },
+
+  removeAppPreference: (appId: string, key: string) => {
+    try {
+      const currentPreferences = api.getAppPreferences(appId);
+      const updatedPreferences = { ...currentPreferences };
+      delete updatedPreferences[key];
+      return api.setAppPreferences(appId, updatedPreferences);
+    } catch (error) {
+      console.error(`Failed to remove preference ${key} for app ${appId}:`, error);
+      return false;
+    }
+  },
+
+  getAppPreference: (appId: string, key: string, defaultValue: any = null) => {
+    try {
+      const preferences = api.getAppPreferences(appId);
+      return preferences.hasOwnProperty(key) ? preferences[key] : defaultValue;
+    } catch (error) {
+      console.error(`Failed to get preference ${key} for app ${appId}:`, error);
+      return defaultValue;
+    }
+  },
+
   // Helper functions
   path: path,
   mime: mime,
@@ -60,6 +143,55 @@ const api = {
 
 // Make API available globally for apps
 (window as any).api = api;
+
+// Enhanced preferences helper for easier app usage
+(window as any).createPreferencesHelper = (appId: string) => {
+  return {
+    get: (key: string, defaultValue: any = null) => api.getAppPreference(appId, key, defaultValue),
+    set: (key: string, value: any) => api.updateAppPreference(appId, key, value),
+    remove: (key: string) => api.removeAppPreference(appId, key),
+    getAll: () => api.getAppPreferences(appId),
+    setAll: (preferences: Record<string, any>) => api.setAppPreferences(appId, preferences),
+    clear: () => api.setAppPreferences(appId, {}),
+
+    // Convenience methods for common data types
+    getString: (key: string, defaultValue: string = '') => {
+      const value = api.getAppPreference(appId, key, defaultValue);
+      return typeof value === 'string' ? value : defaultValue;
+    },
+    getNumber: (key: string, defaultValue: number = 0) => {
+      const value = api.getAppPreference(appId, key, defaultValue);
+      return typeof value === 'number' ? value : defaultValue;
+    },
+    getBoolean: (key: string, defaultValue: boolean = false) => {
+      const value = api.getAppPreference(appId, key, defaultValue);
+      return typeof value === 'boolean' ? value : defaultValue;
+    },
+    getObject: (key: string, defaultValue: any = {}) => {
+      const value = api.getAppPreference(appId, key, defaultValue);
+      return (typeof value === 'object' && value !== null) ? value : defaultValue;
+    },
+
+    // Array helpers
+    getArray: (key: string, defaultValue: any[] = []) => {
+      const value = api.getAppPreference(appId, key, defaultValue);
+      return Array.isArray(value) ? value : defaultValue;
+    },
+    pushToArray: (key: string, item: any) => {
+      const currentArray = api.getAppPreference(appId, key, []);
+      const newArray = Array.isArray(currentArray) ? [...currentArray, item] : [item];
+      return api.updateAppPreference(appId, key, newArray);
+    },
+    removeFromArray: (key: string, item: any) => {
+      const currentArray = api.getAppPreference(appId, key, []);
+      if (Array.isArray(currentArray)) {
+        const newArray = currentArray.filter(existing => existing !== item);
+        return api.updateAppPreference(appId, key, newArray);
+      }
+      return false;
+    }
+  };
+};
 
 // Frame cleanup system
 const frameCleanupCallbacks = new Map<string, (() => void)[]>();
@@ -253,6 +385,7 @@ interface Frame {
   author: string;
   standalone?: boolean; // Optional standalone property
   icon?: string; // Custom icon path
+  userPreferences?: Record<string, any>; // User preferences storage
 }
 
 interface OpenTab {
@@ -498,7 +631,8 @@ const App: React.FC = () => {
     if (!tab.fileInput) {
       props = {
         container,
-        tabId: tab.id
+        tabId: tab.id,
+        appId: tab.frame.id
       };
     } else {
       props = {
@@ -515,7 +649,8 @@ const App: React.FC = () => {
           }
         },
         container,
-        tabId: tab.id
+        tabId: tab.id,
+        appId: tab.frame.id
       };
     }
 
