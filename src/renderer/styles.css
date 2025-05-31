@@ -388,6 +388,8 @@ body {
   background: var(--background);
   z-index: 10;
   overflow: hidden; /* Remove auto scrolling from outer container */
+  /* Ensure no sub-pixel rendering issues */
+  transform: translateZ(0);
 }
 
 .unified-content {
@@ -397,9 +399,19 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
-  height: 100%; /* Take full height */
+  height: calc(100vh - 40px); /* Subtract header height (40px) */
+  max-height: calc(100vh - 40px); /* Ensure no overflow */
   overflow-y: auto; /* Handle scrolling here */
+  overflow-x: hidden; /* Prevent horizontal overflow */
   box-sizing: border-box; /* Include padding in height calculation */
+
+  /* Prevent sub-pixel rendering issues */
+  -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
+
+  /* Ensure crisp pixel boundaries */
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Drop zone section - centered */
