@@ -19,51 +19,119 @@ let selectedAppsDir: string | null = null;
 // Permission Manager for handling file system access
 class PermissionManager {
   private grantedPaths = new Set<string>();
+  private bookmarks = new Map<string, Buffer>(); // Store security-scoped bookmarks
+  private bookmarksFile = path.join(app.getPath('userData'), 'bookmarks.json');
+
+  constructor() {
+    this.loadStoredBookmarks();
+  }
 
   async checkAccess(path: string): Promise<boolean> {
-    // Check if path is already granted
+    // Check if path is already granted in current session
     for (const grantedPath of this.grantedPaths) {
       if (path.startsWith(grantedPath)) {
         return true;
       }
     }
 
-    // Check if it's a common directory we can request
-    const commonDirs = [
-      app.getPath('documents'),
-      app.getPath('desktop'),
-      app.getPath('downloads'),
-      app.getPath('pictures'),
-      app.getPath('music'),
-      app.getPath('videos')
-    ];
-
-    for (const commonDir of commonDirs) {
-      if (path.startsWith(commonDir)) {
-        return await this.requestAccess(commonDir, `Access ${path.split('/').pop()} directory`);
+    // Check if we have a stored bookmark for this path or a parent path
+    for (const [bookmarkPath, bookmark] of this.bookmarks) {
+      if (path.startsWith(bookmarkPath)) {
+        try {
+          // Try to start accessing the bookmark - convert Buffer to base64 string
+          const bookmarkString = bookmark.toString('base64');
+          const stopAccessingSecurityScopedResource = app.startAccessingSecurityScopedResource(bookmarkString);
+          if (stopAccessingSecurityScopedResource) {
+            this.grantedPaths.add(bookmarkPath);
+            return true;
+          }
+        } catch (error) {
+          console.log(`Bookmark for ${bookmarkPath} is no longer valid:`, error);
+          // Remove invalid bookmark
+          this.bookmarks.delete(bookmarkPath);
+          this.saveBookmarks();
+        }
       }
     }
 
-    // For other paths, request access to the specific directory
-    return await this.requestAccess(path, `Access required for: ${path}`);
+    return false;
+  }
+
+  // Check without dialog - useful for testing existing permissions
+  hasStoredAccess(path: string): boolean {
+    for (const grantedPath of this.grantedPaths) {
+      if (path.startsWith(grantedPath)) {
+        return true;
+      }
+    }
+
+    for (const bookmarkPath of this.bookmarks.keys()) {
+      if (path.startsWith(bookmarkPath)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  async checkAccessSilent(path: string): Promise<boolean> {
+    // Check current session first
+    for (const grantedPath of this.grantedPaths) {
+      if (path.startsWith(grantedPath)) {
+        return true;
+      }
+    }
+
+    // Try to restore from bookmarks without showing dialogs
+    for (const [bookmarkPath, bookmark] of this.bookmarks) {
+      if (path.startsWith(bookmarkPath)) {
+        try {
+          // Convert Buffer to base64 string for Electron API
+          const bookmarkString = bookmark.toString('base64');
+          const stopAccessingSecurityScopedResource = app.startAccessingSecurityScopedResource(bookmarkString);
+          if (stopAccessingSecurityScopedResource) {
+            this.grantedPaths.add(bookmarkPath);
+            return true;
+          }
+        } catch (error) {
+          console.log(`Bookmark for ${bookmarkPath} is no longer valid:`, error);
+          this.bookmarks.delete(bookmarkPath);
+          this.saveBookmarks();
+        }
+      }
+    }
+
+    return false;
   }
 
   async requestAccess(path: string, reason: string): Promise<boolean> {
     // Check if already granted
-    if (this.grantedPaths.has(path)) return true;
+    if (await this.checkAccessSilent(path)) return true;
 
     // Show permission dialog
     const result = await dialog.showOpenDialog({
       title: 'Directory Access Required',
       message: `${reason}\n\nPlease select the directory to grant access:`,
       buttonLabel: 'Grant Access',
-      properties: ['openDirectory'],
-      defaultPath: path
+      properties: ['openDirectory'], // Remove createBookmarks as it's not a valid property
+      defaultPath: path,
+      securityScopedBookmarks: true // Enable bookmark creation
     });
 
     if (!result.canceled && result.filePaths.length > 0) {
-      this.grantedPaths.add(result.filePaths[0]);
-      console.log('Granted access to:', result.filePaths[0]);
+      const grantedPath = result.filePaths[0];
+      this.grantedPaths.add(grantedPath);
+
+      // Create and store security-scoped bookmark
+      if (result.bookmarks && result.bookmarks.length > 0) {
+        // Convert base64 string to Buffer for storage
+        const bookmarkBuffer = Buffer.from(result.bookmarks[0], 'base64');
+        this.bookmarks.set(grantedPath, bookmarkBuffer);
+        this.saveBookmarks();
+        console.log('Created persistent bookmark for:', grantedPath);
+      }
+
+      console.log('Granted access to:', grantedPath);
       return true;
     }
 
@@ -77,21 +145,34 @@ class PermissionManager {
       { path: app.getPath('downloads'), name: 'Downloads' }
     ];
 
+    // Check which directories we don't already have access to
+    const needAccess = [];
+    for (const dir of commonDirs) {
+      if (!await this.checkAccessSilent(dir.path)) {
+        needAccess.push(dir);
+      }
+    }
+
+    if (needAccess.length === 0) {
+      console.log('Already have access to all common directories');
+      return;
+    }
+
     // Show a single dialog explaining what we need
     const result = await dialog.showMessageBox({
       type: 'info',
       title: 'File System Access',
       message: 'Viberunner apps may need to read and write files',
-      detail: 'To provide the best experience, please grant access to common directories like Documents, Desktop, and Downloads when prompted.',
+      detail: `To provide the best experience, please grant access to common directories like ${needAccess.map(d => d.name).join(', ')} when prompted.\n\nThese permissions will be saved and won't be requested again.`,
       buttons: ['Grant Access', 'Skip'],
       defaultId: 0
     });
 
     if (result.response === 0) {
-      // Request access to each common directory
-      for (const dir of commonDirs) {
+      // Request access to each needed directory
+      for (const dir of needAccess) {
         try {
-          await this.requestAccess(dir.path, `Grant access to your ${dir.name} folder`);
+          await this.requestAccess(dir.path, `Grant access to your ${dir.name} folder for app file operations`);
         } catch (error) {
           console.log(`User skipped access to ${dir.name}:`, error);
         }
@@ -110,6 +191,77 @@ class PermissionManager {
 
   getGrantedPaths(): string[] {
     return Array.from(this.grantedPaths);
+  }
+
+  getStoredBookmarkPaths(): string[] {
+    return Array.from(this.bookmarks.keys());
+  }
+
+  private loadStoredBookmarks(): void {
+    try {
+      if (fs.existsSync(this.bookmarksFile)) {
+        const data = fs.readFileSync(this.bookmarksFile, 'utf8');
+        const stored = JSON.parse(data);
+
+        // Convert base64 strings back to Buffers
+        for (const [path, base64Data] of Object.entries(stored)) {
+          if (typeof base64Data === 'string') {
+            this.bookmarks.set(path, Buffer.from(base64Data, 'base64'));
+          }
+        }
+
+        console.log(`Loaded ${this.bookmarks.size} stored bookmarks`);
+      }
+    } catch (error) {
+      console.error('Error loading stored bookmarks:', error);
+    }
+  }
+
+  private saveBookmarks(): void {
+    try {
+      // Convert Buffers to base64 strings for storage
+      const toStore: Record<string, string> = {};
+      for (const [path, bookmark] of this.bookmarks) {
+        toStore[path] = bookmark.toString('base64');
+      }
+
+      fs.writeFileSync(this.bookmarksFile, JSON.stringify(toStore, null, 2));
+      console.log(`Saved ${this.bookmarks.size} bookmarks to disk`);
+    } catch (error) {
+      console.error('Error saving bookmarks:', error);
+    }
+  }
+
+  // Clean up invalid bookmarks
+  async validateAndCleanBookmarks(): Promise<void> {
+    const invalidPaths: string[] = [];
+
+    for (const [bookmarkPath, bookmark] of this.bookmarks) {
+      try {
+        // Convert Buffer to base64 string for Electron API
+        const bookmarkString = bookmark.toString('base64');
+        const stopAccessingSecurityScopedResource = app.startAccessingSecurityScopedResource(bookmarkString);
+        if (stopAccessingSecurityScopedResource) {
+          // Bookmark is valid, stop accessing for now
+          stopAccessingSecurityScopedResource();
+        } else {
+          invalidPaths.push(bookmarkPath);
+        }
+      } catch (error) {
+        console.log(`Bookmark for ${bookmarkPath} is invalid:`, error);
+        invalidPaths.push(bookmarkPath);
+      }
+    }
+
+    // Remove invalid bookmarks
+    for (const invalidPath of invalidPaths) {
+      this.bookmarks.delete(invalidPath);
+    }
+
+    if (invalidPaths.length > 0) {
+      this.saveBookmarks();
+      console.log(`Cleaned up ${invalidPaths.length} invalid bookmarks`);
+    }
   }
 }
 
@@ -461,19 +613,6 @@ interface UserPreferences {
   startupApps?: Record<string, StartupAppConfig>;
 }
 
-function loadPreferences(): UserPreferences {
-  try {
-    const prefsPath = getUserDataPath();
-    if (fs.existsSync(prefsPath)) {
-      const data = fs.readFileSync(prefsPath, 'utf8');
-      return JSON.parse(data);
-    }
-  } catch (error) {
-    console.error('Error loading preferences:', error);
-  }
-  return {};
-}
-
 function savePreferences(prefs: UserPreferences) {
   try {
     const prefsPath = getUserDataPath();
@@ -649,62 +788,15 @@ const createWindow = (): void => {
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
-app.on('ready', async () => {
-  // Load user preferences
-  const prefs = loadPreferences();
-
-  // Check if we have a saved apps directory and if it's accessible
-  if (prefs.appsDir && fs.existsSync(prefs.appsDir)) {
-    try {
-      // Test if we can actually read the directory
-      fs.readdirSync(prefs.appsDir);
-      selectedAppsDir = prefs.appsDir;
-      console.log('Using saved apps directory:', selectedAppsDir);
-    } catch (error) {
-      console.log('Saved apps directory is not accessible:', error);
-
-      // Request access to the specific saved directory
-      const result = await dialog.showOpenDialog({
-        title: 'Grant Access to Apps Directory',
-        message: `The app needs access to your apps directory:\n${prefs.appsDir}\n\nPlease select this directory to grant access.`,
-        buttonLabel: 'Grant Access',
-        properties: ['openDirectory'],
-        defaultPath: prefs.appsDir
-      });
-
-      if (!result.canceled && result.filePaths.length > 0 && result.filePaths[0] === prefs.appsDir) {
-        // User granted access to the same directory
-        selectedAppsDir = prefs.appsDir;
-        console.log('Access granted to saved apps directory:', selectedAppsDir);
-      } else {
-        // User cancelled or selected a different directory
-        selectedAppsDir = null;
-      }
-    }
-  }
-
-  // If we still don't have a valid apps directory, prompt user to select one
-  if (!selectedAppsDir) {
-    console.log('No valid apps directory found, prompting user to select one...');
-    selectedAppsDir = await selectAppsDirectory();
-
-    if (!selectedAppsDir) {
-      // User cancelled or no valid directory selected
-      dialog.showErrorBox('No Apps Directory', 'You must select a valid apps directory to use the application.');
-      app.quit();
-      return;
-    }
-
-    // Save the selected directory
-    savePreferences({ appsDir: selectedAppsDir });
-    console.log('Saved apps directory preference:', selectedAppsDir);
-  }
+app.whenReady().then(async () => {
+  // Initialize permission manager and validate stored bookmarks
+  await permissionManager.validateAndCleanBookmarks();
 
   // Register IPC handlers BEFORE creating the window
   registerIpcHandlers();
 
-  // Request access to common directories for better app compatibility
-  await permissionManager.requestCommonDirectoryAccess();
+  // Request access to common directories on startup
+  permissionManager.requestCommonDirectoryAccess();
 
   createWindow();
 });
@@ -1028,50 +1120,83 @@ function registerIpcHandlers() {
   // Permission management handlers
   ipcMain.handle('check-directory-access', async (_event, directoryPath: string) => {
     try {
-      const hasAccess = permissionManager.hasAccess(directoryPath);
-      return { success: true, hasAccess };
+      const hasAccess = await permissionManager.checkAccessSilent(directoryPath);
+      return {
+        success: true,
+        hasAccess
+      };
     } catch (error) {
-      console.error('Error checking directory access:', error);
-      return { success: false, error: (error as Error).message, hasAccess: false };
+      return {
+        success: false,
+        hasAccess: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   });
 
   ipcMain.handle('request-directory-access', async (_event, directoryPath: string, reason?: string) => {
     try {
-      const granted = await permissionManager.requestAccess(directoryPath, reason || `Access required for: ${directoryPath}`);
-      return { success: true, granted };
+      const granted = await permissionManager.requestAccess(
+        directoryPath,
+        reason || `Access required for: ${directoryPath}`
+      );
+      return {
+        success: true,
+        granted
+      };
     } catch (error) {
-      console.error('Error requesting directory access:', error);
-      return { success: false, error: (error as Error).message, granted: false };
+      return {
+        success: false,
+        granted: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   });
 
-  ipcMain.handle('get-granted-paths', async () => {
+  ipcMain.handle('get-granted-paths', async (_event) => {
     try {
-      const grantedPaths = permissionManager.getGrantedPaths();
-      return { success: true, grantedPaths };
+      const sessionPaths = permissionManager.getGrantedPaths();
+      const storedPaths = permissionManager.getStoredBookmarkPaths();
+      // Combine and deduplicate
+      const allPaths = [...new Set([...sessionPaths, ...storedPaths])];
+      return {
+        success: true,
+        grantedPaths: allPaths
+      };
     } catch (error) {
-      console.error('Error getting granted paths:', error);
-      return { success: false, error: (error as Error).message, grantedPaths: [] };
+      return {
+        success: false,
+        grantedPaths: [],
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   });
 
   // Enhanced read-file with permission checking
   ipcMain.handle('read-file-secure', async (_event, filePath: string) => {
     try {
-      // Check if we have permission to read from this location
-      const directory = path.dirname(filePath);
-      const hasAccess = await permissionManager.checkAccess(directory);
+      // Check if we have access to the file's directory
+      const dirPath = path.dirname(filePath);
+      const hasAccess = await permissionManager.checkAccess(dirPath);
 
       if (!hasAccess) {
-        throw new Error('Access denied to directory');
+        return {
+          success: false,
+          error: 'No permission to access file directory'
+        };
       }
 
-      const content = fs.readFileSync(filePath);
-      return { success: true, content: content.toString('base64') };
+      // Read the file and return base64 encoded content
+      const content = await fs.promises.readFile(filePath);
+      return {
+        success: true,
+        content: content.toString('base64')
+      };
     } catch (error) {
-      console.error('Error reading file:', error);
-      return { success: false, error: (error as Error).message };
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   });
 
