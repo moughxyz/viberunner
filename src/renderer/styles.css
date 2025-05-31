@@ -322,7 +322,7 @@ body {
   height: 100%;
   background: var(--background);
   z-index: 10;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 .unified-content {
@@ -332,8 +332,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-6);
-  height: 100%;
-  overflow: hidden;
+  min-height: 100%;
 }
 
 /* Drop zone section - centered */
@@ -972,8 +971,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-height: 300px;
-  overflow-y: auto;
 }
 
 .utility-card {
@@ -1047,8 +1044,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-height: 250px;
-  overflow-y: auto;
 }
 
 .frame-info-card {
