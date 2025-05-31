@@ -530,9 +530,17 @@ const createWindow = (): void => {
 
   // and load the index.html of the app.
   if (process.env.VITE_DEV_SERVER_URL) {
+    // Development mode - load from Vite dev server
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${process.env.VITE_DEV_NAME}/index.html`));
+    // Production mode - load from packaged files
+    // In packaged mode, the renderer files are in the app.asar
+    const isDev = process.env.NODE_ENV === 'development';
+    const rendererPath = isDev
+      ? path.join(__dirname, `../renderer/${process.env.VITE_DEV_NAME}/index.html`)
+      : path.join(__dirname, '../dist/index.html');
+
+    mainWindow.loadFile(rendererPath);
   }
 
   // Open the DevTools.
