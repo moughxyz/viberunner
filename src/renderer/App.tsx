@@ -235,6 +235,7 @@ interface OpenTab {
   fileInput?: FileInput; // undefined for standalone frames
   title: string;
   type: 'file' | 'standalone';
+  frameData?: any; // Store the loaded frame data for reloading
 }
 
 interface FileData {
@@ -342,18 +343,31 @@ const App: React.FC = () => {
 
   const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  const openFrameInNewTab = (frame: Frame, fileInput?: FileInput) => {
+  const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput) => {
     const tabId = generateTabId();
     const title = fileInput
       ? fileInput.path.split('/').pop() || 'Unknown File'
       : frame.name;
+
+    let frameData;
+
+    // Load frame data immediately for both file and standalone frames
+    try {
+      frameData = await loadFrame(frame.id);
+      console.log('Frame data loaded for new tab:', frameData);
+    } catch (error) {
+      console.error('Failed to load frame data for new tab:', error);
+      alert(`Failed to load ${frame.name}: ${error}`);
+      return;
+    }
 
     const newTab: OpenTab = {
       id: tabId,
       frame,
       fileInput,
       title,
-      type: fileInput ? 'file' : 'standalone'
+      type: fileInput ? 'file' : 'standalone',
+      frameData // Store the frame data with the tab
     };
 
     setOpenTabs(prev => [...prev, newTab]);
@@ -382,25 +396,17 @@ const App: React.FC = () => {
     });
   };
 
-  const selectFrame = (frame: Frame) => {
+  const selectFrame = async (frame: Frame) => {
     if (pendingFileInput) {
-      openFrameInNewTab(frame, pendingFileInput);
+      await openFrameInNewTab(frame, pendingFileInput);
     }
   };
 
   const launchStandaloneFrame = async (frame: Frame) => {
     try {
       console.log('Launching standalone frame:', frame.name, frame.id);
-
-      const frameData = await loadFrame(frame.id);
-      console.log('Frame data received:', frameData);
-
-      // Create new tab for standalone frame
-      openFrameInNewTab(frame);
-
-      // Store frame data for useEffect to pick up
-      (window as any).__PENDING_STANDALONE_DATA__ = frameData;
-
+      // openFrameInNewTab will handle loading the frame data
+      await openFrameInNewTab(frame);
     } catch (error) {
       console.error('Failed to launch standalone frame:', error);
       alert(`Failed to launch ${frame.name}: ${error}`);
@@ -414,10 +420,11 @@ const App: React.FC = () => {
   useEffect(() => {
     console.log('Frame loading useEffect triggered:', {
       activeTab: activeTab?.frame.name,
-      frameRootRef: !!frameRootRef.current
+      frameRootRef: !!frameRootRef.current,
+      hasFrameData: !!activeTab?.frameData
     });
 
-    if (activeTab && frameRootRef.current) {
+    if (activeTab && frameRootRef.current && activeTab.frameData) {
       const loadFrameComponent = async () => {
         try {
           console.log('Starting frame component load for:', activeTab.frame.name);
@@ -428,24 +435,18 @@ const App: React.FC = () => {
             console.log('Cleared previous frame content');
           }
 
-          let frameData;
+          const frameData = activeTab.frameData;
           let props;
 
           // Check if this is a standalone frame
-          if (!activeTab.fileInput && (window as any).__PENDING_STANDALONE_DATA__) {
-            console.log('Loading standalone frame with pending data');
-            // Use pending standalone data
-            frameData = (window as any).__PENDING_STANDALONE_DATA__;
+          if (!activeTab.fileInput) {
+            console.log('Loading standalone frame from stored data');
             props = {
               // No fileData for standalone frames
               container: frameRootRef.current
             };
-            // Clear the pending data
-            delete (window as any).__PENDING_STANDALONE_DATA__;
-          } else if (activeTab.fileInput) {
+          } else {
             console.log('Loading file-based frame for file:', activeTab.fileInput.path);
-            // Load the frame's main component for file-based frame
-            frameData = await loadFrame(activeTab.frame.id);
             console.log('Frame data loaded:', {
               hasBundleContent: !!frameData.bundleContent,
               bundleLength: frameData.bundleContent?.length,
@@ -468,9 +469,6 @@ const App: React.FC = () => {
               },
               container: frameRootRef.current
             };
-          } else {
-            console.log('No file or pending standalone data - skipping frame load');
-            return;
           }
 
           console.log('Creating script element for frame execution...');
@@ -544,7 +542,8 @@ const App: React.FC = () => {
     } else {
       console.log('Frame loading conditions not met:', {
         hasActiveTab: !!activeTab,
-        hasFrameRootRef: !!frameRootRef.current
+        hasFrameRootRef: !!frameRootRef.current,
+        hasFrameData: !!activeTab?.frameData
       });
     }
   }, [activeTab]);
@@ -669,7 +668,7 @@ const App: React.FC = () => {
           alert(`No frame found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
         } else if (matches.length === 1) {
           console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].frame.name);
-          openFrameInNewTab(matches[0].frame, fileInput);
+          await openFrameInNewTab(matches[0].frame, fileInput);
           console.log('handleFileDrop: Opened in new tab');
         } else {
           console.log('handleFileDrop: Multiple matches found, showing selection');
