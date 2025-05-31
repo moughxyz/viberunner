@@ -29,18 +29,10 @@ export interface SecureFileWriteResult {
   error?: string;
 }
 
-// Permission API that apps can use
-export interface ViberunnerPermissionAPI {
-  // Check if we already have access to a directory
-  checkDirectoryAccess(directoryPath: string): Promise<PermissionCheckResult>;
-
-  // Request access to a directory with optional reason
-  requestDirectoryAccess(directoryPath: string, reason?: string): Promise<PermissionRequestResult>;
-
-  // Get list of all granted directory paths
-  getGrantedPaths(): Promise<GrantedPathsResult>;
-
-  // Secure file operations that check permissions first
-  readFileSecure(filePath: string): Promise<SecureFileReadResult>;
-  writeFileSecure(filePath: string, content: string, encoding?: 'utf8' | 'base64'): Promise<SecureFileWriteResult>;
+// Permission API methods that are added to window.api
+export interface PermissionAPI {
+  checkDirectoryAccess: (directoryPath: string) => Promise<PermissionCheckResult>;
+  requestDirectoryAccess: (directoryPath: string, reason?: string) => Promise<PermissionRequestResult>;
+  getGrantedPaths: () => Promise<GrantedPathsResult>;
+  readFileSecure: (filePath: string) => Promise<SecureFileReadResult>;
 }

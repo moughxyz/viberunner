@@ -22,6 +22,13 @@ contextBridge.exposeInMainWorld(
       defaultPath?: string;
       filters?: Array<{ name: string; extensions: string[] }>
     }) => ipcRenderer.invoke('save-file-dialog', options),
+    // Permission system
+    checkDirectoryAccess: (directoryPath: string) =>
+      ipcRenderer.invoke('check-directory-access', directoryPath),
+    requestDirectoryAccess: (directoryPath: string, reason?: string) =>
+      ipcRenderer.invoke('request-directory-access', directoryPath, reason),
+    getGrantedPaths: () => ipcRenderer.invoke('get-granted-paths'),
+    readFileSecure: (filePath: string) => ipcRenderer.invoke('read-file-secure', filePath),
     // Launch standalone apps
     launchStandaloneApp: (id: string) => ipcRenderer.invoke('launch-standalone-app', id),
     // Startup app management

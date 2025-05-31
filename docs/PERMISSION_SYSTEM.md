@@ -24,7 +24,7 @@ Apps running in Viberunner can use these IPC calls for file system access:
 
 ### Check Directory Access
 ```javascript
-const result = await window.electronAPI.invoke('check-directory-access', '/path/to/directory');
+const result = await window.api.checkDirectoryAccess('/path/to/directory');
 if (result.success && result.hasAccess) {
   // You can access this directory
 }
@@ -32,7 +32,7 @@ if (result.success && result.hasAccess) {
 
 ### Request Directory Access
 ```javascript
-const result = await window.electronAPI.invoke('request-directory-access',
+const result = await window.api.requestDirectoryAccess(
   '/Users/username/Documents/MyProject',
   'This app needs to save your project files'
 );
@@ -44,17 +44,17 @@ if (result.success && result.granted) {
 
 ### Secure File Operations
 
-#### Read File
+#### Read File (Secure)
 ```javascript
-const result = await window.electronAPI.invoke('read-file-secure', '/path/to/file.txt');
+const result = await window.api.readFileSecure('/path/to/file.txt');
 if (result.success) {
   const content = atob(result.content); // base64 decode
 }
 ```
 
-#### Write File
+#### Write File (Permission-aware)
 ```javascript
-const result = await window.electronAPI.invoke('write-file',
+const result = await window.api.writeFile(
   '/path/to/file.txt',
   'file content',
   'utf8'
@@ -63,7 +63,7 @@ const result = await window.electronAPI.invoke('write-file',
 
 ### Get All Granted Paths
 ```javascript
-const result = await window.electronAPI.invoke('get-granted-paths');
+const result = await window.api.getGrantedPaths();
 if (result.success) {
   console.log('Accessible directories:', result.grantedPaths);
 }
@@ -77,7 +77,7 @@ Only request access to directories you actually need.
 ### 2. **Provide Clear Reasons**
 Always provide a user-friendly explanation when requesting permissions:
 ```javascript
-await window.electronAPI.invoke('request-directory-access',
+await window.api.requestDirectoryAccess(
   documentsPath,
   'Save your sketches and export them as images'
 );
@@ -85,7 +85,7 @@ await window.electronAPI.invoke('request-directory-access',
 
 ### 3. **Handle Permission Denials Gracefully**
 ```javascript
-const result = await window.electronAPI.invoke('request-directory-access', path, reason);
+const result = await window.api.requestDirectoryAccess(path, reason);
 if (!result.granted) {
   // Show alternative options or explain limitations
   showMessage('Without folder access, files will be saved to a temporary location');
@@ -95,9 +95,9 @@ if (!result.granted) {
 ### 4. **Check Before Writing**
 ```javascript
 // Good practice: check before attempting file operations
-const hasAccess = await window.electronAPI.invoke('check-directory-access', targetDir);
+const hasAccess = await window.api.checkDirectoryAccess(targetDir);
 if (!hasAccess.hasAccess) {
-  const permission = await window.electronAPI.invoke('request-directory-access', targetDir, reason);
+  const permission = await window.api.requestDirectoryAccess(targetDir, reason);
   if (!permission.granted) {
     // Handle denial
     return;
@@ -105,17 +105,20 @@ if (!hasAccess.hasAccess) {
 }
 
 // Now safe to write
-await window.electronAPI.invoke('write-file', filePath, content);
+await window.api.writeFile(filePath, content);
 ```
 
 ## Common Directory Paths
 
-Get standard directory paths:
+Get standard directory paths using Node.js path utilities in your app:
 ```javascript
-// These are automatically requested at startup
-const documentsPath = await window.electronAPI.invoke('get-path', 'documents');
-const desktopPath = await window.electronAPI.invoke('get-path', 'desktop');
-const downloadsPath = await window.electronAPI.invoke('get-path', 'downloads');
+// You'll need to implement these yourself or request them via IPC
+const os = require('os');
+const path = require('path');
+
+const documentsPath = path.join(os.homedir(), 'Documents');
+const desktopPath = path.join(os.homedir(), 'Desktop');
+const downloadsPath = path.join(os.homedir(), 'Downloads');
 ```
 
 ## Error Handling
@@ -148,7 +151,7 @@ const fs = require('fs');
 fs.writeFileSync(path, content);
 
 // New (permission-aware)
-const result = await window.electronAPI.invoke('write-file', path, content);
+const result = await window.api.writeFile(path, content);
 if (!result.success) {
   console.error('Write failed:', result.error);
 }
