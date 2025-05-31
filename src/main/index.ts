@@ -586,6 +586,24 @@ app.on('open-file', (event, filePath) => {
 
 // Register all IPC handlers
 function registerIpcHandlers() {
+  // Clear existing handlers to prevent conflicts
+  ipcMain.removeAllListeners('get-visualizers');
+  ipcMain.removeAllListeners('load-visualizer');
+  ipcMain.removeAllListeners('get-mimetype');
+  ipcMain.removeAllListeners('read-file');
+  ipcMain.removeAllListeners('handle-file-drop');
+  ipcMain.removeAllListeners('get-visualizers-directory');
+  ipcMain.removeAllListeners('change-frames-directory');
+  ipcMain.removeAllListeners('reload-visualizers');
+  ipcMain.removeAllListeners('read-directory');
+  ipcMain.removeAllListeners('find-matching-visualizers');
+  ipcMain.removeAllListeners('write-file');
+  ipcMain.removeAllListeners('backup-file');
+  ipcMain.removeAllListeners('save-file-dialog');
+  ipcMain.removeAllListeners('launch-standalone-visualizer');
+
+  console.log('Registering IPC handlers...');
+
   ipcMain.handle('get-visualizers', async () => {
     try {
       console.log('IPC get-visualizers: Starting to get visualizers');
@@ -660,14 +678,20 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('change-frames-directory', async () => {
-    const newDir = await selectVisualizersDirectory();
-    if (newDir) {
-      selectedVisualizersDir = newDir;
-      savePreferences({ visualizersDir: newDir });
-      console.log('Changed frames directory to:', newDir);
-      return { success: true, directory: newDir };
+    try {
+      console.log('change-frames-directory handler called');
+      const newDir = await selectVisualizersDirectory();
+      if (newDir) {
+        selectedVisualizersDir = newDir;
+        savePreferences({ visualizersDir: newDir });
+        console.log('Changed frames directory to:', newDir);
+        return { success: true, directory: newDir };
+      }
+      return { success: false, directory: null };
+    } catch (error) {
+      console.error('Error in change-frames-directory handler:', error);
+      throw error;
     }
-    return { success: false, directory: null };
   });
 
   ipcMain.handle('reload-visualizers', async () => {
@@ -866,4 +890,6 @@ function registerIpcHandlers() {
       throw error;
     }
   });
+
+  console.log('All IPC handlers registered successfully');
 }

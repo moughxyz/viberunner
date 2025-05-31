@@ -11889,6 +11889,21 @@ require$$3.app.on("open-file", (event, filePath) => {
   }
 });
 function registerIpcHandlers() {
+  require$$3.ipcMain.removeAllListeners("get-visualizers");
+  require$$3.ipcMain.removeAllListeners("load-visualizer");
+  require$$3.ipcMain.removeAllListeners("get-mimetype");
+  require$$3.ipcMain.removeAllListeners("read-file");
+  require$$3.ipcMain.removeAllListeners("handle-file-drop");
+  require$$3.ipcMain.removeAllListeners("get-visualizers-directory");
+  require$$3.ipcMain.removeAllListeners("change-frames-directory");
+  require$$3.ipcMain.removeAllListeners("reload-visualizers");
+  require$$3.ipcMain.removeAllListeners("read-directory");
+  require$$3.ipcMain.removeAllListeners("find-matching-visualizers");
+  require$$3.ipcMain.removeAllListeners("write-file");
+  require$$3.ipcMain.removeAllListeners("backup-file");
+  require$$3.ipcMain.removeAllListeners("save-file-dialog");
+  require$$3.ipcMain.removeAllListeners("launch-standalone-visualizer");
+  console.log("Registering IPC handlers...");
   require$$3.ipcMain.handle("get-visualizers", async () => {
     try {
       console.log("IPC get-visualizers: Starting to get visualizers");
@@ -11950,14 +11965,20 @@ function registerIpcHandlers() {
     return selectedVisualizersDir;
   });
   require$$3.ipcMain.handle("change-frames-directory", async () => {
-    const newDir = await selectVisualizersDirectory();
-    if (newDir) {
-      selectedVisualizersDir = newDir;
-      savePreferences({ visualizersDir: newDir });
-      console.log("Changed frames directory to:", newDir);
-      return { success: true, directory: newDir };
+    try {
+      console.log("change-frames-directory handler called");
+      const newDir = await selectVisualizersDirectory();
+      if (newDir) {
+        selectedVisualizersDir = newDir;
+        savePreferences({ visualizersDir: newDir });
+        console.log("Changed frames directory to:", newDir);
+        return { success: true, directory: newDir };
+      }
+      return { success: false, directory: null };
+    } catch (error) {
+      console.error("Error in change-frames-directory handler:", error);
+      throw error;
     }
-    return { success: false, directory: null };
   });
   require$$3.ipcMain.handle("reload-visualizers", async () => {
     if (selectedVisualizersDir) {
@@ -12121,4 +12142,5 @@ function registerIpcHandlers() {
       throw error;
     }
   });
+  console.log("All IPC handlers registered successfully");
 }
