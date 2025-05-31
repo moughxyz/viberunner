@@ -440,7 +440,7 @@ body {
 .utilities-grid {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .utility-card {
@@ -448,8 +448,8 @@ body {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: transparent;
+  border: none;
   border-radius: var(--radius);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -459,10 +459,9 @@ body {
 }
 
 .utility-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
+  background: var(--surface);
+  transform: none;
+  box-shadow: none;
 }
 
 /* Directory controls - clean inline layout */
@@ -1048,4 +1047,53 @@ body {
   .section-actions .btn {
     width: 100%;
   }
+}
+
+.utility-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  color: var(--accent);
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.utility-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.utility-title {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.utility-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.utility-action {
+  color: var(--accent);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.utility-card:hover .utility-action {
+  background: var(--accent-light);
+  border-color: var(--accent);
 }
