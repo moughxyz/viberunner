@@ -633,44 +633,49 @@ const App: React.FC = () => {
       console.log('Enabled startup apps:', enabledStartupApps);
 
       if (enabledStartupApps.length > 0) {
-        console.log(`Auto-launching ${enabledStartupApps.length} startup apps...`);
+        console.log(`Auto-launching ${enabledStartupApps.length} startup apps in parallel...`);
 
-        // Launch each app with a small delay
-        enabledStartupApps.forEach(([appId, config], index) => {
-          console.log(`Scheduling launch for ${appId} with ${index * 500}ms delay`);
-          setTimeout(() => {
+        // Store the current New Tab ID to maintain focus
+        const currentNewTabId = openTabs.find(tab => tab.type === 'newtab')?.id;
+
+        // Launch all apps in parallel without delays
+        const launchPromises = enabledStartupApps.map(async ([appId, config]) => {
+          try {
             const frame = frames.find(f => f.id === appId);
-            console.log(`Attempting to launch ${appId}:`, {
-              frameFound: !!frame,
-              frameName: frame?.name,
-              isStandalone: frame?.standalone,
-              allFrameIds: frames.map(f => f.id)
-            });
+            console.log(`Launching startup app: ${appId} (tab order: ${config.tabOrder})`);
+
             if (frame && frame.standalone) {
-              console.log(`Auto-launching startup app: ${appId} (tab order: ${config.tabOrder})`);
-              // Force new tab for startup apps to prevent them from overwriting each other
-              openFrameInNewTab(frame, undefined, true);
+              // Launch the app but don't wait for tab switching
+              await openFrameInNewTab(frame, undefined, true, false);
+              console.log(`Successfully launched startup app: ${appId}`);
             } else {
               console.warn(`Could not launch ${appId}:`, {
                 frameFound: !!frame,
                 isStandalone: frame?.standalone
               });
             }
-          }, index * 500); // 500ms delay between each app
+          } catch (error) {
+            console.error(`Error launching startup app ${appId}:`, error);
+          }
         });
 
-        // After all startup apps are launched, switch to the "New Tab"
-        const switchToNewTabDelay = enabledStartupApps.length * 500 + 300; // Extra 300ms buffer
-        setTimeout(() => {
-          console.log('Switching to New Tab after startup apps launch');
-          setOpenTabs(prev => {
-            const newTab = prev.find(tab => tab.type === 'newtab');
+        // Launch all apps in parallel and then return focus to New Tab
+        Promise.all(launchPromises).then(() => {
+          console.log('All startup apps launched, maintaining focus on New Tab');
+
+          // Ensure we stay on the New Tab after all apps are launched
+          if (currentNewTabId) {
+            switchToTab(currentNewTabId);
+          } else {
+            // Find any New Tab that exists
+            const newTab = openTabs.find(tab => tab.type === 'newtab');
             if (newTab) {
               switchToTab(newTab.id);
             }
-            return prev;
-          });
-        }, switchToNewTabDelay);
+          }
+        }).catch(error => {
+          console.error('Error during parallel startup app launch:', error);
+        });
       }
       hasLaunchedStartupApps.current = true;
     }
@@ -1038,7 +1043,7 @@ const App: React.FC = () => {
     setActiveTabId(tabId);
   };
 
-  const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput, forceNewTab: boolean = false) => {
+  const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput, forceNewTab: boolean = false, switchToTab_: boolean = true) => {
     const title = fileInput
       ? fileInput.path.split('/').pop() || 'Unknown File'
       : frame.name;
@@ -1076,8 +1081,10 @@ const App: React.FC = () => {
       const success = await createFrameContainer(transformedTab);
 
       if (success) {
-        // Switch to show this tab, passing the transformed tab data
-        switchToTab(transformedTab.id, transformedTab);
+        // Only switch to this tab if switchToTab_ is true
+        if (switchToTab_) {
+          switchToTab(transformedTab.id, transformedTab);
+        }
 
         // Reorder tabs to keep "New Tab" at the end
         setTimeout(() => {
@@ -1109,8 +1116,10 @@ const App: React.FC = () => {
       const success = await createFrameContainer(newTab);
 
       if (success) {
-        // Switch to show this tab, passing the new tab data
-        switchToTab(tabId, newTab);
+        // Only switch to this tab if switchToTab_ is true
+        if (switchToTab_) {
+          switchToTab(tabId, newTab);
+        }
 
         // Reorder tabs to keep "New Tab" at the end
         setTimeout(() => {
