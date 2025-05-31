@@ -274,12 +274,13 @@ body {
 }
 
 .format-tag {
+  display: inline-block;
   padding: var(--space-1) var(--space-3);
-  background: var(--surface-hover);
-  color: var(--text-secondary);
+  background: var(--accent-light);
+  color: var(--accent);
+  border-radius: var(--radius);
   font-size: var(--font-size-xs);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  font-weight: 500;
 }
 
 /* Frame Selection */
@@ -661,5 +662,106 @@ body {
 }
 
 .standalone-item .btn {
+  flex-shrink: 0;
+}
+
+/* Standalone Frames in Drop Zone */
+.drop-zone-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin: var(--space-8) 0 var(--space-6) 0;
+  width: 100%;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.divider-text {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.standalone-frames-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 800px;
+}
+
+.standalone-frame-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+}
+
+.standalone-frame-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.standalone-frame-card:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.standalone-frame-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: var(--accent-light);
+  color: var(--accent);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  flex-shrink: 0;
+}
+
+.standalone-frame-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.standalone-frame-title {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.standalone-frame-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.standalone-frame-action {
+  color: var(--accent);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  padding: var(--space-2) var(--space-3);
+  background: var(--accent-light);
+  border-radius: var(--radius);
   flex-shrink: 0;
 }

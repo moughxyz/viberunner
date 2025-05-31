@@ -708,7 +708,7 @@ const App: React.FC = () => {
                     </div>
                     <p className="card-description">{frame.description}</p>
                     <div className="card-footer">
-                      <span className="supported-formats">{getSupportedFormats(frame)}</span>
+                      {getSupportedFormats(frame)}
                     </div>
                   </button>
                 ))}
@@ -770,6 +770,34 @@ const App: React.FC = () => {
                   <span className="format-tag">CSV</span>
                   <span className="format-tag">Text</span>
                 </div>
+
+                {/* Standalone Frames Section */}
+                {frames.filter(f => f.standalone).length > 0 && (
+                  <div className="drop-zone-divider">
+                    <div className="divider-line"></div>
+                    <span className="divider-text">Or, launch these standalone utilities</span>
+                    <div className="divider-line"></div>
+                  </div>
+                )}
+
+                {frames.filter(f => f.standalone).length > 0 && (
+                  <div className="standalone-frames-grid">
+                    {frames.filter(f => f.standalone).map(frame => (
+                      <button
+                        key={frame.id}
+                        className="standalone-frame-card"
+                        onClick={() => launchStandaloneFrame(frame)}
+                      >
+                        <div className="standalone-frame-icon">⚡</div>
+                        <div className="standalone-frame-content">
+                          <h4 className="standalone-frame-title">{frame.name}</h4>
+                          <p className="standalone-frame-description">{frame.description}</p>
+                        </div>
+                        <div className="standalone-frame-action">Launch</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}
