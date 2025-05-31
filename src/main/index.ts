@@ -16,6 +16,106 @@ if (require('electron-squirrel-startup')) {
 // Store the selected apps directory
 let selectedAppsDir: string | null = null;
 
+// Permission Manager for handling file system access
+class PermissionManager {
+  private grantedPaths = new Set<string>();
+
+  async checkAccess(path: string): Promise<boolean> {
+    // Check if path is already granted
+    for (const grantedPath of this.grantedPaths) {
+      if (path.startsWith(grantedPath)) {
+        return true;
+      }
+    }
+
+    // Check if it's a common directory we can request
+    const commonDirs = [
+      app.getPath('documents'),
+      app.getPath('desktop'),
+      app.getPath('downloads'),
+      app.getPath('pictures'),
+      app.getPath('music'),
+      app.getPath('videos')
+    ];
+
+    for (const commonDir of commonDirs) {
+      if (path.startsWith(commonDir)) {
+        return await this.requestAccess(commonDir, `Access ${path.split('/').pop()} directory`);
+      }
+    }
+
+    // For other paths, request access to the specific directory
+    return await this.requestAccess(path, `Access required for: ${path}`);
+  }
+
+  async requestAccess(path: string, reason: string): Promise<boolean> {
+    // Check if already granted
+    if (this.grantedPaths.has(path)) return true;
+
+    // Show permission dialog
+    const result = await dialog.showOpenDialog({
+      title: 'Directory Access Required',
+      message: `${reason}\n\nPlease select the directory to grant access:`,
+      buttonLabel: 'Grant Access',
+      properties: ['openDirectory'],
+      defaultPath: path
+    });
+
+    if (!result.canceled && result.filePaths.length > 0) {
+      this.grantedPaths.add(result.filePaths[0]);
+      console.log('Granted access to:', result.filePaths[0]);
+      return true;
+    }
+
+    return false;
+  }
+
+  async requestCommonDirectoryAccess(): Promise<void> {
+    const commonDirs = [
+      { path: app.getPath('documents'), name: 'Documents' },
+      { path: app.getPath('desktop'), name: 'Desktop' },
+      { path: app.getPath('downloads'), name: 'Downloads' }
+    ];
+
+    // Show a single dialog explaining what we need
+    const result = await dialog.showMessageBox({
+      type: 'info',
+      title: 'File System Access',
+      message: 'Viberunner apps may need to read and write files',
+      detail: 'To provide the best experience, please grant access to common directories like Documents, Desktop, and Downloads when prompted.',
+      buttons: ['Grant Access', 'Skip'],
+      defaultId: 0
+    });
+
+    if (result.response === 0) {
+      // Request access to each common directory
+      for (const dir of commonDirs) {
+        try {
+          await this.requestAccess(dir.path, `Grant access to your ${dir.name} folder`);
+        } catch (error) {
+          console.log(`User skipped access to ${dir.name}:`, error);
+        }
+      }
+    }
+  }
+
+  hasAccess(path: string): boolean {
+    for (const grantedPath of this.grantedPaths) {
+      if (path.startsWith(grantedPath)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  getGrantedPaths(): string[] {
+    return Array.from(this.grantedPaths);
+  }
+}
+
+// Global permission manager instance
+const permissionManager = new PermissionManager();
+
 // Enhanced matcher types
 interface FileMatcher {
   type: 'mimetype' | 'filename' | 'filename-contains' | 'path-pattern' | 'content-json' | 'content-regex' | 'file-size' | 'combined';
@@ -553,13 +653,39 @@ app.on('ready', async () => {
   // Load user preferences
   const prefs = loadPreferences();
 
-  // Check if we have a saved apps directory
+  // Check if we have a saved apps directory and if it's accessible
   if (prefs.appsDir && fs.existsSync(prefs.appsDir)) {
-    selectedAppsDir = prefs.appsDir;
-    console.log('Using saved apps directory:', selectedAppsDir);
-  } else {
-    // Show dialog to select apps directory
-    console.log('No saved apps directory found, prompting user...');
+    try {
+      // Test if we can actually read the directory
+      fs.readdirSync(prefs.appsDir);
+      selectedAppsDir = prefs.appsDir;
+      console.log('Using saved apps directory:', selectedAppsDir);
+    } catch (error) {
+      console.log('Saved apps directory is not accessible:', error);
+
+      // Request access to the specific saved directory
+      const result = await dialog.showOpenDialog({
+        title: 'Grant Access to Apps Directory',
+        message: `The app needs access to your apps directory:\n${prefs.appsDir}\n\nPlease select this directory to grant access.`,
+        buttonLabel: 'Grant Access',
+        properties: ['openDirectory'],
+        defaultPath: prefs.appsDir
+      });
+
+      if (!result.canceled && result.filePaths.length > 0 && result.filePaths[0] === prefs.appsDir) {
+        // User granted access to the same directory
+        selectedAppsDir = prefs.appsDir;
+        console.log('Access granted to saved apps directory:', selectedAppsDir);
+      } else {
+        // User cancelled or selected a different directory
+        selectedAppsDir = null;
+      }
+    }
+  }
+
+  // If we still don't have a valid apps directory, prompt user to select one
+  if (!selectedAppsDir) {
+    console.log('No valid apps directory found, prompting user to select one...');
     selectedAppsDir = await selectAppsDirectory();
 
     if (!selectedAppsDir) {
@@ -576,6 +702,9 @@ app.on('ready', async () => {
 
   // Register IPC handlers BEFORE creating the window
   registerIpcHandlers();
+
+  // Request access to common directories for better app compatibility
+  await permissionManager.requestCommonDirectoryAccess();
 
   createWindow();
 });
@@ -618,6 +747,10 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('write-file');
   ipcMain.removeAllListeners('backup-file');
   ipcMain.removeAllListeners('save-file-dialog');
+  ipcMain.removeAllListeners('check-directory-access');
+  ipcMain.removeAllListeners('request-directory-access');
+  ipcMain.removeAllListeners('get-granted-paths');
+  ipcMain.removeAllListeners('read-file-secure');
 
   console.log('Registering IPC handlers...');
 
@@ -806,6 +939,14 @@ function registerIpcHandlers() {
         throw new Error('Invalid file path');
       }
 
+      // Check if we have permission to write to this location
+      const directory = path.dirname(filePath);
+      const hasAccess = await permissionManager.checkAccess(directory);
+
+      if (!hasAccess) {
+        throw new Error('Access denied to directory');
+      }
+
       if (encoding === 'base64') {
         const buffer = Buffer.from(content, 'base64');
         fs.writeFileSync(filePath, buffer);
@@ -880,6 +1021,56 @@ function registerIpcHandlers() {
       return { success: false, error: 'No focused window found' };
     } catch (error) {
       console.error('Error closing window:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  // Permission management handlers
+  ipcMain.handle('check-directory-access', async (_event, directoryPath: string) => {
+    try {
+      const hasAccess = permissionManager.hasAccess(directoryPath);
+      return { success: true, hasAccess };
+    } catch (error) {
+      console.error('Error checking directory access:', error);
+      return { success: false, error: (error as Error).message, hasAccess: false };
+    }
+  });
+
+  ipcMain.handle('request-directory-access', async (_event, directoryPath: string, reason?: string) => {
+    try {
+      const granted = await permissionManager.requestAccess(directoryPath, reason || `Access required for: ${directoryPath}`);
+      return { success: true, granted };
+    } catch (error) {
+      console.error('Error requesting directory access:', error);
+      return { success: false, error: (error as Error).message, granted: false };
+    }
+  });
+
+  ipcMain.handle('get-granted-paths', async () => {
+    try {
+      const grantedPaths = permissionManager.getGrantedPaths();
+      return { success: true, grantedPaths };
+    } catch (error) {
+      console.error('Error getting granted paths:', error);
+      return { success: false, error: (error as Error).message, grantedPaths: [] };
+    }
+  });
+
+  // Enhanced read-file with permission checking
+  ipcMain.handle('read-file-secure', async (_event, filePath: string) => {
+    try {
+      // Check if we have permission to read from this location
+      const directory = path.dirname(filePath);
+      const hasAccess = await permissionManager.checkAccess(directory);
+
+      if (!hasAccess) {
+        throw new Error('Access denied to directory');
+      }
+
+      const content = fs.readFileSync(filePath);
+      return { success: true, content: content.toString('base64') };
+    } catch (error) {
+      console.error('Error reading file:', error);
       return { success: false, error: (error as Error).message };
     }
   });
