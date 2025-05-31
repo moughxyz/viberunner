@@ -305,6 +305,12 @@ body {
   border-radius: 0;
 }
 
+/* Hide frame viewport completely when on new tab */
+.content-area:has(.new-tab-unified) .frame-viewport {
+  border: none;
+  background: transparent;
+}
+
 /* Unified New Tab Interface */
 .new-tab-unified {
   position: absolute;
