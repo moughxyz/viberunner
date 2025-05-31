@@ -387,7 +387,7 @@ body {
   height: 100%;
   background: var(--background);
   z-index: 10;
-  overflow-y: auto;
+  overflow: hidden; /* Remove auto scrolling from outer container */
 }
 
 .unified-content {
@@ -397,7 +397,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
-  min-height: 100%;
+  height: 100%; /* Take full height */
+  overflow-y: auto; /* Handle scrolling here */
+  box-sizing: border-box; /* Include padding in height calculation */
 }
 
 /* Drop zone section - centered */
@@ -1205,7 +1207,7 @@ body {
   max-height: 100% !important;
   position: relative !important;
   display: block !important;
-  overflow: auto !important;
+  overflow: hidden !important; /* Let the app handle its own scrolling */
 }
 
 /* Override any attempts to style body/html */
@@ -1218,7 +1220,7 @@ body {
   max-height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-  overflow: auto !important;
+  overflow: visible !important; /* Allow natural scrolling */
   background: transparent !important;
 }
 
@@ -1257,7 +1259,7 @@ body {
   height: 100% !important;
   max-width: 100% !important;
   max-height: 100% !important;
-  overflow: auto !important;
+  overflow: visible !important; /* Allow apps to handle their own scrolling */
   box-sizing: border-box !important;
   display: flex !important;
   flex-direction: column !important;
