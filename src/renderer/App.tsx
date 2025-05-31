@@ -294,8 +294,11 @@ const App: React.FC = () => {
   const [isLoadingFrames, setIsLoadingFrames] = useState(false);
   const frameRootRef = useRef<HTMLDivElement>(null);
 
-  // Track which tabs have been loaded to avoid reloading
-  const loadedTabsRef = useRef<Set<string>>(new Set());
+  // Imperative tab management - outside React state
+  const tabContainersRef = useRef<Map<string, {
+    domElement: HTMLDivElement;
+    reactRoot: any;
+  }>>(new Map());
 
   // Load frames directory info
   useEffect(() => {
@@ -357,6 +360,102 @@ const App: React.FC = () => {
 
   const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+  // Imperative function to create a frame container
+  const createFrameContainer = async (tab: OpenTab) => {
+    if (!frameRootRef.current || !tab.frame || !tab.frameData) return;
+
+    console.log('Creating frame container for tab:', tab.id);
+
+    // Create DOM container
+    const container = document.createElement('div');
+    container.className = 'tab-frame-container';
+    container.style.position = 'absolute';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.right = '0';
+    container.style.bottom = '0';
+    container.style.width = '100%';
+    container.style.height = '100%';
+    container.style.display = 'none'; // Start hidden
+    frameRootRef.current.appendChild(container);
+
+    // Prepare props
+    let props;
+    if (!tab.fileInput) {
+      props = { container };
+    } else {
+      props = {
+        fileInput: tab.fileInput,
+        fileData: {
+          path: tab.fileInput.path,
+          mimetype: tab.fileInput.mimetype,
+          content: '',
+          analysis: {
+            filename: path.basename(tab.fileInput.path),
+            size: 0,
+            isJson: tab.fileInput.mimetype === 'application/json' || tab.fileInput.path.endsWith('.json'),
+            jsonContent: null
+          }
+        },
+        container
+      };
+    }
+
+    // Create script and load frame
+    const script = document.createElement('script');
+    script.textContent = tab.frameData.bundleContent;
+
+    const frameLoader = (FrameComponent: any) => {
+      const root = document.createElement('div');
+      container.appendChild(root);
+
+      const reactRoot = createRoot(root);
+      reactRoot.render(React.createElement(FrameComponent, props));
+
+      // Store in our ref
+      tabContainersRef.current.set(tab.id, {
+        domElement: container,
+        reactRoot
+      });
+
+      console.log('Frame loaded for tab:', tab.id);
+    };
+
+    (window as any).__LOAD_FRAME__ = frameLoader;
+    (window as any).__LOAD_VISUALIZER__ = frameLoader;
+
+    document.head.appendChild(script);
+
+    // Cleanup
+    setTimeout(() => {
+      if (document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+      delete (window as any).__LOAD_FRAME__;
+      delete (window as any).__LOAD_VISUALIZER__;
+    }, 100);
+  };
+
+  // Imperative function to switch tab visibility
+  const switchToTab = (tabId: string) => {
+    const activeTab = openTabs.find(tab => tab.id === tabId);
+
+    // Hide all frame containers
+    tabContainersRef.current.forEach((container) => {
+      container.domElement.style.display = 'none';
+    });
+
+    // Show the active tab's container if it's not a new tab
+    if (activeTab && activeTab.type !== 'newtab') {
+      const container = tabContainersRef.current.get(tabId);
+      if (container) {
+        container.domElement.style.display = 'block';
+      }
+    }
+
+    setActiveTabId(tabId);
+  };
+
   const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput) => {
     const title = fileInput
       ? fileInput.path.split('/').pop() || 'Unknown File'
@@ -364,17 +463,16 @@ const App: React.FC = () => {
 
     let frameData;
 
-    // Load frame data immediately for both file and standalone frames
+    // Load frame data
     try {
       frameData = await loadFrame(frame.id);
-      console.log('Frame data loaded for new tab:', frameData);
     } catch (error) {
       console.error('Failed to load frame data for new tab:', error);
       alert(`Failed to load ${frame.name}: ${error}`);
       return;
     }
 
-    // Check if we have an active new tab to transform, otherwise create a new one
+    // Check if we have an active new tab to transform
     const currentTab = openTabs.find(tab => tab.id === activeTabId);
     if (currentTab && currentTab.type === 'newtab') {
       // Transform the current new tab
@@ -390,6 +488,12 @@ const App: React.FC = () => {
       setOpenTabs(prev => prev.map(tab =>
         tab.id === activeTabId ? transformedTab : tab
       ));
+
+      // Create the frame container
+      await createFrameContainer(transformedTab);
+
+      // Switch to show this tab
+      switchToTab(transformedTab.id);
     } else {
       // Create a new tab
       const tabId = generateTabId();
@@ -403,7 +507,12 @@ const App: React.FC = () => {
       };
 
       setOpenTabs(prev => [...prev, newTab]);
-      setActiveTabId(tabId);
+
+      // Create the frame container
+      await createFrameContainer(newTab);
+
+      // Switch to show this tab
+      switchToTab(tabId);
     }
 
     setShowFrameSelection(false);
@@ -411,19 +520,20 @@ const App: React.FC = () => {
   };
 
   const closeTab = (tabId: string) => {
-    // Cleanup the tab's React root before removing it
-    const tabToClose = openTabs.find(tab => tab.id === tabId);
-    if (tabToClose?.reactRoot) {
-      console.log('Unmounting React root for closed tab:', tabId);
+    // Cleanup the tab's container
+    const container = tabContainersRef.current.get(tabId);
+    if (container) {
+      console.log('Cleaning up container for tab:', tabId);
       try {
-        tabToClose.reactRoot.unmount();
+        container.reactRoot.unmount();
+        if (frameRootRef.current && frameRootRef.current.contains(container.domElement)) {
+          frameRootRef.current.removeChild(container.domElement);
+        }
       } catch (error) {
-        console.warn('Error unmounting React root for closed tab:', error);
+        console.warn('Error cleaning up tab container:', error);
       }
+      tabContainersRef.current.delete(tabId);
     }
-
-    // Remove from loaded tabs tracking
-    loadedTabsRef.current.delete(tabId);
 
     setOpenTabs(prev => {
       const filtered = prev.filter(tab => tab.id !== tabId);
@@ -432,9 +542,9 @@ const App: React.FC = () => {
       if (activeTabId === tabId) {
         const currentIndex = prev.findIndex(tab => tab.id === tabId);
         if (filtered.length > 0) {
-          // Activate the tab to the right, or the rightmost if we closed the last tab
           const newActiveIndex = Math.min(currentIndex, filtered.length - 1);
-          setActiveTabId(filtered[newActiveIndex]?.id || null);
+          const newActiveTab = filtered[newActiveIndex];
+          switchToTab(newActiveTab.id);
         } else {
           // If no tabs left, create a new tab
           const newTab: OpenTab = {
@@ -443,13 +553,18 @@ const App: React.FC = () => {
             type: 'newtab'
           };
           setOpenTabs([newTab]);
-          setActiveTabId(newTab.id);
+          switchToTab(newTab.id);
           return [newTab];
         }
       }
 
       return filtered;
     });
+  };
+
+  // Handle tab switching
+  const handleTabSwitch = (tabId: string) => {
+    switchToTab(tabId);
   };
 
   const selectFrame = async (frame: Frame) => {
@@ -461,139 +576,12 @@ const App: React.FC = () => {
   const launchStandaloneFrame = async (frame: Frame) => {
     try {
       console.log('Launching standalone frame:', frame.name, frame.id);
-      // openFrameInNewTab will handle loading the frame data
       await openFrameInNewTab(frame);
     } catch (error) {
       console.error('Failed to launch standalone frame:', error);
       alert(`Failed to launch ${frame.name}: ${error}`);
     }
   };
-
-  // Load and render frames for tabs
-  useEffect(() => {
-    console.log('Frame loading useEffect triggered:', {
-      activeTabId,
-      openTabs: openTabs.map(t => ({ id: t.id, type: t.type, hasFrameData: !!t.frameData }))
-    });
-
-    if (!frameRootRef.current) return;
-
-    // Update visibility of existing tab containers
-    openTabs.forEach(tab => {
-      if (tab.domContainer) {
-        const shouldShow = activeTabId === tab.id && tab.type !== 'newtab';
-        tab.domContainer.style.display = shouldShow ? 'block' : 'none';
-      }
-    });
-
-  }, [activeTabId]); // Only depend on activeTabId for visibility updates
-
-  // Separate effect for loading new frame containers
-  useEffect(() => {
-    if (!frameRootRef.current) return;
-
-    openTabs.forEach(async (tab) => {
-      // Skip if it's a new tab, already loaded, or missing frame data
-      if (tab.type === 'newtab' ||
-          loadedTabsRef.current.has(tab.id) ||
-          !tab.frameData ||
-          !tab.frame) {
-        return;
-      }
-
-      console.log('Loading frame for tab:', tab.id, tab.frame.name);
-      loadedTabsRef.current.add(tab.id);
-
-      try {
-        // Create a dedicated container for this tab
-        const tabContainer = document.createElement('div');
-        tabContainer.className = 'tab-frame-container';
-        tabContainer.style.display = tab.id === activeTabId ? 'block' : 'none';
-        tabContainer.style.height = '100%';
-        frameRootRef.current!.appendChild(tabContainer);
-
-        // Store the container directly on the tab object (mutation for immediate effect)
-        const tabIndex = openTabs.findIndex(t => t.id === tab.id);
-        if (tabIndex !== -1) {
-          (openTabs[tabIndex] as any).domContainer = tabContainer;
-        }
-
-        // Prepare props for the frame
-        let props;
-        if (!tab.fileInput) {
-          // Standalone frame
-          props = {
-            container: tabContainer
-          };
-        } else {
-          // File-based frame
-          props = {
-            fileInput: tab.fileInput,
-            fileData: {
-              path: tab.fileInput.path,
-              mimetype: tab.fileInput.mimetype,
-              content: '',
-              analysis: {
-                filename: path.basename(tab.fileInput.path),
-                size: 0,
-                isJson: tab.fileInput.mimetype === 'application/json' || tab.fileInput.path.endsWith('.json'),
-                jsonContent: null
-              }
-            },
-            container: tabContainer
-          };
-        }
-
-        // Create and execute the frame script
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.textContent = tab.frameData.bundleContent;
-
-        // Set up frame loader
-        const frameLoader = (FrameComponent: any) => {
-          console.log('Frame loader called for tab:', tab.id);
-
-          const root = document.createElement('div');
-          tabContainer.appendChild(root);
-
-          try {
-            const reactRoot = createRoot(root);
-            reactRoot.render(React.createElement(FrameComponent, props));
-
-            // Store the React root directly on the tab object (mutation for immediate effect)
-            if (tabIndex !== -1) {
-              (openTabs[tabIndex] as any).reactRoot = reactRoot;
-            }
-
-            console.log('Frame rendered successfully for tab:', tab.id);
-          } catch (renderError) {
-            console.error('React rendering error for tab:', tab.id, renderError);
-          }
-        };
-
-        // Support both patterns
-        (window as any).__LOAD_FRAME__ = frameLoader;
-        (window as any).__LOAD_VISUALIZER__ = frameLoader;
-
-        // Execute the script
-        document.head.appendChild(script);
-
-        // Cleanup script after execution
-        setTimeout(() => {
-          if (document.head.contains(script)) {
-            document.head.removeChild(script);
-          }
-          delete (window as any).__LOAD_FRAME__;
-          delete (window as any).__LOAD_VISUALIZER__;
-        }, 100);
-
-      } catch (error) {
-        console.error('Failed to load frame for tab:', tab.id, error);
-        loadedTabsRef.current.delete(tab.id); // Remove from loaded set on error
-      }
-    });
-
-  }, [openTabs]); // Only run when tabs are added/removed
 
   // Get the currently active tab
   const activeTab = openTabs.find(tab => tab.id === activeTabId);
@@ -768,7 +756,7 @@ const App: React.FC = () => {
     };
 
     setOpenTabs(prev => [...prev, newTab]);
-    setActiveTabId(tabId);
+    switchToTab(tabId);
     setShowFrameSelection(false);
     setPendingFileInput(null);
   };
@@ -784,7 +772,7 @@ const App: React.FC = () => {
                 <div
                   key={tab.id}
                   className={`tab ${tab.id === activeTabId ? 'tab-active' : ''}`}
-                  onClick={() => setActiveTabId(tab.id)}
+                  onClick={() => handleTabSwitch(tab.id)}
                 >
                   <div className="tab-icon">
                     {tab.type === 'newtab' ? '➕' : tab.type === 'standalone' ? '⚡' : '📄'}
