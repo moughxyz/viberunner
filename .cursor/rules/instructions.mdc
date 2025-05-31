@@ -4,5 +4,6 @@ globs:
 alwaysApply: true
 ---
 - ALWAYS commit changes after each change.
-- the visualizers directory is in ~/Desktop/visualizers
+- The apps directory is in ExampleApps
 - DO NOT RUN THE APP YOURSELF. I WILL DO THIS SEPARATELY.
+- Whenever you make a change to an app in ExampleApps, build the app with npm run build.

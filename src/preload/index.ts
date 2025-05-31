@@ -24,6 +24,15 @@ contextBridge.exposeInMainWorld(
       filters?: Array<{ name: string; extensions: string[] }>
     }) => ipcRenderer.invoke('save-file-dialog', options),
     // Launch standalone apps
-    launchStandaloneApp: (id: string) => ipcRenderer.invoke('launch-standalone-app', id)
+    launchStandaloneApp: (id: string) => ipcRenderer.invoke('launch-standalone-app', id),
+    // Startup app management
+    getStartupApps: () => ipcRenderer.invoke('get-startup-apps'),
+    setStartupApp: (appId: string, config: { enabled: boolean; tabOrder: number }) =>
+      ipcRenderer.invoke('set-startup-app', appId, config),
+    removeStartupApp: (appId: string) => ipcRenderer.invoke('remove-startup-app', appId),
+    // Listen for startup app launch events from main process
+    onLaunchStartupApp: (callback: (event: any, data: { appId: string; config: any }) => void) =>
+      ipcRenderer.on('launch-startup-app', callback),
+    removeStartupAppListeners: () => ipcRenderer.removeAllListeners('launch-startup-app')
   }
 );

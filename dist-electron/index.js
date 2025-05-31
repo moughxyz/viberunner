@@ -11503,7 +11503,6 @@ if (require("electron-squirrel-startup")) {
   require$$3.app.quit();
 }
 let selectedAppsDir = null;
-path.join(require$$3.app.getPath("userData"), "apps");
 async function getMimetype(filePath) {
   try {
     const stats = fs.statSync(filePath);
@@ -11629,18 +11628,18 @@ function findMatchingApps(apps, fileAnalysis) {
   return matches.sort((a, b) => b.priority - a.priority);
 }
 async function loadApps() {
-  const APPS_DIR2 = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
-  console.log("loadApps: Loading from directory:", APPS_DIR2);
-  if (!fs.existsSync(APPS_DIR2)) {
-    console.log("loadApps: Directory does not exist:", APPS_DIR2);
+  const APPS_DIR = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+  console.log("loadApps: Loading from directory:", APPS_DIR);
+  if (!fs.existsSync(APPS_DIR)) {
+    console.log("loadApps: Directory does not exist:", APPS_DIR);
     return [];
   }
   try {
     console.log("loadApps: Reading directory contents");
-    const dirContents = fs.readdirSync(APPS_DIR2);
+    const dirContents = fs.readdirSync(APPS_DIR);
     console.log("loadApps: Directory contents:", dirContents);
     const directories = dirContents.filter((dir) => {
-      const fullPath = path.join(APPS_DIR2, dir);
+      const fullPath = path.join(APPS_DIR, dir);
       const isDir = fs.statSync(fullPath).isDirectory();
       console.log(`loadApps: ${dir} is directory: ${isDir}`);
       return isDir;
@@ -11648,7 +11647,7 @@ async function loadApps() {
     console.log("loadApps: Found directories:", directories);
     const apps = directories.map((dir) => {
       console.log(`loadApps: Processing directory: ${dir}`);
-      const vizPath = path.join(APPS_DIR2, dir);
+      const vizPath = path.join(APPS_DIR, dir);
       const metadataPath = path.join(vizPath, "viz.json");
       console.log(`loadApps: Looking for metadata at: ${metadataPath}`);
       if (!fs.existsSync(metadataPath)) {
@@ -11832,26 +11831,52 @@ async function ensureApps() {
 }
 const createWindow = () => {
   const mainWindow = new require$$3.BrowserWindow({
-    width: 1200,
-    height: 800,
-    titleBarStyle: "hiddenInset",
-    // Keep native macOS controls, hide title bar
+    height: 1e3,
+    width: 1600,
     webPreferences: {
-      nodeIntegration: true,
-      // Allow direct Node.js access in renderer
-      contextIsolation: false,
-      // Remove context isolation for full access
-      webSecurity: false
-      // Allow loading local resources
-    }
+      preload: path.join(__dirname, "../preload/index.js"),
+      nodeIntegration: false,
+      contextIsolation: true,
+      webSecurity: true
+    },
+    titleBarStyle: "hiddenInset",
+    vibrancy: "under-window",
+    backgroundColor: "#1a1a1a"
   });
   remoteMain.enable(mainWindow.webContents);
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+    mainWindow.loadFile(path.join(__dirname, `../renderer/${process.env.VITE_DEV_NAME}/index.html`));
   }
+  mainWindow.webContents.once("did-finish-load", () => {
+    setTimeout(() => launchStartupApps(mainWindow), 1e3);
+  });
 };
+async function launchStartupApps(mainWindow) {
+  try {
+    console.log("Checking for startup apps...");
+    const prefs = loadPreferences();
+    const startupApps = prefs.startupApps || {};
+    const enabledStartupApps = Object.entries(startupApps).filter(([_, config]) => config.enabled).sort(([, a], [, b]) => a.tabOrder - b.tabOrder);
+    if (enabledStartupApps.length === 0) {
+      console.log("No startup apps configured");
+      return;
+    }
+    console.log(`Launching ${enabledStartupApps.length} startup apps...`);
+    for (const [appId, config] of enabledStartupApps) {
+      try {
+        console.log(`Launching startup app: ${appId} (tab order: ${config.tabOrder})`);
+        mainWindow.webContents.send("launch-startup-app", { appId, config });
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Failed to launch startup app ${appId}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error("Error launching startup apps:", error);
+  }
+}
 require$$3.app.on("ready", async () => {
   const prefs = loadPreferences();
   if (prefs.appsDir && fs.existsSync(prefs.appsDir)) {
@@ -11904,6 +11929,9 @@ function registerIpcHandlers() {
   require$$3.ipcMain.removeAllListeners("save-file-dialog");
   require$$3.ipcMain.removeAllListeners("launch-standalone-app");
   require$$3.ipcMain.removeAllListeners("get-app-icon");
+  require$$3.ipcMain.removeAllListeners("get-startup-apps");
+  require$$3.ipcMain.removeAllListeners("set-startup-app");
+  require$$3.ipcMain.removeAllListeners("remove-startup-app");
   console.log("Registering IPC handlers...");
   require$$3.ipcMain.handle("get-apps", async () => {
     try {
@@ -11916,14 +11944,14 @@ function registerIpcHandlers() {
       throw error;
     }
   });
-  require$$3.ipcMain.handle("load-app", async (event, id) => {
+  require$$3.ipcMain.handle("load-app", async (_event, id) => {
     const apps = await loadApps();
     const appInstance = apps.find((v) => v.id === id);
     if (!appInstance) {
       throw new Error(`App ${id} not found`);
     }
-    const APPS_DIR2 = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
-    const appDir = path.join(APPS_DIR2, appInstance.id);
+    const APPS_DIR = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+    const appDir = path.join(APPS_DIR, appInstance.id);
     const bundlePath = path.join(appDir, "dist", "bundle.iife.js");
     if (!fs.existsSync(bundlePath)) {
       throw new Error(`Bundle not found: ${bundlePath}`);
@@ -11931,14 +11959,14 @@ function registerIpcHandlers() {
     const bundleContent = fs.readFileSync(bundlePath, "utf-8");
     return { bundleContent, config: appInstance };
   });
-  require$$3.ipcMain.handle("get-mimetype", async (event, filePath) => {
+  require$$3.ipcMain.handle("get-mimetype", async (_event, filePath) => {
     return await getMimetype(filePath);
   });
-  require$$3.ipcMain.handle("read-file", async (event, filePath) => {
+  require$$3.ipcMain.handle("read-file", async (_event, filePath) => {
     const content = fs.readFileSync(filePath);
     return content.toString("base64");
   });
-  require$$3.ipcMain.handle("handle-file-drop", async (event, filePath) => {
+  require$$3.ipcMain.handle("handle-file-drop", async (_event, filePath) => {
     const fileAnalysis = await analyzeFile(filePath);
     if (fileAnalysis.mimetype === "inode/directory") {
       return {
@@ -11989,7 +12017,7 @@ function registerIpcHandlers() {
     }
     return { success: false, apps: [] };
   });
-  require$$3.ipcMain.handle("read-directory", async (event, dirPath) => {
+  require$$3.ipcMain.handle("read-directory", async (_event, dirPath) => {
     try {
       console.log("Reading directory:", dirPath);
       if (!fs.existsSync(dirPath)) {
@@ -12036,7 +12064,7 @@ function registerIpcHandlers() {
       return { success: false, error: error.message, files: [] };
     }
   });
-  require$$3.ipcMain.handle("find-matching-apps", async (event, filePath) => {
+  require$$3.ipcMain.handle("find-matching-apps", async (_event, filePath) => {
     try {
       const apps = await loadApps();
       const fileAnalysis = await analyzeFile(filePath);
@@ -12061,7 +12089,7 @@ function registerIpcHandlers() {
       };
     }
   });
-  require$$3.ipcMain.handle("write-file", async (event, filePath, content, encoding = "utf8") => {
+  require$$3.ipcMain.handle("write-file", async (_event, filePath, content, encoding = "utf8") => {
     try {
       if (!filePath || filePath.includes("..")) {
         throw new Error("Invalid file path");
@@ -12079,7 +12107,7 @@ function registerIpcHandlers() {
       return { success: false, error: error.message };
     }
   });
-  require$$3.ipcMain.handle("backup-file", async (event, filePath) => {
+  require$$3.ipcMain.handle("backup-file", async (_event, filePath) => {
     try {
       if (!filePath || filePath.includes("..")) {
         throw new Error("Invalid file path");
@@ -12097,7 +12125,7 @@ function registerIpcHandlers() {
       return { success: false, error: error.message };
     }
   });
-  require$$3.ipcMain.handle("save-file-dialog", async (event, options = {}) => {
+  require$$3.ipcMain.handle("save-file-dialog", async (_event, options = {}) => {
     try {
       const result = await require$$3.dialog.showSaveDialog({
         title: options.title || "Save File",
@@ -12116,7 +12144,7 @@ function registerIpcHandlers() {
       return { success: false, error: error.message, canceled: true };
     }
   });
-  require$$3.ipcMain.handle("launch-standalone-app", async (event, id) => {
+  require$$3.ipcMain.handle("launch-standalone-app", async (_event, id) => {
     try {
       const apps = await loadApps();
       const appInstance = apps.find((v) => v.id === id);
@@ -12126,8 +12154,8 @@ function registerIpcHandlers() {
       if (!appInstance.standalone) {
         throw new Error(`App ${id} is not configured for standalone use`);
       }
-      const APPS_DIR2 = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
-      const appDir = path.join(APPS_DIR2, appInstance.id);
+      const APPS_DIR = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+      const appDir = path.join(APPS_DIR, appInstance.id);
       const bundlePath = path.join(appDir, "dist", "bundle.iife.js");
       if (!fs.existsSync(bundlePath)) {
         throw new Error(`Bundle not found: ${bundlePath}`);
@@ -12143,13 +12171,13 @@ function registerIpcHandlers() {
       throw error;
     }
   });
-  require$$3.ipcMain.handle("get-app-icon", async (event, appId, iconPath) => {
+  require$$3.ipcMain.handle("get-app-icon", async (_event, appId, iconPath) => {
     try {
       if (!appId || !iconPath || iconPath.includes("..")) {
         throw new Error("Invalid app ID or icon path");
       }
-      const APPS_DIR2 = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
-      const appDir = path.join(APPS_DIR2, appId);
+      const APPS_DIR = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+      const appDir = path.join(APPS_DIR, appId);
       const fullIconPath = path.join(appDir, iconPath);
       if (!fullIconPath.startsWith(appDir)) {
         throw new Error("Icon path must be within app directory");
@@ -12164,6 +12192,44 @@ function registerIpcHandlers() {
       return { success: true, iconData };
     } catch (error) {
       console.error("Error loading app icon:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  require$$3.ipcMain.handle("get-startup-apps", async () => {
+    try {
+      const prefs = loadPreferences();
+      return { success: true, startupApps: prefs.startupApps || {} };
+    } catch (error) {
+      console.error("Error getting startup apps:", error);
+      return { success: false, error: error.message, startupApps: {} };
+    }
+  });
+  require$$3.ipcMain.handle("set-startup-app", async (_event, appId, config) => {
+    try {
+      const prefs = loadPreferences();
+      if (!prefs.startupApps) {
+        prefs.startupApps = {};
+      }
+      prefs.startupApps[appId] = config;
+      savePreferences(prefs);
+      console.log(`Startup app config updated for ${appId}:`, config);
+      return { success: true };
+    } catch (error) {
+      console.error("Error setting startup app:", error);
+      return { success: false, error: error.message };
+    }
+  });
+  require$$3.ipcMain.handle("remove-startup-app", async (_event, appId) => {
+    try {
+      const prefs = loadPreferences();
+      if (prefs.startupApps && prefs.startupApps[appId]) {
+        delete prefs.startupApps[appId];
+        savePreferences(prefs);
+        console.log(`Startup app config removed for ${appId}`);
+      }
+      return { success: true };
+    } catch (error) {
+      console.error("Error removing startup app:", error);
       return { success: false, error: error.message };
     }
   });

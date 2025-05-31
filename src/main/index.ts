@@ -16,9 +16,6 @@ if (require('electron-squirrel-startup')) {
 // Store the selected apps directory
 let selectedAppsDir: string | null = null;
 
-// Constants
-const APPS_DIR = path.join(app.getPath('userData'), 'apps');
-
 // Enhanced matcher types
 interface FileMatcher {
   type: 'mimetype' | 'filename' | 'filename-contains' | 'path-pattern' | 'content-json' | 'content-regex' | 'file-size' | 'combined';
@@ -354,7 +351,17 @@ function getUserDataPath() {
   return path.join(app.getPath('userData'), 'preferences.json');
 }
 
-function loadPreferences(): { appsDir?: string } {
+interface StartupAppConfig {
+  enabled: boolean;
+  tabOrder: number;
+}
+
+interface UserPreferences {
+  appsDir?: string;
+  startupApps?: Record<string, StartupAppConfig>;
+}
+
+function loadPreferences(): UserPreferences {
   try {
     const prefsPath = getUserDataPath();
     if (fs.existsSync(prefsPath)) {
@@ -367,7 +374,7 @@ function loadPreferences(): { appsDir?: string } {
   return {};
 }
 
-function savePreferences(prefs: { appsDir?: string }) {
+function savePreferences(prefs: UserPreferences) {
   try {
     const prefsPath = getUserDataPath();
     fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
@@ -506,14 +513,17 @@ async function ensureApps(): Promise<boolean> {
 const createWindow = (): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    titleBarStyle: 'hiddenInset', // Keep native macOS controls, hide title bar
+    height: 1000,
+    width: 1600,
     webPreferences: {
-      nodeIntegration: true, // Allow direct Node.js access in renderer
-      contextIsolation: false, // Remove context isolation for full access
-      webSecurity: false // Allow loading local resources
+      preload: path.join(__dirname, '../preload/index.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      webSecurity: true
     },
+    titleBarStyle: 'hiddenInset',
+    vibrancy: 'under-window',
+    backgroundColor: '#1a1a1a'
   });
 
   // Enable remote module for this window
@@ -523,12 +533,54 @@ const createWindow = (): void => {
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(path.join(__dirname, `../renderer/${process.env.VITE_DEV_NAME}/index.html`));
   }
 
-  // Open the DevTools only in development mode
+  // Open the DevTools.
   // mainWindow.webContents.openDevTools();
+
+  // Launch startup apps after the window is fully loaded
+  mainWindow.webContents.once('did-finish-load', () => {
+    setTimeout(() => launchStartupApps(mainWindow), 1000); // Small delay to ensure UI is ready
+  });
 };
+
+// Function to launch startup apps automatically
+async function launchStartupApps(mainWindow: BrowserWindow) {
+  try {
+    console.log('Checking for startup apps...');
+    const prefs = loadPreferences();
+    const startupApps = prefs.startupApps || {};
+
+    // Get apps that are enabled for startup
+    const enabledStartupApps = Object.entries(startupApps)
+      .filter(([_, config]) => config.enabled)
+      .sort(([, a], [, b]) => a.tabOrder - b.tabOrder); // Sort by tab order
+
+    if (enabledStartupApps.length === 0) {
+      console.log('No startup apps configured');
+      return;
+    }
+
+    console.log(`Launching ${enabledStartupApps.length} startup apps...`);
+
+    for (const [appId, config] of enabledStartupApps) {
+      try {
+        console.log(`Launching startup app: ${appId} (tab order: ${config.tabOrder})`);
+
+        // Send a message to the renderer to launch this app
+        mainWindow.webContents.send('launch-startup-app', { appId, config });
+
+        // Small delay between launches to prevent overwhelming the system
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Failed to launch startup app ${appId}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error('Error launching startup apps:', error);
+  }
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -605,6 +657,9 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('save-file-dialog');
   ipcMain.removeAllListeners('launch-standalone-app');
   ipcMain.removeAllListeners('get-app-icon');
+  ipcMain.removeAllListeners('get-startup-apps');
+  ipcMain.removeAllListeners('set-startup-app');
+  ipcMain.removeAllListeners('remove-startup-app');
 
   console.log('Registering IPC handlers...');
 
@@ -620,7 +675,7 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle('load-app', async (event, id: string) => {
+  ipcMain.handle('load-app', async (_event, id: string) => {
     const apps = await loadApps();
     const appInstance = apps.find(v => v.id === id);
     if (!appInstance) {
@@ -640,16 +695,16 @@ function registerIpcHandlers() {
     return { bundleContent, config: appInstance };
   });
 
-  ipcMain.handle('get-mimetype', async (event, filePath: string) => {
+  ipcMain.handle('get-mimetype', async (_event, filePath: string) => {
     return await getMimetype(filePath);
   });
 
-  ipcMain.handle('read-file', async (event, filePath: string) => {
+  ipcMain.handle('read-file', async (_event, filePath: string) => {
     const content = fs.readFileSync(filePath);
     return content.toString('base64');
   });
 
-  ipcMain.handle('handle-file-drop', async (event, filePath: string) => {
+  ipcMain.handle('handle-file-drop', async (_event, filePath: string) => {
     const fileAnalysis = await analyzeFile(filePath);
 
     // For directories, don't try to read content as binary
@@ -708,7 +763,7 @@ function registerIpcHandlers() {
   });
 
   // Read directory contents for folder visualization
-  ipcMain.handle('read-directory', async (event, dirPath: string) => {
+  ipcMain.handle('read-directory', async (_event, dirPath: string) => {
     try {
       console.log('Reading directory:', dirPath);
 
@@ -763,7 +818,7 @@ function registerIpcHandlers() {
   });
 
   // New enhanced app matching endpoint
-  ipcMain.handle('find-matching-apps', async (event, filePath: string) => {
+  ipcMain.handle('find-matching-apps', async (_event, filePath: string) => {
     try {
       const apps = await loadApps();
       const fileAnalysis = await analyzeFile(filePath);
@@ -790,7 +845,7 @@ function registerIpcHandlers() {
   });
 
   // File writing and backup operations for apps
-  ipcMain.handle('write-file', async (event, filePath: string, content: string, encoding: 'utf8' | 'base64' = 'utf8') => {
+  ipcMain.handle('write-file', async (_event, filePath: string, content: string, encoding: 'utf8' | 'base64' = 'utf8') => {
     try {
       // Validate file path for security
       if (!filePath || filePath.includes('..')) {
@@ -812,7 +867,7 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle('backup-file', async (event, filePath: string) => {
+  ipcMain.handle('backup-file', async (_event, filePath: string) => {
     try {
       // Validate file path for security
       if (!filePath || filePath.includes('..')) {
@@ -835,7 +890,7 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle('save-file-dialog', async (event, options: {
+  ipcMain.handle('save-file-dialog', async (_event, options: {
     title?: string;
     defaultPath?: string;
     filters?: Array<{ name: string; extensions: string[] }>
@@ -861,7 +916,7 @@ function registerIpcHandlers() {
   });
 
   // Launch standalone app without file input
-  ipcMain.handle('launch-standalone-app', async (event, id: string) => {
+  ipcMain.handle('launch-standalone-app', async (_event, id: string) => {
     try {
       const apps = await loadApps();
       const appInstance = apps.find(v => v.id === id);
@@ -896,7 +951,7 @@ function registerIpcHandlers() {
   });
 
   // Load app icon from app directory
-  ipcMain.handle('get-app-icon', async (event, appId: string, iconPath: string) => {
+  ipcMain.handle('get-app-icon', async (_event, appId: string, iconPath: string) => {
     try {
       // Validate inputs for security
       if (!appId || !iconPath || iconPath.includes('..')) {
@@ -925,6 +980,48 @@ function registerIpcHandlers() {
       return { success: true, iconData };
     } catch (error) {
       console.error('Error loading app icon:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  // Startup app preferences management
+  ipcMain.handle('get-startup-apps', async () => {
+    try {
+      const prefs = loadPreferences();
+      return { success: true, startupApps: prefs.startupApps || {} };
+    } catch (error) {
+      console.error('Error getting startup apps:', error);
+      return { success: false, error: (error as Error).message, startupApps: {} };
+    }
+  });
+
+  ipcMain.handle('set-startup-app', async (_event, appId: string, config: StartupAppConfig) => {
+    try {
+      const prefs = loadPreferences();
+      if (!prefs.startupApps) {
+        prefs.startupApps = {};
+      }
+      prefs.startupApps[appId] = config;
+      savePreferences(prefs);
+      console.log(`Startup app config updated for ${appId}:`, config);
+      return { success: true };
+    } catch (error) {
+      console.error('Error setting startup app:', error);
+      return { success: false, error: (error as Error).message };
+    }
+  });
+
+  ipcMain.handle('remove-startup-app', async (_event, appId: string) => {
+    try {
+      const prefs = loadPreferences();
+      if (prefs.startupApps && prefs.startupApps[appId]) {
+        delete prefs.startupApps[appId];
+        savePreferences(prefs);
+        console.log(`Startup app config removed for ${appId}`);
+      }
+      return { success: true };
+    } catch (error) {
+      console.error('Error removing startup app:', error);
       return { success: false, error: (error as Error).message };
     }
   });

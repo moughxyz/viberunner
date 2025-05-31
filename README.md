@@ -1,6 +1,29 @@
-# ⚡ Viberunner - Advanced File Visualizer Platform
+# ⚡ Viberunner - Desktop Vibe App Manager
 
-Viberunner is a powerful Electron-based platform that allows developers to create custom visualizers for any type of file. With an advanced matching system that goes far beyond simple MIME types, you can create sophisticated file handlers that analyze content, file structure, and metadata to provide precise matching.
+Viberunner is a powerful runtime container for your vibe-coded apps. It allows you to manage and run several React-based utilities and apps on your desktop, with powerful matchers to select the right app based on the context.
+
+Viberunner is a single-player utility meant to be used by one person on their own computer. It's not a way to ship your React product to your users. Rather, it allows you to easily manage, organize, and create vibe-coded system utilities that can do just about anything, including:
+
+**Standalone utilities:**
+- Realtime clipboard watcher and history
+- Dotfile editor to edit your most common global dotfiles (.bashrc, .vimprofile, .zshrc, etc)
+- Mouse jiggler that moves your mouse every X seconds
+- Port sniffer that shows open ports and associated processes
+
+**Contextual apps:**
+- Image redactor: drag and drop an image and draw to redact certain areas
+- YouTube Thumbnail Preview: drag a thumbnail and preview how it would look on YouTube with ability to set title and channel name.
+- Package upgrader: drag and drop a package.json file and check which packages need upgrading, and upgrade them with one click.
+
+## How it works
+
+1. When you launch Viberunner, you'll be asked to choose a directory of where your apps are located.
+2. Viberunner apps are just regular React apps which have deep system access (Node, Python; anything a terminal can do, your Viberunner apps can do).
+3. You build a new Viberunner app using your LLM agent of choice (Cursor, for example), by feeding it this README file and instructing it to create a new "app" based on your requirements.
+4. Save your app in the apps directory you set in step 1, and launch Viberunner.
+5. You can now run your new app with one click!
+
+**Important:** Because Viberunner gives unrestricted system access to your apps (it's the only way to build a powerful utility), you should never run untrusted code. See the Security section at the end of this readme.
 
 ## 🎨 Key Features
 

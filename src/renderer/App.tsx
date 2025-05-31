@@ -21,6 +21,17 @@ const api = {
   // Icon loading for apps
   getAppIcon: (appId: string, iconPath: string) => ipcRenderer.invoke('get-app-icon', appId, iconPath),
 
+  // Startup app management
+  getStartupApps: () => ipcRenderer.invoke('get-startup-apps'),
+  setStartupApp: (appId: string, config: { enabled: boolean; tabOrder: number }) =>
+    ipcRenderer.invoke('set-startup-app', appId, config),
+  removeStartupApp: (appId: string) => ipcRenderer.invoke('remove-startup-app', appId),
+
+  // Listen for startup app launch events from main process
+  onLaunchStartupApp: (callback: (event: any, data: { appId: string; config: any }) => void) =>
+    ipcRenderer.on('launch-startup-app', callback),
+  removeStartupAppListeners: () => ipcRenderer.removeAllListeners('launch-startup-app'),
+
   // Direct file operations using Node.js - exposed to frames
   readFile: (filePath: string, encoding: 'utf8' | 'base64' = 'utf8') => {
     if (encoding === 'base64') {
@@ -399,13 +410,6 @@ interface OpenTab {
   domContainer?: HTMLDivElement; // Store the DOM container for each tab
 }
 
-interface FileData {
-  path: string;
-  mimetype: string;
-  content: string;
-  analysis?: FileAnalysis;
-}
-
 // Helper function to get supported formats for a frame
 const getSupportedFormats = (frame: any): string => {
   if (frame.standalone) {
@@ -450,12 +454,11 @@ const App: React.FC = () => {
     { id: 'default-tab', title: 'New Tab', type: 'newtab' }
   ]);
   const [activeTabId, setActiveTabId] = useState('default-tab');
-  const [selectedFileData, setSelectedFileData] = useState<any>(null);
-  const [matchingFrames, setMatchingFrames] = useState<Frame[]>([]);
   const [showFrameSelection, setShowFrameSelection] = useState(false);
   const [availableFrames, setAvailableFrames] = useState<Frame[]>([]);
   const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
   const [appIcons, setAppIcons] = useState<Record<string, string>>({});
+  const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
 
   const frameRootRef = useRef<HTMLDivElement>(null);
 
@@ -481,6 +484,63 @@ const App: React.FC = () => {
     return null;
   };
 
+  // Load startup app preferences
+  const loadStartupApps = async () => {
+    try {
+      const result = await api.getStartupApps();
+      if (result.success) {
+        setStartupApps(result.startupApps);
+      }
+    } catch (error) {
+      console.error('Error loading startup apps:', error);
+    }
+  };
+
+  // Toggle startup app enabled state
+  const toggleStartupApp = async (appId: string, enabled: boolean) => {
+    try {
+      const currentConfig = startupApps[appId] || { enabled: false, tabOrder: 1 };
+      const newConfig = { ...currentConfig, enabled };
+
+      if (enabled) {
+        // If enabling, set a default tab order if not already set
+        if (!currentConfig.tabOrder) {
+          const maxTabOrder = Math.max(0, ...Object.values(startupApps).map(app => app.tabOrder));
+          newConfig.tabOrder = maxTabOrder + 1;
+        }
+        const result = await api.setStartupApp(appId, newConfig);
+        if (result.success) {
+          setStartupApps(prev => ({ ...prev, [appId]: newConfig }));
+        }
+      } else {
+        await api.removeStartupApp(appId);
+        setStartupApps(prev => {
+          const updated = { ...prev };
+          delete updated[appId];
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error('Error toggling startup app:', error);
+    }
+  };
+
+  // Update tab order for startup app
+  const updateStartupAppTabOrder = async (appId: string, tabOrder: number) => {
+    try {
+      const currentConfig = startupApps[appId];
+      if (!currentConfig || !currentConfig.enabled) return;
+
+      const newConfig = { ...currentConfig, tabOrder };
+      const result = await api.setStartupApp(appId, newConfig);
+      if (result.success) {
+        setStartupApps(prev => ({ ...prev, [appId]: newConfig }));
+      }
+    } catch (error) {
+      console.error('Error updating startup app tab order:', error);
+    }
+  };
+
   // Load icons for all frames when frames change
   useEffect(() => {
     frames.forEach(frame => {
@@ -488,6 +548,28 @@ const App: React.FC = () => {
         loadAppIcon(frame);
       }
     });
+  }, [frames]);
+
+  // Load startup apps when component mounts and when frames change
+  useEffect(() => {
+    loadStartupApps();
+  }, [frames]);
+
+  // Handle startup app launch events from main process
+  useEffect(() => {
+    const handleStartupAppLaunch = (_event: any, data: { appId: string; config: any }) => {
+      console.log('Received startup app launch event:', data);
+      const frame = frames.find(f => f.id === data.appId);
+      if (frame && frame.standalone) {
+        launchStandaloneFrame(frame);
+      }
+    };
+
+    api.onLaunchStartupApp(handleStartupAppLaunch);
+
+    return () => {
+      api.removeStartupAppListeners();
+    };
   }, [frames]);
 
   // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
@@ -498,11 +580,6 @@ const App: React.FC = () => {
 
     // Return Viberunner SVG logo as fallback
     return getViberunnerLogoPath();
-  };
-
-  // Function to check if icon is custom (not the default Viberunner logo)
-  const isCustomIcon = (frame: Frame): boolean => {
-    return !!appIcons[frame.id];
   };
 
   // Function to get Viberunner logo as data URL
@@ -1409,26 +1486,62 @@ const App: React.FC = () => {
                               <span className="section-count">{frames.filter(f => f.standalone).length}</span>
                             </div>
                             <div className="utilities-grid">
-                              {frames.filter(f => f.standalone).map(frame => (
-                                <button
-                                  key={frame.id}
-                                  className="utility-card"
-                                  onClick={() => launchStandaloneFrame(frame)}
-                                >
-                                  <div className="utility-icon">
-                                    <img
-                                      src={getAppIcon(frame)}
-                                      alt={frame.name}
-                                      style={{ width: '24px', height: '24px', objectFit: 'contain' }}
-                                    />
+                              {frames.filter(f => f.standalone).map(frame => {
+                                const startupConfig = startupApps[frame.id];
+                                const isStartupEnabled = startupConfig?.enabled || false;
+                                const tabOrder = startupConfig?.tabOrder || 1;
+
+                                return (
+                                  <div key={frame.id} className="utility-card-container">
+                                    <div className="utility-card" onClick={() => launchStandaloneFrame(frame)}>
+                                      <div className="utility-icon">
+                                        <img
+                                          src={getAppIcon(frame)}
+                                          alt={frame.name}
+                                          style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+                                        />
+                                      </div>
+                                      <div className="utility-content">
+                                        <h5 className="utility-title">{frame.name}</h5>
+                                        <p className="utility-description">{frame.description}</p>
+                                      </div>
+                                      <div className="utility-action">Launch</div>
+                                    </div>
+
+                                    {/* Startup controls */}
+                                    <div className="startup-controls" onClick={(e) => e.stopPropagation()}>
+                                      <div className="startup-toggle">
+                                        <label className="toggle-label">
+                                          <input
+                                            type="checkbox"
+                                            checked={isStartupEnabled}
+                                            onChange={(e) => toggleStartupApp(frame.id, e.target.checked)}
+                                            className="toggle-checkbox"
+                                          />
+                                          <span className="toggle-slider"></span>
+                                          <span className="toggle-text">Start on launch</span>
+                                        </label>
+                                      </div>
+
+                                      {isStartupEnabled && (
+                                        <div className="tab-order-control">
+                                          <label className="tab-order-label">
+                                            Tab order:
+                                            <input
+                                              type="number"
+                                              min="1"
+                                              max="99"
+                                              value={tabOrder}
+                                              onChange={(e) => updateStartupAppTabOrder(frame.id, parseInt(e.target.value) || 1)}
+                                              className="tab-order-input"
+                                            />
+                                          </label>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="utility-content">
-                                    <h5 className="utility-title">{frame.name}</h5>
-                                    <p className="utility-description">{frame.description}</p>
-                                  </div>
-                                  <div className="utility-action">Launch</div>
-                                </button>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         </div>
