@@ -265,7 +265,6 @@ body {
 
 .content-area {
   flex: 1;
-  transition: all 0.2s ease; /* Smooth transition when sidebar appears/disappears */
   width: 100%;
 }
 
