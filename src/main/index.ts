@@ -516,7 +516,6 @@ const createWindow = (): void => {
     height: 1000,
     width: 1600,
     webPreferences: {
-      preload: path.join(__dirname, '../preload/index.js'),
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: true
@@ -538,49 +537,7 @@ const createWindow = (): void => {
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();
-
-  // Launch startup apps after the window is fully loaded
-  mainWindow.webContents.once('did-finish-load', () => {
-    setTimeout(() => launchStartupApps(mainWindow), 1000); // Small delay to ensure UI is ready
-  });
 };
-
-// Function to launch startup apps automatically
-async function launchStartupApps(mainWindow: BrowserWindow) {
-  try {
-    console.log('Checking for startup apps...');
-    const prefs = loadPreferences();
-    const startupApps = prefs.startupApps || {};
-
-    // Get apps that are enabled for startup
-    const enabledStartupApps = Object.entries(startupApps)
-      .filter(([_, config]) => config.enabled)
-      .sort(([, a], [, b]) => a.tabOrder - b.tabOrder); // Sort by tab order
-
-    if (enabledStartupApps.length === 0) {
-      console.log('No startup apps configured');
-      return;
-    }
-
-    console.log(`Launching ${enabledStartupApps.length} startup apps...`);
-
-    for (const [appId, config] of enabledStartupApps) {
-      try {
-        console.log(`Launching startup app: ${appId} (tab order: ${config.tabOrder})`);
-
-        // Send a message to the renderer to launch this app
-        mainWindow.webContents.send('launch-startup-app', { appId, config });
-
-        // Small delay between launches to prevent overwhelming the system
-        await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (error) {
-        console.error(`Failed to launch startup app ${appId}:`, error);
-      }
-    }
-  } catch (error) {
-    console.error('Error launching startup apps:', error);
-  }
-}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -657,9 +614,6 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('save-file-dialog');
   ipcMain.removeAllListeners('launch-standalone-app');
   ipcMain.removeAllListeners('get-app-icon');
-  ipcMain.removeAllListeners('get-startup-apps');
-  ipcMain.removeAllListeners('set-startup-app');
-  ipcMain.removeAllListeners('remove-startup-app');
 
   console.log('Registering IPC handlers...');
 
@@ -912,117 +866,6 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error('Error showing save dialog:', error);
       return { success: false, error: (error as Error).message, canceled: true };
-    }
-  });
-
-  // Launch standalone app without file input
-  ipcMain.handle('launch-standalone-app', async (_event, id: string) => {
-    try {
-      const apps = await loadApps();
-      const appInstance = apps.find(v => v.id === id);
-
-      if (!appInstance) {
-        throw new Error(`App ${id} not found`);
-      }
-
-      if (!appInstance.standalone) {
-        throw new Error(`App ${id} is not configured for standalone use`);
-      }
-
-      // Use the selected directory directly
-      const APPS_DIR = selectedAppsDir || path.join(app.getPath('userData'), 'apps');
-      const appDir = path.join(APPS_DIR, appInstance.id);
-      const bundlePath = path.join(appDir, 'dist', 'bundle.iife.js');
-
-      if (!fs.existsSync(bundlePath)) {
-        throw new Error(`Bundle not found: ${bundlePath}`);
-      }
-
-      const bundleContent = fs.readFileSync(bundlePath, 'utf-8');
-      return {
-        bundleContent,
-        config: appInstance,
-        standalone: true
-      };
-    } catch (error) {
-      console.error('Error launching standalone app:', error);
-      throw error;
-    }
-  });
-
-  // Load app icon from app directory
-  ipcMain.handle('get-app-icon', async (_event, appId: string, iconPath: string) => {
-    try {
-      // Validate inputs for security
-      if (!appId || !iconPath || iconPath.includes('..')) {
-        throw new Error('Invalid app ID or icon path');
-      }
-
-      const APPS_DIR = selectedAppsDir || path.join(app.getPath('userData'), 'apps');
-      const appDir = path.join(APPS_DIR, appId);
-      const fullIconPath = path.join(appDir, iconPath);
-
-      // Ensure the icon path is within the app directory
-      if (!fullIconPath.startsWith(appDir)) {
-        throw new Error('Icon path must be within app directory');
-      }
-
-      if (!fs.existsSync(fullIconPath)) {
-        throw new Error(`Icon file not found: ${iconPath}`);
-      }
-
-      // Read the icon file as base64
-      const iconBuffer = fs.readFileSync(fullIconPath);
-      const mimeType = mime.lookup(fullIconPath) || 'application/octet-stream';
-      const iconData = `data:${mimeType};base64,${iconBuffer.toString('base64')}`;
-
-      console.log(`Icon loaded successfully for app ${appId}: ${iconPath}`);
-      return { success: true, iconData };
-    } catch (error) {
-      console.error('Error loading app icon:', error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  // Startup app preferences management
-  ipcMain.handle('get-startup-apps', async () => {
-    try {
-      const prefs = loadPreferences();
-      return { success: true, startupApps: prefs.startupApps || {} };
-    } catch (error) {
-      console.error('Error getting startup apps:', error);
-      return { success: false, error: (error as Error).message, startupApps: {} };
-    }
-  });
-
-  ipcMain.handle('set-startup-app', async (_event, appId: string, config: StartupAppConfig) => {
-    try {
-      const prefs = loadPreferences();
-      if (!prefs.startupApps) {
-        prefs.startupApps = {};
-      }
-      prefs.startupApps[appId] = config;
-      savePreferences(prefs);
-      console.log(`Startup app config updated for ${appId}:`, config);
-      return { success: true };
-    } catch (error) {
-      console.error('Error setting startup app:', error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  ipcMain.handle('remove-startup-app', async (_event, appId: string) => {
-    try {
-      const prefs = loadPreferences();
-      if (prefs.startupApps && prefs.startupApps[appId]) {
-        delete prefs.startupApps[appId];
-        savePreferences(prefs);
-        console.log(`Startup app config removed for ${appId}`);
-      }
-      return { success: true };
-    } catch (error) {
-      console.error('Error removing startup app:', error);
-      return { success: false, error: (error as Error).message };
     }
   });
 

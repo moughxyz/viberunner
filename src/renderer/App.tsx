@@ -12,26 +12,8 @@ const { app } = require('@electron/remote') || require('electron').remote?.app;
 (window as any).React = React;
 (window as any).ReactDOM = { createRoot };
 
-// Simplified API - only keep IPC for dialogs
+// Simplified API - only direct operations, no IPC
 const api = {
-  // Dialog operations that need main process
-  changeFramesDirectory: () => ipcRenderer.invoke('change-frames-directory'),
-  saveFileDialog: (options?: any) => ipcRenderer.invoke('save-file-dialog', options),
-
-  // Icon loading for apps
-  getAppIcon: (appId: string, iconPath: string) => ipcRenderer.invoke('get-app-icon', appId, iconPath),
-
-  // Startup app management
-  getStartupApps: () => ipcRenderer.invoke('get-startup-apps'),
-  setStartupApp: (appId: string, config: { enabled: boolean; tabOrder: number }) =>
-    ipcRenderer.invoke('set-startup-app', appId, config),
-  removeStartupApp: (appId: string) => ipcRenderer.invoke('remove-startup-app', appId),
-
-  // Listen for startup app launch events from main process
-  onLaunchStartupApp: (callback: (event: any, data: { appId: string; config: any }) => void) =>
-    ipcRenderer.on('launch-startup-app', callback),
-  removeStartupAppListeners: () => ipcRenderer.removeAllListeners('launch-startup-app'),
-
   // Direct file operations using Node.js - exposed to frames
   readFile: (filePath: string, encoding: 'utf8' | 'base64' = 'utf8') => {
     if (encoding === 'base64') {
@@ -472,11 +454,26 @@ const App: React.FC = () => {
     }
 
     try {
-      const result = await api.getAppIcon(frame.id, frame.icon);
-      if (result.success && result.iconData) {
-        setAppIcons(prev => ({ ...prev, [frame.id]: result.iconData! }));
-        return result.iconData;
+      const FRAMES_DIR = getFramesDirectory();
+      const appDir = path.join(FRAMES_DIR, frame.id);
+      const fullIconPath = path.join(appDir, frame.icon);
+
+      // Ensure the icon path is within the app directory
+      if (!fullIconPath.startsWith(appDir)) {
+        throw new Error('Icon path must be within app directory');
       }
+
+      if (!fs.existsSync(fullIconPath)) {
+        throw new Error(`Icon file not found: ${frame.icon}`);
+      }
+
+      // Read the icon file as base64
+      const iconBuffer = fs.readFileSync(fullIconPath);
+      const mimeType = mime.lookup(fullIconPath) || 'application/octet-stream';
+      const iconData = `data:${mimeType};base64,${iconBuffer.toString('base64')}`;
+
+      setAppIcons(prev => ({ ...prev, [frame.id]: iconData }));
+      return iconData;
     } catch (error) {
       console.error(`Failed to load icon for ${frame.name}:`, error);
     }
@@ -579,6 +576,30 @@ const App: React.FC = () => {
     loadStartupApps();
   }, [frames]);
 
+  // Auto-launch startup apps when frames are loaded
+  useEffect(() => {
+    if (frames.length > 0 && Object.keys(startupApps).length > 0) {
+      const enabledStartupApps = Object.entries(startupApps)
+        .filter(([_, config]) => config.enabled)
+        .sort(([, a], [, b]) => a.tabOrder - b.tabOrder);
+
+      if (enabledStartupApps.length > 0) {
+        console.log(`Auto-launching ${enabledStartupApps.length} startup apps...`);
+
+        // Launch each app with a small delay
+        enabledStartupApps.forEach(([appId, config], index) => {
+          setTimeout(() => {
+            const frame = frames.find(f => f.id === appId);
+            if (frame && frame.standalone) {
+              console.log(`Auto-launching startup app: ${appId} (tab order: ${config.tabOrder})`);
+              launchStandaloneFrame(frame);
+            }
+          }, index * 500); // 500ms delay between each app
+        });
+      }
+    }
+  }, [frames, startupApps]);
+
   // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
   const getAppIcon = (frame: Frame): string => {
     if (appIcons[frame.id]) {
@@ -655,7 +676,7 @@ const App: React.FC = () => {
 
   const handleChangeFramesDirectory = async () => {
     try {
-      const result = await api.changeFramesDirectory();
+      const result = await ipcRenderer.invoke('change-frames-directory');
       if (result.success && result.directory) {
         setFramesDirectory(result.directory);
         await reloadFrames();
