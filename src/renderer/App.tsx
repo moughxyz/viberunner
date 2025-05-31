@@ -292,6 +292,7 @@ const App: React.FC = () => {
   const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
   const [framesDirectory, setFramesDirectory] = useState<string>('');
   const [isLoadingFrames, setIsLoadingFrames] = useState(false);
+  const [showFileFrames, setShowFileFrames] = useState(false); // Collapsed by default
   const frameRootRef = useRef<HTMLDivElement>(null);
 
   // Imperative tab management - outside React state
@@ -1000,39 +1001,49 @@ const App: React.FC = () => {
                       </div>
                     )}
 
-                    {/* File-based frames section */}
+                    {/* File-based frames section - collapsible */}
                     {frames.filter(f => !f.standalone).length > 0 && (
                       <div className="frames-section">
                         <div className="section-card">
                           <div className="section-header">
-                            <h4 className="section-title">
-                              <span className="section-icon">🎨</span>
-                              File Frames
-                            </h4>
-                            <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
+                            <button
+                              className="section-header-button"
+                              onClick={() => setShowFileFrames(!showFileFrames)}
+                            >
+                              <h4 className="section-title">
+                                <span className="section-icon">🎨</span>
+                                File Frames
+                              </h4>
+                              <div className="section-meta">
+                                <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
+                                <span className="section-toggle">{showFileFrames ? '▼' : '▶'}</span>
+                              </div>
+                            </button>
                           </div>
-                          {isLoadingFrames ? (
-                            <div className="loading-state">
-                              <span className="loading-spinner">⟳</span>
-                              Loading frames...
-                            </div>
-                          ) : (
-                            <div className="frames-grid">
-                              {frames.filter(f => !f.standalone).map(frame => (
-                                <div key={frame.id} className="frame-info-card">
-                                  <div className="frame-info-header">
-                                    <h5 className="frame-info-title">{frame.name}</h5>
-                                    <div className="frame-info-status">
-                                      <span className="status-dot"></span>
+                          {showFileFrames && (
+                            isLoadingFrames ? (
+                              <div className="loading-state">
+                                <span className="loading-spinner">⟳</span>
+                                Loading frames...
+                              </div>
+                            ) : (
+                              <div className="frames-grid">
+                                {frames.filter(f => !f.standalone).map(frame => (
+                                  <div key={frame.id} className="frame-info-card">
+                                    <div className="frame-info-header">
+                                      <h5 className="frame-info-title">{frame.name}</h5>
+                                      <div className="frame-info-status">
+                                        <span className="status-dot"></span>
+                                      </div>
+                                    </div>
+                                    <p className="frame-info-description">{frame.description}</p>
+                                    <div className="frame-info-formats">
+                                      {getSupportedFormats(frame)}
                                     </div>
                                   </div>
-                                  <p className="frame-info-description">{frame.description}</p>
-                                  <div className="frame-info-formats">
-                                    {getSupportedFormats(frame)}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
+                                ))}
+                              </div>
+                            )
                           )}
                         </div>
                       </div>
