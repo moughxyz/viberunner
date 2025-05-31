@@ -361,7 +361,7 @@ const App: React.FC = () => {
     }
 
     // Return Viberunner SVG logo as fallback
-    return getViberunnerSvg();
+    return getViberunnerLogoPath();
   };
 
   // Function to check if icon is custom (not the default Viberunner logo)
@@ -369,12 +369,31 @@ const App: React.FC = () => {
     return !!appIcons[frame.id];
   };
 
-  // Generate Viberunner SVG logo as data URL
-  const getViberunnerSvg = (size: number = 24): string => {
-    const svg = `<svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-      <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>`;
-    return `data:image/svg+xml;base64,${btoa(svg)}`;
+  // Function to get Viberunner logo as data URL
+  const getViberunnerLogoPath = (): string => {
+    try {
+      // Load SVG file and convert to data URL
+      const svgPath = path.resolve(__dirname, '../assets/viberunner-logo.svg');
+      if (fs.existsSync(svgPath)) {
+        const svgContent = fs.readFileSync(svgPath, 'utf8');
+        return `data:image/svg+xml;base64,${btoa(svgContent)}`;
+      } else {
+        // Try alternative path
+        const altPath = path.resolve(process.cwd(), 'src/assets/viberunner-logo.svg');
+        if (fs.existsSync(altPath)) {
+          const svgContent = fs.readFileSync(altPath, 'utf8');
+          return `data:image/svg+xml;base64,${btoa(svgContent)}`;
+        }
+        throw new Error('SVG file not found');
+      }
+    } catch (error) {
+      console.warn('Failed to load Viberunner logo SVG, using fallback:', error);
+      // Fallback to inline SVG if file loading fails
+      const svg = `<svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="white" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>`;
+      return `data:image/svg+xml;base64,${btoa(svg)}`;
+    }
   };
 
   // Imperative tab management - outside React state
@@ -1040,7 +1059,7 @@ const App: React.FC = () => {
                       />
                     ) : (
                       <img
-                        src={getViberunnerSvg(16)}
+                        src={getViberunnerLogoPath()}
                         alt="Default"
                         style={{ width: '16px', height: '16px', objectFit: 'contain' }}
                       />
@@ -1080,7 +1099,7 @@ const App: React.FC = () => {
           <h1 className="vf-app-title">
             <div className="vf-app-icon">
               <img
-                src={getViberunnerSvg()}
+                src={getViberunnerLogoPath()}
                 alt="Viberunner Logo"
                 style={{ width: '24px', height: '24px', objectFit: 'contain' }}
               />
