@@ -619,6 +619,19 @@ const App: React.FC = () => {
             }
           }, index * 500); // 500ms delay between each app
         });
+
+        // After all startup apps are launched, switch to the "New Tab"
+        const switchToNewTabDelay = enabledStartupApps.length * 500 + 300; // Extra 300ms buffer
+        setTimeout(() => {
+          console.log('Switching to New Tab after startup apps launch');
+          setOpenTabs(prev => {
+            const newTab = prev.find(tab => tab.type === 'newtab');
+            if (newTab) {
+              switchToTab(newTab.id);
+            }
+            return prev;
+          });
+        }, switchToNewTabDelay);
       }
       hasLaunchedStartupApps.current = true;
     }
