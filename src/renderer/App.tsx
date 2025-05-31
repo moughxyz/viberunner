@@ -448,7 +448,94 @@ const App: React.FC = () => {
     return new Promise((resolve) => {
       // Create script and load frame
       const script = document.createElement('script');
-      script.textContent = tab.frameData.bundleContent;
+
+      // AUTO-SCOPE CSS: Process the frame bundle to automatically scope CSS
+      let processedBundleContent = tab.frameData.bundleContent;
+
+      // Pattern to match CSS strings in the bundle (CSS-in-JS or template literals)
+      const cssPatterns = [
+        // CSS template literals or strings that start with selectors
+        /(`|"|')([^`"']*(?:\*\s*\{|\.[\w-]+\s*\{|#[\w-]+\s*\{|[a-zA-Z][a-zA-Z0-9]*\s*\{)[^`"']*)\1/g,
+        // Inline style objects that might contain CSS
+        /style\s*:\s*`([^`]*(?:\{[^}]*\}[^`]*)*)`/g,
+        // CSS strings in createGlobalStyle or similar
+        /createGlobalStyle`([^`]*)`/g
+      ];
+
+      cssPatterns.forEach(pattern => {
+        processedBundleContent = processedBundleContent.replace(pattern, (match: string, quote: string, cssContent: string) => {
+          if (!cssContent) return match;
+
+          // Don't process if already scoped to .tab-frame-container
+          if (cssContent.includes('.tab-frame-container') || cssContent.includes(`[data-frame-id="${tab.id}"]`)) {
+            return match;
+          }
+
+          // Auto-scope CSS selectors
+          const scopedCSS = cssContent
+            // Scope universal selector
+            .replace(/^\s*\*\s*\{/gm, `[data-frame-id="${tab.id}"] * {`)
+            // Scope element selectors
+            .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+            // Scope class selectors
+            .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+            // Scope ID selectors
+            .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+            // Scope descendant selectors
+            .replace(/^(\s*)([.#]?[\w-]+(?:\s+[.#]?[\w-]+)*)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+            // Handle @media queries by scoping the content inside
+            .replace(/@media[^{]+\{([^{}]*(?:\{[^}]*\}[^{}]*)*)\}/g, (mediaMatch: string, mediaContent: string) => {
+              const scopedMediaContent = mediaContent
+                .replace(/^\s*\*\s*\{/gm, `[data-frame-id="${tab.id}"] * {`)
+                .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+                .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+                .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`);
+              return mediaMatch.replace(mediaContent, scopedMediaContent);
+            });
+
+          return quote ? `${quote}${scopedCSS}${quote}` : scopedCSS;
+        });
+      });
+
+      // Also intercept any dynamic style injection
+      const frameStyleInterceptor = `
+        // Intercept style injection for frame isolation
+        (function() {
+          const originalCreateElement = document.createElement;
+          const frameId = "${tab.id}";
+
+          document.createElement = function(tagName) {
+            const element = originalCreateElement.call(this, tagName);
+
+            if (tagName.toLowerCase() === 'style') {
+              // Mark style elements created by this frame
+              element.setAttribute('data-frame-style', frameId);
+
+              // Override textContent to auto-scope CSS
+              const originalTextContentSetter = Object.getOwnPropertyDescriptor(Element.prototype, 'textContent').set;
+              Object.defineProperty(element, 'textContent', {
+                set: function(value) {
+                  if (value && typeof value === 'string') {
+                    // Auto-scope the CSS
+                    const scopedCSS = value
+                      .replace(/^\\s*\\*\\s*\\{/gm, \`[data-frame-id="\${frameId}"] * {\`)
+                      .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
+                      .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
+                      .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`);
+                    originalTextContentSetter.call(this, scopedCSS);
+                  } else {
+                    originalTextContentSetter.call(this, value);
+                  }
+                }
+              });
+            }
+
+            return element;
+          };
+        })();
+      `;
+
+      script.textContent = frameStyleInterceptor + '\n' + processedBundleContent;
 
       const frameLoader = (FrameComponent: any) => {
         console.log('Frame loader called for tab:', tab.id);
@@ -479,26 +566,66 @@ const App: React.FC = () => {
           container.style.isolation = 'isolate';
           container.style.zIndex = '1';
 
-          // Create a style element to override frame CSS within this container
+          // Create a style element for frame-specific overrides
           const frameStyleOverride = document.createElement('style');
+          frameStyleOverride.setAttribute('data-frame-style-override', tab.id);
           frameStyleOverride.textContent = `
-            /* Scope all frame styles to this container only */
-            .tab-frame-container [data-frame-id="${tab.id}"] * {
+            /* Auto-generated frame isolation for ${tab.frame?.name || 'Unknown'} */
+            [data-frame-id="${tab.id}"] {
+              position: relative !important;
+              width: 100% !important;
+              height: 100% !important;
+              max-width: 100% !important;
+              max-height: 100% !important;
+              overflow: auto !important;
+              contain: layout style size !important;
+              isolation: isolate !important;
+            }
+
+            /* Prevent global CSS pollution from frame */
+            [data-frame-id="${tab.id}"] * {
               position: relative !important;
               max-width: 100% !important;
               max-height: 100% !important;
             }
 
-            .tab-frame-container [data-frame-id="${tab.id}"] .dotfile-editor {
+            /* Override viewport units within frame */
+            [data-frame-id="${tab.id}"] [style*="100vh"],
+            [data-frame-id="${tab.id}"] [style*="100VH"] {
               height: 100% !important;
+            }
+
+            [data-frame-id="${tab.id}"] [style*="100vw"],
+            [data-frame-id="${tab.id}"] [style*="100VW"] {
               width: 100% !important;
+            }
+
+            /* Prevent fixed positioning */
+            [data-frame-id="${tab.id}"] [style*="position: fixed"],
+            [data-frame-id="${tab.id}"] [style*="position:fixed"] {
               position: relative !important;
+            }
+
+            /* Ensure common frame root classes are contained */
+            [data-frame-id="${tab.id}"] .dotfile-editor,
+            [data-frame-id="${tab.id}"] [class*="App"],
+            [data-frame-id="${tab.id}"] [class*="app"],
+            [data-frame-id="${tab.id}"] [class*="main"],
+            [data-frame-id="${tab.id}"] [class*="container"],
+            [data-frame-id="${tab.id}"] [class*="wrapper"],
+            [data-frame-id="${tab.id}"] [class*="root"] {
+              position: relative !important;
+              width: 100% !important;
+              height: 100% !important;
+              max-width: 100% !important;
+              max-height: 100% !important;
               overflow: auto !important;
+              box-sizing: border-box !important;
             }
           `;
           document.head.appendChild(frameStyleOverride);
 
-          // Add frame identifier
+          // Add frame identifier for CSS scoping
           isolationWrapper.setAttribute('data-frame-id', tab.id);
 
           reactRoot.render(React.createElement(FrameComponent, props));
@@ -523,11 +650,21 @@ const App: React.FC = () => {
 
       document.head.appendChild(script);
 
-      // Cleanup script after execution
+      // Cleanup script after execution and clean up any frame-injected styles
       setTimeout(() => {
         if (document.head.contains(script)) {
           document.head.removeChild(script);
         }
+
+        // Clean up any style elements created by the frame that weren't scoped
+        const frameStyles = document.querySelectorAll(`style[data-frame-style="${tab.id}"]`);
+        frameStyles.forEach(style => {
+          if (!style.textContent?.includes(`[data-frame-id="${tab.id}"]`)) {
+            console.warn('Removing unscoped frame style element');
+            style.remove();
+          }
+        });
+
         delete (window as any).__LOAD_FRAME__;
         delete (window as any).__LOAD_VISUALIZER__;
 
