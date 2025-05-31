@@ -440,7 +440,7 @@ body {
 .utilities-grid {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-3);
 }
 
 .utility-card {
