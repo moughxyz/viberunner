@@ -108,8 +108,11 @@ class PermissionManager {
     // Check if already granted
     if (await this.checkAccessSilent(path)) return true;
 
+    // Get the main window to use as parent for the dialog
+    const mainWindow = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+
     // Show permission dialog
-    const result = await dialog.showOpenDialog({
+    const result = await dialog.showOpenDialog(mainWindow, {
       title: 'Directory Access Required',
       message: `${reason}\n\nPlease select the directory to grant access:`,
       buttonLabel: 'Grant Access',
@@ -158,8 +161,11 @@ class PermissionManager {
       return;
     }
 
+    // Get the main window to use as parent for the dialog
+    const mainWindow = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+
     // Show a single dialog explaining what we need
-    const result = await dialog.showMessageBox({
+    const result = await dialog.showMessageBox(mainWindow, {
       type: 'info',
       title: 'File System Access',
       message: 'Viberunner apps may need to read and write files',
@@ -558,7 +564,10 @@ async function loadApps(): Promise<AppConfig[]> {
 
 // Function to show app directory selection dialog
 async function selectAppsDirectory(): Promise<string | null> {
-  const result = await dialog.showOpenDialog({
+  // Get the main window to use as parent for the dialog
+  const mainWindow = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+
+  const result = await dialog.showOpenDialog(mainWindow, {
     title: 'Select Apps Directory',
     message: 'Choose the folder containing your apps',
     buttonLabel: 'Select Folder',

@@ -770,7 +770,6 @@ const App: React.FC = () => {
       if (result.success && result.directory) {
         setFramesDirectory(result.directory);
         await reloadFrames();
-        alert(`Apps directory changed to: ${result.directory}`);
       }
     } catch (error) {
       console.error('Error changing frames directory:', error);
