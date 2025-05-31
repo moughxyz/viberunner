@@ -448,6 +448,10 @@ const App: React.FC = () => {
   // Get the currently active tab
   const activeTab = openTabs.find(tab => tab.id === activeTabId);
 
+  // Tab drag and drop state
+  const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
+  const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
+
   // Function to load app icon
   const loadAppIcon = async (frame: Frame): Promise<string | null> => {
     if (!frame.icon) return null;
@@ -1188,6 +1192,63 @@ const App: React.FC = () => {
     switchToTab(tabId);
   };
 
+  // Tab drag and drop handlers
+  const handleTabDragStart = (e: React.DragEvent, tabId: string) => {
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', tabId);
+    setDraggedTabId(tabId);
+  };
+
+  const handleTabDragEnd = () => {
+    setDraggedTabId(null);
+    setDragOverTabId(null);
+  };
+
+  const handleTabDragOver = (e: React.DragEvent, tabId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    if (draggedTabId && draggedTabId !== tabId) {
+      setDragOverTabId(tabId);
+    }
+  };
+
+  const handleTabDragLeave = (e: React.DragEvent, _tabId: string) => {
+    // Only clear if we're actually leaving this tab (not entering a child element)
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverTabId(null);
+    }
+  };
+
+  const handleTabDrop = (e: React.DragEvent, dropTargetTabId: string) => {
+    e.preventDefault();
+
+    const draggedId = e.dataTransfer.getData('text/plain');
+    if (!draggedId || draggedId === dropTargetTabId) {
+      return;
+    }
+
+    // Reorder tabs
+    setOpenTabs(prev => {
+      const newTabs = [...prev];
+      const draggedIndex = newTabs.findIndex(tab => tab.id === draggedId);
+      const targetIndex = newTabs.findIndex(tab => tab.id === dropTargetTabId);
+
+      if (draggedIndex === -1 || targetIndex === -1) {
+        return prev;
+      }
+
+      // Remove dragged tab and insert at target position
+      const [draggedTab] = newTabs.splice(draggedIndex, 1);
+      newTabs.splice(targetIndex, 0, draggedTab);
+
+      return newTabs;
+    });
+
+    setDraggedTabId(null);
+    setDragOverTabId(null);
+  };
+
   const selectFrame = async (frame: Frame) => {
     if (pendingFileInput) {
       await openFrameInNewTab(frame, pendingFileInput);
@@ -1389,8 +1450,18 @@ const App: React.FC = () => {
               {openTabs.map(tab => (
                 <div
                   key={tab.id}
-                  className={`vf-tab ${tab.id === activeTabId ? 'vf-tab-active' : ''}`}
+                  className={`vf-tab ${tab.id === activeTabId ? 'vf-tab-active' : ''} ${
+                    draggedTabId === tab.id ? 'vf-tab-dragging' : ''
+                  } ${
+                    dragOverTabId === tab.id ? 'vf-tab-drop-target' : ''
+                  }`}
                   onClick={() => handleTabSwitch(tab.id)}
+                  draggable={true}
+                  onDragStart={(e) => handleTabDragStart(e, tab.id)}
+                  onDragEnd={handleTabDragEnd}
+                  onDragOver={(e) => handleTabDragOver(e, tab.id)}
+                  onDragLeave={(e) => handleTabDragLeave(e, tab.id)}
+                  onDrop={(e) => handleTabDrop(e, tab.id)}
                 >
                   <div className="vf-tab-icon">
                     {tab.type === 'newtab' ? (
@@ -1423,6 +1494,13 @@ const App: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         closeTab(tab.id);
+                      }}
+                      onMouseDown={(e) => {
+                        e.stopPropagation();
+                      }}
+                      onDragStart={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                       }}
                       title="Close tab"
                     >
