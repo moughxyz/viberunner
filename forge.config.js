@@ -4,7 +4,7 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     name: 'Viberunner',
-    executableName: 'Viberunner',
+    executableName: 'viberunner',
     appBundleId: 'com.viberunner.app',
     appCategoryType: 'public.app-category.productivity',
     icon: './assets/icon', // Electron-forge will auto-select .ico/.icns/.png based on platform
@@ -55,7 +55,9 @@ module.exports = {
       config: {
         options: {
           maintainer: 'Viberunner Team',
-          homepage: 'https://github.com/yourusername/viberunner'
+          homepage: 'https://github.com/yourusername/viberunner',
+          name: 'viberunner',
+          bin: 'viberunner'
         }
       },
     },
@@ -64,7 +66,9 @@ module.exports = {
       config: {
         options: {
           maintainer: 'Viberunner Team',
-          homepage: 'https://github.com/yourusername/viberunner'
+          homepage: 'https://github.com/yourusername/viberunner',
+          name: 'viberunner',
+          bin: 'viberunner'
         }
       },
     },
