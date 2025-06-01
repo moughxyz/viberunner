@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: windows-latest
+            platform: win32
+            arch: x64
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build renderer
+      run: npm run build
+
+    - name: Make distributables
+      run: npm run make
+
+    - name: List build artifacts
+      shell: bash
+      run: |
+        echo "Build artifacts in out/make:"
+        find ./out/make -type f -name "*.zip" -o -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" | sort
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: viberunner-${{ matrix.platform }}-${{ matrix.arch }}
+        path: |
+          out/make/**/*
+        retention-days: 30
+
+  create-release:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Display structure of downloaded files
+      run: |
+        echo "Downloaded artifacts:"
+        ls -la artifacts/
+        find artifacts/ -type f -name "*.zip" -o -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" | sort
+
+    - name: Create Release and Upload Assets
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Viberunner ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          ## Viberunner ${{ github.ref_name }}
+
+          🎉 **New Release Available!**
+
+          This release includes builds for all major platforms:
+
+          ### 📥 Download Instructions
+
+          - **🍎 macOS**: Download the `.dmg` file for easy installation, or the `.zip` for portable use
+          - **🪟 Windows**: Download the Setup `.exe` file for installation
+          - **🐧 Linux**: Choose from `.deb` (Ubuntu/Debian), `.rpm` (RHEL/Fedora), or `.zip` for portable use
+
+          ### 🔧 Installation Notes
+
+          - **macOS**: You may need to allow the app in System Preferences > Security & Privacy
+          - **Windows**: The app is not signed, so Windows Defender may show a warning
+          - **Linux**: Install the package using your package manager or extract the zip file
+
+          ---
+
+          **Full Changelog**: [${{ github.event.before }}...${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }})
+        files: |
+          artifacts/**/*.dmg
+          artifacts/**/*.zip
+          artifacts/**/*.exe
+          artifacts/**/*.deb
+          artifacts/**/*.rpm
+          artifacts/**/*.AppImage
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
