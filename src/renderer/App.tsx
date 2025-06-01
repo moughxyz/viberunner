@@ -46,8 +46,8 @@ const api = {
   getAppPreferences: (appId: string) => {
     try {
       const APPS_DIR = getAppsDirectory();
-      const framePath = path.join(APPS_DIR, appId);
-      const metadataPath = path.join(framePath, 'viz.json');
+      const appPath = path.join(APPS_DIR, appId);
+      const metadataPath = path.join(appPath, 'viz.json');
 
       if (!fs.existsSync(metadataPath)) {
         console.warn(`No viz.json found for app ${appId}`);
@@ -67,8 +67,8 @@ const api = {
   setAppPreferences: (appId: string, preferences: any) => {
     try {
       const APPS_DIR = getAppsDirectory();
-      const framePath = path.join(APPS_DIR, appId);
-      const metadataPath = path.join(framePath, 'viz.json');
+      const appPath = path.join(APPS_DIR, appId);
+      const metadataPath = path.join(appPath, 'viz.json');
 
       if (!fs.existsSync(metadataPath)) {
         throw new Error(`No viz.json found for app ${appId}`);
@@ -187,29 +187,29 @@ const api = {
 };
 
 // App cleanup system
-const frameCleanupCallbacks = new Map<string, (() => void)[]>();
+const appCleanupCallbacks = new Map<string, (() => void)[]>();
 
 // Global cleanup registration function for apps
 const registerCleanup = (tabId: string, cleanupFn: () => void) => {
-  if (!frameCleanupCallbacks.has(tabId)) {
-    frameCleanupCallbacks.set(tabId, []);
+  if (!appCleanupCallbacks.has(tabId)) {
+    appCleanupCallbacks.set(tabId, []);
   }
-  frameCleanupCallbacks.get(tabId)!.push(cleanupFn);
+  appCleanupCallbacks.get(tabId)!.push(cleanupFn);
 };
 
 // Global cleanup execution function
 const executeCleanup = (tabId: string) => {
-  const callbacks = frameCleanupCallbacks.get(tabId);
+  const callbacks = appCleanupCallbacks.get(tabId);
   if (callbacks) {
     console.log(`Executing ${callbacks.length} cleanup callbacks for tab ${tabId}`);
     callbacks.forEach(callback => {
       try {
         callback();
       } catch (error) {
-        console.error('Error in frame cleanup callback:', error);
+        console.error('Error in app cleanup callback:', error);
       }
     });
-    frameCleanupCallbacks.delete(tabId);
+    appCleanupCallbacks.delete(tabId);
   }
 };
 
@@ -309,8 +309,8 @@ async function loadApps(): Promise<App[]> {
     console.log('loadApps: Found directories:', directories);
 
     const apps = directories.map((dir: string) => {
-      const framePath = path.join(APPS_DIR, dir);
-      const metadataPath = path.join(framePath, 'viz.json');
+      const appPath = path.join(APPS_DIR, dir);
+      const metadataPath = path.join(appPath, 'viz.json');
       console.log(`loadApps: Checking for metadata at: ${metadataPath}`);
 
       if (!fs.existsSync(metadataPath)) {
@@ -343,8 +343,8 @@ async function loadApps(): Promise<App[]> {
 
 async function loadApp(id: string) {
   const APPS_DIR = getAppsDirectory();
-  const framePath = path.join(APPS_DIR, id);
-  const bundlePath = path.join(framePath, 'dist', 'bundle.iife.js');
+  const appPath = path.join(APPS_DIR, id);
+  const bundlePath = path.join(appPath, 'dist', 'bundle.iife.js');
 
   if (!fs.existsSync(bundlePath)) {
     throw new Error(`Bundle not found: ${bundlePath}`);
@@ -353,7 +353,7 @@ async function loadApp(id: string) {
   const bundleContent = fs.readFileSync(bundlePath, 'utf-8');
 
   // Also load the metadata
-  const metadataPath = path.join(framePath, 'viz.json');
+  const metadataPath = path.join(appPath, 'viz.json');
   let config = null;
   if (fs.existsSync(metadataPath)) {
     const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
@@ -383,29 +383,29 @@ interface App {
 
 interface OpenTab {
   id: string;
-  frame?: App; // Optional for new tab - represents the app/visualization
+  app?: App; // Optional for new tab - represents the app/visualization
   fileInput?: FileInput; // undefined for standalone apps and new tab
   title: string;
   type: 'file' | 'standalone' | 'newtab';
-  frameData?: any; // Store the loaded app data for reloading
+  appData?: any; // Store the loaded app data for reloading
   reactRoot?: any; // Store the React root for each tab
   domContainer?: HTMLDivElement; // Store the DOM container for each tab
 }
 
-// Helper function to get supported formats for a frame
-const getSupportedFormats = (frame: any): string => {
-  if (frame.standalone) {
+// Helper function to get supported formats for a app
+const getSupportedFormats = (app: any): string => {
+  if (app.standalone) {
     return 'Standalone utility';
   }
 
-  if (frame.mimetypes && frame.mimetypes.length > 0) {
-    return frame.mimetypes.join(', ');
+  if (app.mimetypes && app.mimetypes.length > 0) {
+    return app.mimetypes.join(', ');
   }
 
-  if (frame.matchers && frame.matchers.length > 0) {
+  if (app.matchers && app.matchers.length > 0) {
     const formats = new Set<string>();
 
-    frame.matchers.forEach((matcher: any) => {
+    app.matchers.forEach((matcher: any) => {
       if (matcher.type === 'mimetype' && matcher.mimetype) {
         formats.add(matcher.mimetype);
       } else if (matcher.type === 'filename' && matcher.pattern) {
@@ -443,7 +443,7 @@ const App: React.FC = () => {
   const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
   const [showSettings, setShowSettings] = useState(false);
 
-  const frameRootRef = useRef<HTMLDivElement>(null);
+  const appRootRef = useRef<HTMLDivElement>(null);
   const hasLaunchedStartupApps = useRef<boolean>(false);
 
   // Get the currently active tab
@@ -454,18 +454,18 @@ const App: React.FC = () => {
   const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
 
   // Function to load app icon
-  const loadAppIcon = async (frame: App): Promise<string | null> => {
-    if (!frame.icon) return null;
+  const loadAppIcon = async (app: App): Promise<string | null> => {
+    if (!app.icon) return null;
 
     // Check if already cached
-    if (appIcons[frame.id]) {
-      return appIcons[frame.id];
+    if (appIcons[app.id]) {
+      return appIcons[app.id];
     }
 
     try {
       const APPS_DIR = getAppsDirectory();
-      const appDir = path.join(APPS_DIR, frame.id);
-      const fullIconPath = path.join(appDir, frame.icon);
+      const appDir = path.join(APPS_DIR, app.id);
+      const fullIconPath = path.join(appDir, app.icon);
 
       // Ensure the icon path is within the app directory
       if (!fullIconPath.startsWith(appDir)) {
@@ -473,7 +473,7 @@ const App: React.FC = () => {
       }
 
       if (!fs.existsSync(fullIconPath)) {
-        throw new Error(`Icon file not found: ${frame.icon}`);
+        throw new Error(`Icon file not found: ${app.icon}`);
       }
 
       // Read the icon file as base64
@@ -481,10 +481,10 @@ const App: React.FC = () => {
       const mimeType = mime.lookup(fullIconPath) || 'application/octet-stream';
       const iconData = `data:${mimeType};base64,${iconBuffer.toString('base64')}`;
 
-      setAppIcons(prev => ({ ...prev, [frame.id]: iconData }));
+      setAppIcons(prev => ({ ...prev, [app.id]: iconData }));
       return iconData;
     } catch (error) {
-      console.error(`Failed to load icon for ${frame.name}:`, error);
+      console.error(`Failed to load icon for ${app.name}:`, error);
     }
 
     return null;
@@ -573,9 +573,9 @@ const App: React.FC = () => {
 
   // Load icons for all apps when apps change
   useEffect(() => {
-    apps.forEach(frame => {
-      if (frame.icon && !appIcons[frame.id]) {
-        loadAppIcon(frame);
+    apps.forEach(app => {
+      if (app.icon && !appIcons[app.id]) {
+        loadAppIcon(app);
       }
     });
   }, [apps]);
@@ -649,17 +649,17 @@ const App: React.FC = () => {
         // Launch all apps in parallel without delays
         const launchPromises = enabledStartupApps.map(async ([appId, config]) => {
           try {
-            const frame = apps.find(f => f.id === appId);
+            const app = apps.find(f => f.id === appId);
             console.log(`Launching startup app: ${appId} (tab order: ${config.tabOrder})`);
 
-            if (frame && frame.standalone) {
+            if (app && app.standalone) {
               // Launch the app but don't wait for tab switching
-              await openAppInNewTab(frame, undefined, true, false);
+              await openAppInNewTab(app, undefined, true, false);
               console.log(`Successfully launched startup app: ${appId}`);
             } else {
               console.warn(`Could not launch ${appId}:`, {
-                frameFound: !!frame,
-                isStandalone: frame?.standalone
+                appFound: !!app,
+                isStandalone: app?.standalone
               });
             }
           } catch (error) {
@@ -684,9 +684,9 @@ const App: React.FC = () => {
   }, [apps, startupApps]);
 
   // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
-  const getAppIcon = (frame: App): string => {
-    if (appIcons[frame.id]) {
-      return appIcons[frame.id];
+  const getAppIcon = (app: App): string => {
+    if (appIcons[app.id]) {
+      return appIcons[app.id];
     }
 
     // Return Viberunner SVG logo as fallback
@@ -779,22 +779,22 @@ const App: React.FC = () => {
 
   const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  // Imperative function to create a frame container
+  // Imperative function to create a app container
   const createAppContainer = async (tab: OpenTab): Promise<boolean> => {
-    if (!frameRootRef.current || !tab.frame || !tab.frameData) {
-      console.error('Cannot create frame container:', {
-        hasAppRoot: !!frameRootRef.current,
-        hasApp: !!tab.frame,
-        hasAppData: !!tab.frameData
+    if (!appRootRef.current || !tab.app || !tab.appData) {
+      console.error('Cannot create app container:', {
+        hasAppRoot: !!appRootRef.current,
+        hasApp: !!tab.app,
+        hasAppData: !!tab.appData
       });
       return false;
     }
 
-    console.log('Creating frame container for tab:', tab.id);
+    console.log('Creating app container for tab:', tab.id);
 
     // Create DOM container
     const container = document.createElement('div');
-    container.className = 'tab-frame-container';
+    container.className = 'tab-app-container';
     container.style.position = 'absolute';
     container.style.top = '0';
     container.style.left = '0';
@@ -807,7 +807,7 @@ const App: React.FC = () => {
     container.style.zIndex = '-1';
     container.style.opacity = '0';
     container.style.background = 'var(--background)';
-    frameRootRef.current.appendChild(container);
+    appRootRef.current.appendChild(container);
 
     // Prepare props with cleanup support
     let props;
@@ -815,7 +815,7 @@ const App: React.FC = () => {
       props = {
         container,
         tabId: tab.id,
-        appId: tab.frame.id
+        appId: tab.app.id
       };
     } else {
       props = {
@@ -833,16 +833,16 @@ const App: React.FC = () => {
         },
         container,
         tabId: tab.id,
-        appId: tab.frame.id
+        appId: tab.app.id
       };
     }
 
     return new Promise<boolean>((resolve) => {
-      // Create script and load frame
+      // Create script and load app
       const script = document.createElement('script');
       script.type = 'text/javascript';
 
-      let processedBundleContent = tab.frameData.bundleContent;
+      let processedBundleContent = tab.appData.bundleContent;
 
       // CSS scoping patterns for auto-scoping
       const cssPatterns = [
@@ -854,30 +854,30 @@ const App: React.FC = () => {
         processedBundleContent = processedBundleContent.replace(pattern, (match: string, quote: string, cssContent: string) => {
           if (!cssContent) return match;
 
-          // Don't process if already scoped to .tab-frame-container
-          if (cssContent.includes('.tab-frame-container') || cssContent.includes(`[data-frame-id="${tab.id}"]`)) {
+          // Don't process if already scoped to .tab-app-container
+          if (cssContent.includes('.tab-app-container') || cssContent.includes(`[data-app-id="${tab.id}"]`)) {
             return match;
           }
 
           // Auto-scope CSS selectors
           const scopedCSS = cssContent
             // Scope universal selector
-            .replace(/^\s*\*\s*\{/gm, `[data-frame-id="${tab.id}"] * {`)
+            .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
             // Scope element selectors
-            .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+            .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
             // Scope class selectors
-            .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+            .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
             // Scope ID selectors
-            .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+            .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
             // Scope descendant selectors
-            .replace(/^(\s*)([.#]?[\w-]+(?:\s+[.#]?[\w-]+)*)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
+            .replace(/^(\s*)([.#]?[\w-]+(?:\s+[.#]?[\w-]+)*)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
             // Handle @media queries by scoping the content inside
             .replace(/@media[^{]+\{([^{}]*(?:\{[^}]*\}[^{}]*)*)\}/g, (mediaMatch: string, mediaContent: string) => {
               const scopedMediaContent = mediaContent
-                .replace(/^\s*\*\s*\{/gm, `[data-frame-id="${tab.id}"] * {`)
-                .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
-                .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
-                .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`);
+                .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
+                .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
+                .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
+                .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`);
               return mediaMatch.replace(mediaContent, scopedMediaContent);
             });
 
@@ -886,18 +886,18 @@ const App: React.FC = () => {
       });
 
       // Also intercept any dynamic style injection
-      const frameStyleInterceptor = `
-        // Intercept style injection for frame isolation
+      const appStyleInterceptor = `
+        // Intercept style injection for app isolation
         (function() {
           const originalCreateElement = document.createElement;
-          const frameId = "${tab.id}";
+          const appId = "${tab.id}";
 
           document.createElement = function(tagName) {
             const element = originalCreateElement.call(this, tagName);
 
             if (tagName.toLowerCase() === 'style') {
-              // Mark style elements created by this frame
-              element.setAttribute('data-frame-style', frameId);
+              // Mark style elements created by this app
+              element.setAttribute('data-app-style', appId);
 
               // Override textContent to auto-scope CSS - with safety checks
               try {
@@ -912,10 +912,10 @@ const App: React.FC = () => {
                       if (value && typeof value === 'string') {
                         // Auto-scope the CSS
                         const scopedCSS = value
-                          .replace(/^\\s*\\*\\s*\\{/gm, \`[data-frame-id="\${frameId}"] * {\`)
-                          .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
-                          .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
-                          .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`);
+                          .replace(/^\\s*\\*\\s*\\{/gm, \`[data-app-id="\${appId}"] * {\`)
+                          .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-app-id="\${appId}"] $2 {\`)
+                          .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${appId}"] $2 {\`)
+                          .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${appId}"] $2 {\`);
                         originalTextContentSetter.call(this, scopedCSS);
                       } else {
                         originalTextContentSetter.call(this, value);
@@ -927,7 +927,7 @@ const App: React.FC = () => {
                   });
                 }
               } catch (err) {
-                console.warn('Failed to intercept textContent for frame CSS scoping:', err);
+                console.warn('Failed to intercept textContent for app CSS scoping:', err);
               }
             }
 
@@ -936,9 +936,9 @@ const App: React.FC = () => {
         })();
       `;
 
-      script.textContent = frameStyleInterceptor + '\n' + processedBundleContent;
+      script.textContent = appStyleInterceptor + '\n' + processedBundleContent;
 
-      const frameLoader = (AppComponent: any) => {
+      const appLoader = (AppComponent: any) => {
         try {
           // Create an isolation wrapper div
           const isolationWrapper = document.createElement('div');
@@ -958,7 +958,7 @@ const App: React.FC = () => {
           container.appendChild(isolationWrapper);
 
           // Render directly into the isolation wrapper
-          isolationWrapper.setAttribute('data-frame-id', tab.id);
+          isolationWrapper.setAttribute('data-app-id', tab.id);
 
           const root = createRoot(isolationWrapper);
           root.render(React.createElement(AppComponent, props));
@@ -978,15 +978,15 @@ const App: React.FC = () => {
 
           resolve(true);
         } catch (error) {
-          console.error('Error rendering frame:', error);
+          console.error('Error rendering app:', error);
           resolve(false);
         }
       };
 
-      // Make the frame loader available globally with backward compatibility
-      (window as any).__LOAD_APP__ = frameLoader;
-      (window as any).__LOAD_VISUALIZER__ = frameLoader; // Backward compatibility
-      (window as any).__LOAD_FRAME__ = frameLoader; // Backward compatibility
+      // Make the app loader available globally with backward compatibility
+      (window as any).__LOAD_APP__ = appLoader;
+      (window as any).__LOAD_VISUALIZER__ = appLoader; // Backward compatibility
+      (window as any).__LOAD_FRAME__ = appLoader; // Backward compatibility
 
       script.onload = () => {
         // Clean up after script loads
@@ -1016,7 +1016,7 @@ const App: React.FC = () => {
 
     console.log('Switching to tab:', tabId, 'type:', activeTab?.type);
 
-    // Hide all frame containers with enhanced visibility control
+    // Hide all app containers with enhanced visibility control
     tabContainersRef.current.forEach((container, id) => {
       console.log('Hiding container for tab:', id);
       const element = container.domElement;
@@ -1044,19 +1044,19 @@ const App: React.FC = () => {
     setActiveTabId(tabId);
   };
 
-  const openAppInNewTab = async (frame: App, fileInput?: FileInput, forceNewTab: boolean = false, switchToTab_: boolean = true) => {
+  const openAppInNewTab = async (app: App, fileInput?: FileInput, forceNewTab: boolean = false, switchToTab_: boolean = true) => {
     const title = fileInput
       ? fileInput.path.split('/').pop() || 'Unknown File'
-      : frame.name;
+      : app.name;
 
-    let frameData;
+    let appData;
 
-    // Load frame data
+    // Load app data
     try {
-      frameData = await loadApp(frame.id);
+      appData = await loadApp(app.id);
     } catch (error) {
-      console.error('Failed to load frame data:', error);
-      alert(`Failed to load ${frame.name}: ${error}`);
+      console.error('Failed to load app data:', error);
+      alert(`Failed to load ${app.name}: ${error}`);
       return;
     }
 
@@ -1067,18 +1067,18 @@ const App: React.FC = () => {
       // Transform the current new tab
       const transformedTab: OpenTab = {
         ...currentTab,
-        frame,
+        app,
         fileInput,
         title,
         type: fileInput ? 'file' : 'standalone',
-        frameData
+        appData
       };
 
       setOpenTabs(prev => prev.map(tab =>
         tab.id === activeTabId ? transformedTab : tab
       ));
 
-      // Create the frame container and wait for it to be ready
+      // Create the app container and wait for it to be ready
       const success = await createAppContainer(transformedTab);
 
       if (success) {
@@ -1096,24 +1096,24 @@ const App: React.FC = () => {
           });
         }, 50); // Small delay to ensure tab is properly added first
       } else {
-        console.error('Failed to create frame container for transformed tab');
-        alert(`Failed to load ${frame.name}`);
+        console.error('Failed to create app container for transformed tab');
+        alert(`Failed to load ${app.name}`);
       }
     } else {
       // Create a new tab
       const tabId = generateTabId();
       const newTab: OpenTab = {
         id: tabId,
-        frame,
+        app,
         fileInput,
         title,
         type: fileInput ? 'file' : 'standalone',
-        frameData
+        appData
       };
 
       setOpenTabs(prev => [...prev, newTab]);
 
-      // Create the frame container and wait for it to be ready
+      // Create the app container and wait for it to be ready
       const success = await createAppContainer(newTab);
 
       if (success) {
@@ -1131,8 +1131,8 @@ const App: React.FC = () => {
           });
         }, 50); // Small delay to ensure tab is properly added first
       } else {
-        console.error('Failed to create frame container for new tab');
-        alert(`Failed to load ${frame.name}`);
+        console.error('Failed to create app container for new tab');
+        alert(`Failed to load ${app.name}`);
       }
     }
 
@@ -1153,13 +1153,13 @@ const App: React.FC = () => {
       try {
         container.reactRoot.unmount();
 
-        // Remove the frame-specific style element
+        // Remove the app-specific style element
         if (container.styleElement && document.head.contains(container.styleElement)) {
           document.head.removeChild(container.styleElement);
         }
 
-        if (frameRootRef.current && frameRootRef.current.contains(container.domElement)) {
-          frameRootRef.current.removeChild(container.domElement);
+        if (appRootRef.current && appRootRef.current.contains(container.domElement)) {
+          appRootRef.current.removeChild(container.domElement);
         }
       } catch (error) {
         console.warn('Error cleaning up tab container:', error);
@@ -1196,7 +1196,7 @@ const App: React.FC = () => {
 
   // Handle tab switching
   const handleTabSwitch = (tabId: string) => {
-    // Reset frame selection state when switching tabs
+    // Reset app selection state when switching tabs
     setShowAppSelection(false);
     setPendingFileInput(null);
     switchToTab(tabId);
@@ -1259,19 +1259,19 @@ const App: React.FC = () => {
     setDragOverTabId(null);
   };
 
-  const selectApp = async (frame: App) => {
+  const selectApp = async (app: App) => {
     if (pendingFileInput) {
-      await openAppInNewTab(frame, pendingFileInput);
+      await openAppInNewTab(app, pendingFileInput);
     }
   };
 
-  const launchStandaloneApp = async (frame: App) => {
+  const launchStandaloneApp = async (app: App) => {
     try {
-      console.log('Launching standalone frame:', frame.name, frame.id);
-      await openAppInNewTab(frame);
+      console.log('Launching standalone app:', app.name, app.id);
+      await openAppInNewTab(app);
     } catch (error) {
-      console.error('Failed to launch standalone frame:', error);
-      alert(`Failed to launch ${frame.name}: ${error}`);
+      console.error('Failed to launch standalone app:', error);
+      alert(`Failed to launch ${app.name}: ${error}`);
     }
   };
 
@@ -1335,17 +1335,17 @@ const App: React.FC = () => {
     }
   }
 
-  async function findMatchingApps(filePath: string): Promise<Array<{frame: App, priority: number}>> {
+  async function findMatchingApps(filePath: string): Promise<Array<{app: App, priority: number}>> {
     const apps = await loadApps();
     const fileAnalysis = await analyzeFile(filePath);
-    const matches: Array<{frame: App, priority: number}> = [];
+    const matches: Array<{app: App, priority: number}> = [];
 
-    for (const frame of apps) {
+    for (const app of apps) {
       let bestPriority = -1;
 
       // Check enhanced matchers first
-      if ((frame as any).matchers) {
-        for (const matcher of (frame as any).matchers) {
+      if ((app as any).matchers) {
+        for (const matcher of (app as any).matchers) {
           if (evaluateMatcher(matcher, fileAnalysis)) {
             bestPriority = Math.max(bestPriority, matcher.priority);
           }
@@ -1353,14 +1353,14 @@ const App: React.FC = () => {
       }
 
       // Fallback to legacy mimetype matching
-      if (bestPriority === -1 && frame.mimetypes) {
-        if (frame.mimetypes.includes(fileAnalysis.mimetype)) {
+      if (bestPriority === -1 && app.mimetypes) {
+        if (app.mimetypes.includes(fileAnalysis.mimetype)) {
           bestPriority = 50; // Default priority for legacy matchers
         }
       }
 
       if (bestPriority > -1) {
-        matches.push({ frame, priority: bestPriority });
+        matches.push({ app, priority: bestPriority });
       }
     }
 
@@ -1394,14 +1394,14 @@ const App: React.FC = () => {
           console.log('handleFileDrop: No matches found');
           alert(`No app found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
         } else if (matches.length === 1) {
-          console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].frame.name);
-          await openAppInNewTab(matches[0].frame, fileInput);
+          console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].app.name);
+          await openAppInNewTab(matches[0].app, fileInput);
           console.log('handleFileDrop: Opened in new tab');
         } else {
           console.log('handleFileDrop: Multiple matches found, showing selection');
           setPendingFileInput(fileInput);
           setAvailableApps(matches.map((m: any) => ({
-            ...m.frame,
+            ...m.app,
             matchPriority: m.priority
           })));
           setShowAppSelection(true);
@@ -1480,10 +1480,10 @@ const App: React.FC = () => {
                         alt="New Tab"
                         style={{ width: '16px', height: '16px', objectFit: 'contain' }}
                       />
-                    ) : tab.frame ? (
+                    ) : tab.app ? (
                       <img
-                        src={getAppIcon(tab.frame)}
-                        alt={tab.frame.name}
+                        src={getAppIcon(tab.app)}
+                        alt={tab.app.name}
                         style={{ width: '16px', height: '16px', objectFit: 'contain' }}
                       />
                     ) : (
@@ -1496,7 +1496,7 @@ const App: React.FC = () => {
                   </div>
                   <div className="vf-tab-content">
                     <span className="vf-tab-title">{tab.title}</span>
-                    {tab.frame && <span className="vf-tab-subtitle">{tab.frame.name}</span>}
+                    {tab.app && <span className="vf-tab-subtitle">{tab.app.name}</span>}
                   </div>
                   {tab.type !== 'newtab' || openTabs.length > 1 ? (
                     <button
@@ -1548,7 +1548,7 @@ const App: React.FC = () => {
       <div id="vf-main-layout">
         <main className="vf-content-area">
           {showAppSelection && activeTab?.type === 'newtab' ? (
-            <div className="vf-frame-selection">
+            <div className="vf-app-selection">
               <div className="selection-header">
                 <h2 className="selection-title">Choose an app</h2>
                 <p className="selection-subtitle">
@@ -1560,33 +1560,33 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <div className="frame-grid">
-                {availableApps.map(frame => (
+              <div className="app-grid">
+                {availableApps.map(app => (
                   <div
-                    key={frame.id}
-                    className="frame-card"
-                    onClick={() => selectApp(frame)}
+                    key={app.id}
+                    className="app-card"
+                    onClick={() => selectApp(app)}
                   >
                     <div className="card-header">
                       <div className="card-icon">
                         <img
-                          src={getAppIcon(frame)}
-                          alt={frame.name}
+                          src={getAppIcon(app)}
+                          alt={app.name}
                           style={{ width: '32px', height: '32px', objectFit: 'contain' }}
                         />
                       </div>
                       <div className="card-title-section">
-                        <h3 className="card-title">{frame.name}</h3>
+                        <h3 className="card-title">{app.name}</h3>
                         <div className="card-badge">
                           <div className="badge-dot"></div>
                           Ready
                         </div>
                       </div>
                     </div>
-                    <p className="card-description">{frame.description}</p>
+                    <p className="card-description">{app.description}</p>
                     <div className="card-footer">
                       <div className="supported-formats">
-                        {getSupportedFormats(frame)}
+                        {getSupportedFormats(app)}
                       </div>
                     </div>
                   </div>
@@ -1604,9 +1604,9 @@ const App: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="frame-viewport-container">
-            {/* Always render frame viewport for tab containers */}
-            <div ref={frameRootRef} className="frame-viewport" />
+          <div className="app-viewport-container">
+            {/* Always render app viewport for tab containers */}
+            <div ref={appRootRef} className="app-viewport" />
 
             {/* Unified new tab interface when active tab is new tab */}
             {activeTab?.type === 'newtab' && !showAppSelection && (
@@ -1694,24 +1694,24 @@ const App: React.FC = () => {
                               <span className="section-count">{apps.filter(f => f.standalone).length}</span>
                             </div>
                             <div className="utilities-grid">
-                              {apps.filter(f => f.standalone).map(frame => {
-                                const startupConfig = startupApps[frame.id];
+                              {apps.filter(f => f.standalone).map(app => {
+                                const startupConfig = startupApps[app.id];
                                 const isStartupEnabled = startupConfig?.enabled || false;
                                 const tabOrder = startupConfig?.tabOrder || 1;
 
                                 return (
-                                  <div key={frame.id} className="utility-card-container">
-                                    <div className="utility-card" onClick={() => launchStandaloneApp(frame)}>
+                                  <div key={app.id} className="utility-card-container">
+                                    <div className="utility-card" onClick={() => launchStandaloneApp(app)}>
                                       <div className="utility-icon">
                                         <img
-                                          src={getAppIcon(frame)}
-                                          alt={frame.name}
+                                          src={getAppIcon(app)}
+                                          alt={app.name}
                                           style={{ width: '24px', height: '24px', objectFit: 'contain' }}
                                         />
                                       </div>
                                       <div className="utility-content">
-                                        <h5 className="utility-title">{frame.name}</h5>
-                                        <p className="utility-description">{frame.description}</p>
+                                        <h5 className="utility-title">{app.name}</h5>
+                                        <p className="utility-description">{app.description}</p>
                                       </div>
                                       <div className="utility-action">Launch</div>
                                     </div>
@@ -1723,7 +1723,7 @@ const App: React.FC = () => {
                                           <input
                                             type="checkbox"
                                             checked={isStartupEnabled}
-                                            onChange={(e) => toggleStartupApp(frame.id, e.target.checked)}
+                                            onChange={(e) => toggleStartupApp(app.id, e.target.checked)}
                                             onClick={(e) => e.stopPropagation()}
                                             className="toggle-checkbox"
                                           />
@@ -1741,7 +1741,7 @@ const App: React.FC = () => {
                                               min="1"
                                               max="99"
                                               value={tabOrder}
-                                              onChange={(e) => updateStartupAppTabOrder(frame.id, parseInt(e.target.value) || 1)}
+                                              onChange={(e) => updateStartupAppTabOrder(app.id, parseInt(e.target.value) || 1)}
                                               onClick={(e) => e.stopPropagation()}
                                               className="tab-order-input"
                                             />
@@ -1774,17 +1774,17 @@ const App: React.FC = () => {
                               </div>
                             ) : (
                               <div className="apps-grid">
-                                {apps.filter(f => !f.standalone).map(frame => (
-                                  <div key={frame.id} className="frame-info-card">
-                                    <div className="frame-info-header">
-                                      <h5 className="frame-info-title">{frame.name}</h5>
-                                      <div className="frame-info-status">
+                                {apps.filter(f => !f.standalone).map(app => (
+                                  <div key={app.id} className="app-info-card">
+                                    <div className="app-info-header">
+                                      <h5 className="app-info-title">{app.name}</h5>
+                                      <div className="app-info-status">
                                         <span className="status-dot"></span>
                                       </div>
                                     </div>
-                                    <p className="frame-info-description">{frame.description}</p>
-                                    <div className="frame-info-formats">
-                                      {getSupportedFormats(frame)}
+                                    <p className="app-info-description">{app.description}</p>
+                                    <div className="app-info-formats">
+                                      {getSupportedFormats(app)}
                                     </div>
                                   </div>
                                 ))}
