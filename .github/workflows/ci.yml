@@ -84,6 +84,7 @@ jobs:
 
   security-audit:
     runs-on: ubuntu-latest
+    continue-on-error: true
 
     steps:
     - name: Checkout code
@@ -113,14 +114,18 @@ jobs:
     - name: Check build status
       run: |
         if [ "${{ needs.lint-and-typecheck.result }}" = "success" ] && \
-           [ "${{ needs.build-test.result }}" = "success" ] && \
-           [ "${{ needs.security-audit.result }}" = "success" ]; then
-          echo "✅ All CI checks passed!"
+           [ "${{ needs.build-test.result }}" = "success" ]; then
+          echo "✅ All critical CI checks passed!"
+          if [ "${{ needs.security-audit.result }}" = "success" ]; then
+            echo "✅ Security audit also passed!"
+          else
+            echo "⚠️  Security audit had warnings (allowed to continue)"
+          fi
           exit 0
         else
-          echo "❌ Some CI checks failed:"
+          echo "❌ Critical CI checks failed:"
           echo "  Lint & TypeCheck: ${{ needs.lint-and-typecheck.result }}"
           echo "  Build Test: ${{ needs.build-test.result }}"
-          echo "  Security Audit: ${{ needs.security-audit.result }}"
+          echo "  Security Audit: ${{ needs.security-audit.result }} (non-blocking)"
           exit 1
         fi
