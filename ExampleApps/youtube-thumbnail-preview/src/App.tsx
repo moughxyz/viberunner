@@ -28,7 +28,6 @@ declare global {
       [key: string]: any;
     };
     __LOAD_APP__?: (component: any) => void;
-    __LOAD_APP__?: (component: any) => void;
   }
 }
 
