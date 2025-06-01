@@ -7,7 +7,7 @@ module.exports = {
   packagerConfig: {
     name: 'Viberunner',
     executableName: 'viberunner',
-    appBundleId: 'com.viberunner.app',
+    appBundleId: 'me.viberunner.mac',
     appCategoryType: 'public.app-category.productivity',
     icon: './assets/icon', // Electron-forge will auto-select .ico/.icns/.png based on platform
     asar: {
