@@ -15,16 +15,6 @@ interface Window {
       }>;
       fileAnalysis: any;
     }>;
-    saveFileDialog: (options?: {
-      title?: string;
-      defaultPath?: string;
-      filters?: Array<{ name: string; extensions: string[] }>
-    }) => Promise<{
-      success: boolean;
-      filePath: string | null;
-      canceled: boolean;
-      error?: string
-    }>;
     launchStandaloneApp: (id: string) => Promise<any>;
     // Icon loading for apps
     getAppIcon: (appId: string, iconPath: string) => Promise<{

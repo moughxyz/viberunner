@@ -1167,16 +1167,6 @@ const matches = await window.api.findMatchingVisualizers('/path/to/file');
 // File Writing & Backup Operations (NEW!)
 // Write content to a file (with automatic backup support)
 const writeResult = await window.api.writeFile('/path/to/file', content, 'utf8'); // or 'base64'
-
-// Show native save dialog for "Save As" functionality
-const dialogResult = await window.api.saveFileDialog({
-  title: 'Save Modified File',
-  defaultPath: '/path/to/default.json',
-  filters: [
-    { name: 'JSON Files', extensions: ['json'] },
-    { name: 'All Files', extensions: ['*'] }
-  ]
-});
 ```
 
 ### Full Node.js Access

@@ -2,7 +2,6 @@ import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import mime from 'mime-types';
-import { exec } from 'child_process';
 import os from 'os';
 
 // Enable remote module for renderer access to app.getPath
@@ -804,31 +803,6 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle('save-file-dialog', async (_event, options: {
-    title?: string;
-    defaultPath?: string;
-    filters?: Array<{ name: string; extensions: string[] }>
-  } = {}) => {
-    try {
-      const result = await dialog.showSaveDialog({
-        title: options.title || 'Save File',
-        defaultPath: options.defaultPath,
-        filters: options.filters || [
-          { name: 'All Files', extensions: ['*'] }
-        ]
-      });
-
-      return {
-        success: !result.canceled,
-        filePath: result.filePath || null,
-        canceled: result.canceled
-      };
-    } catch (error) {
-      console.error('Error showing save dialog:', error);
-      return { success: false, error: (error as Error).message, canceled: true };
-    }
-  });
-
   // Close window handler for keyboard shortcuts
   ipcMain.handle('close-window', async () => {
     try {
@@ -859,48 +833,6 @@ function registerIpcHandlers() {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
-  });
-
-  // General-purpose command execution handler for plugins
-  ipcMain.handle('execute-command', async (_event, command: string, options?: { timeout?: number }) => {
-    return new Promise((resolve) => {
-      try {
-        const execOptions = {
-          timeout: options?.timeout || 30000, // 30 second default timeout
-          maxBuffer: 1024 * 1024 // 1MB buffer limit
-        };
-
-        exec(command, execOptions, (error, stdout, stderr) => {
-          if (error) {
-            console.error('Command execution error:', error);
-            resolve({
-              success: false,
-              error: error.message,
-              stdout: stdout || '',
-              stderr: stderr || '',
-              code: error.code
-            });
-            return;
-          }
-
-          console.log(`Command executed successfully: ${command.substring(0, 100)}${command.length > 100 ? '...' : ''}`);
-          resolve({
-            success: true,
-            stdout: stdout || '',
-            stderr: stderr || '',
-            code: 0
-          });
-        });
-      } catch (error) {
-        resolve({
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error',
-          stdout: '',
-          stderr: '',
-          code: -1
-        });
-      }
-    });
   });
 
   console.log('All IPC handlers registered successfully');
