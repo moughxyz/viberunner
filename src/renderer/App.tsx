@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
+import UpdateNotification from './components/UpdateNotification';
 
 // Direct Node.js access with full integration
 const { ipcRenderer } = require('electron');
@@ -1844,6 +1845,9 @@ const App: React.FC = () => {
             )}
           </div>
         </main>
+
+        {/* Update Notification Component */}
+        <UpdateNotification />
       </div>
     </div>
   );

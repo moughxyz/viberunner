@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import fs from 'fs';
 import mime from 'mime-types';
@@ -8,6 +9,38 @@ import os from 'os';
 import '@electron/remote/main';
 const remoteMain = require('@electron/remote/main');
 remoteMain.initialize();
+
+// Configure autoupdate
+autoUpdater.checkForUpdatesAndNotify();
+
+// Handle autoupdate events
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for update...');
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available:', info);
+});
+
+autoUpdater.on('update-not-available', (info) => {
+  console.log('Update not available:', info);
+});
+
+autoUpdater.on('error', (err) => {
+  console.log('Error in auto-updater:', err);
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  let log_message = "Download speed: " + progressObj.bytesPerSecond;
+  log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+  log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+  console.log(log_message);
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded:', info);
+  autoUpdater.quitAndInstall();
+});
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -833,6 +866,56 @@ function registerIpcHandlers() {
         error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
+  });
+
+  // Autoupdate handlers
+  ipcMain.handle('check-for-updates', async () => {
+    try {
+      const updateInfo = await autoUpdater.checkForUpdates();
+      return {
+        success: true,
+        updateInfo
+      };
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  });
+
+  ipcMain.handle('download-update', async () => {
+    try {
+      await autoUpdater.downloadUpdate();
+      return { success: true };
+    } catch (error) {
+      console.error('Error downloading update:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  });
+
+  ipcMain.handle('quit-and-install', async () => {
+    try {
+      autoUpdater.quitAndInstall();
+      return { success: true };
+    } catch (error) {
+      console.error('Error installing update:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  });
+
+  ipcMain.handle('get-app-version', async () => {
+    return {
+      success: true,
+      version: app.getVersion()
+    };
   });
 
   console.log('All IPC handlers registered successfully');

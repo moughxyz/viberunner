@@ -22,6 +22,30 @@ interface Window {
       iconData?: string;
       error?: string;
     }>;
+    // Autoupdate methods
+    checkForUpdates: () => Promise<{
+      success: boolean;
+      updateInfo?: {
+        version: string;
+        releaseDate?: string;
+        releaseNotes?: string;
+      };
+      error?: string;
+    }>;
+    downloadUpdate: () => Promise<{
+      success: boolean;
+      error?: string;
+    }>;
+    quitAndInstall: () => Promise<{
+      success: boolean;
+      error?: string;
+    }>;
+    getAppVersion: () => Promise<{
+      success: boolean;
+      version: string;
+    }>;
+    // Generic invoke method
+    invoke: (channel: string, ...args: any[]) => Promise<any>;
     // Node.js utilities
     nodeUtils: {
       fs: typeof import('fs');

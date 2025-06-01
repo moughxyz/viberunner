@@ -21,6 +21,13 @@ contextBridge.exposeInMainWorld(
     // Listen for startup app launch events from main process
     onLaunchStartupApp: (callback: (event: any, data: { appId: string; config: any }) => void) =>
       ipcRenderer.on('launch-startup-app', callback),
-    removeStartupAppListeners: () => ipcRenderer.removeAllListeners('launch-startup-app')
+    removeStartupAppListeners: () => ipcRenderer.removeAllListeners('launch-startup-app'),
+    // Autoupdate methods
+    checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+    downloadUpdate: () => ipcRenderer.invoke('download-update'),
+    quitAndInstall: () => ipcRenderer.invoke('quit-and-install'),
+    getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+    // Generic invoke method for future extensions
+    invoke: (channel: string, ...args: any[]) => ipcRenderer.invoke(channel, ...args)
   }
 );

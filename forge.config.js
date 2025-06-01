@@ -83,11 +83,12 @@ module.exports = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: 'yourusername', // Replace with your GitHub username
-          name: 'viberunner'      // Replace with your repo name
+          owner: 'yourusername', // Replace with your actual GitHub username
+          name: 'viberunner'      // Replace with your actual repo name
         },
         prerelease: false,
-        draft: true
+        draft: false, // Set to false for autoupdate to work
+        generateReleaseNotes: true // Automatically generate release notes
       }
     }
   ],
