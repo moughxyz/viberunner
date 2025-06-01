@@ -985,8 +985,6 @@ const App: React.FC = () => {
 
       // Make the app loader available globally with backward compatibility
       (window as any).__LOAD_APP__ = appLoader;
-      (window as any).__LOAD_VISUALIZER__ = appLoader; // Backward compatibility
-      (window as any).__LOAD_FRAME__ = appLoader; // Backward compatibility
 
       script.onload = () => {
         // Clean up after script loads
@@ -995,8 +993,6 @@ const App: React.FC = () => {
             script.parentNode.removeChild(script);
           }
           delete (window as any).__LOAD_APP__;
-          delete (window as any).__LOAD_VISUALIZER__;
-          delete (window as any).__LOAD_FRAME__;
         }, 1000);
       };
 

@@ -27,8 +27,8 @@ declare global {
     api?: {
       [key: string]: any;
     };
-    __LOAD_VISUALIZER__?: (component: any) => void;
-    __LOAD_FRAME__?: (component: any) => void;
+    __LOAD_APP__?: (component: any) => void;
+    __LOAD_APP__?: (component: any) => void;
   }
 }
 
@@ -858,10 +858,10 @@ export default YouTubeThumbnailPreview;
 // Global registration for IIFE bundle
 if (typeof window !== 'undefined') {
   // Support both new and legacy loader patterns
-  if ((window as any).__LOAD_FRAME__) {
-    (window as any).__LOAD_FRAME__(YouTubeThumbnailPreview);
+  if ((window as any).__LOAD_APP__) {
+    (window as any).__LOAD_APP__(YouTubeThumbnailPreview);
   }
-  if ((window as any).__LOAD_VISUALIZER__) {
-    (window as any).__LOAD_VISUALIZER__(YouTubeThumbnailPreview);
+  if ((window as any).__LOAD_APP__) {
+    (window as any).__LOAD_APP__(YouTubeThumbnailPreview);
   }
 }

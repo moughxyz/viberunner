@@ -125,11 +125,11 @@ if (typeof window !== 'undefined') {
   (window as any).ImageInverterComponent = ImageInverter;
 
   // Support both new and legacy loader patterns
-  if ((window as any).__LOAD_FRAME__) {
-    (window as any).__LOAD_FRAME__(ImageInverter);
+  if ((window as any).__LOAD_APP__) {
+    (window as any).__LOAD_APP__(ImageInverter);
   }
-  if ((window as any).__LOAD_VISUALIZER__) {
-    (window as any).__LOAD_VISUALIZER__(ImageInverter);
+  if ((window as any).__LOAD_APP__) {
+    (window as any).__LOAD_APP__(ImageInverter);
   }
 }
 

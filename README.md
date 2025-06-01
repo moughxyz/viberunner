@@ -1011,8 +1011,8 @@ const JsonFormatter: React.FC<JsonFormatterProps> = ({ fileData }) => {
 export default JsonFormatter;
 
 // Global registration for IIFE bundle
-if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
-  (window as any).__LOAD_VISUALIZER__(JsonFormatter);
+if (typeof window !== 'undefined' && (window as any).__LOAD_APP__) {
+  (window as any).__LOAD_APP__(JsonFormatter);
 }
 ```
 

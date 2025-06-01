@@ -22,7 +22,7 @@ export default defineConfig({
           'react': 'React',
           'react-dom': 'ReactDOM'
         },
-        footer: 'if (typeof window !== "undefined" && window.__LOAD_VISUALIZER__) { window.__LOAD_VISUALIZER__(FolderizeVisualizer.default || FolderizeVisualizer); }'
+        footer: 'if (typeof window !== "undefined" && window.__LOAD_APP__) { window.__LOAD_APP__(FolderizeVisualizer.default || FolderizeVisualizer); }'
       }
     }
   }

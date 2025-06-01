@@ -4,6 +4,6 @@ import App from './App.tsx'
 export default App;
 
 // Global registration for IIFE bundle
-if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
-  (window as any).__LOAD_VISUALIZER__(App);
+if (typeof window !== 'undefined' && (window as any).__LOAD_APP__) {
+  (window as any).__LOAD_APP__(App);
 }
