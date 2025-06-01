@@ -14,7 +14,6 @@ electron.contextBridge.exposeInMainWorld(
     findMatchingApps: (filePath) => electron.ipcRenderer.invoke("find-matching-apps", filePath),
     // File writing and backup operations
     writeFile: (filePath, content, encoding) => electron.ipcRenderer.invoke("write-file", filePath, content, encoding),
-    backupFile: (filePath) => electron.ipcRenderer.invoke("backup-file", filePath),
     saveFileDialog: (options) => electron.ipcRenderer.invoke("save-file-dialog", options),
     // System operations for plugins
     getPlatform: () => electron.ipcRenderer.invoke("get-platform"),

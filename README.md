@@ -550,7 +550,6 @@ Apps have access to the global `api` object and direct Node.js modules:
 // File operations
 const content = api.readFile(filePath, 'utf8');
 api.writeFile(filePath, content);
-const backupPath = api.backupFile(filePath);
 
 // File system operations
 const exists = api.exists(filePath);
@@ -914,19 +913,13 @@ const JsonFormatter: React.FC<JsonFormatterProps> = ({ fileData }) => {
     if (!formatted || error) return;
 
     try {
-      // Create backup of original file first
-      const backupResult = await window.api.backupFile(fileData.path);
-      if (!backupResult.success) {
-        throw new Error(`Failed to create backup: ${backupResult.error}`);
-      }
-
       // Save the formatted JSON back to the original file
       const saveResult = await window.api.writeFile(fileData.path, formatted, 'utf8');
       if (!saveResult.success) {
         throw new Error(`Failed to save file: ${saveResult.error}`);
       }
 
-      alert(`JSON saved successfully!\nBackup created: ${backupResult.backupPath}`);
+      alert(`JSON saved successfully!`);
     } catch (err) {
       alert(`Error saving file: ${err}`);
     }
@@ -1218,9 +1211,6 @@ const matches = await window.api.findMatchingVisualizers('/path/to/file');
 // File Writing & Backup Operations (NEW!)
 // Write content to a file (with automatic backup support)
 const writeResult = await window.api.writeFile('/path/to/file', content, 'utf8'); // or 'base64'
-
-// Create backup of original file before modifications
-const backupResult = await window.api.backupFile('/path/to/file');
 
 // Show native save dialog for "Save As" functionality
 const dialogResult = await window.api.saveFileDialog({
@@ -1648,10 +1638,6 @@ const JsonEditor: React.FC<VisualizerProps> = ({ fileData }) => {
     try {
       // Validate JSON before saving
       JSON.parse(content);
-
-      // Create backup and save
-      const backupResult = await window.api.backupFile(fileData.path);
-      if (!backupResult.success) throw new Error(backupResult.error);
 
       const saveResult = await window.api.writeFile(fileData.path, content, 'utf8');
       if (!saveResult.success) throw new Error(saveResult.error);

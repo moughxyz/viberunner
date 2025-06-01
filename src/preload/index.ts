@@ -16,7 +16,6 @@ contextBridge.exposeInMainWorld(
     // File writing and backup operations
     writeFile: (filePath: string, content: string, encoding?: 'utf8' | 'base64') =>
       ipcRenderer.invoke('write-file', filePath, content, encoding),
-    backupFile: (filePath: string) => ipcRenderer.invoke('backup-file', filePath),
     saveFileDialog: (options?: {
       title?: string;
       defaultPath?: string;

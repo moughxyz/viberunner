@@ -62,7 +62,6 @@ declare global {
     api: {
       readFile: (path: string, encoding?: string) => string;
       writeFile: (path: string, content: string, encoding?: string) => { success: boolean; error?: string };
-      backupFile: (path: string) => { success: boolean; backupPath?: string; error?: string };
       exists: (path: string) => boolean;
       stat: (path: string) => { size: number; mtime: Date; isFile: boolean; isDirectory: boolean };
       path: {
@@ -345,19 +344,13 @@ const PackageUpgrader: React.FC<PackageUpgraderProps> = ({ fileInput, fileData, 
     }
 
     try {
-      // Create backup first using the new Node API
-      const backupResult = window.api.backupFile(filePath);
-      if (!backupResult.success) {
-        throw new Error(`Failed to create backup: ${backupResult.error}`);
-      }
-
       // Save the updated content using the new Node API
       const saveResult = window.api.writeFile(filePath, updatedContent, 'utf8');
       if (!saveResult.success) {
         throw new Error(`Failed to save file: ${saveResult.error}`);
       }
 
-      alert(`✅ Updated package.json saved successfully!\n\n${selectedUpdates.size} dependencies upgraded.\n\nLocation: ${filePath}\nBackup created: ${backupResult.backupPath}`);
+      alert(`✅ Updated package.json saved successfully!\n\n${selectedUpdates.size} dependencies upgraded.\n\nLocation: ${filePath}\n`);
 
       // Optionally clear selected updates after successful save
       setSelectedUpdates(new Set());

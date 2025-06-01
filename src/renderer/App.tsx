@@ -29,15 +29,6 @@ const api = {
       fs.writeFileSync(filePath, content, 'utf8');
     }
   },
-  backupFile: (filePath: string) => {
-    if (fs.existsSync(filePath)) {
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupPath = `${filePath}.backup.${timestamp}`;
-      fs.copyFileSync(filePath, backupPath);
-      return backupPath;
-    }
-    return null;
-  },
   exists: (filePath: string) => fs.existsSync(filePath),
   stat: (filePath: string) => fs.statSync(filePath),
   readDir: (dirPath: string) => fs.readdirSync(dirPath),

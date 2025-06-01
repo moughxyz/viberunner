@@ -22,11 +22,6 @@ interface Window {
       success: boolean;
       error?: string
     }>;
-    backupFile: (filePath: string) => Promise<{
-      success: boolean;
-      backupPath?: string;
-      error?: string
-    }>;
     saveFileDialog: (options?: {
       title?: string;
       defaultPath?: string;
