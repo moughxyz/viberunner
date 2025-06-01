@@ -45,7 +45,7 @@ const api = {
   // User Preferences API for apps
   getAppPreferences: (appId: string) => {
     try {
-      const FRAMES_DIR = getFramesDirectory();
+      const FRAMES_DIR = getAppsDirectory();
       const framePath = path.join(FRAMES_DIR, appId);
       const metadataPath = path.join(framePath, 'viz.json');
 
@@ -66,7 +66,7 @@ const api = {
 
   setAppPreferences: (appId: string, preferences: any) => {
     try {
-      const FRAMES_DIR = getFramesDirectory();
+      const FRAMES_DIR = getAppsDirectory();
       const framePath = path.join(FRAMES_DIR, appId);
       const metadataPath = path.join(framePath, 'viz.json');
 
@@ -218,7 +218,7 @@ const executeCleanup = (tabId: string) => {
 (window as any).executeCleanup = executeCleanup;
 
 // Constants
-const getFramesDirectory = () => {
+const getAppsDirectory = () => {
   // Try to get the saved directory from preferences
   try {
     const { app } = require('@electron/remote');
@@ -286,42 +286,42 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
   };
 }
 
-async function loadFrames(): Promise<Frame[]> {
-  const FRAMES_DIR = getFramesDirectory();
-  console.log('loadFrames: Looking for frames in:', FRAMES_DIR);
+async function loadApps(): Promise<Frame[]> {
+  const FRAMES_DIR = getAppsDirectory();
+  console.log('loadApps: Looking for frames in:', FRAMES_DIR);
 
   if (!fs.existsSync(FRAMES_DIR)) {
-    console.log('loadFrames: Directory does not exist, creating it');
+    console.log('loadApps: Directory does not exist, creating it');
     fs.mkdirSync(FRAMES_DIR, { recursive: true });
     return [];
   }
 
   try {
     const dirContents = fs.readdirSync(FRAMES_DIR);
-    console.log('loadFrames: Directory contents:', dirContents);
+    console.log('loadApps: Directory contents:', dirContents);
 
     const directories = dirContents.filter((dir: string) => {
       const fullPath = path.join(FRAMES_DIR, dir);
       const isDir = fs.statSync(fullPath).isDirectory();
-      console.log(`loadFrames: ${dir} is directory: ${isDir}`);
+      console.log(`loadApps: ${dir} is directory: ${isDir}`);
       return isDir;
     });
-    console.log('loadFrames: Found directories:', directories);
+    console.log('loadApps: Found directories:', directories);
 
     const frames = directories.map((dir: string) => {
       const framePath = path.join(FRAMES_DIR, dir);
       const metadataPath = path.join(framePath, 'viz.json');
-      console.log(`loadFrames: Checking for metadata at: ${metadataPath}`);
+      console.log(`loadApps: Checking for metadata at: ${metadataPath}`);
 
       if (!fs.existsSync(metadataPath)) {
-        console.log(`loadFrames: No viz.json found for ${dir}`);
+        console.log(`loadApps: No viz.json found for ${dir}`);
         return null;
       }
 
       try {
         const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
         const metadata = JSON.parse(metadataContent);
-        console.log(`loadFrames: Successfully loaded metadata for ${dir}:`, metadata);
+        console.log(`loadApps: Successfully loaded metadata for ${dir}:`, metadata);
         return {
           ...metadata,
           id: dir,
@@ -333,16 +333,16 @@ async function loadFrames(): Promise<Frame[]> {
     })
     .filter(Boolean) as Frame[];
 
-    console.log('loadFrames: Final frames array:', frames);
+    console.log('loadApps: Final frames array:', frames);
     return frames;
   } catch (error) {
-    console.error('Error in loadFrames function:', error);
+    console.error('Error in loadApps function:', error);
     throw error;
   }
 }
 
 async function loadFrame(id: string) {
-  const FRAMES_DIR = getFramesDirectory();
+  const FRAMES_DIR = getAppsDirectory();
   const framePath = path.join(FRAMES_DIR, id);
   const bundlePath = path.join(framePath, 'dist', 'bundle.iife.js');
 
@@ -429,15 +429,15 @@ const getSupportedFormats = (frame: any): string => {
 };
 
 const App: React.FC = () => {
-  const [frames, setFrames] = useState<Frame[]>([]);
-  const [framesDirectory, setFramesDirectory] = useState<string>('');
-  const [isLoadingFrames, setIsLoadingFrames] = useState(false);
+  const [frames, setApps] = useState<Frame[]>([]);
+  const [framesDirectory, setAppsDirectory] = useState<string>('');
+  const [isLoadingApps, setIsLoadingApps] = useState(false);
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
     { id: 'default-tab', title: 'New Tab', type: 'newtab' }
   ]);
   const [activeTabId, setActiveTabId] = useState('default-tab');
   const [showFrameSelection, setShowFrameSelection] = useState(false);
-  const [availableFrames, setAvailableFrames] = useState<Frame[]>([]);
+  const [availableApps, setAvailableApps] = useState<Frame[]>([]);
   const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
   const [appIcons, setAppIcons] = useState<Record<string, string>>({});
   const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
@@ -463,7 +463,7 @@ const App: React.FC = () => {
     }
 
     try {
-      const FRAMES_DIR = getFramesDirectory();
+      const FRAMES_DIR = getAppsDirectory();
       const appDir = path.join(FRAMES_DIR, frame.id);
       const fullIconPath = path.join(appDir, frame.icon);
 
@@ -731,8 +731,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const loadDirectoryInfo = async () => {
       try {
-        const dir = getFramesDirectory();
-        setFramesDirectory(dir || 'Not set');
+        const dir = getAppsDirectory();
+        setAppsDirectory(dir || 'Not set');
       } catch (error) {
         console.error('Error loading frames directory:', error);
       }
@@ -740,31 +740,31 @@ const App: React.FC = () => {
     loadDirectoryInfo();
   }, []);
 
-  const reloadFrames = async () => {
+  const reloadApps = async () => {
     try {
-      setIsLoadingFrames(true);
+      setIsLoadingApps(true);
       // Reset startup apps launch flag so they can launch again after reload
       hasLaunchedStartupApps.current = false;
-      const frames = await loadFrames();
-      setFrames(frames);
+      const frames = await loadApps();
+      setApps(frames);
     } catch (error) {
       console.error('Error loading frames:', error);
       alert('Failed to load apps. Please check your apps directory.');
     } finally {
-      setIsLoadingFrames(false);
+      setIsLoadingApps(false);
     }
   };
 
   useEffect(() => {
-    reloadFrames();
+    reloadApps();
   }, []);
 
-  const handleChangeFramesDirectory = async () => {
+  const handleChangeAppsDirectory = async () => {
     try {
       const result = await ipcRenderer.invoke('change-frames-directory');
       if (result.success && result.directory) {
-        setFramesDirectory(result.directory);
-        await reloadFrames();
+        setAppsDirectory(result.directory);
+        await reloadApps();
       }
     } catch (error) {
       console.error('Error changing frames directory:', error);
@@ -772,8 +772,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleReloadFrames = async () => {
-    await reloadFrames();
+  const handleReloadApps = async () => {
+    await reloadApps();
     alert('Apps reloaded successfully!');
   };
 
@@ -1335,8 +1335,8 @@ const App: React.FC = () => {
     }
   }
 
-  async function findMatchingFrames(filePath: string): Promise<Array<{frame: Frame, priority: number}>> {
-    const frames = await loadFrames();
+  async function findMatchingApps(filePath: string): Promise<Array<{frame: Frame, priority: number}>> {
+    const frames = await loadApps();
     const fileAnalysis = await analyzeFile(filePath);
     const matches: Array<{frame: Frame, priority: number}> = [];
 
@@ -1387,7 +1387,7 @@ const App: React.FC = () => {
         console.log('handleFileDrop: File input prepared:', fileInput);
 
         // Find matching frames directly
-        const matches = await findMatchingFrames(filePath);
+        const matches = await findMatchingApps(filePath);
         console.log('handleFileDrop: Found matches:', matches);
 
         if (matches.length === 0) {
@@ -1400,7 +1400,7 @@ const App: React.FC = () => {
         } else {
           console.log('handleFileDrop: Multiple matches found, showing selection');
           setPendingFileInput(fileInput);
-          setAvailableFrames(matches.map((m: any) => ({
+          setAvailableApps(matches.map((m: any) => ({
             ...m.frame,
             matchPriority: m.priority
           })));
@@ -1561,7 +1561,7 @@ const App: React.FC = () => {
               </div>
 
               <div className="frame-grid">
-                {availableFrames.map(frame => (
+                {availableApps.map(frame => (
                   <div
                     key={frame.id}
                     className="frame-card"
@@ -1633,7 +1633,7 @@ const App: React.FC = () => {
                         <div className="directory-actions">
                           <button
                             className="btn btn-primary"
-                            onClick={handleChangeFramesDirectory}
+                            onClick={handleChangeAppsDirectory}
                           >
                             <span className="btn-icon">📁</span>
                             Choose Directory
@@ -1641,10 +1641,10 @@ const App: React.FC = () => {
                           {framesDirectory && framesDirectory !== 'Not set' && (
                             <button
                               className="btn btn-outline"
-                              onClick={handleReloadFrames}
-                              disabled={isLoadingFrames}
+                              onClick={handleReloadApps}
+                              disabled={isLoadingApps}
                             >
-                              <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
+                              <span className="btn-icon">{isLoadingApps ? '⟳' : '🔄'}</span>
                               Reload
                             </button>
                           )}
@@ -1767,7 +1767,7 @@ const App: React.FC = () => {
                               </h4>
                               <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
                             </div>
-                            {isLoadingFrames ? (
+                            {isLoadingApps ? (
                               <div className="loading-state">
                                 <span className="loading-spinner">⟳</span>
                                 Loading apps...
@@ -1804,7 +1804,7 @@ const App: React.FC = () => {
               <div className="directory-controls-persistent">
                 <button
                   className="directory-btn directory-change-btn"
-                  onClick={handleChangeFramesDirectory}
+                  onClick={handleChangeAppsDirectory}
                   title="Change apps directory"
                 >
                   <span className="btn-icon">📁</span>
@@ -1812,11 +1812,11 @@ const App: React.FC = () => {
                 </button>
                 <button
                   className="directory-btn directory-reload-btn"
-                  onClick={handleReloadFrames}
-                  disabled={isLoadingFrames}
+                  onClick={handleReloadApps}
+                  disabled={isLoadingApps}
                   title="Reload apps"
                 >
-                  <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
+                  <span className="btn-icon">{isLoadingApps ? '⟳' : '🔄'}</span>
                   <span className="btn-text">Reload</span>
                 </button>
                 <div className="directory-path-mini">
@@ -1842,16 +1842,16 @@ const App: React.FC = () => {
                       <div className="setting-actions">
                         <button
                           className="btn btn-primary"
-                          onClick={handleChangeFramesDirectory}
+                          onClick={handleChangeAppsDirectory}
                         >
                           Choose Directory
                         </button>
                         <button
                           className="btn btn-outline"
-                          onClick={handleReloadFrames}
-                          disabled={isLoadingFrames}
+                          onClick={handleReloadApps}
+                          disabled={isLoadingApps}
                         >
-                          {isLoadingFrames ? 'Reloading...' : 'Reload Apps'}
+                          {isLoadingApps ? 'Reloading...' : 'Reload Apps'}
                         </button>
                       </div>
                     </div>

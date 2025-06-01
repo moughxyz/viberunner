@@ -1061,7 +1061,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Standalone Frames in Drop Zone */
+/* Standalone Apps in Drop Zone */
 .drop-zone-divider {
   display: flex;
   align-items: center;

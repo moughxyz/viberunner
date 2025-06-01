@@ -34,7 +34,7 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 - **📱 Chrome-style Tabbed Interface**: Open multiple files and apps simultaneously with smooth tab switching
 - **🎨 Enhanced File Matching**: Go beyond MIME types with filename patterns, content analysis, and priority-based selection
 - **⚙️ User Preferences System**: Apps can store and retrieve user preferences with a powerful API
-- **🔧 Direct Node.js Access**: Frames have full access to Node.js APIs for maximum flexibility and performance
+- **🔧 Direct Node.js Access**: Apps have full access to Node.js APIs for maximum flexibility and performance
 - **🌙 Modern Dark UI**: Beautiful glassmorphism interface with smooth animations and native tab styling
 - **⚛️ React-Based Visualizers**: Build components using React 18+ with TypeScript support
 - **🔄 Hot Reloading**: Instant visualizer updates during development
@@ -508,11 +508,11 @@ The preferences system includes robust error handling:
 
 ### Overview
 
-Frames now have direct access to Node.js APIs instead of receiving pre-processed file content. This provides better performance, flexibility, and avoids data corruption issues.
+Apps now have direct access to Node.js APIs instead of receiving pre-processed file content. This provides better performance, flexibility, and avoids data corruption issues.
 
 ### Frame Props
 
-#### File-based Frames
+#### File-based Apps
 ```typescript
 interface FrameProps {
   fileInput: {
@@ -533,7 +533,7 @@ interface FrameProps {
 }
 ```
 
-#### Standalone Frames
+#### Standalone Apps
 ```typescript
 interface FrameProps {
   container: HTMLElement; // Mount point
@@ -544,7 +544,7 @@ interface FrameProps {
 
 ### Available APIs
 
-Frames have access to the global `api` object and direct Node.js modules:
+Apps have access to the global `api` object and direct Node.js modules:
 
 ```javascript
 // File operations
@@ -1719,7 +1719,7 @@ const checkLatestVersions = async (dependencies: Record<string, string>) => {
 
 ### Frame Cleanup API
 
-**⚠️ Important:** Frames should register cleanup callbacks to prevent memory leaks and ensure proper resource management when tabs are closed.
+**⚠️ Important:** Apps should register cleanup callbacks to prevent memory leaks and ensure proper resource management when tabs are closed.
 
 #### Available Functions
 
