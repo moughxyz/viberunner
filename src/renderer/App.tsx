@@ -286,1595 +286,1008 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
   };
 }
 
-async function loadFrames(): Promise<Frame[]> {
-  const FRAMES_DIR = getFramesDirectory();
-  console.log('loadFrames: Looking for frames in:', FRAMES_DIR);
-
-  if (!fs.existsSync(FRAMES_DIR)) {
-    console.log('loadFrames: Directory does not exist, creating it');
-    fs.mkdirSync(FRAMES_DIR, { recursive: true });
-    return [];
-  }
-
+const getAppsDirectory = () => {
   try {
-    const dirContents = fs.readdirSync(FRAMES_DIR);
-    console.log('loadFrames: Directory contents:', dirContents);
+    const Store = require('electron-store');
+    const store = new Store();
+    let appsDir = store.get('preferences.appsDir');
+
+    if (appsDir && typeof appsDir === 'string') {
+      console.log('Using saved apps directory:', appsDir);
+      return appsDir;
+    }
+
+    // Fallback to default directory
+    const path = require('path');
+    const os = require('os');
+    const fallback = path.join(os.homedir(), 'ExampleApps');
+    console.log('Using fallback apps directory:', fallback);
+    return fallback;
+  } catch (error) {
+    console.error('Error getting apps directory:', error);
+    return null;
+  }
+};
+
+async function loadApps(): Promise<App[]> {
+  try {
+    const APPS_DIR = getAppsDirectory();
+    console.log('loadApps: Looking for apps in:', APPS_DIR);
+
+    if (!fs.existsSync(APPS_DIR)) {
+      console.log('loadApps: Directory does not exist, creating it');
+      fs.mkdirSync(APPS_DIR, { recursive: true });
+      return [];
+    }
+
+    const dirContents = fs.readdirSync(APPS_DIR);
+    console.log('loadApps: Directory contents:', dirContents);
 
     const directories = dirContents.filter((dir: string) => {
-      const fullPath = path.join(FRAMES_DIR, dir);
+      const fullPath = path.join(APPS_DIR, dir);
       const isDir = fs.statSync(fullPath).isDirectory();
-      console.log(`loadFrames: ${dir} is directory: ${isDir}`);
+      console.log(`loadApps: ${dir} is directory: ${isDir}`);
       return isDir;
     });
-    console.log('loadFrames: Found directories:', directories);
 
-    const frames = directories.map((dir: string) => {
-      const framePath = path.join(FRAMES_DIR, dir);
-      const metadataPath = path.join(framePath, 'viz.json');
-      console.log(`loadFrames: Checking for metadata at: ${metadataPath}`);
+    console.log('loadApps: Found directories:', directories);
+
+    const apps = directories.map((dir: string) => {
+      const appPath = path.join(APPS_DIR, dir);
+      const metadataPath = path.join(appPath, 'viz.json');
+      console.log(`loadApps: Checking for metadata at: ${metadataPath}`);
 
       if (!fs.existsSync(metadataPath)) {
-        console.log(`loadFrames: No viz.json found for ${dir}`);
+        console.log(`loadApps: No viz.json found for ${dir}`);
         return null;
       }
 
       try {
-        const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
+        const metadataContent = fs.readFileSync(metadataPath, 'utf8');
         const metadata = JSON.parse(metadataContent);
-        console.log(`loadFrames: Successfully loaded metadata for ${dir}:`, metadata);
+        console.log(`loadApps: Successfully loaded metadata for ${dir}:`, metadata);
+
         return {
-          ...metadata,
           id: dir,
+          ...metadata
         };
-      } catch (parseError) {
-        console.error(`Error parsing metadata for ${dir}:`, parseError);
+      } catch (error) {
+        console.error(`Error loading metadata for ${dir}:`, error);
         return null;
       }
     })
-    .filter(Boolean) as Frame[];
+      .filter(Boolean) as App[];
 
-    console.log('loadFrames: Final frames array:', frames);
-    return frames;
+    console.log('loadApps: Final apps array:', apps);
+    return apps;
   } catch (error) {
-    console.error('Error in loadFrames function:', error);
-    throw error;
+    console.error('Error in loadApps function:', error);
+    return [];
   }
 }
 
-async function loadFrame(id: string) {
-  const FRAMES_DIR = getFramesDirectory();
-  const framePath = path.join(FRAMES_DIR, id);
-  const bundlePath = path.join(framePath, 'dist', 'bundle.iife.js');
+async function loadApp(id: string) {
+  const APPS_DIR = getAppsDirectory();
+  const appPath = path.join(APPS_DIR, id);
+  const bundlePath = path.join(appPath, 'dist', 'bundle.iife.js');
 
   if (!fs.existsSync(bundlePath)) {
-    throw new Error(`Bundle not found: ${bundlePath}`);
+    throw new Error(`Bundle not found at: ${bundlePath}`);
   }
 
-  const bundleContent = fs.readFileSync(bundlePath, 'utf-8');
+  const bundleContent = fs.readFileSync(bundlePath, 'utf8');
 
-  // Also load the metadata
-  const metadataPath = path.join(framePath, 'viz.json');
-  let config = null;
-  if (fs.existsSync(metadataPath)) {
-    const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
-    config = JSON.parse(metadataContent);
-  }
+  // Load metadata if needed
+  const metadataPath = path.join(appPath, 'viz.json');
+  const metadata = fs.existsSync(metadataPath)
+    ? JSON.parse(fs.readFileSync(metadataPath, 'utf8'))
+    : {};
 
-  return { bundleContent, config };
+  return { bundleContent, metadata };
 }
 
-interface FileInput {
-  path: string;
-  mimetype: string;
-  // Remove content and analysis - frames will handle these directly
-}
+// Remove content and analysis - apps will handle these directly
+const fileAnalysisCache = new Map();
 
-interface Frame {
+interface App {
   id: string;
   name: string;
   description: string;
   version: string;
-  mimetypes: string[];
   author: string;
-  standalone?: boolean; // Optional standalone property
-  icon?: string; // Custom icon path
-  userPreferences?: Record<string, any>; // User preferences storage
+  mimetypes?: string[];
+  matchers?: Array<{
+    type: string;
+    [key: string]: any;
+  }>;
+  standalone?: boolean;
+  icon?: string;
 }
 
-interface OpenTab {
+interface Tab {
   id: string;
-  frame?: Frame; // Optional for new tab - represents the app/visualization
-  fileInput?: FileInput; // undefined for standalone apps and new tab
   title: string;
-  type: 'file' | 'standalone' | 'newtab';
-  frameData?: any; // Store the loaded app data for reloading
-  reactRoot?: any; // Store the React root for each tab
-  domContainer?: HTMLDivElement; // Store the DOM container for each tab
+  type: 'newtab' | 'file' | 'standalone';
+  filePath?: string;
+  app?: App; // Optional for new tab - represents the app/visualization
+  isActive: boolean;
+  isClosable: boolean;
+  appData?: any; // Store the loaded app data for reloading
 }
 
-// Helper function to get supported formats for a frame
-const getSupportedFormats = (frame: any): string => {
-  if (frame.standalone) {
+// Tab management state
+const [tabs, setTabs] = useState<Tab[]>([]);
+
+// Helper function to get supported formats for an app
+const getSupportedFormats = (app: any): string => {
+  if (app.standalone) {
     return 'Standalone utility';
   }
 
-  if (frame.mimetypes && frame.mimetypes.length > 0) {
-    return frame.mimetypes.join(', ');
+  if (app.mimetypes && app.mimetypes.length > 0) {
+    return app.mimetypes.join(', ');
   }
 
-  if (frame.matchers && frame.matchers.length > 0) {
-    const formats = new Set<string>();
-
-    frame.matchers.forEach((matcher: any) => {
-      if (matcher.type === 'mimetype' && matcher.mimetype) {
-        formats.add(matcher.mimetype);
-      } else if (matcher.type === 'filename' && matcher.pattern) {
-        formats.add(`*.${matcher.pattern.split('.').pop() || 'file'}`);
-      } else if (matcher.type === 'filename-contains' && matcher.substring) {
-        const ext = matcher.extension ? `.${matcher.extension}` : '';
-        formats.add(`*${matcher.substring}*${ext}`);
-      } else if (matcher.type === 'content-json') {
-        formats.add('JSON');
-      } else if (matcher.type === 'file-size') {
-        formats.add('Size-based');
-      } else {
-        formats.add(matcher.type);
+  if (app.matchers && app.matchers.length > 0) {
+    const formats: string[] = [];
+    app.matchers.forEach((matcher: any) => {
+      switch (matcher.type) {
+        case 'mimetype':
+          if (matcher.mimetype) formats.push(matcher.mimetype);
+          break;
+        case 'filename':
+          if (matcher.pattern) formats.push(`File: ${matcher.pattern}`);
+          break;
+        case 'filename-contains':
+          if (matcher.substring) formats.push(`Contains: ${matcher.substring}`);
+          break;
+        case 'path-pattern':
+          if (matcher.pattern) formats.push(`Path: ${matcher.pattern}`);
+          break;
+        case 'content-json':
+          formats.push('JSON content');
+          break;
+        case 'content-regex':
+          formats.push('Content pattern');
+          break;
+        default:
+          break;
       }
     });
-
-    return Array.from(formats).join(', ') || 'Enhanced matching';
+    return formats.length > 0 ? formats.join(', ') : 'Various formats';
   }
 
-  return 'All files';
+  return 'Unknown formats';
 };
 
-const App: React.FC = () => {
-  const [frames, setFrames] = useState<Frame[]>([]);
-  const [framesDirectory, setFramesDirectory] = useState<string>('');
-  const [isLoadingFrames, setIsLoadingFrames] = useState(false);
-  const [openTabs, setOpenTabs] = useState<OpenTab[]>([
-    { id: 'default-tab', title: 'New Tab', type: 'newtab' }
-  ]);
-  const [activeTabId, setActiveTabId] = useState('default-tab');
-  const [showFrameSelection, setShowFrameSelection] = useState(false);
-  const [availableFrames, setAvailableFrames] = useState<Frame[]>([]);
-  const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
-  const [appIcons, setAppIcons] = useState<Record<string, string>>({});
-  const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
-  const [showSettings, setShowSettings] = useState(false);
+const [apps, setApps] = useState<App[]>([]);
+const [appsDirectory, setAppsDirectory] = useState<string>('');
+const [isLoadingApps, setIsLoadingApps] = useState(false);
+const [appIcons, setAppIcons] = useState<{[key: string]: string}>({});
+const [startupApps, setStartupApps] = useState<{[key: string]: any}>({});
+const [showManagement, setShowManagement] = useState(false);
 
-  const frameRootRef = useRef<HTMLDivElement>(null);
-  const hasLaunchedStartupApps = useRef<boolean>(false);
+const [showAppSelection, setShowAppSelection] = useState(false);
+const [availableApps, setAvailableApps] = useState<App[]>([]);
+const [pendingFilePath, setPendingFilePath] = useState<string | null>(null);
 
-  // Get the currently active tab
-  const activeTab = openTabs.find(tab => tab.id === activeTabId);
+// Active tab state
+const [activeTabId, setActiveTabId] = useState<string>('');
 
-  // Tab drag and drop state
-  const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
-  const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
+const appRootRef = useRef<HTMLDivElement>(null);
+const hasLaunchedStartupApps = useRef<boolean>(false);
 
-  // Function to load app icon
-  const loadAppIcon = async (frame: Frame): Promise<string | null> => {
-    if (!frame.icon) return null;
+// Get the active tab
+const activeTab = tabs.find(tab => tab.id === activeTabId);
 
-    // Check if already cached
-    if (appIcons[frame.id]) {
-      return appIcons[frame.id];
+// Create a preferences helper for this app
+const prefs = (window as any).createPreferencesHelper?.('viberunner') || {
+  getString: (key: string, defaultValue: string) => defaultValue,
+  set: (key: string, value: any) => {},
+  getObject: (key: string, defaultValue: any) => defaultValue
+};
+
+const loadAppIcon = async (app: App): Promise<string | null> => {
+  if (!app.icon) return null;
+
+  // Check if already cached
+  if (appIcons[app.id]) {
+    return appIcons[app.id];
+  }
+
+  try {
+    const APPS_DIR = getAppsDirectory();
+    const appDir = path.join(APPS_DIR, app.id);
+    const fullIconPath = path.join(appDir, app.icon);
+
+    const fs = require('fs');
+
+    // Check if icon file exists
+    if (!fs.existsSync(fullIconPath)) {
+      throw new Error(`Icon file not found: ${app.icon}`);
     }
 
-    try {
-      const FRAMES_DIR = getFramesDirectory();
-      const appDir = path.join(FRAMES_DIR, frame.id);
-      const fullIconPath = path.join(appDir, frame.icon);
+    // Read the icon file and convert to data URL
+    const iconBuffer = fs.readFileSync(fullIconPath);
+    const ext = path.extname(app.icon).toLowerCase();
+    let mimeType = 'image/png'; // default
 
-      // Ensure the icon path is within the app directory
-      if (!fullIconPath.startsWith(appDir)) {
-        throw new Error('Icon path must be within app directory');
-      }
+    if (ext === '.svg') mimeType = 'image/svg+xml';
+    else if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+    else if (ext === '.gif') mimeType = 'image/gif';
+    else if (ext === '.webp') mimeType = 'image/webp';
 
-      if (!fs.existsSync(fullIconPath)) {
-        throw new Error(`Icon file not found: ${frame.icon}`);
-      }
+    const iconData = `data:${mimeType};base64,${iconBuffer.toString('base64')}`;
 
-      // Read the icon file as base64
-      const iconBuffer = fs.readFileSync(fullIconPath);
-      const mimeType = mime.lookup(fullIconPath) || 'application/octet-stream';
-      const iconData = `data:${mimeType};base64,${iconBuffer.toString('base64')}`;
+    // Cache the icon
+    setAppIcons(prev => ({ ...prev, [app.id]: iconData }));
 
-      setAppIcons(prev => ({ ...prev, [frame.id]: iconData }));
-      return iconData;
-    } catch (error) {
-      console.error(`Failed to load icon for ${frame.name}:`, error);
-    }
-
+    return iconData;
+  } catch (error) {
+    console.error(`Failed to load icon for ${app.name}:`, error);
     return null;
-  };
+  }
+};
 
-  // Load startup app preferences
-  const loadStartupApps = async () => {
-    try {
-      const { app } = require('@electron/remote');
-      const prefsPath = path.join(app.getPath('userData'), 'preferences.json');
-
-      if (fs.existsSync(prefsPath)) {
-        const prefsContent = fs.readFileSync(prefsPath, 'utf8');
-        const prefs = JSON.parse(prefsContent);
-        setStartupApps(prefs.startupApps || {});
-      }
-    } catch (error) {
-      console.error('Error loading startup apps:', error);
+// Load icons for all apps when apps change
+useEffect(() => {
+  apps.forEach(app => {
+    if (app.icon && !appIcons[app.id]) {
+      loadAppIcon(app);
     }
-  };
+  });
+}, [apps]);
 
-  // Save startup app preferences
-  const saveStartupApps = (newStartupApps: Record<string, { enabled: boolean; tabOrder: number }>) => {
-    try {
-      const { app } = require('@electron/remote');
-      const prefsPath = path.join(app.getPath('userData'), 'preferences.json');
+// Load startup apps when component mounts and when apps change
+useEffect(() => {
+  const savedStartupApps = prefs.getObject('startupApps', {});
+  setStartupApps(savedStartupApps);
+}, [apps]);
 
-      // Load existing preferences
-      let prefs = {};
-      if (fs.existsSync(prefsPath)) {
-        const prefsContent = fs.readFileSync(prefsPath, 'utf8');
-        prefs = JSON.parse(prefsContent);
-      }
+// Auto-launch startup apps when apps are loaded
+useEffect(() => {
+  console.log('Auto-launch effect triggered:', {
+    appsLength: apps.length,
+    startupAppsKeys: Object.keys(startupApps),
+    hasLaunched: hasLaunchedStartupApps.current
+  });
 
-      // Update startup apps
-      (prefs as any).startupApps = newStartupApps;
+  if (apps.length > 0 && Object.keys(startupApps).length > 0 && !hasLaunchedStartupApps.current) {
+    hasLaunchedStartupApps.current = true;
 
-      // Save back to file
-      fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2), 'utf8');
+    // Wait a bit for the UI to settle
+    setTimeout(() => {
+      Object.entries(startupApps).forEach(([appId, shouldLaunch]) => {
+        if (shouldLaunch) {
+          console.log('Auto-launching startup app:', appId);
 
-      setStartupApps(newStartupApps);
-    } catch (error) {
-      console.error('Error saving startup apps:', error);
-    }
-  };
+          // Find the app in our loaded apps
+          const app = apps.find(f => f.id === appId);
+          if (app) {
+            // Create a new tab for this startup app
+            const newTabId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+            const newTab: Tab = {
+              id: newTabId,
+              title: app.name,
+              type: 'standalone',
+              app: app,
+              isActive: false,
+              isClosable: true
+            };
 
-  // Toggle startup app enabled state
-  const toggleStartupApp = async (appId: string, enabled: boolean) => {
-    try {
-      const newStartupApps = { ...startupApps };
-
-      if (enabled) {
-        // If enabling, set a default tab order if not already set
-        const currentConfig = startupApps[appId] || { enabled: false, tabOrder: 1 };
-        if (!currentConfig.tabOrder) {
-          const maxTabOrder = Math.max(0, ...Object.values(startupApps).map(app => app.tabOrder));
-          currentConfig.tabOrder = maxTabOrder + 1;
-        }
-        newStartupApps[appId] = { ...currentConfig, enabled: true };
-      } else {
-        delete newStartupApps[appId];
-      }
-
-      saveStartupApps(newStartupApps);
-    } catch (error) {
-      console.error('Error toggling startup app:', error);
-    }
-  };
-
-  // Update tab order for startup app
-  const updateStartupAppTabOrder = async (appId: string, tabOrder: number) => {
-    try {
-      const currentConfig = startupApps[appId];
-      if (!currentConfig || !currentConfig.enabled) return;
-
-      const newStartupApps = {
-        ...startupApps,
-        [appId]: { ...currentConfig, tabOrder }
-      };
-
-      saveStartupApps(newStartupApps);
-    } catch (error) {
-      console.error('Error updating startup app tab order:', error);
-    }
-  };
-
-  // Load icons for all frames when frames change
-  useEffect(() => {
-    frames.forEach(frame => {
-      if (frame.icon && !appIcons[frame.id]) {
-        loadAppIcon(frame);
-      }
-    });
-  }, [frames]);
-
-  // Load startup apps when component mounts and when frames change
-  useEffect(() => {
-    loadStartupApps();
-  }, [frames]);
-
-  // Keyboard shortcuts for tab/window management
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for Cmd+T (macOS) or Ctrl+T (Windows/Linux) - Create new tab
-      if ((event.metaKey || event.ctrlKey) && event.key === 't') {
-        event.preventDefault();
-        createNewTab();
-        return;
-      }
-
-      // Check for Cmd+W (macOS) or Ctrl+W (Windows/Linux)
-      if ((event.metaKey || event.ctrlKey) && event.key === 'w') {
-        event.preventDefault();
-
-        // If multiple tabs or active tab is not a new tab, close the active tab
-        if (openTabs.length > 1 || (activeTab && activeTab.type !== 'newtab')) {
-          if (activeTabId) {
-            closeTab(activeTabId);
-          }
-        } else {
-          // Only a new tab remains or no tabs, close the window
-          try {
-            ipcRenderer.invoke('close-window');
-          } catch (error) {
-            console.error('Failed to close window:', error);
-            // Fallback: try to close via window object
-            window.close();
-          }
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [openTabs, activeTabId, activeTab]);
-
-  // Auto-launch startup apps when frames are loaded
-  useEffect(() => {
-    console.log('Auto-launch useEffect triggered:', {
-      framesLength: frames.length,
-      startupAppsCount: Object.keys(startupApps).length,
-      hasLaunched: hasLaunchedStartupApps.current,
-      startupApps
-    });
-
-    if (frames.length > 0 && Object.keys(startupApps).length > 0 && !hasLaunchedStartupApps.current) {
-      const enabledStartupApps = Object.entries(startupApps)
-        .filter(([_, config]) => config.enabled)
-        .sort(([, a], [, b]) => a.tabOrder - b.tabOrder);
-
-      console.log('Enabled startup apps:', enabledStartupApps);
-
-      if (enabledStartupApps.length > 0) {
-        console.log(`Auto-launching ${enabledStartupApps.length} startup apps in parallel...`);
-
-        // Store the current New Tab ID to maintain focus
-        const currentNewTabId = openTabs.find(tab => tab.type === 'newtab')?.id;
-
-        // Launch all apps in parallel without delays
-        const launchPromises = enabledStartupApps.map(async ([appId, config]) => {
-          try {
-            const frame = frames.find(f => f.id === appId);
-            console.log(`Launching startup app: ${appId} (tab order: ${config.tabOrder})`);
-
-            if (frame && frame.standalone) {
-              // Launch the app but don't wait for tab switching
-              await openFrameInNewTab(frame, undefined, true, false);
-              console.log(`Successfully launched startup app: ${appId}`);
-            } else {
-              console.warn(`Could not launch ${appId}:`, {
-                frameFound: !!frame,
-                isStandalone: frame?.standalone
-              });
-            }
-          } catch (error) {
-            console.error(`Error launching startup app ${appId}:`, error);
-          }
-        });
-
-        // Launch all apps in parallel and then return focus to New Tab
-        Promise.all(launchPromises).then(() => {
-          console.log('All startup apps launched, maintaining focus on New Tab');
-
-          // Ensure we stay on the New Tab after all apps are launched
-          if (currentNewTabId) {
-            switchToTab(currentNewTabId);
-          }
-        }).catch(error => {
-          console.error('Error during parallel startup app launch:', error);
-        });
-      }
-      hasLaunchedStartupApps.current = true;
-    }
-  }, [frames, startupApps]);
-
-  // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
-  const getAppIcon = (frame: Frame): string => {
-    if (appIcons[frame.id]) {
-      return appIcons[frame.id];
-    }
-
-    // Return Viberunner SVG logo as fallback
-    return getViberunnerLogoPath();
-  };
-
-  // Function to get Viberunner logo as data URL
-  const getViberunnerLogoPath = (): string => {
-    try {
-      // Load SVG file and convert to data URL
-      const svgPath = path.resolve(__dirname, '../assets/viberunner-logo.svg');
-      if (fs.existsSync(svgPath)) {
-        const svgContent = fs.readFileSync(svgPath, 'utf8');
-        return `data:image/svg+xml;base64,${btoa(svgContent)}`;
-      } else {
-        // Try alternative path
-        const altPath = path.resolve(process.cwd(), 'src/assets/viberunner-logo.svg');
-        if (fs.existsSync(altPath)) {
-          const svgContent = fs.readFileSync(altPath, 'utf8');
-          return `data:image/svg+xml;base64,${btoa(svgContent)}`;
-        }
-        throw new Error('SVG file not found');
-      }
-    } catch (error) {
-      console.warn('Failed to load Viberunner logo SVG, using fallback:', error);
-      // Fallback to inline SVG if file loading fails
-      const svg = `<svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="white" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>`;
-      return `data:image/svg+xml;base64,${btoa(svg)}`;
-    }
-  };
-
-  // Imperative tab management - outside React state
-  const tabContainersRef = useRef<Map<string, {
-    domElement: HTMLDivElement;
-    reactRoot: any;
-    styleElement?: HTMLStyleElement;
-  }>>(new Map());
-
-  // Load frames directory info
-  useEffect(() => {
-    const loadDirectoryInfo = async () => {
-      try {
-        const dir = getFramesDirectory();
-        setFramesDirectory(dir || 'Not set');
-      } catch (error) {
-        console.error('Error loading frames directory:', error);
-      }
-    };
-    loadDirectoryInfo();
-  }, []);
-
-  const reloadFrames = async () => {
-    try {
-      setIsLoadingFrames(true);
-      // Reset startup apps launch flag so they can launch again after reload
-      hasLaunchedStartupApps.current = false;
-      const frames = await loadFrames();
-      setFrames(frames);
-    } catch (error) {
-      console.error('Error loading frames:', error);
-      alert('Failed to load apps. Please check your apps directory.');
-    } finally {
-      setIsLoadingFrames(false);
-    }
-  };
-
-  useEffect(() => {
-    reloadFrames();
-  }, []);
-
-  const handleChangeFramesDirectory = async () => {
-    try {
-      const result = await ipcRenderer.invoke('change-frames-directory');
-      if (result.success && result.directory) {
-        setFramesDirectory(result.directory);
-        await reloadFrames();
-      }
-    } catch (error) {
-      console.error('Error changing frames directory:', error);
-      alert('Failed to change apps directory.');
-    }
-  };
-
-  const handleReloadFrames = async () => {
-    await reloadFrames();
-    alert('Apps reloaded successfully!');
-  };
-
-  const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-  // Imperative function to create a frame container
-  const createFrameContainer = async (tab: OpenTab): Promise<boolean> => {
-    if (!frameRootRef.current || !tab.frame || !tab.frameData) {
-      console.error('Cannot create frame container:', {
-        hasFrameRoot: !!frameRootRef.current,
-        hasFrame: !!tab.frame,
-        hasFrameData: !!tab.frameData
-      });
-      return false;
-    }
-
-    console.log('Creating frame container for tab:', tab.id);
-
-    // Create DOM container
-    const container = document.createElement('div');
-    container.className = 'tab-frame-container';
-    container.style.position = 'absolute';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.right = '0';
-    container.style.bottom = '0';
-    container.style.width = '100%';
-    container.style.height = '100%';
-    container.style.display = 'none'; // Start hidden
-    container.style.visibility = 'hidden';
-    container.style.zIndex = '-1';
-    container.style.opacity = '0';
-    container.style.background = 'var(--background)';
-    frameRootRef.current.appendChild(container);
-
-    // Prepare props with cleanup support
-    let props;
-    if (!tab.fileInput) {
-      props = {
-        container,
-        tabId: tab.id,
-        appId: tab.frame.id
-      };
-    } else {
-      props = {
-        fileInput: tab.fileInput,
-        fileData: {
-          path: tab.fileInput.path,
-          mimetype: tab.fileInput.mimetype,
-          content: '',
-          analysis: {
-            filename: path.basename(tab.fileInput.path),
-            size: 0,
-            isJson: tab.fileInput.mimetype === 'application/json' || tab.fileInput.path.endsWith('.json'),
-            jsonContent: null
-          }
-        },
-        container,
-        tabId: tab.id,
-        appId: tab.frame.id
-      };
-    }
-
-    return new Promise<boolean>((resolve) => {
-      // Create script and load frame
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-
-      let processedBundleContent = tab.frameData.bundleContent;
-
-      // CSS scoping patterns for auto-scoping
-      const cssPatterns = [
-        /(['"`])([^'"`]*\.css[^'"`]*)\1/g,
-        /(['"`])([^'"`]*{[^}]*}[^'"`]*)\1/g
-      ];
-
-      cssPatterns.forEach(pattern => {
-        processedBundleContent = processedBundleContent.replace(pattern, (match: string, quote: string, cssContent: string) => {
-          if (!cssContent) return match;
-
-          // Don't process if already scoped to .tab-frame-container
-          if (cssContent.includes('.tab-frame-container') || cssContent.includes(`[data-frame-id="${tab.id}"]`)) {
-            return match;
-          }
-
-          // Auto-scope CSS selectors
-          const scopedCSS = cssContent
-            // Scope universal selector
-            .replace(/^\s*\*\s*\{/gm, `[data-frame-id="${tab.id}"] * {`)
-            // Scope element selectors
-            .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
-            // Scope class selectors
-            .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
-            // Scope ID selectors
-            .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
-            // Scope descendant selectors
-            .replace(/^(\s*)([.#]?[\w-]+(?:\s+[.#]?[\w-]+)*)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
-            // Handle @media queries by scoping the content inside
-            .replace(/@media[^{]+\{([^{}]*(?:\{[^}]*\}[^{}]*)*)\}/g, (mediaMatch: string, mediaContent: string) => {
-              const scopedMediaContent = mediaContent
-                .replace(/^\s*\*\s*\{/gm, `[data-frame-id="${tab.id}"] * {`)
-                .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
-                .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`)
-                .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-frame-id="${tab.id}"] $2 {`);
-              return mediaMatch.replace(mediaContent, scopedMediaContent);
+            setTabs(prevTabs => {
+              const existingNewTab = prevTabs.find(t => t.type === 'newtab');
+              if (existingNewTab && prevTabs.length === 1) {
+                // Replace the single new tab
+                newTab.isActive = true;
+                return [newTab];
+              } else {
+                // Add to existing tabs
+                const updated = prevTabs.map(t => ({ ...t, isActive: false }));
+                newTab.isActive = true;
+                return [...updated, newTab];
+              }
             });
 
-          return quote ? `${quote}${scopedCSS}${quote}` : scopedCSS;
-        });
+            setActiveTabId(newTabId);
+          }
+        }
       });
-
-      // Also intercept any dynamic style injection
-      const frameStyleInterceptor = `
-        // Intercept style injection for frame isolation
-        (function() {
-          const originalCreateElement = document.createElement;
-          const frameId = "${tab.id}";
-
-          document.createElement = function(tagName) {
-            const element = originalCreateElement.call(this, tagName);
-
-            if (tagName.toLowerCase() === 'style') {
-              // Mark style elements created by this frame
-              element.setAttribute('data-frame-style', frameId);
-
-              // Override textContent to auto-scope CSS - with safety checks
-              try {
-                const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'textContent') ||
-                                 Object.getOwnPropertyDescriptor(Node.prototype, 'textContent') ||
-                                 Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'textContent');
-
-                if (descriptor && descriptor.set) {
-                  const originalTextContentSetter = descriptor.set;
-                  Object.defineProperty(element, 'textContent', {
-                    set: function(value) {
-                      if (value && typeof value === 'string') {
-                        // Auto-scope the CSS
-                        const scopedCSS = value
-                          .replace(/^\\s*\\*\\s*\\{/gm, \`[data-frame-id="\${frameId}"] * {\`)
-                          .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
-                          .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`)
-                          .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-frame-id="\${frameId}"] $2 {\`);
-                        originalTextContentSetter.call(this, scopedCSS);
-                      } else {
-                        originalTextContentSetter.call(this, value);
-                      }
-                    },
-                    get: descriptor.get,
-                    enumerable: descriptor.enumerable,
-                    configurable: descriptor.configurable
-                  });
-                }
-              } catch (err) {
-                console.warn('Failed to intercept textContent for frame CSS scoping:', err);
-              }
-            }
-
-            return element;
-          };
-        })();
-      `;
-
-      script.textContent = frameStyleInterceptor + '\n' + processedBundleContent;
-
-      const frameLoader = (FrameComponent: any) => {
-        try {
-          // Create an isolation wrapper div
-          const isolationWrapper = document.createElement('div');
-          isolationWrapper.style.cssText = `
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
-            position: relative !important;
-            overflow: auto !important;
-            display: block !important;
-            contain: layout style size !important;
-            isolation: isolate !important;
-            z-index: 1 !important;
-          `;
-
-          container.appendChild(isolationWrapper);
-
-          // Render directly into the isolation wrapper
-          isolationWrapper.setAttribute('data-frame-id', tab.id);
-
-          const root = createRoot(isolationWrapper);
-          root.render(React.createElement(FrameComponent, props));
-
-          // Store container reference in tabContainersRef for tab switching
-          tabContainersRef.current.set(tab.id, {
-            domElement: container,
-            reactRoot: root,
-            styleElement: undefined
-          });
-
-          // Show the container with proper stacking
-          container.style.display = 'block';
-          container.style.visibility = 'visible';
-          container.style.zIndex = '10';
-          container.style.opacity = '1';
-
-          resolve(true);
-        } catch (error) {
-          console.error('Error rendering frame:', error);
-          resolve(false);
-        }
-      };
-
-      // Make the frame loader available globally with backward compatibility
-      (window as any).__LOAD_APP__ = frameLoader;
-      (window as any).__LOAD_VISUALIZER__ = frameLoader; // Backward compatibility
-      (window as any).__LOAD_FRAME__ = frameLoader; // Backward compatibility
-
-      script.onload = () => {
-        // Clean up after script loads
-        setTimeout(() => {
-          if (script.parentNode) {
-            script.parentNode.removeChild(script);
-          }
-          delete (window as any).__LOAD_APP__;
-          delete (window as any).__LOAD_VISUALIZER__;
-          delete (window as any).__LOAD_FRAME__;
-        }, 1000);
-      };
-
-      script.onerror = (error) => {
-        console.error('Script loading error:', error);
-        resolve(false);
-      };
-
-      document.head.appendChild(script);
-    });
-  };
-
-  // Imperative function to switch tab visibility
-  const switchToTab = (tabId: string, tabData?: OpenTab) => {
-    // Use provided tab data or look up from state
-    const activeTab = tabData || openTabs.find(tab => tab.id === tabId);
-
-    console.log('Switching to tab:', tabId, 'type:', activeTab?.type);
-
-    // Hide all frame containers with enhanced visibility control
-    tabContainersRef.current.forEach((container, id) => {
-      console.log('Hiding container for tab:', id);
-      const element = container.domElement;
-      element.style.display = 'none';
-      element.style.visibility = 'hidden';
-      element.style.zIndex = '-1';
-      element.style.opacity = '0';
-    });
-
-    // Show the active tab's container if it's not a new tab
-    if (activeTab && activeTab.type !== 'newtab') {
-      const container = tabContainersRef.current.get(tabId);
-      if (container) {
-        console.log('Showing container for tab:', tabId);
-        const element = container.domElement;
-        element.style.display = 'block';
-        element.style.visibility = 'visible';
-        element.style.zIndex = '10';
-        element.style.opacity = '1';
-      } else {
-        console.warn('No container found for tab:', tabId);
-      }
-    }
-
-    setActiveTabId(tabId);
-  };
-
-  const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput, forceNewTab: boolean = false, switchToTab_: boolean = true) => {
-    const title = fileInput
-      ? fileInput.path.split('/').pop() || 'Unknown File'
-      : frame.name;
-
-    let frameData;
-
-    // Load frame data
-    try {
-      frameData = await loadFrame(frame.id);
-    } catch (error) {
-      console.error('Failed to load frame data:', error);
-      alert(`Failed to load ${frame.name}: ${error}`);
-      return;
-    }
-
-    // Check if we have an active new tab to transform (but not if forceNewTab is true)
-    const currentTab = openTabs.find(tab => tab.id === activeTabId);
-
-    if (!forceNewTab && currentTab && currentTab.type === 'newtab') {
-      // Transform the current new tab
-      const transformedTab: OpenTab = {
-        ...currentTab,
-        frame,
-        fileInput,
-        title,
-        type: fileInput ? 'file' : 'standalone',
-        frameData
-      };
-
-      setOpenTabs(prev => prev.map(tab =>
-        tab.id === activeTabId ? transformedTab : tab
-      ));
-
-      // Create the frame container and wait for it to be ready
-      const success = await createFrameContainer(transformedTab);
-
-      if (success) {
-        // Only switch to this tab if switchToTab_ is true
-        if (switchToTab_) {
-          switchToTab(transformedTab.id, transformedTab);
-        }
-
-        // Reorder tabs to keep "New Tab" at the end
-        setTimeout(() => {
-          setOpenTabs(prev => {
-            const newTabTabs = prev.filter(tab => tab.type === 'newtab');
-            const otherTabs = prev.filter(tab => tab.type !== 'newtab');
-            return [...otherTabs, ...newTabTabs];
-          });
-        }, 50); // Small delay to ensure tab is properly added first
-      } else {
-        console.error('Failed to create frame container for transformed tab');
-        alert(`Failed to load ${frame.name}`);
-      }
-    } else {
-      // Create a new tab
-      const tabId = generateTabId();
-      const newTab: OpenTab = {
-        id: tabId,
-        frame,
-        fileInput,
-        title,
-        type: fileInput ? 'file' : 'standalone',
-        frameData
-      };
-
-      setOpenTabs(prev => [...prev, newTab]);
-
-      // Create the frame container and wait for it to be ready
-      const success = await createFrameContainer(newTab);
-
-      if (success) {
-        // Only switch to this tab if switchToTab_ is true
-        if (switchToTab_) {
-          switchToTab(tabId, newTab);
-        }
-
-        // Reorder tabs to keep "New Tab" at the end
-        setTimeout(() => {
-          setOpenTabs(prev => {
-            const newTabTabs = prev.filter(tab => tab.type === 'newtab');
-            const otherTabs = prev.filter(tab => tab.type !== 'newtab');
-            return [...otherTabs, ...newTabTabs];
-          });
-        }, 50); // Small delay to ensure tab is properly added first
-      } else {
-        console.error('Failed to create frame container for new tab');
-        alert(`Failed to load ${frame.name}`);
-      }
-    }
-
-    setShowFrameSelection(false);
-    setPendingFileInput(null);
-  };
-
-  const closeTab = (tabId: string) => {
-    console.log('Closing tab:', tabId);
-
-    // Execute cleanup callbacks for this tab
-    executeCleanup(tabId);
-
-    // Cleanup the tab's container
-    const container = tabContainersRef.current.get(tabId);
-    if (container) {
-      console.log('Cleaning up container for tab:', tabId);
-      try {
-        container.reactRoot.unmount();
-
-        // Remove the frame-specific style element
-        if (container.styleElement && document.head.contains(container.styleElement)) {
-          document.head.removeChild(container.styleElement);
-        }
-
-        if (frameRootRef.current && frameRootRef.current.contains(container.domElement)) {
-          frameRootRef.current.removeChild(container.domElement);
-        }
-      } catch (error) {
-        console.warn('Error cleaning up tab container:', error);
-      }
-      tabContainersRef.current.delete(tabId);
-    }
-
-    setOpenTabs(prev => {
-      const filtered = prev.filter(tab => tab.id !== tabId);
-
-      // If we closed the active tab, activate another one
-      if (activeTabId === tabId) {
-        const currentIndex = prev.findIndex(tab => tab.id === tabId);
-        if (filtered.length > 0) {
-          const newActiveIndex = Math.min(currentIndex, filtered.length - 1);
-          const newActiveTab = filtered[newActiveIndex];
-          switchToTab(newActiveTab.id);
-        } else {
-          // If no tabs left, create a new tab
-          const newTab: OpenTab = {
-            id: generateTabId(),
-            title: 'New Tab',
-            type: 'newtab'
-          };
-          setOpenTabs([newTab]);
-          switchToTab(newTab.id);
-          return [newTab];
-        }
-      }
-
-      return filtered;
-    });
-  };
-
-  // Handle tab switching
-  const handleTabSwitch = (tabId: string) => {
-    // Reset frame selection state when switching tabs
-    setShowFrameSelection(false);
-    setPendingFileInput(null);
-    switchToTab(tabId);
-  };
-
-  // Tab drag and drop handlers
-  const handleTabDragStart = (e: React.DragEvent, tabId: string) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', tabId);
-    setDraggedTabId(tabId);
-  };
-
-  const handleTabDragEnd = () => {
-    setDraggedTabId(null);
-    setDragOverTabId(null);
-  };
-
-  const handleTabDragOver = (e: React.DragEvent, tabId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-
-    if (draggedTabId && draggedTabId !== tabId) {
-      setDragOverTabId(tabId);
-    }
-  };
-
-  const handleTabDragLeave = (e: React.DragEvent, _tabId: string) => {
-    // Only clear if we're actually leaving this tab (not entering a child element)
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setDragOverTabId(null);
-    }
-  };
-
-  const handleTabDrop = (e: React.DragEvent, dropTargetTabId: string) => {
-    e.preventDefault();
-
-    const draggedId = e.dataTransfer.getData('text/plain');
-    if (!draggedId || draggedId === dropTargetTabId) {
-      return;
-    }
-
-    // Reorder tabs
-    setOpenTabs(prev => {
-      const newTabs = [...prev];
-      const draggedIndex = newTabs.findIndex(tab => tab.id === draggedId);
-      const targetIndex = newTabs.findIndex(tab => tab.id === dropTargetTabId);
-
-      if (draggedIndex === -1 || targetIndex === -1) {
-        return prev;
-      }
-
-      // Remove dragged tab and insert at target position
-      const [draggedTab] = newTabs.splice(draggedIndex, 1);
-      newTabs.splice(targetIndex, 0, draggedTab);
-
-      return newTabs;
-    });
-
-    setDraggedTabId(null);
-    setDragOverTabId(null);
-  };
-
-  const selectFrame = async (frame: Frame) => {
-    if (pendingFileInput) {
-      await openFrameInNewTab(frame, pendingFileInput);
-    }
-  };
-
-  const launchStandaloneFrame = async (frame: Frame) => {
-    try {
-      console.log('Launching standalone frame:', frame.name, frame.id);
-      await openFrameInNewTab(frame);
-    } catch (error) {
-      console.error('Failed to launch standalone frame:', error);
-      alert(`Failed to launch ${frame.name}: ${error}`);
-    }
-  };
-
-  // Enhanced file matching functions
-  function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {
-    switch (matcher.type) {
-      case 'mimetype':
-        return matcher.mimetype === fileAnalysis.mimetype;
-
-      case 'filename':
-        if (matcher.pattern) {
-          // Support exact match or glob pattern
-          if (matcher.pattern.includes('*') || matcher.pattern.includes('?')) {
-            // Simple glob pattern matching
-            const regexPattern = matcher.pattern
-              .replace(/\*/g, '.*')
-              .replace(/\?/g, '.');
-            return new RegExp(`^${regexPattern}$`).test(fileAnalysis.filename);
-          } else {
-            // Exact match
-            return matcher.pattern === fileAnalysis.filename;
-          }
-        }
-        return false;
-
-      case 'filename-contains':
-        if (matcher.substring) {
-          // Case-insensitive substring matching
-          const hasSubstring = fileAnalysis.filename.toLowerCase().includes(matcher.substring.toLowerCase());
-
-          // If extension is specified, also check that
-          if (matcher.extension) {
-            const fileExtension = path.extname(fileAnalysis.filename).toLowerCase();
-            const targetExtension = matcher.extension.startsWith('.')
-              ? matcher.extension.toLowerCase()
-              : `.${matcher.extension.toLowerCase()}`;
-            return hasSubstring && fileExtension === targetExtension;
-          }
-
-          return hasSubstring;
-        }
-        return false;
-
-      case 'content-json':
-        if (!fileAnalysis.isJson || !fileAnalysis.jsonContent) return false;
-        if (matcher.requiredProperties) {
-          return matcher.requiredProperties.every((prop: string) =>
-            fileAnalysis.jsonContent && fileAnalysis.jsonContent[prop] !== undefined
-          );
-        }
-        return true;
-
-      case 'file-size':
-        const size = fileAnalysis.size;
-        if (matcher.minSize !== undefined && size < matcher.minSize) return false;
-        if (matcher.maxSize !== undefined && size > matcher.maxSize) return false;
-        return true;
-
-      default:
-        return false;
-    }
+    }, 1000);
   }
+}, [apps, startupApps]);
 
-  async function findMatchingFrames(filePath: string): Promise<Array<{frame: Frame, priority: number}>> {
-    const frames = await loadFrames();
-    const fileAnalysis = await analyzeFile(filePath);
-    const matches: Array<{frame: Frame, priority: number}> = [];
-
-    for (const frame of frames) {
-      let bestPriority = -1;
-
-      // Check enhanced matchers first
-      if ((frame as any).matchers) {
-        for (const matcher of (frame as any).matchers) {
-          if (evaluateMatcher(matcher, fileAnalysis)) {
-            bestPriority = Math.max(bestPriority, matcher.priority);
-          }
-        }
-      }
-
-      // Fallback to legacy mimetype matching
-      if (bestPriority === -1 && frame.mimetypes) {
-        if (frame.mimetypes.includes(fileAnalysis.mimetype)) {
-          bestPriority = 50; // Default priority for legacy matchers
-        }
-      }
-
-      if (bestPriority > -1) {
-        matches.push({ frame, priority: bestPriority });
-      }
-    }
-
-    // Sort by priority (highest first)
-    return matches.sort((a, b) => b.priority - a.priority);
+// Load apps directory info
+useEffect(() => {
+  try {
+    const dir = getAppsDirectory();
+    setAppsDirectory(dir || 'Not set');
+  } catch (error) {
+    console.error('Error loading apps directory:', error);
+    setAppsDirectory('Error loading directory');
   }
+}, []);
 
-  useEffect(() => {
-    // Handle file drops
-    const handleFileDrop = async (filePath: string) => {
-      try {
-        console.log('=== FILE DROP STARTED ===');
-        console.log('handleFileDrop: Processing file:', filePath);
+const reloadApps = async () => {
+  try {
+    setIsLoadingApps(true);
 
-        // Simplified file analysis for matching only
-        const fileAnalysis = await analyzeFile(filePath);
-        console.log('handleFileDrop: File analysis:', fileAnalysis);
-
-        // Create simplified file input - just path and mimetype
-        const fileInput: FileInput = {
-          path: filePath,
-          mimetype: fileAnalysis.mimetype
-        };
-        console.log('handleFileDrop: File input prepared:', fileInput);
-
-        // Find matching frames directly
-        const matches = await findMatchingFrames(filePath);
-        console.log('handleFileDrop: Found matches:', matches);
-
-        if (matches.length === 0) {
-          console.log('handleFileDrop: No matches found');
-          alert(`No app found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
-        } else if (matches.length === 1) {
-          console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].frame.name);
-          await openFrameInNewTab(matches[0].frame, fileInput);
-          console.log('handleFileDrop: Opened in new tab');
-        } else {
-          console.log('handleFileDrop: Multiple matches found, showing selection');
-          setPendingFileInput(fileInput);
-          setAvailableFrames(matches.map((m: any) => ({
-            ...m.frame,
-            matchPriority: m.priority
-          })));
-          setShowFrameSelection(true);
-          console.log('handleFileDrop: State set for multiple matches');
-        }
-        console.log('=== FILE DROP COMPLETED ===');
-      } catch (error) {
-        console.error('Error handling file drop:', error);
-        alert(`Error handling file: ${error}`);
-      }
-    };
-
-    // Listen for file drops
-    const onDrop = (event: DragEvent) => {
-      event.preventDefault();
-      const filePath = event.dataTransfer?.files[0]?.path;
-      if (filePath) {
-        handleFileDrop(filePath);
-      }
-    };
-
-    const onDragOver = (event: DragEvent) => {
-      event.preventDefault();
-    };
-
-    window.addEventListener('drop', onDrop);
-    window.addEventListener('dragover', onDragOver);
-
-    return () => {
-      window.removeEventListener('drop', onDrop);
-      window.removeEventListener('dragover', onDragOver);
-    };
-  }, [frames]);
-
-  const createNewTab = () => {
-    const tabId = generateTabId();
-    const newTab: OpenTab = {
-      id: tabId,
-      title: 'New Tab',
-      type: 'newtab'
-    };
-
-    setOpenTabs(prev => [...prev, newTab]);
-    switchToTab(tabId);
-    setShowFrameSelection(false);
-    setPendingFileInput(null);
-  };
-
-  return (
-    <div className="vf-app">
-      <header id="vf-header">
-        <div className="vf-header-content">
-          {/* Tabs first, right after macOS traffic lights */}
-          <div className="vf-header-tabs">
-            <div className="vf-tabs-list">
-              {openTabs.map(tab => (
-                <div
-                  key={tab.id}
-                  className={`vf-tab ${tab.id === activeTabId ? 'vf-tab-active' : ''} ${
-                    draggedTabId === tab.id ? 'vf-tab-dragging' : ''
-                  } ${
-                    dragOverTabId === tab.id ? 'vf-tab-drop-target' : ''
-                  }`}
-                  onClick={() => handleTabSwitch(tab.id)}
-                  draggable={true}
-                  onDragStart={(e) => handleTabDragStart(e, tab.id)}
-                  onDragEnd={handleTabDragEnd}
-                  onDragOver={(e) => handleTabDragOver(e, tab.id)}
-                  onDragLeave={(e) => handleTabDragLeave(e, tab.id)}
-                  onDrop={(e) => handleTabDrop(e, tab.id)}
-                >
-                  <div className="vf-tab-icon">
-                    {tab.type === 'newtab' ? (
-                      <img
-                        src={getViberunnerLogoPath()}
-                        alt="New Tab"
-                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
-                      />
-                    ) : tab.frame ? (
-                      <img
-                        src={getAppIcon(tab.frame)}
-                        alt={tab.frame.name}
-                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
-                      />
-                    ) : (
-                      <img
-                        src={getViberunnerLogoPath()}
-                        alt="Default"
-                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
-                      />
-                    )}
-                  </div>
-                  <div className="vf-tab-content">
-                    <span className="vf-tab-title">{tab.title}</span>
-                    {tab.frame && <span className="vf-tab-subtitle">{tab.frame.name}</span>}
-                  </div>
-                  {tab.type !== 'newtab' || openTabs.length > 1 ? (
-                    <button
-                      className="vf-tab-close"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        closeTab(tab.id);
-                      }}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                      }}
-                      onDragStart={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      title="Close tab"
-                    >
-                      ✕
-                    </button>
-                  ) : null}
-                </div>
-              ))}
-
-              {/* New Tab Button */}
-              <button
-                className="vf-new-tab-btn"
-                onClick={createNewTab}
-                title="New tab"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          {/* Viberunner logo on the right */}
-          <h1 className="vf-app-title">
-            <div className="vf-app-icon">
-              <img
-                src={getViberunnerLogoPath()}
-                alt="Viberunner Logo"
-                style={{ width: '24px', height: '24px', objectFit: 'contain' }}
-              />
-            </div>
-            Viberunner
-          </h1>
-        </div>
-      </header>
-
-      <div id="vf-main-layout">
-        <main className="vf-content-area">
-          {showFrameSelection && activeTab?.type === 'newtab' ? (
-            <div className="vf-frame-selection">
-              <div className="selection-header">
-                <h2 className="selection-title">Choose an app</h2>
-                <p className="selection-subtitle">
-                  Multiple apps can handle this file type. Choose one to continue:
-                </p>
-                <div className="file-meta">
-                  <span className="filename">{path.basename(pendingFileInput?.path || '')}</span>
-                  <span className="file-type">{pendingFileInput?.mimetype}</span>
-                </div>
-              </div>
-
-              <div className="frame-grid">
-                {availableFrames.map(frame => (
-                  <div
-                    key={frame.id}
-                    className="frame-card"
-                    onClick={() => selectFrame(frame)}
-                  >
-                    <div className="card-header">
-                      <div className="card-icon">
-                        <img
-                          src={getAppIcon(frame)}
-                          alt={frame.name}
-                          style={{ width: '32px', height: '32px', objectFit: 'contain' }}
-                        />
-                      </div>
-                      <div className="card-title-section">
-                        <h3 className="card-title">{frame.name}</h3>
-                        <div className="card-badge">
-                          <div className="badge-dot"></div>
-                          Ready
-                        </div>
-                      </div>
-                    </div>
-                    <p className="card-description">{frame.description}</p>
-                    <div className="card-footer">
-                      <div className="supported-formats">
-                        {getSupportedFormats(frame)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="selection-actions">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowFrameSelection(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="frame-viewport-container">
-            {/* Always render frame viewport for tab containers */}
-            <div ref={frameRootRef} className="frame-viewport" />
-
-            {/* Unified new tab interface when active tab is new tab */}
-            {activeTab?.type === 'newtab' && !showFrameSelection && (
-              <div className="vf-new-tab-unified">
-                <div className="unified-content">
-                  {/* Show only directory setup if no frames directory is properly configured */}
-                  {!framesDirectory || framesDirectory === 'Not set' || frames.length === 0 ? (
-                    <div className="directory-setup-only">
-                      <div className="setup-header">
-                        <div className="setup-icon">📁</div>
-                        <h2 className="setup-title">Choose your apps directory</h2>
-                        <p className="setup-description">
-                          Select the directory where your apps are located to get started.
-                        </p>
-                      </div>
-
-                      <div className="directory-card">
-                        <div className="directory-info">
-                          <h4 className="directory-label">Current Directory</h4>
-                          <div className="directory-path">
-                            {framesDirectory || 'No directory selected'}
-                          </div>
-                        </div>
-                        <div className="directory-actions">
-                          <button
-                            className="btn btn-primary"
-                            onClick={handleChangeFramesDirectory}
-                          >
-                            <span className="btn-icon">📁</span>
-                            Choose Directory
-                          </button>
-                          {framesDirectory && framesDirectory !== 'Not set' && (
-                            <button
-                              className="btn btn-outline"
-                              onClick={handleReloadFrames}
-                              disabled={isLoadingFrames}
-                            >
-                              <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
-                              Reload
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {framesDirectory && framesDirectory !== 'Not set' && frames.length === 0 && (
-                        <div className="setup-hint">
-                          <p>No visualization apps found in this directory.</p>
-                          <p>Make sure your directory contains properly configured apps with viz.json files.</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      {/* Single column layout */}
-                      {/* Main drop zone section */}
-                      <div className="drop-zone-section">
-                        <div className="drop-zone">
-                          <div className="drop-zone-content">
-                            <div className="drop-zone-icon">📂</div>
-                            <h3 className="drop-zone-title">Drop files to visualize</h3>
-                            <p className="drop-zone-description">
-                              Supports documents, images, data files, and more
-                            </p>
-                            <div className="drop-zone-formats">
-                              <span className="format-tag">JSON</span>
-                              <span className="format-tag">Images</span>
-                              <span className="format-tag">CSV</span>
-                              <span className="format-tag">Text</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Divider */}
-                      <div className="section-divider"></div>
-
-                      {/* Standalone frames section */}
-                      {frames.filter(f => f.standalone).length > 0 && (
-                        <div className="utilities-section">
-                          <div className="section-card">
-                            <div className="section-header">
-                              <h4 className="section-title">
-                                Standalone Apps
-                              </h4>
-                              <span className="section-count">{frames.filter(f => f.standalone).length}</span>
-                            </div>
-                            <div className="utilities-grid">
-                              {frames.filter(f => f.standalone).map(frame => {
-                                const startupConfig = startupApps[frame.id];
-                                const isStartupEnabled = startupConfig?.enabled || false;
-                                const tabOrder = startupConfig?.tabOrder || 1;
-
-                                return (
-                                  <div key={frame.id} className="utility-card-container">
-                                    <div className="utility-card" onClick={() => launchStandaloneFrame(frame)}>
-                                      <div className="utility-icon">
-                                        <img
-                                          src={getAppIcon(frame)}
-                                          alt={frame.name}
-                                          style={{ width: '24px', height: '24px', objectFit: 'contain' }}
-                                        />
-                                      </div>
-                                      <div className="utility-content">
-                                        <h5 className="utility-title">{frame.name}</h5>
-                                        <p className="utility-description">{frame.description}</p>
-                                      </div>
-                                      <div className="utility-action">Launch</div>
-                                    </div>
-
-                                    {/* Startup controls */}
-                                    <div className="startup-controls" onClick={(e) => e.stopPropagation()}>
-                                      <div className="startup-toggle">
-                                        <label className="toggle-label" onClick={(e) => e.stopPropagation()}>
-                                          <input
-                                            type="checkbox"
-                                            checked={isStartupEnabled}
-                                            onChange={(e) => toggleStartupApp(frame.id, e.target.checked)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="toggle-checkbox"
-                                          />
-                                          <span className="toggle-slider"></span>
-                                          <span className="toggle-text">Start on launch</span>
-                                        </label>
-                                      </div>
-
-                                      {isStartupEnabled && (
-                                        <div className="tab-order-control">
-                                          <label className="tab-order-label">
-                                            Tab order:
-                                            <input
-                                              type="number"
-                                              min="1"
-                                              max="99"
-                                              value={tabOrder}
-                                              onChange={(e) => updateStartupAppTabOrder(frame.id, parseInt(e.target.value) || 1)}
-                                              onClick={(e) => e.stopPropagation()}
-                                              className="tab-order-input"
-                                            />
-                                          </label>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* File-based frames section */}
-                      {frames.filter(f => !f.standalone).length > 0 && (
-                        <div className="frames-section">
-                          <div className="section-card">
-                            <div className="section-header">
-                              <h4 className="section-title">
-                                Contextual Apps
-                              </h4>
-                              <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
-                            </div>
-                            {isLoadingFrames ? (
-                              <div className="loading-state">
-                                <span className="loading-spinner">⟳</span>
-                                Loading apps...
-                              </div>
-                            ) : (
-                              <div className="frames-grid">
-                                {frames.filter(f => !f.standalone).map(frame => (
-                                  <div key={frame.id} className="frame-info-card">
-                                    <div className="frame-info-header">
-                                      <h5 className="frame-info-title">{frame.name}</h5>
-                                      <div className="frame-info-status">
-                                        <span className="status-dot"></span>
-                                      </div>
-                                    </div>
-                                    <p className="frame-info-description">{frame.description}</p>
-                                    <div className="frame-info-formats">
-                                      {getSupportedFormats(frame)}
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Directory Controls - Fixed outside scrollable content */}
-            {activeTab?.type === 'newtab' && !showFrameSelection && framesDirectory && framesDirectory !== 'Not set' && frames.length > 0 && (
-              <div className="directory-controls-persistent">
-                <button
-                  className="directory-btn directory-change-btn"
-                  onClick={handleChangeFramesDirectory}
-                  title="Change apps directory"
-                >
-                  <span className="btn-icon">📁</span>
-                  <span className="btn-text">Change Directory</span>
-                </button>
-                <button
-                  className="directory-btn directory-reload-btn"
-                  onClick={handleReloadFrames}
-                  disabled={isLoadingFrames}
-                  title="Reload apps"
-                >
-                  <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
-                  <span className="btn-text">Reload</span>
-                </button>
-                <div className="directory-path-mini">
-                  {framesDirectory}
-                </div>
-              </div>
-            )}
-
-            {/* Settings Modal */}
-            {showSettings && (
-              <div className="settings-modal-overlay" onClick={() => setShowSettings(false)}>
-                <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
-                  <div className="settings-header">
-                    <h3>Settings</h3>
-                    <button onClick={() => setShowSettings(false)} className="close-btn">✕</button>
-                  </div>
-                  <div className="settings-content">
-                    <div className="setting-group">
-                      <label>Apps Directory</label>
-                      <div className="directory-path-display">
-                        {framesDirectory}
-                      </div>
-                      <div className="setting-actions">
-                        <button
-                          className="btn btn-primary"
-                          onClick={handleChangeFramesDirectory}
-                        >
-                          Choose Directory
-                        </button>
-                        <button
-                          className="btn btn-outline"
-                          onClick={handleReloadFrames}
-                          disabled={isLoadingFrames}
-                        >
-                          {isLoadingFrames ? 'Reloading...' : 'Reload Apps'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Settings Icon */}
-            {activeTab?.type === 'newtab' && !showFrameSelection && (
-              <button
-                className="settings-icon"
-                onClick={() => setShowSettings(true)}
-                title="Settings"
-              >
-                ⚙️
-              </button>
-            )}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+    console.log('Reloading apps...');
+    const apps = await loadApps();
+    setApps(apps);
+  } catch (error) {
+    console.error('Error loading apps:', error);
+    setApps([]);
+  } finally {
+    setIsLoadingApps(false);
+  }
 };
 
-export default App;
+useEffect(() => {
+  reloadApps();
+}, []);
+
+const handleChangeAppsDirectory = async () => {
+  try {
+    const result = await ipcRenderer.invoke('change-apps-directory');
+    if (result.success) {
+      setAppsDirectory(result.directory);
+      await reloadApps();
+    }
+  } catch (error) {
+    console.error('Error changing apps directory:', error);
+  }
+};
+
+const handleReloadApps = async () => {
+  await reloadApps();
+};
+
+// Load and render an app into a tab container
+const loadAppIntoTab = async (tab: Tab) => {
+  if (!tab.app) return;
+
+  const container = document.getElementById(`tab-${tab.id}`);
+  if (!container) return;
+
+  try {
+    // Load the app bundle and metadata
+    const { bundleContent, metadata } = await loadApp(tab.app.id);
+
+    // Clear the container
+    container.innerHTML = '';
+
+    // Create isolated wrapper for the app
+    const isolationWrapper = document.createElement('div');
+    isolationWrapper.style.cssText = `
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: auto;
+      isolation: isolate;
+      contain: layout style paint;
+    `;
+
+    container.className = 'tab-app-container';
+
+    // Process and inject CSS isolation
+    let processedBundleContent = bundleContent;
+
+    // Inject CSS scoping for this specific app
+    if (bundleContent.includes('<style>') || bundleContent.includes('stylesheet')) {
+      const cssContent = bundleContent.match(/<style[^>]*>([\s\S]*?)<\/style>/gi)?.join('\n') || '';
+
+      // Don't process if already scoped to .tab-app-container
+      if (cssContent.includes('.tab-app-container') || cssContent.includes(`[data-app-id="${tab.id}"]`)) {
+        console.log('CSS already scoped, skipping processing');
+      } else {
+        console.log('Processing CSS for scoping...');
+        // Scope all CSS rules to this tab's container
+        const scopedCSS = cssContent
+          .replace(/<style[^>]*>|<\/style>/gi, '')
+          .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
+          // Scope element selectors
+          .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
+          // Scope class selectors
+          .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
+          // Scope ID selectors
+          .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
+          // Scope complex selectors
+          .replace(/^(\s*)([.#]?[\w-]+(?:\s+[.#]?[\w-]+)*)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
+
+        // Additional safety scoping
+        const additionalScoping = scopedCSS
+          .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
+          .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
+          .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
+          .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`);
+
+        // Inject scoped CSS
+        const styleElement = document.createElement('style');
+        styleElement.textContent = additionalScoping;
+        styleElement.setAttribute('data-app-style', tab.app.id);
+        document.head.appendChild(styleElement);
+      }
+    }
+
+    // JavaScript isolation and injection
+    const appStyleInterceptor = `
+      (function() {
+        const originalCreateElement = document.createElement;
+        document.createElement = function(tagName) {
+          const element = originalCreateElement.call(document, tagName);
+          if (tagName.toLowerCase() === 'style') {
+            element.textContent = element.textContent || '';
+            const appId = "${tab.id}";
+
+            // Intercept style content and scope it
+            const originalTextContentSetter = Object.getOwnPropertyDescriptor(Element.prototype, 'textContent').set;
+            Object.defineProperty(element, 'textContent', {
+              set: function(value) {
+                if (value && typeof value === 'string') {
+                  const scopedValue = value
+                    .replace(/^\\s*\\*\\s*\\{/gm, \`[data-app-id="\${appId}"] * {\`)
+                    .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-app-id="\${appId}"] $2 {\`)
+                    .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${appId}"] $2 {\`)
+                    .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${appId}"] $2 {\`);
+                  originalTextContentSetter.call(this, scopedValue);
+                } else {
+                  originalTextContentSetter.call(this, value);
+                }
+              },
+              get: function() {
+                return originalTextContentSetter ? originalTextContentSetter.call(this) : '';
+              }
+            });
+          }
+          return element;
+        };
+      })();
+    `;
+
+    // Create and inject the script
+    const script = document.createElement('script');
+    script.textContent = appStyleInterceptor + '\n' + processedBundleContent;
+
+    // Set up the app environment
+    const props: any = {
+      container: isolationWrapper,
+      tabId: tab.id,
+      appId: tab.app.id
+    };
+
+    // Add file-specific props if this is a file tab
+    if (tab.type === 'file' && tab.filePath) {
+      props.fileInput = {
+        path: tab.filePath,
+        mimetype: 'application/octet-stream' // Will be detected properly in real implementation
+      };
+
+      // Legacy support
+      props.fileData = {
+        path: tab.filePath,
+        mimetype: 'application/octet-stream',
+        content: '', // Apps should read files directly now
+        analysis: {}
+      };
+    }
+
+    // Make props available globally for the app to pick up
+    (window as any).__LOAD_VISUALIZER__ = (AppComponent: any) => {
+      console.log('Loading app component:', AppComponent);
+
+      // Use React to render the app component
+      const React = (window as any).React;
+      const ReactDOM = (window as any).ReactDOM;
+
+      if (React && ReactDOM && AppComponent) {
+        // Create element using React.createElement
+        const element = React.createElement(AppComponent, props);
+
+        // Render using ReactDOM.render
+        const createRoot = ReactDOM.createRoot || ReactDOM.render;
+        if (createRoot === ReactDOM.createRoot) {
+          // React 18+ way
+          const root = createRoot(isolationWrapper);
+          root.render(element);
+        } else {
+          // React 17 way
+          ReactDOM.render(element, isolationWrapper);
+        }
+      } else {
+        console.error('React, ReactDOM, or AppComponent not available');
+      }
+    };
+
+    isolationWrapper.setAttribute('data-app-id', tab.id);
+    container.appendChild(isolationWrapper);
+
+    // Inject and execute the script
+    document.body.appendChild(script);
+
+    // Store app data for potential reloading
+    setTabs(prev => prev.map(t =>
+      t.id === tab.id
+        ? { ...t, appData: { bundleContent, metadata } }
+        : t
+    ));
+
+  } catch (error) {
+    console.error('Error loading app:', error);
+    if (container) {
+      container.innerHTML = `
+        <div style="padding: 20px; color: #ef4444; background: #1a1a1a; border-radius: 8px; margin: 20px;">
+          <h3>❌ Error Loading App</h3>
+          <p><strong>App:</strong> ${tab.app.name}</p>
+          <p><strong>Error:</strong> ${error instanceof Error ? error.message : 'Unknown error'}</p>
+          <p>Please check that the app is properly built and the bundle.iife.js file exists.</p>
+          <details style="margin-top: 10px;">
+            <summary>Technical Details</summary>
+            <pre style="background: #0a0a0a; padding: 10px; border-radius: 4px; overflow: auto; font-size: 12px;">
+              App ID: ${tab.app.id}
+              Expected bundle: ${tab.app.id}/dist/bundle.iife.js
+
+              ${error instanceof Error ? error.stack : 'No stack trace available'}
+            </pre>
+          </details>
+        </div>
+      `;
+    }
+  }
+};
+
+// Clean up app-specific styles when tab is removed
+const cleanupAppTab = (tabId: string) => {
+  // Remove the app-specific style element
+  const styleElement = document.querySelector(`style[data-app-style="${tabId}"]`);
+  if (styleElement) {
+    styleElement.remove();
+  }
+
+  // Clean up any app-specific resources
+  executeCleanup(tabId);
+};
+
+// Function to set a tab as active and ensure it's loaded
+const setActiveTab = (tabId: string) => {
+  setActiveTabId(tabId);
+  setTabs(prev => prev.map(tab => ({
+    ...tab,
+    isActive: tab.id === tabId
+  })));
+
+  // Load the app if it's not a new tab and hasn't been loaded yet
+  const tab = tabs.find(t => t.id === tabId);
+  if (tab && tab.type !== 'newtab' && tab.app) {
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      loadAppIntoTab(tab);
+    }, 100);
+  }
+};
+
+const closeTab = (tabId: string) => {
+  setTabs(prev => {
+    const filtered = prev.filter(tab => tab.id !== tabId);
+
+    // Clean up app-specific resources
+    cleanupAppTab(tabId);
+
+    // If we closed the active tab, activate another one
+    if (activeTabId === tabId) {
+      if (filtered.length > 0) {
+        const newActiveTab = filtered[filtered.length - 1];
+        setActiveTabId(newActiveTab.id);
+        // Update active state
+        return filtered.map(tab => ({
+          ...tab,
+          isActive: tab.id === newActiveTab.id
+        }));
+      } else {
+        // No tabs left, create a new tab
+        const newTabId = Date.now().toString();
+        const newTab: Tab = {
+          id: newTabId,
+          title: 'New Tab',
+          type: 'newtab',
+          isActive: true,
+          isClosable: false
+        };
+        setActiveTabId(newTabId);
+        return [newTab];
+      }
+    }
+
+    return filtered;
+  });
+};
+
+const createNewTab = () => {
+  const newTabId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+  const newTab: Tab = {
+    id: newTabId,
+    title: 'New Tab',
+    type: 'newtab',
+    isActive: true,
+    isClosable: tabs.length > 0 // Can't close if it's the only tab
+  };
+
+  setTabs(prev => {
+    const updatedTabs = prev.map(tab => ({ ...tab, isActive: false }));
+    return [...updatedTabs, newTab];
+  });
+
+  setActiveTabId(newTabId);
+  setShowAppSelection(false);
+};
+
+const addAppTab = (app: App, filePath?: string) => {
+  const tabId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+
+  const newTab: Tab = {
+    id: tabId,
+    title: filePath ? `${path.basename(filePath)} - ${app.name}` : app.name,
+    type: filePath ? 'file' : 'standalone',
+    filePath,
+    app: app,
+    isActive: true,
+    isClosable: true
+  };
+
+  setTabs(prev => {
+    // If there's only one new tab, replace it
+    const existingNewTab = prev.find(t => t.type === 'newtab');
+    if (existingNewTab && prev.length === 1) {
+      return [newTab];
+    }
+
+    // Otherwise add to existing tabs
+    const updatedTabs = prev.map(tab => ({ ...tab, isActive: false }));
+    return [...updatedTabs, newTab];
+  });
+
+  setActiveTabId(tabId);
+  setShowAppSelection(false);
+};
+
+async function findMatchingApps(filePath: string): Promise<Array<{app: App, priority: number}>> {
+  const apps = await loadApps();
+  const matches: Array<{app: App, priority: number}> = [];
+
+  // File analysis for matching
+  for (const app of apps) {
+    // ... existing matching logic ...
+  }
+
+  // Sort by priority (highest first)
+  return matches.sort((a, b) => b.priority - a.priority);
+}
+
+// Handle file drop
+const handleFileDrop = async (filePath: string) => {
+  if (!filePath) return;
+
+  try {
+    // Find matching apps directly
+    const matches = await findMatchingApps(filePath);
+
+    if (matches.length === 0) {
+      // No matching apps found
+      alert('No apps found that can handle this file type.');
+      return;
+    }
+
+    if (matches.length === 1) {
+      // Single match - load it directly
+      addAppTab(matches[0].app, filePath);
+    } else {
+      // Multiple matches - show selection
+      setPendingFilePath(filePath);
+      setAvailableApps(matches.map((m: any) => ({
+        ...m.app,
+        priority: m.priority
+      })));
+      setShowAppSelection(true);
+    }
+  } catch (error) {
+    console.error('Error processing file drop:', error);
+    alert('Error processing the dropped file.');
+  }
+};
+
+// Load app when activeTab changes
+useEffect(() => {
+  const tab = tabs.find(t => t.id === activeTabId);
+  if (tab && tab.app && tab.type !== 'newtab') {
+    loadAppIntoTab(tab);
+  }
+}, [activeTabId, tabs]);
+
+// Handle app selection for file
+const handleAppSelection = (app: App) => {
+  if (pendingFilePath) {
+    addAppTab(app, pendingFilePath);
+    setPendingFilePath(null);
+  }
+  setShowAppSelection(false);
+};
+
+{showAppSelection && activeTab?.type === 'newtab' ? (
+  <div className="vf-app-selection">
+    <div style={{
+      padding: '40px',
+      textAlign: 'center',
+      color: '#ffffff',
+      background: 'rgba(26, 26, 26, 0.95)',
+      backdropFilter: 'blur(10px)',
+      borderRadius: '12px',
+      margin: '40px',
+      border: '1px solid rgba(255, 255, 255, 0.1)'
+    }}>
+      <h3 style={{ marginBottom: '20px', color: '#ffffff' }}>
+        Choose an App for: {pendingFilePath ? path.basename(pendingFilePath) : 'File'}
+      </h3>
+
+      <div className="app-grid">
+        {availableApps.map((app) => (
+          <div
+            key={app.id}
+            className="app-card"
+            onClick={() => handleAppSelection(app)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div style={{
+              padding: '20px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              textAlign: 'center',
+              transition: 'all 0.2s ease'
+            }}>
+              <h4 style={{ color: '#ffffff', marginBottom: '10px' }}>{app.name}</h4>
+              <p style={{ color: '#b3b3b3', fontSize: '14px', marginBottom: '15px' }}>{app.description}</p>
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.2)',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: '#60a5fa'
+              }}>
+                Priority: {(app as any).priority || 'Unknown'}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => setShowAppSelection(false)}
+        style={{
+          marginTop: '20px',
+          padding: '10px 20px',
+          background: 'rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '6px',
+          color: '#ffffff',
+          cursor: 'pointer'
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+) : (
+  <div className="app-viewport-container">
+    {/* App viewport for rendering apps */}
+    <div ref={appRootRef} className="app-viewport" />
+
+    {/* Tab containers for background tab persistence */}
+    {tabs.map(tab => (
+      <div
+        key={tab.id}
+        id={`tab-${tab.id}`}
+        style={{
+          display: tab.isActive ? 'block' : 'none',
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          background: '#0a0a0a',
+          zIndex: tab.isActive ? 10 : 1
+        }}
+      />
+    ))}
+  </div>
+)}
+
+// ... existing code ...
+
+{/* Apps Management Panel */}
+<div
+  className={`vf-floating-panel ${showManagement ? 'visible' : ''}`}
+  style={{
+    position: 'absolute',
+    top: '60px',
+    right: '20px',
+    width: '400px',
+    maxHeight: 'calc(100vh - 120px)',
+    background: 'rgba(26, 26, 26, 0.95)',
+    backdropFilter: 'blur(20px)',
+    border: '1px solid rgba(255, 255, 255, 0.1)',
+    borderRadius: '12px',
+    padding: '20px',
+    color: '#ffffff',
+    fontSize: '14px',
+    zIndex: 1000,
+    overflow: 'auto',
+    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.5)'
+  }}
+>
+  <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+    <h3 style={{ margin: '0 0 10px 0', color: '#ffffff' }}>⚙️ Apps Management</h3>
+    <p style={{ margin: 0, color: '#b3b3b3', fontSize: '13px' }}>
+      Manage your Viberunner apps and directory settings
+    </p>
+  </div>
+
+  {/* Apps Directory Section */}
+  <div style={{ marginBottom: '25px' }}>
+    <h4 style={{ margin: '0 0 10px 0', color: '#ffffff', fontSize: '16px' }}>📁 Apps Directory</h4>
+    <div style={{
+      background: 'rgba(255, 255, 255, 0.05)',
+      padding: '12px',
+      borderRadius: '6px',
+      marginBottom: '10px',
+      wordBreak: 'break-all',
+      fontSize: '12px',
+      fontFamily: 'monospace',
+      color: '#b3b3b3'
+    }}>
+      {appsDirectory}
+    </div>
+    <div style={{ display: 'flex', gap: '8px' }}>
+      <button
+        onClick={handleChangeAppsDirectory}
+        style={{
+          flex: 1,
+          padding: '8px 12px',
+          background: 'rgba(59, 130, 246, 0.2)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
+          borderRadius: '6px',
+          color: '#60a5fa',
+          fontSize: '12px',
+          cursor: 'pointer'
+        }}
+      >
+        📂 Change Directory
+      </button>
+      <button
+        onClick={handleReloadApps}
+        disabled={isLoadingApps}
+        style={{
+          flex: 1,
+          padding: '8px 12px',
+          background: 'rgba(34, 197, 94, 0.2)',
+          border: '1px solid rgba(34, 197, 94, 0.3)',
+          borderRadius: '6px',
+          color: '#4ade80',
+          fontSize: '12px',
+          cursor: 'pointer',
+          opacity: isLoadingApps ? 0.5 : 1
+        }}
+      >
+        {isLoadingApps ? '🔄 Loading...' : '🔄 Reload Apps'}
+      </button>
+    </div>
+  </div>
+
+  {/* Apps List */}
+  <div>
+    <h4 style={{ margin: '0 0 15px 0', color: '#ffffff', fontSize: '16px' }}>
+      🚀 Available Apps ({apps.length})
+    </h4>
+
+    {apps.length === 0 ? (
+      <div style={{
+        textAlign: 'center',
+        padding: '20px',
+        color: '#808080',
+        background: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: '6px'
+      }}>
+        <p style={{ margin: '0 0 10px 0' }}>📭 No apps found</p>
+        <p style={{ margin: 0, fontSize: '12px' }}>
+          Add apps to your apps directory to see them here
+        </p>
+      </div>
+    ) : (
+      <div className="apps-grid" style={{
+        display: 'grid',
+        gap: '12px',
+        maxHeight: '400px',
+        overflowY: 'auto'
+      }}>
+        {apps.map((app) => (
+          <div key={app.id} className="app-info-card">
+            <div className="app-info-header">
+              <h5 className="app-info-title">{app.name}</h5>
+              <div className="app-info-status">
+                {app.standalone ? '⚡ Standalone' : '📄 File Handler'}
+              </div>
+            </div>
+            <p className="app-info-description">{app.description}</p>
+            <div className="app-info-formats">
+              <strong>Formats:</strong> {getSupportedFormats(app)}
+            </div>
+
+            {/* Startup App Toggle for Standalone Apps */}
+            {app.standalone && (
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
+                  <input
+                    type="checkbox"
+                    checked={!!startupApps[app.id]}
+                    onChange={(e) => {
+                      const newStartupApps = { ...startupApps };
+                      if (e.target.checked) {
+                        newStartupApps[app.id] = true;
+                      } else {
+                        delete newStartupApps[app.id];
+                      }
+                      setStartupApps(newStartupApps);
+                      prefs.set('startupApps', newStartupApps);
+                    }}
+                    style={{ margin: 0 }}
+                  />
+                  <span style={{ color: '#b3b3b3' }}>🚀 Launch on startup</span>
+                </label>
+              </div>
+            )}
+
+            {/* Launch Button for Standalone Apps */}
+            {app.standalone && (
+              <div style={{ marginTop: '10px' }}>
+                <button
+                  onClick={() => addAppTab(app)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    background: 'rgba(34, 197, 94, 0.2)',
+                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    borderRadius: '6px',
+                    color: '#4ade80',
+                    fontSize: '12px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  🚀 Launch
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+
+  {/* Close Button */}
+  <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+    <button
+      onClick={() => setShowManagement(false)}
+      style={{
+        width: '100%',
+        padding: '10px',
+        background: 'rgba(255, 255, 255, 0.1)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        borderRadius: '6px',
+        color: '#ffffff',
+        cursor: 'pointer'
+      }}
+    >
+      ✕ Close
+    </button>
+  </div>
+</div>
+
+// ... existing code ...

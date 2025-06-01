@@ -18,264 +18,6 @@ if (require('electron-squirrel-startup')) {
 // Store the selected apps directory
 let selectedAppsDir: string | null = null;
 
-// Permission Manager for handling file system access
-class PermissionManager {
-  private grantedPaths = new Set<string>();
-  private bookmarks = new Map<string, Buffer>(); // Store security-scoped bookmarks
-  private bookmarksFile = path.join(app.getPath('userData'), 'bookmarks.json');
-
-  constructor() {
-    this.loadStoredBookmarks();
-  }
-
-  async checkAccess(path: string): Promise<boolean> {
-    // Check if path is already granted in current session
-    for (const grantedPath of this.grantedPaths) {
-      if (path.startsWith(grantedPath)) {
-        return true;
-      }
-    }
-
-    // Check if we have a stored bookmark for this path or a parent path
-    for (const [bookmarkPath, bookmark] of this.bookmarks) {
-      if (path.startsWith(bookmarkPath)) {
-        try {
-          // Try to start accessing the bookmark - convert Buffer to base64 string
-          const bookmarkString = bookmark.toString('base64');
-          const stopAccessingSecurityScopedResource = app.startAccessingSecurityScopedResource(bookmarkString);
-          if (stopAccessingSecurityScopedResource) {
-            this.grantedPaths.add(bookmarkPath);
-            return true;
-          }
-        } catch (error) {
-          console.log(`Bookmark for ${bookmarkPath} is no longer valid:`, error);
-          // Remove invalid bookmark
-          this.bookmarks.delete(bookmarkPath);
-          this.saveBookmarks();
-        }
-      }
-    }
-
-    return false;
-  }
-
-  // Check without dialog - useful for testing existing permissions
-  hasStoredAccess(path: string): boolean {
-    for (const grantedPath of this.grantedPaths) {
-      if (path.startsWith(grantedPath)) {
-        return true;
-      }
-    }
-
-    for (const bookmarkPath of this.bookmarks.keys()) {
-      if (path.startsWith(bookmarkPath)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  async checkAccessSilent(path: string): Promise<boolean> {
-    // Check current session first
-    for (const grantedPath of this.grantedPaths) {
-      if (path.startsWith(grantedPath)) {
-        return true;
-      }
-    }
-
-    // Try to restore from bookmarks without showing dialogs
-    for (const [bookmarkPath, bookmark] of this.bookmarks) {
-      if (path.startsWith(bookmarkPath)) {
-        try {
-          // Convert Buffer to base64 string for Electron API
-          const bookmarkString = bookmark.toString('base64');
-          const stopAccessingSecurityScopedResource = app.startAccessingSecurityScopedResource(bookmarkString);
-          if (stopAccessingSecurityScopedResource) {
-            this.grantedPaths.add(bookmarkPath);
-            return true;
-          }
-        } catch (error) {
-          console.log(`Bookmark for ${bookmarkPath} is no longer valid:`, error);
-          this.bookmarks.delete(bookmarkPath);
-          this.saveBookmarks();
-        }
-      }
-    }
-
-    return false;
-  }
-
-  async requestAccess(path: string, reason: string): Promise<boolean> {
-    // Check if already granted
-    if (await this.checkAccessSilent(path)) return true;
-
-    // Get the main window to use as parent for the dialog
-    const mainWindow = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
-
-    // Show permission dialog
-    const result = await dialog.showOpenDialog(mainWindow, {
-      title: 'Directory Access Required',
-      message: `${reason}\n\nPlease select the directory to grant access:`,
-      buttonLabel: 'Grant Access',
-      properties: ['openDirectory'], // Remove createBookmarks as it's not a valid property
-      defaultPath: path,
-      securityScopedBookmarks: true // Enable bookmark creation
-    });
-
-    if (!result.canceled && result.filePaths.length > 0) {
-      const grantedPath = result.filePaths[0];
-      this.grantedPaths.add(grantedPath);
-
-      // Create and store security-scoped bookmark
-      if (result.bookmarks && result.bookmarks.length > 0) {
-        // Convert base64 string to Buffer for storage
-        const bookmarkBuffer = Buffer.from(result.bookmarks[0], 'base64');
-        this.bookmarks.set(grantedPath, bookmarkBuffer);
-        this.saveBookmarks();
-        console.log('Created persistent bookmark for:', grantedPath);
-      }
-
-      console.log('Granted access to:', grantedPath);
-      return true;
-    }
-
-    return false;
-  }
-
-  async requestCommonDirectoryAccess(): Promise<void> {
-    const commonDirs = [
-      { path: app.getPath('documents'), name: 'Documents' },
-      { path: app.getPath('desktop'), name: 'Desktop' },
-      { path: app.getPath('downloads'), name: 'Downloads' }
-    ];
-
-    // Check which directories we don't already have access to
-    const needAccess = [];
-    for (const dir of commonDirs) {
-      if (!await this.checkAccessSilent(dir.path)) {
-        needAccess.push(dir);
-      }
-    }
-
-    if (needAccess.length === 0) {
-      console.log('Already have access to all common directories');
-      return;
-    }
-
-    // Get the main window to use as parent for the dialog
-    const mainWindow = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
-
-    // Show a single dialog explaining what we need
-    const result = await dialog.showMessageBox(mainWindow, {
-      type: 'info',
-      title: 'File System Access',
-      message: 'Viberunner apps may need to read and write files',
-      detail: `To provide the best experience, please grant access to common directories like ${needAccess.map(d => d.name).join(', ')} when prompted.\n\nThese permissions will be saved and won't be requested again.`,
-      buttons: ['Grant Access', 'Skip'],
-      defaultId: 0
-    });
-
-    if (result.response === 0) {
-      // Request access to each needed directory
-      for (const dir of needAccess) {
-        try {
-          await this.requestAccess(dir.path, `Grant access to your ${dir.name} folder for app file operations`);
-        } catch (error) {
-          console.log(`User skipped access to ${dir.name}:`, error);
-        }
-      }
-    }
-  }
-
-  hasAccess(path: string): boolean {
-    for (const grantedPath of this.grantedPaths) {
-      if (path.startsWith(grantedPath)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  getGrantedPaths(): string[] {
-    return Array.from(this.grantedPaths);
-  }
-
-  getStoredBookmarkPaths(): string[] {
-    return Array.from(this.bookmarks.keys());
-  }
-
-  private loadStoredBookmarks(): void {
-    try {
-      if (fs.existsSync(this.bookmarksFile)) {
-        const data = fs.readFileSync(this.bookmarksFile, 'utf8');
-        const stored = JSON.parse(data);
-
-        // Convert base64 strings back to Buffers
-        for (const [path, base64Data] of Object.entries(stored)) {
-          if (typeof base64Data === 'string') {
-            this.bookmarks.set(path, Buffer.from(base64Data, 'base64'));
-          }
-        }
-
-        console.log(`Loaded ${this.bookmarks.size} stored bookmarks`);
-      }
-    } catch (error) {
-      console.error('Error loading stored bookmarks:', error);
-    }
-  }
-
-  private saveBookmarks(): void {
-    try {
-      // Convert Buffers to base64 strings for storage
-      const toStore: Record<string, string> = {};
-      for (const [path, bookmark] of this.bookmarks) {
-        toStore[path] = bookmark.toString('base64');
-      }
-
-      fs.writeFileSync(this.bookmarksFile, JSON.stringify(toStore, null, 2));
-      console.log(`Saved ${this.bookmarks.size} bookmarks to disk`);
-    } catch (error) {
-      console.error('Error saving bookmarks:', error);
-    }
-  }
-
-  // Clean up invalid bookmarks
-  async validateAndCleanBookmarks(): Promise<void> {
-    const invalidPaths: string[] = [];
-
-    for (const [bookmarkPath, bookmark] of this.bookmarks) {
-      try {
-        // Convert Buffer to base64 string for Electron API
-        const bookmarkString = bookmark.toString('base64');
-        const stopAccessingSecurityScopedResource = app.startAccessingSecurityScopedResource(bookmarkString);
-        if (stopAccessingSecurityScopedResource) {
-          // Bookmark is valid, stop accessing for now
-          stopAccessingSecurityScopedResource();
-        } else {
-          invalidPaths.push(bookmarkPath);
-        }
-      } catch (error) {
-        console.log(`Bookmark for ${bookmarkPath} is invalid:`, error);
-        invalidPaths.push(bookmarkPath);
-      }
-    }
-
-    // Remove invalid bookmarks
-    for (const invalidPath of invalidPaths) {
-      this.bookmarks.delete(invalidPath);
-    }
-
-    if (invalidPaths.length > 0) {
-      this.saveBookmarks();
-      console.log(`Cleaned up ${invalidPaths.length} invalid bookmarks`);
-    }
-  }
-}
-
-// Global permission manager instance
-const permissionManager = new PermissionManager();
-
 // Enhanced matcher types
 interface FileMatcher {
   type: 'mimetype' | 'filename' | 'filename-contains' | 'path-pattern' | 'content-json' | 'content-regex' | 'file-size' | 'combined';
@@ -868,7 +610,7 @@ const createWindow = (): void => {
       contextIsolation: false,
       webSecurity: true,
       // sandbox: false,
-      // nodeIntegrationInSubFrames: true,
+      // nodeIntegrationInSubApps: true,
     },
     titleBarStyle: 'hiddenInset',
     vibrancy: 'under-window',
@@ -900,15 +642,8 @@ const createWindow = (): void => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 app.whenReady().then(async () => {
-  // Initialize permission manager and validate stored bookmarks
-  await permissionManager.validateAndCleanBookmarks();
-
   // Register IPC handlers BEFORE creating the window
   registerIpcHandlers();
-
-  // NOTE: Removed automatic permission request on startup
-  // Permissions will now be requested on-demand by individual apps
-  // permissionManager.requestCommonDirectoryAccess();
 
   // Create menu bar
   createMenuBar();
@@ -947,17 +682,13 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('load-app');
   ipcMain.removeAllListeners('get-mimetype');
   ipcMain.removeAllListeners('read-file');
-  ipcMain.removeAllListeners('change-frames-directory');
+  ipcMain.removeAllListeners('change-apps-directory');
   ipcMain.removeAllListeners('reload-apps');
   ipcMain.removeAllListeners('read-directory');
   ipcMain.removeAllListeners('find-matching-apps');
   ipcMain.removeAllListeners('write-file');
   ipcMain.removeAllListeners('backup-file');
   ipcMain.removeAllListeners('save-file-dialog');
-  ipcMain.removeAllListeners('check-directory-access');
-  ipcMain.removeAllListeners('request-directory-access');
-  ipcMain.removeAllListeners('get-granted-paths');
-  ipcMain.removeAllListeners('read-file-secure');
   ipcMain.removeAllListeners('get-platform');
   ipcMain.removeAllListeners('execute-command');
 
@@ -1032,20 +763,31 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle('change-frames-directory', async () => {
+  ipcMain.handle('change-apps-directory', async () => {
     try {
-      console.log('change-frames-directory handler called');
-      const newDir = await selectAppsDirectory();
-      if (newDir) {
-        selectedAppsDir = newDir;
-        savePreferences({ appsDir: newDir });
-        console.log('Changed frames directory to:', newDir);
+      console.log('change-apps-directory handler called');
+      const mainWindow = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
+      const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openDirectory'],
+        title: 'Select Apps Directory'
+      });
+
+      if (!result.canceled && result.filePaths.length > 0) {
+        const newDir = result.filePaths[0];
+        console.log('Changed apps directory to:', newDir);
+
+        // Store the new directory in preferences
+        const Store = require('electron-store');
+        const store = new Store();
+        store.set('preferences.appsDir', newDir);
+
         return { success: true, directory: newDir };
       }
+
       return { success: false, directory: null };
     } catch (error) {
-      console.error('Error in change-frames-directory handler:', error);
-      throw error;
+      console.error('Error in change-apps-directory handler:', error);
+      return { success: false, directory: null, error: (error as Error).message };
     }
   });
 
@@ -1148,14 +890,6 @@ function registerIpcHandlers() {
         throw new Error('Invalid file path');
       }
 
-      // Check if we have permission to write to this location
-      const directory = path.dirname(filePath);
-      const hasAccess = await permissionManager.checkAccess(directory);
-
-      if (!hasAccess) {
-        throw new Error('Access denied to directory');
-      }
-
       if (encoding === 'base64') {
         const buffer = Buffer.from(content, 'base64');
         fs.writeFileSync(filePath, buffer);
@@ -1231,89 +965,6 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error('Error closing window:', error);
       return { success: false, error: (error as Error).message };
-    }
-  });
-
-  // Permission management handlers
-  ipcMain.handle('check-directory-access', async (_event, directoryPath: string) => {
-    try {
-      const hasAccess = await permissionManager.checkAccessSilent(directoryPath);
-      return {
-        success: true,
-        hasAccess
-      };
-    } catch (error) {
-      return {
-        success: false,
-        hasAccess: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  });
-
-  ipcMain.handle('request-directory-access', async (_event, directoryPath: string, reason?: string) => {
-    try {
-      const granted = await permissionManager.requestAccess(
-        directoryPath,
-        reason || `Access required for: ${directoryPath}`
-      );
-      return {
-        success: true,
-        granted
-      };
-    } catch (error) {
-      return {
-        success: false,
-        granted: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  });
-
-  ipcMain.handle('get-granted-paths', async (_event) => {
-    try {
-      const sessionPaths = permissionManager.getGrantedPaths();
-      const storedPaths = permissionManager.getStoredBookmarkPaths();
-      // Combine and deduplicate
-      const allPaths = [...new Set([...sessionPaths, ...storedPaths])];
-      return {
-        success: true,
-        grantedPaths: allPaths
-      };
-    } catch (error) {
-      return {
-        success: false,
-        grantedPaths: [],
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  });
-
-  // Enhanced read-file with permission checking
-  ipcMain.handle('read-file-secure', async (_event, filePath: string) => {
-    try {
-      // Check if we have access to the file's directory
-      const dirPath = path.dirname(filePath);
-      const hasAccess = await permissionManager.checkAccess(dirPath);
-
-      if (!hasAccess) {
-        return {
-          success: false,
-          error: 'No permission to access file directory'
-        };
-      }
-
-      // Read the file and return base64 encoded content
-      const content = await fs.promises.readFile(filePath);
-      return {
-        success: true,
-        content: content.toString('base64')
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
     }
   });
 

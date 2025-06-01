@@ -9,7 +9,7 @@ contextBridge.exposeInMainWorld(
     getMimetype: (filePath: string) => ipcRenderer.invoke('get-mimetype', filePath),
     readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
     handleFileDrop: (filePath: string) => ipcRenderer.invoke('handle-file-drop', filePath),
-    changeAppsDirectory: () => ipcRenderer.invoke('change-frames-directory'),
+    changeAppsDirectory: () => ipcRenderer.invoke('change-apps-directory'),
     reloadApps: () => ipcRenderer.invoke('reload-apps'),
     readDirectory: (dirPath: string) => ipcRenderer.invoke('read-directory', dirPath),
     findMatchingApps: (filePath: string) => ipcRenderer.invoke('find-matching-apps', filePath),
@@ -22,13 +22,6 @@ contextBridge.exposeInMainWorld(
       defaultPath?: string;
       filters?: Array<{ name: string; extensions: string[] }>
     }) => ipcRenderer.invoke('save-file-dialog', options),
-    // Permission system
-    checkDirectoryAccess: (directoryPath: string) =>
-      ipcRenderer.invoke('check-directory-access', directoryPath),
-    requestDirectoryAccess: (directoryPath: string, reason?: string) =>
-      ipcRenderer.invoke('request-directory-access', directoryPath, reason),
-    getGrantedPaths: () => ipcRenderer.invoke('get-granted-paths'),
-    readFileSecure: (filePath: string) => ipcRenderer.invoke('read-file-secure', filePath),
     // System operations for plugins
     getPlatform: () => ipcRenderer.invoke('get-platform'),
     executeCommand: (command: string, options?: { timeout?: number }) =>

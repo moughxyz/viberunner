@@ -1,7 +1,4 @@
 "use strict";
-var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 const require$$3 = require("electron");
 const path = require("path");
 const fs = require("fs");
@@ -11016,7 +11013,7 @@ const getElectronBinding = (name) => {
 };
 getElectronBinding$1.getElectronBinding = getElectronBinding;
 server.exports;
-(function(module2, exports) {
+(function(module, exports) {
   var __importDefault = commonjsGlobal && commonjsGlobal.__importDefault || function(mod) {
     return mod && mod.__esModule ? mod : { "default": mod };
   };
@@ -11356,7 +11353,7 @@ Remote event names: ${remoteEvents.join(", ")}`;
           if (process.mainModule) {
             customEvent.returnValue = process.mainModule.require(moduleName);
           } else {
-            let mainModule = module2;
+            let mainModule = module;
             while (mainModule.parent) {
               mainModule = mainModule.parent;
             }
@@ -11507,212 +11504,6 @@ remoteMain.initialize();
 if (require("electron-squirrel-startup")) {
   require$$3.app.quit();
 }
-let selectedAppsDir = null;
-class PermissionManager {
-  constructor() {
-    __publicField(this, "grantedPaths", /* @__PURE__ */ new Set());
-    __publicField(this, "bookmarks", /* @__PURE__ */ new Map());
-    // Store security-scoped bookmarks
-    __publicField(this, "bookmarksFile", path.join(require$$3.app.getPath("userData"), "bookmarks.json"));
-    this.loadStoredBookmarks();
-  }
-  async checkAccess(path2) {
-    for (const grantedPath of this.grantedPaths) {
-      if (path2.startsWith(grantedPath)) {
-        return true;
-      }
-    }
-    for (const [bookmarkPath, bookmark] of this.bookmarks) {
-      if (path2.startsWith(bookmarkPath)) {
-        try {
-          const bookmarkString = bookmark.toString("base64");
-          const stopAccessingSecurityScopedResource = require$$3.app.startAccessingSecurityScopedResource(bookmarkString);
-          if (stopAccessingSecurityScopedResource) {
-            this.grantedPaths.add(bookmarkPath);
-            return true;
-          }
-        } catch (error) {
-          console.log(`Bookmark for ${bookmarkPath} is no longer valid:`, error);
-          this.bookmarks.delete(bookmarkPath);
-          this.saveBookmarks();
-        }
-      }
-    }
-    return false;
-  }
-  // Check without dialog - useful for testing existing permissions
-  hasStoredAccess(path2) {
-    for (const grantedPath of this.grantedPaths) {
-      if (path2.startsWith(grantedPath)) {
-        return true;
-      }
-    }
-    for (const bookmarkPath of this.bookmarks.keys()) {
-      if (path2.startsWith(bookmarkPath)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  async checkAccessSilent(path2) {
-    for (const grantedPath of this.grantedPaths) {
-      if (path2.startsWith(grantedPath)) {
-        return true;
-      }
-    }
-    for (const [bookmarkPath, bookmark] of this.bookmarks) {
-      if (path2.startsWith(bookmarkPath)) {
-        try {
-          const bookmarkString = bookmark.toString("base64");
-          const stopAccessingSecurityScopedResource = require$$3.app.startAccessingSecurityScopedResource(bookmarkString);
-          if (stopAccessingSecurityScopedResource) {
-            this.grantedPaths.add(bookmarkPath);
-            return true;
-          }
-        } catch (error) {
-          console.log(`Bookmark for ${bookmarkPath} is no longer valid:`, error);
-          this.bookmarks.delete(bookmarkPath);
-          this.saveBookmarks();
-        }
-      }
-    }
-    return false;
-  }
-  async requestAccess(path2, reason) {
-    if (await this.checkAccessSilent(path2)) return true;
-    const mainWindow = require$$3.BrowserWindow.getFocusedWindow() || require$$3.BrowserWindow.getAllWindows()[0];
-    const result = await require$$3.dialog.showOpenDialog(mainWindow, {
-      title: "Directory Access Required",
-      message: `${reason}
-
-Please select the directory to grant access:`,
-      buttonLabel: "Grant Access",
-      properties: ["openDirectory"],
-      // Remove createBookmarks as it's not a valid property
-      defaultPath: path2,
-      securityScopedBookmarks: true
-      // Enable bookmark creation
-    });
-    if (!result.canceled && result.filePaths.length > 0) {
-      const grantedPath = result.filePaths[0];
-      this.grantedPaths.add(grantedPath);
-      if (result.bookmarks && result.bookmarks.length > 0) {
-        const bookmarkBuffer = Buffer.from(result.bookmarks[0], "base64");
-        this.bookmarks.set(grantedPath, bookmarkBuffer);
-        this.saveBookmarks();
-        console.log("Created persistent bookmark for:", grantedPath);
-      }
-      console.log("Granted access to:", grantedPath);
-      return true;
-    }
-    return false;
-  }
-  async requestCommonDirectoryAccess() {
-    const commonDirs = [
-      { path: require$$3.app.getPath("documents"), name: "Documents" },
-      { path: require$$3.app.getPath("desktop"), name: "Desktop" },
-      { path: require$$3.app.getPath("downloads"), name: "Downloads" }
-    ];
-    const needAccess = [];
-    for (const dir of commonDirs) {
-      if (!await this.checkAccessSilent(dir.path)) {
-        needAccess.push(dir);
-      }
-    }
-    if (needAccess.length === 0) {
-      console.log("Already have access to all common directories");
-      return;
-    }
-    const mainWindow = require$$3.BrowserWindow.getFocusedWindow() || require$$3.BrowserWindow.getAllWindows()[0];
-    const result = await require$$3.dialog.showMessageBox(mainWindow, {
-      type: "info",
-      title: "File System Access",
-      message: "Viberunner apps may need to read and write files",
-      detail: `To provide the best experience, please grant access to common directories like ${needAccess.map((d) => d.name).join(", ")} when prompted.
-
-These permissions will be saved and won't be requested again.`,
-      buttons: ["Grant Access", "Skip"],
-      defaultId: 0
-    });
-    if (result.response === 0) {
-      for (const dir of needAccess) {
-        try {
-          await this.requestAccess(dir.path, `Grant access to your ${dir.name} folder for app file operations`);
-        } catch (error) {
-          console.log(`User skipped access to ${dir.name}:`, error);
-        }
-      }
-    }
-  }
-  hasAccess(path2) {
-    for (const grantedPath of this.grantedPaths) {
-      if (path2.startsWith(grantedPath)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  getGrantedPaths() {
-    return Array.from(this.grantedPaths);
-  }
-  getStoredBookmarkPaths() {
-    return Array.from(this.bookmarks.keys());
-  }
-  loadStoredBookmarks() {
-    try {
-      if (fs.existsSync(this.bookmarksFile)) {
-        const data = fs.readFileSync(this.bookmarksFile, "utf8");
-        const stored = JSON.parse(data);
-        for (const [path2, base64Data] of Object.entries(stored)) {
-          if (typeof base64Data === "string") {
-            this.bookmarks.set(path2, Buffer.from(base64Data, "base64"));
-          }
-        }
-        console.log(`Loaded ${this.bookmarks.size} stored bookmarks`);
-      }
-    } catch (error) {
-      console.error("Error loading stored bookmarks:", error);
-    }
-  }
-  saveBookmarks() {
-    try {
-      const toStore = {};
-      for (const [path2, bookmark] of this.bookmarks) {
-        toStore[path2] = bookmark.toString("base64");
-      }
-      fs.writeFileSync(this.bookmarksFile, JSON.stringify(toStore, null, 2));
-      console.log(`Saved ${this.bookmarks.size} bookmarks to disk`);
-    } catch (error) {
-      console.error("Error saving bookmarks:", error);
-    }
-  }
-  // Clean up invalid bookmarks
-  async validateAndCleanBookmarks() {
-    const invalidPaths = [];
-    for (const [bookmarkPath, bookmark] of this.bookmarks) {
-      try {
-        const bookmarkString = bookmark.toString("base64");
-        const stopAccessingSecurityScopedResource = require$$3.app.startAccessingSecurityScopedResource(bookmarkString);
-        if (stopAccessingSecurityScopedResource) {
-          stopAccessingSecurityScopedResource();
-        } else {
-          invalidPaths.push(bookmarkPath);
-        }
-      } catch (error) {
-        console.log(`Bookmark for ${bookmarkPath} is invalid:`, error);
-        invalidPaths.push(bookmarkPath);
-      }
-    }
-    for (const invalidPath of invalidPaths) {
-      this.bookmarks.delete(invalidPath);
-    }
-    if (invalidPaths.length > 0) {
-      this.saveBookmarks();
-      console.log(`Cleaned up ${invalidPaths.length} invalid bookmarks`);
-    }
-  }
-}
-const permissionManager = new PermissionManager();
 async function getMimetype(filePath) {
   try {
     const stats = fs.statSync(filePath);
@@ -11838,7 +11629,7 @@ function findMatchingApps(apps, fileAnalysis) {
   return matches.sort((a, b) => b.priority - a.priority);
 }
 async function loadApps() {
-  const APPS_DIR = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+  const APPS_DIR = path.join(require$$3.app.getPath("userData"), "apps");
   console.log("loadApps: Loading from directory:", APPS_DIR);
   if (!fs.existsSync(APPS_DIR)) {
     console.log("loadApps: Directory does not exist:", APPS_DIR);
@@ -11886,146 +11677,6 @@ async function loadApps() {
   } catch (error) {
     console.error("loadApps: Error in loadApps function:", error);
     throw error;
-  }
-}
-async function selectAppsDirectory() {
-  const mainWindow = require$$3.BrowserWindow.getFocusedWindow() || require$$3.BrowserWindow.getAllWindows()[0];
-  const result = await require$$3.dialog.showOpenDialog(mainWindow, {
-    title: "Select Apps Directory",
-    message: "Choose the folder containing your apps",
-    buttonLabel: "Select Folder",
-    properties: ["openDirectory"],
-    defaultPath: path.join(require("os").homedir(), "Desktop")
-  });
-  if (result.canceled || result.filePaths.length === 0) {
-    return null;
-  }
-  const selectedPath = result.filePaths[0];
-  try {
-    const contents = fs.readdirSync(selectedPath);
-    const appFolders = contents.filter((item) => {
-      const itemPath = path.join(selectedPath, item);
-      if (!fs.statSync(itemPath).isDirectory()) return false;
-      const vizJsonPath = path.join(itemPath, "viz.json");
-      return fs.existsSync(vizJsonPath);
-    });
-    if (appFolders.length === 0) {
-      require$$3.dialog.showErrorBox("Invalid Directory", "The selected directory does not contain any valid apps.\n\nApps should be folders containing a viz.json file.");
-      return null;
-    }
-    console.log(`Found ${appFolders.length} app(s):`, appFolders);
-    return selectedPath;
-  } catch (error) {
-    console.error("Error validating apps directory:", error);
-    require$$3.dialog.showErrorBox("Error", "Could not read the selected directory.");
-    return null;
-  }
-}
-function getUserDataPath() {
-  return path.join(require$$3.app.getPath("userData"), "preferences.json");
-}
-function savePreferences(prefs) {
-  try {
-    const prefsPath = getUserDataPath();
-    fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
-  } catch (error) {
-    console.error("Error saving preferences:", error);
-  }
-}
-async function ensureApps() {
-  if (!selectedAppsDir) {
-    console.error("No apps directory selected");
-    return false;
-  }
-  const appsDir = path.join(require$$3.app.getPath("userData"), "apps");
-  console.log("Source apps dir:", selectedAppsDir);
-  console.log("Target apps dir:", appsDir);
-  try {
-    if (!fs.existsSync(appsDir)) {
-      fs.mkdirSync(appsDir, { recursive: true });
-      console.log("Created apps directory:", appsDir);
-    }
-    const sourceContents = fs.readdirSync(selectedAppsDir);
-    const appFolders = sourceContents.filter((item) => {
-      const itemPath = path.join(selectedAppsDir, item);
-      if (!fs.statSync(itemPath).isDirectory()) return false;
-      const vizJsonPath = path.join(itemPath, "viz.json");
-      return fs.existsSync(vizJsonPath);
-    });
-    console.log(`Found ${appFolders.length} app(s) to copy:`, appFolders);
-    for (const app2 of appFolders) {
-      const sourcePath = path.join(selectedAppsDir, app2);
-      const targetPath = path.join(appsDir, app2);
-      console.log(`Processing ${app2}:`);
-      console.log("  Source:", sourcePath);
-      console.log("  Target:", targetPath);
-      const sourceVizJson = path.join(sourcePath, "viz.json");
-      if (!fs.existsSync(sourceVizJson)) {
-        console.warn(`viz.json does not exist in source: ${sourceVizJson}`);
-        continue;
-      }
-      if (fs.existsSync(targetPath)) {
-        try {
-          fs.rmSync(targetPath, { recursive: true, force: true });
-          console.log(`  Removed existing ${app2} directory`);
-        } catch (error) {
-          console.log(`  fs.rmSync failed for ${app2}, trying manual removal:`, error);
-          const removeDir = (dir) => {
-            if (fs.existsSync(dir)) {
-              const files = fs.readdirSync(dir);
-              for (const file of files) {
-                const filePath = path.join(dir, file);
-                try {
-                  if (fs.lstatSync(filePath).isDirectory()) {
-                    removeDir(filePath);
-                  } else {
-                    fs.unlinkSync(filePath);
-                  }
-                } catch (err) {
-                  console.warn(`    Failed to remove ${filePath}:`, err);
-                }
-              }
-              try {
-                fs.rmdirSync(dir);
-              } catch (err) {
-                console.warn(`    Failed to remove directory ${dir}:`, err);
-              }
-            }
-          };
-          removeDir(targetPath);
-          console.log(`  Manual removal completed for ${app2}`);
-        }
-      }
-      fs.mkdirSync(targetPath, { recursive: true });
-      const essentialFiles = ["viz.json"];
-      const essentialDirs = ["dist"];
-      for (const file of essentialFiles) {
-        const sourceFile = path.join(sourcePath, file);
-        const targetFile = path.join(targetPath, file);
-        if (fs.existsSync(sourceFile)) {
-          fs.copyFileSync(sourceFile, targetFile);
-          console.log(`  Copied ${file}`);
-        }
-      }
-      for (const dir of essentialDirs) {
-        const sourceDir = path.join(sourcePath, dir);
-        const targetDir = path.join(targetPath, dir);
-        if (fs.existsSync(sourceDir)) {
-          fs.cpSync(sourceDir, targetDir, { recursive: true });
-          console.log(`  Copied ${dir} directory`);
-        }
-      }
-      const targetVizJson = path.join(targetPath, "viz.json");
-      if (fs.existsSync(targetVizJson)) {
-        console.log(`  viz.json successfully copied for ${app2}`);
-      } else {
-        console.error(`  viz.json was not copied properly for ${app2}`);
-      }
-    }
-    return true;
-  } catch (error) {
-    console.error("Failed to ensure apps:", error);
-    return false;
   }
 }
 const createMenuBar = () => {
@@ -12128,7 +11779,7 @@ const createWindow = () => {
       contextIsolation: false,
       webSecurity: true
       // sandbox: false,
-      // nodeIntegrationInSubFrames: true,
+      // nodeIntegrationInSubApps: true,
     },
     titleBarStyle: "hiddenInset",
     vibrancy: "under-window",
@@ -12144,7 +11795,6 @@ const createWindow = () => {
   }
 };
 require$$3.app.whenReady().then(async () => {
-  await permissionManager.validateAndCleanBookmarks();
   registerIpcHandlers();
   createMenuBar();
   createWindow();
@@ -12171,17 +11821,13 @@ function registerIpcHandlers() {
   require$$3.ipcMain.removeAllListeners("load-app");
   require$$3.ipcMain.removeAllListeners("get-mimetype");
   require$$3.ipcMain.removeAllListeners("read-file");
-  require$$3.ipcMain.removeAllListeners("change-frames-directory");
+  require$$3.ipcMain.removeAllListeners("change-apps-directory");
   require$$3.ipcMain.removeAllListeners("reload-apps");
   require$$3.ipcMain.removeAllListeners("read-directory");
   require$$3.ipcMain.removeAllListeners("find-matching-apps");
   require$$3.ipcMain.removeAllListeners("write-file");
   require$$3.ipcMain.removeAllListeners("backup-file");
   require$$3.ipcMain.removeAllListeners("save-file-dialog");
-  require$$3.ipcMain.removeAllListeners("check-directory-access");
-  require$$3.ipcMain.removeAllListeners("request-directory-access");
-  require$$3.ipcMain.removeAllListeners("get-granted-paths");
-  require$$3.ipcMain.removeAllListeners("read-file-secure");
   require$$3.ipcMain.removeAllListeners("get-platform");
   require$$3.ipcMain.removeAllListeners("execute-command");
   console.log("Registering IPC handlers...");
@@ -12202,7 +11848,7 @@ function registerIpcHandlers() {
     if (!appInstance) {
       throw new Error(`App ${id} not found`);
     }
-    const APPS_DIR = selectedAppsDir || path.join(require$$3.app.getPath("userData"), "apps");
+    const APPS_DIR = path.join(require$$3.app.getPath("userData"), "apps");
     const appDir = path.join(APPS_DIR, appInstance.id);
     const bundlePath = path.join(appDir, "dist", "bundle.iife.js");
     if (!fs.existsSync(bundlePath)) {
@@ -12242,28 +11888,29 @@ function registerIpcHandlers() {
       };
     }
   });
-  require$$3.ipcMain.handle("change-frames-directory", async () => {
+  require$$3.ipcMain.handle("change-apps-directory", async () => {
     try {
-      console.log("change-frames-directory handler called");
-      const newDir = await selectAppsDirectory();
-      if (newDir) {
-        selectedAppsDir = newDir;
-        savePreferences({ appsDir: newDir });
-        console.log("Changed frames directory to:", newDir);
+      console.log("change-apps-directory handler called");
+      const mainWindow = require$$3.BrowserWindow.getFocusedWindow() || require$$3.BrowserWindow.getAllWindows()[0];
+      const result = await require$$3.dialog.showOpenDialog(mainWindow, {
+        properties: ["openDirectory"],
+        title: "Select Apps Directory"
+      });
+      if (!result.canceled && result.filePaths.length > 0) {
+        const newDir = result.filePaths[0];
+        console.log("Changed apps directory to:", newDir);
+        const Store = require("electron-store");
+        const store = new Store();
+        store.set("preferences.appsDir", newDir);
         return { success: true, directory: newDir };
       }
       return { success: false, directory: null };
     } catch (error) {
-      console.error("Error in change-frames-directory handler:", error);
-      throw error;
+      console.error("Error in change-apps-directory handler:", error);
+      return { success: false, directory: null, error: error.message };
     }
   });
   require$$3.ipcMain.handle("reload-apps", async () => {
-    if (selectedAppsDir) {
-      const success = await ensureApps();
-      const apps = await loadApps();
-      return { success, apps };
-    }
     return { success: false, apps: [] };
   });
   require$$3.ipcMain.handle("read-directory", async (_event, dirPath) => {
@@ -12343,11 +11990,6 @@ function registerIpcHandlers() {
       if (!filePath || filePath.includes("..")) {
         throw new Error("Invalid file path");
       }
-      const directory = path.dirname(filePath);
-      const hasAccess = await permissionManager.checkAccess(directory);
-      if (!hasAccess) {
-        throw new Error("Access denied to directory");
-      }
       if (encoding === "base64") {
         const buffer = Buffer.from(content, "base64");
         fs.writeFileSync(filePath, buffer);
@@ -12409,78 +12051,6 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error("Error closing window:", error);
       return { success: false, error: error.message };
-    }
-  });
-  require$$3.ipcMain.handle("check-directory-access", async (_event, directoryPath) => {
-    try {
-      const hasAccess = await permissionManager.checkAccessSilent(directoryPath);
-      return {
-        success: true,
-        hasAccess
-      };
-    } catch (error) {
-      return {
-        success: false,
-        hasAccess: false,
-        error: error instanceof Error ? error.message : "Unknown error"
-      };
-    }
-  });
-  require$$3.ipcMain.handle("request-directory-access", async (_event, directoryPath, reason) => {
-    try {
-      const granted = await permissionManager.requestAccess(
-        directoryPath,
-        reason || `Access required for: ${directoryPath}`
-      );
-      return {
-        success: true,
-        granted
-      };
-    } catch (error) {
-      return {
-        success: false,
-        granted: false,
-        error: error instanceof Error ? error.message : "Unknown error"
-      };
-    }
-  });
-  require$$3.ipcMain.handle("get-granted-paths", async (_event) => {
-    try {
-      const sessionPaths = permissionManager.getGrantedPaths();
-      const storedPaths = permissionManager.getStoredBookmarkPaths();
-      const allPaths = [.../* @__PURE__ */ new Set([...sessionPaths, ...storedPaths])];
-      return {
-        success: true,
-        grantedPaths: allPaths
-      };
-    } catch (error) {
-      return {
-        success: false,
-        grantedPaths: [],
-        error: error instanceof Error ? error.message : "Unknown error"
-      };
-    }
-  });
-  require$$3.ipcMain.handle("read-file-secure", async (_event, filePath) => {
-    try {
-      const dirPath = path.dirname(filePath);
-      const hasAccess = await permissionManager.checkAccess(dirPath);
-      if (!hasAccess) {
-        return {
-          success: false,
-          error: "No permission to access file directory"
-        };
-      }
-      const content = await fs.promises.readFile(filePath);
-      return {
-        success: true,
-        content: content.toString("base64")
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error"
-      };
     }
   });
   require$$3.ipcMain.handle("get-platform", async () => {
