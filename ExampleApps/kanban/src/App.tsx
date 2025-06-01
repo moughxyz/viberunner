@@ -35,7 +35,7 @@ declare global {
       backupFile?: (path: string) => Promise<{ success: boolean; backupPath?: string; error?: string }>;
       [key: string]: any;
     };
-    __LOAD_APP__?: (component: any) => void;
+    __LOAD_VISUALIZER__?: (component: any) => void;
   }
 }
 
@@ -690,10 +690,10 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ fileData }) => {
   );
 };
 
-// Export the component for Viberunner to load
+// Export the component for Vizor to load
 export default KanbanBoard;
 
 // Global registration for IIFE bundle
-if (typeof window !== 'undefined' && (window as any).__LOAD_APP__) {
-  (window as any).__LOAD_APP__(KanbanBoard);
+if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
+  (window as any).__LOAD_VISUALIZER__(KanbanBoard);
 }

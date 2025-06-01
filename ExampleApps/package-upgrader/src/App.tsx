@@ -74,7 +74,7 @@ declare global {
       fs: any;
       require: (module: string) => any;
     };
-    __LOAD_APP__?: (component: any) => void;
+    __LOAD_VISUALIZER__?: (component: any) => void;
     registerCleanup?: (tabId: string, cleanup: () => void) => void;
   }
 }
@@ -832,10 +832,10 @@ const PackageUpgrader: React.FC<PackageUpgraderProps> = ({ fileInput, fileData, 
   );
 };
 
-// Export the component for Viberunner to load
+// Export the component for Vizor to load
 export default PackageUpgrader;
 
 // Global registration for IIFE bundle
-if (typeof window !== 'undefined' && (window as any).__LOAD_APP__) {
-  (window as any).__LOAD_APP__(PackageUpgrader);
+if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
+  (window as any).__LOAD_VISUALIZER__(PackageUpgrader);
 }

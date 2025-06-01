@@ -1,7 +1,7 @@
 {
   "name": "viberunner",
   "version": "1.0.0",
-  "description": "Desktop Vibe App Manager",
+  "description": "Modern file visualization platform and app runner",
   "main": "dist-electron/index.js",
   "scripts": {
     "start": "electron-forge start",

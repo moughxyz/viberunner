@@ -392,6 +392,6 @@ const PortSniffer: React.FC<StandaloneVisualizerProps> = ({ fileData }) => {
 export default PortSniffer;
 
 // Global registration for IIFE bundle
-if (typeof window !== 'undefined' && (window as any).__LOAD_APP__) {
-  (window as any).__LOAD_APP__(PortSniffer);
+if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
+  (window as any).__LOAD_VISUALIZER__(PortSniffer);
 }

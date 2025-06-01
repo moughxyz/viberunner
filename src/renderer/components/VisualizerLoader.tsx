@@ -31,7 +31,7 @@ const VisualizerLoader: React.FC<VisualizerLoaderProps> = ({ visualizerId, fileD
         };
 
         // When the script loads, it will call this function
-        (window as any).__LOAD_APP__ = (VisualizerComponent: any) => {
+        (window as any).__LOAD_VISUALIZER__ = (VisualizerComponent: any) => {
           if (containerRef.current) {
             const root = document.createElement('div');
             containerRef.current.appendChild(root);
@@ -51,7 +51,7 @@ const VisualizerLoader: React.FC<VisualizerLoaderProps> = ({ visualizerId, fileD
         return () => {
           // Cleanup
           document.head.removeChild(script);
-          delete (window as any).__LOAD_APP__;
+          delete (window as any).__LOAD_VISUALIZER__;
         };
       } catch (error) {
         console.error('Failed to load visualizer:', error);

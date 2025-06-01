@@ -9,7 +9,7 @@ declare global {
         readFileSync: (path: string) => Buffer;
       };
     };
-    __LOAD_APP__?: (component: any) => void;
+    __LOAD_VISUALIZER__?: (component: any) => void;
   }
 }
 
@@ -659,8 +659,8 @@ const Redactor: React.FC<RedactorProps> = ({ fileInput, fileData, tabId }) => {
 if (typeof window !== 'undefined') {
   (window as any).RedactorComponent = Redactor;
 
-  if ((window as any).__LOAD_APP__) {
-    (window as any).__LOAD_APP__(Redactor);
+  if ((window as any).__LOAD_VISUALIZER__) {
+    (window as any).__LOAD_VISUALIZER__(Redactor);
   }
 }
 

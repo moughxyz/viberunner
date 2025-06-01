@@ -20,7 +20,7 @@ interface MouseJigglerProps {
 // Add window API types
 declare global {
   interface Window {
-    __LOAD_APP__?: (component: any) => void;
+    __LOAD_VISUALIZER__?: (component: any) => void;
   }
 }
 
@@ -1010,6 +1010,6 @@ end tell
 export default MouseJiggler;
 
 // Global registration for IIFE bundle
-if (typeof window !== 'undefined' && (window as any).__LOAD_APP__) {
-  (window as any).__LOAD_APP__(MouseJiggler);
+if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
+  (window as any).__LOAD_VISUALIZER__(MouseJiggler);
 }

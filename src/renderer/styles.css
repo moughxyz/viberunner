@@ -385,7 +385,7 @@ body {
 }
 
 /* For apps, full width with no padding */
-.vf-content-area:has(.tab-app-container[style*="display: block"]) {
+.vf-content-area:has(.tab-frame-container[style*="display: block"]) {
   padding: 0;
 }
 
@@ -395,23 +395,23 @@ body {
 }
 
 /* App selection gets full viewport */
-.vf-content-area:has(.vf-app-selection) {
+.vf-content-area:has(.vf-frame-selection) {
   padding: 0;
 }
 
 /* App viewport gets full space when apps are active */
-.app-viewport-container {
+.frame-viewport-container {
   height: calc(100vh - 41px);
   max-height: calc(100vh - 41px);
 }
 
-/* Override container height for app selection to allow natural sizing */
-.vf-content-area:has(.vf-app-selection) .app-viewport-container {
+/* Override container height for frame selection to allow natural sizing */
+.vf-content-area:has(.vf-frame-selection) .frame-viewport-container {
   height: auto;
   max-height: none;
 }
 
-.app-viewport {
+.frame-viewport {
   height: 100%;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -421,19 +421,19 @@ body {
 }
 
 /* Remove border and radius when apps are active */
-.vf-content-area:has(.tab-app-container[style*="display: block"]) .app-viewport {
+.vf-content-area:has(.tab-frame-container[style*="display: block"]) .frame-viewport {
   border: none;
   border-radius: 0;
 }
 
-/* Hide app viewport completely when on new tab */
-.vf-content-area:has(.vf-new-tab-unified) .app-viewport {
+/* Hide frame viewport completely when on new tab */
+.vf-content-area:has(.vf-new-tab-unified) .frame-viewport {
   border: none;
   background: transparent;
 }
 
-/* Hide app viewport completely when on app selection */
-.vf-content-area:has(.vf-app-selection) .app-viewport {
+/* Hide frame viewport completely when on frame selection */
+.vf-content-area:has(.vf-frame-selection) .frame-viewport {
   border: none;
   background: transparent;
 }
@@ -630,7 +630,7 @@ body {
   gap: var(--space-3);
 }
 
-.app-info-card {
+.frame-info-card {
   padding: var(--space-3) var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -638,37 +638,37 @@ body {
   transition: all 0.15s ease;
 }
 
-.app-info-card:hover {
+.frame-info-card:hover {
   background: var(--surface-hover);
   border-color: var(--border-hover);
 }
 
-.app-info-header {
+.frame-info-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-2);
 }
 
-.app-info-title {
+.frame-info-title {
   font-size: var(--font-size-base);
   font-weight: 500;
   color: var(--text-primary);
 }
 
-.app-info-status {
+.frame-info-status {
   display: flex;
   align-items: center;
 }
 
-.app-info-description {
+.frame-info-description {
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   line-height: 1.4;
   margin-bottom: var(--space-2);
 }
 
-.app-info-formats {
+.frame-info-formats {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
@@ -780,7 +780,7 @@ body {
 }
 
 /* App Selection */
-.vf-app-selection {
+.vf-frame-selection {
   max-width: 800px;
   margin: 0 auto;
   padding: var(--space-8);
@@ -826,14 +826,14 @@ body {
   font-weight: 500;
 }
 
-.app-grid {
+.frame-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--space-6);
   margin-bottom: var(--space-8);
 }
 
-.app-card {
+.frame-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -843,7 +843,7 @@ body {
   position: relative;
 }
 
-.app-card:hover {
+.frame-card:hover {
   background: var(--surface-hover);
   border-color: var(--border-hover);
   transform: translateY(-2px);
@@ -851,7 +851,7 @@ body {
   cursor: pointer;
 }
 
-.app-card:active {
+.frame-card:active {
   transform: translateY(0);
   box-shadow: var(--shadow);
   background: var(--accent-light);
@@ -942,13 +942,13 @@ body {
 }
 
 /* App List */
-.app-list {
+.frame-list {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.app-item {
+.frame-item {
   padding: var(--space-4);
   background: var(--background);
   border: 1px solid var(--border);
@@ -956,7 +956,7 @@ body {
   transition: all 0.15s ease;
 }
 
-.app-item:hover {
+.frame-item:hover {
   background: var(--surface-hover);
   border-color: var(--border-hover);
 }
@@ -1020,7 +1020,7 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .app-grid {
+  .frame-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -1031,7 +1031,7 @@ body {
     padding: var(--space-4);
   }
 
-  .app-grid {
+  .frame-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1044,7 +1044,7 @@ body {
   }
 }
 
-/* Standalone app items */
+/* Standalone frame items */
 .standalone-item .item-header {
   display: flex;
   align-items: flex-start;
@@ -1091,7 +1091,7 @@ body {
   max-width: 800px;
 }
 
-.standalone-app-card {
+.standalone-frame-card {
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -1106,14 +1106,14 @@ body {
   min-height: 80px;
 }
 
-.standalone-app-card:hover {
+.standalone-frame-card:hover {
   background: var(--surface-hover);
   border-color: var(--border-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.standalone-app-icon {
+.standalone-frame-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1126,19 +1126,19 @@ body {
   flex-shrink: 0;
 }
 
-.standalone-app-content {
+.standalone-frame-content {
   flex: 1;
   min-width: 0;
 }
 
-.standalone-app-title {
+.standalone-frame-title {
   font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 var(--space-1) 0;
 }
 
-.standalone-app-description {
+.standalone-frame-description {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   margin: 0;
@@ -1147,7 +1147,7 @@ body {
   white-space: nowrap;
 }
 
-.standalone-app-action {
+.standalone-frame-action {
   color: var(--accent);
   font-size: var(--font-size-sm);
   font-weight: 500;
@@ -1200,7 +1200,7 @@ body {
 }
 
 /* Tab App Containers - for background tab persistence */
-.tab-app-container {
+.tab-frame-container {
   position: absolute;
   top: 0;
   left: 0;
@@ -1237,21 +1237,21 @@ body {
 }
 
 /* Hidden tab containers should be completely invisible */
-.tab-app-container[style*="display: none"] {
+.tab-frame-container[style*="display: none"] {
   visibility: hidden !important;
   z-index: -1 !important;
   opacity: 0 !important;
 }
 
 /* Active tab containers should be on top */
-.tab-app-container[style*="display: block"] {
+.tab-frame-container[style*="display: block"] {
   z-index: 10 !important;
   visibility: visible !important;
   opacity: 1 !important;
 }
 
-/* Scope ALL app content to prevent global CSS pollution */
-.tab-app-container * {
+/* Scope ALL frame content to prevent global CSS pollution */
+.tab-frame-container * {
   /* Prevent any styles from escaping the container */
   max-width: 100% !important;
   max-height: 100% !important;
@@ -1264,15 +1264,15 @@ body {
 }
 
 /* Block universal selectors from apps */
-.tab-app-container *,
-.tab-app-container *::before,
-.tab-app-container *::after {
-  /* Prevent app CSS from affecting anything outside */
+.tab-frame-container *,
+.tab-frame-container *::before,
+.tab-frame-container *::after {
+  /* Prevent frame CSS from affecting anything outside */
   box-sizing: border-box !important;
 }
 
 /* Prevent global resets from apps */
-.tab-app-container > * {
+.tab-frame-container > * {
   /* First child should take full space */
   width: 100% !important;
   height: 100% !important;
@@ -1284,8 +1284,8 @@ body {
 }
 
 /* Override any attempts to style body/html */
-.tab-app-container body,
-.tab-app-container html {
+.tab-frame-container body,
+.tab-frame-container html {
   position: relative !important;
   width: 100% !important;
   height: 100% !important;
@@ -1298,35 +1298,35 @@ body {
 }
 
 /* Prevent any fixed positioning */
-.tab-app-container [style*="position: fixed"],
-.tab-app-container [style*="position:fixed"] {
+.tab-frame-container [style*="position: fixed"],
+.tab-frame-container [style*="position:fixed"] {
   position: relative !important;
 }
 
 /* Override viewport units */
-.tab-app-container [style*="100vh"],
-.tab-app-container [style*="100VH"] {
+.tab-frame-container [style*="100vh"],
+.tab-frame-container [style*="100VH"] {
   height: 100% !important;
 }
 
-.tab-app-container [style*="100vw"],
-.tab-app-container [style*="100VW"] {
+.tab-frame-container [style*="100vw"],
+.tab-frame-container [style*="100VW"] {
   width: 100% !important;
 }
 
-.tab-app-container [style*="min-height: 100vh"],
-.tab-app-container [style*="min-height:100vh"] {
+.tab-frame-container [style*="min-height: 100vh"],
+.tab-frame-container [style*="min-height:100vh"] {
   min-height: 100% !important;
 }
 
-/* Force containment on common app container classes */
-.tab-app-container .dotfile-editor,
-.tab-app-container [class*="App"],
-.tab-app-container [class*="app"],
-.tab-app-container [class*="main"],
-.tab-app-container [class*="container"],
-.tab-app-container [class*="wrapper"],
-.tab-app-container [class*="root"] {
+/* Force containment on common frame container classes */
+.tab-frame-container .dotfile-editor,
+.tab-frame-container [class*="App"],
+.tab-frame-container [class*="app"],
+.tab-frame-container [class*="main"],
+.tab-frame-container [class*="container"],
+.tab-frame-container [class*="wrapper"],
+.tab-frame-container [class*="root"] {
   position: relative !important;
   width: 100% !important;
   height: 100% !important;
@@ -1339,24 +1339,24 @@ body {
 }
 
 /* Reset any viewport units to 100% */
-.tab-app-container [style*="100vh"],
-.tab-app-container [style*="100VH"] {
+.tab-frame-container [style*="100vh"],
+.tab-frame-container [style*="100VH"] {
   height: 100% !important;
 }
 
-.tab-app-container [style*="100vw"],
-.tab-app-container [style*="100VW"] {
+.tab-frame-container [style*="100vw"],
+.tab-frame-container [style*="100VW"] {
   width: 100% !important;
 }
 
 /* Prevent z-index issues */
-.tab-app-container * {
+.tab-frame-container * {
   z-index: auto !important;
 }
 
 /* Override any min-height that could cause issues */
-.tab-app-container [style*="min-height: 100vh"],
-.tab-app-container [style*="min-height:100vh"] {
+.tab-frame-container [style*="min-height: 100vh"],
+.tab-frame-container [style*="min-height:100vh"] {
   min-height: 100% !important;
 }
 
@@ -1375,7 +1375,7 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .app-grid {
+  .frame-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1685,7 +1685,7 @@ body {
   border: 1px solid var(--border);
 }
 
-.two-column-layout .apps-grid .app-info-card {
+.two-column-layout .apps-grid .frame-info-card {
   background: var(--surface);
   border: 1px solid var(--border);
 }

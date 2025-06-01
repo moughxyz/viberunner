@@ -2,7 +2,7 @@
   "name": "YouTube Thumbnail Preview",
   "description": "Preview image files as YouTube thumbnails with customizable title and realistic YouTube interface",
   "version": "1.0.0",
-  "author": "Viberunner",
+  "author": "Vizor",
 
   "matchers": [
     {
@@ -82,6 +82,6 @@
   ],
 
   "tags": ["youtube", "thumbnail", "preview", "content-creation", "social-media"],
-  "homepage": "https://github.com/Viberunner/youtube-thumbnail-preview",
+  "homepage": "https://github.com/vizor/youtube-thumbnail-preview",
   "license": "MIT"
 }

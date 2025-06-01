@@ -104,7 +104,7 @@ The editor automatically detects file types and applies appropriate syntax highl
 
 ### Viberunner Build Requirements
 
-**Important**: This app is specifically configured for Viberunner compatibility. Viberunner expects:
+**Important**: This frame is specifically configured for Viberunner compatibility. Viberunner expects:
 - **Bundle Format**: IIFE (Immediately Invoked Function Expression) instead of ES modules
 - **Specific Filename**: `dist/bundle.iife.js` (not hashed filenames)
 - **Single Bundle**: All code must be bundled into one file using `inlineDynamicImports: true`
@@ -141,7 +141,7 @@ The editor uses a fallback system to avoid CDN dependencies:
 - **Fallback**: Simple textarea-based editor if Monaco fails to load
 - **No CDN**: All resources are bundled locally, no external dependencies
 
-This approach ensures the app works reliably in Viberunner's sandboxed environment.
+This approach ensures the frame works reliably in Viberunner's sandboxed environment.
 
 ### Mock File System
 Since this runs in a browser environment, the editor uses a mock file system that:

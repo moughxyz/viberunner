@@ -1,6 +1,6 @@
 # 📋 Kanban Board Visualizer
 
-A powerful and intuitive Kanban board visualizer for Viberunner that transforms simple text files into interactive, drag-and-drop task management boards. Perfect for managing projects, organizing tasks, and visualizing workflows directly from text files.
+A powerful and intuitive Kanban board visualizer for Vizor that transforms simple text files into interactive, drag-and-drop task management boards. Perfect for managing projects, organizing tasks, and visualizing workflows directly from text files.
 
 ## ✨ Features
 
@@ -98,9 +98,9 @@ DONE:
 - Team kickoff meeting
 ```
 
-### 3. Open in Viberunner
+### 3. Open in Vizor
 
-Drop the file into Viberunner and watch it transform into an interactive Kanban board!
+Drop the file into Vizor and watch it transform into an interactive Kanban board!
 
 ## 🎮 Usage Guide
 

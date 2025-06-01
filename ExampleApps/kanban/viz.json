@@ -2,7 +2,7 @@
   "name": "Kanban Board",
   "description": "Interactive kanban board for text files containing 'kanban' - drag & drop tasks between columns",
   "version": "1.0.0",
-  "author": "Viberunner",
+  "author": "Vizor",
 
   "matchers": [
     {
@@ -47,6 +47,6 @@
   ],
 
   "tags": ["productivity", "kanban", "task-management", "board", "drag-drop"],
-  "homepage": "https://github.com/Viberunner/kanban-visualizer",
+  "homepage": "https://github.com/vizor/kanban-visualizer",
   "license": "MIT"
 }

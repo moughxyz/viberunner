@@ -1,6 +1,6 @@
 # 📦 Package Upgrader Visualizer
 
-A powerful Viberunner visualizer for analyzing and upgrading npm dependencies in package.json files. Get detailed insights about outdated packages, view their information, and generate updated package.json files with a beautiful, intuitive interface.
+A powerful Vizor visualizer for analyzing and upgrading npm dependencies in package.json files. Get detailed insights about outdated packages, view their information, and generate updated package.json files with a beautiful, intuitive interface.
 
 ## ✨ Features
 
@@ -12,7 +12,7 @@ A powerful Viberunner visualizer for analyzing and upgrading npm dependencies in
 - **✅ Selective Updates**: Choose which packages to update with checkboxes
 - **💾 Export Functionality**: Download updated package.json files
 - **🔗 Quick Links**: Direct links to package homepage, repository, and npm page
-- **🌙 Dark Theme**: Beautiful, modern UI that matches Viberunner's design
+- **🌙 Dark Theme**: Beautiful, modern UI that matches Vizor's design
 
 ## 🎯 File Matching
 
@@ -26,7 +26,7 @@ This visualizer will activate for:
 
 ## 🚀 Quick Start
 
-1. **Drop a package.json file** into Viberunner
+1. **Drop a package.json file** into Vizor
 2. **Click "Check Updates"** to analyze dependencies
 3. **Review the results** - outdated packages are highlighted
 4. **Select packages** to update using checkboxes
@@ -102,7 +102,7 @@ package-upgrader/
 ├── src/
 │   └── App.tsx          # Main React component
 ├── dist/
-│   └── bundle.iife.js   # Built output for Viberunner
+│   └── bundle.iife.js   # Built output for Vizor
 ├── viz.json             # Visualizer configuration
 ├── package.json         # Project dependencies
 ├── tsconfig.json        # TypeScript configuration
@@ -148,13 +148,23 @@ The visualizer uses multiple matchers for precise file detection:
 
 ## 🤝 Contributing
 
-This visualizer is part of the Viberunner ecosystem. To contribute:
+This visualizer is part of the Vizor ecosystem. To contribute:
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Test thoroughly
 5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- **npm Registry API**: For providing package information
+- **Vizor Platform**: For the visualization framework
+- **React Community**: For the excellent development experience
 
 ---
 

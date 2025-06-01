@@ -680,9 +680,13 @@ function registerIpcHandlers() {
   // Clear existing handlers to prevent conflicts
   ipcMain.removeAllListeners('get-apps');
   ipcMain.removeAllListeners('load-app');
+  ipcMain.removeAllListeners('get-mimetype');
+  ipcMain.removeAllListeners('read-file');
   ipcMain.removeAllListeners('change-apps-directory');
   ipcMain.removeAllListeners('reload-apps');
+  ipcMain.removeAllListeners('read-directory');
   ipcMain.removeAllListeners('find-matching-apps');
+  ipcMain.removeAllListeners('write-file');
   ipcMain.removeAllListeners('backup-file');
   ipcMain.removeAllListeners('save-file-dialog');
   ipcMain.removeAllListeners('get-platform');
@@ -722,6 +726,43 @@ function registerIpcHandlers() {
     return { bundleContent, config: appInstance };
   });
 
+  ipcMain.handle('get-mimetype', async (_event, filePath: string) => {
+    return await getMimetype(filePath);
+  });
+
+  ipcMain.handle('read-file', async (_event, filePath: string) => {
+    const content = fs.readFileSync(filePath);
+    return content.toString('base64');
+  });
+
+  ipcMain.handle('handle-file-drop', async (_event, filePath: string) => {
+    const fileAnalysis = await analyzeFile(filePath);
+
+    // For directories, don't try to read content as binary
+    if (fileAnalysis.mimetype === 'inode/directory') {
+      return {
+        path: filePath,
+        mimetype: fileAnalysis.mimetype,
+        content: '', // Empty content for directories
+        analysis: fileAnalysis
+      };
+    } else {
+      // For files, read the content as base64 if it hasn't been read yet
+      let content = fileAnalysis.content;
+      if (!content && fs.existsSync(filePath)) {
+        const binaryContent = fs.readFileSync(filePath);
+        content = binaryContent.toString('base64');
+      }
+
+      return {
+        path: filePath,
+        mimetype: fileAnalysis.mimetype,
+        content,
+        analysis: fileAnalysis
+      };
+    }
+  });
+
   ipcMain.handle('change-apps-directory', async () => {
     try {
       console.log('change-apps-directory handler called');
@@ -748,6 +789,60 @@ function registerIpcHandlers() {
     return { success: false, apps: [] };
   });
 
+  // Read directory contents for folder visualization
+  ipcMain.handle('read-directory', async (_event, dirPath: string) => {
+    try {
+      console.log('Reading directory:', dirPath);
+
+      if (!fs.existsSync(dirPath)) {
+        throw new Error(`Directory does not exist: ${dirPath}`);
+      }
+
+      const stats = fs.statSync(dirPath);
+      if (!stats.isDirectory()) {
+        throw new Error(`Path is not a directory: ${dirPath}`);
+      }
+
+      const items = fs.readdirSync(dirPath);
+      const fileInfos = items.map(item => {
+        const itemPath = path.join(dirPath, item);
+        try {
+          const itemStats = fs.statSync(itemPath);
+          const isDirectory = itemStats.isDirectory();
+
+          let extension = '';
+          if (!isDirectory) {
+            extension = path.extname(item).toLowerCase().replace('.', '');
+          }
+
+          return {
+            name: item,
+            path: itemPath,
+            isDirectory,
+            size: isDirectory ? 0 : itemStats.size,
+            extension: extension || undefined,
+            modified: itemStats.mtime.toISOString()
+          };
+        } catch (error) {
+          console.warn(`Could not stat ${itemPath}:`, error);
+          return {
+            name: item,
+            path: itemPath,
+            isDirectory: false,
+            size: 0,
+            extension: '',
+            modified: new Date().toISOString()
+          };
+        }
+      });
+
+      console.log(`Found ${fileInfos.length} items in ${dirPath}`);
+      return { success: true, files: fileInfos };
+    } catch (error) {
+      console.error('Error reading directory:', error);
+      return { success: false, error: (error as Error).message, files: [] };
+    }
+  });
 
   // New enhanced app matching endpoint
   ipcMain.handle('find-matching-apps', async (_event, filePath: string) => {
@@ -773,6 +868,29 @@ function registerIpcHandlers() {
         matches: [],
         fileAnalysis: null
       };
+    }
+  });
+
+  // File writing and backup operations for apps
+  ipcMain.handle('write-file', async (_event, filePath: string, content: string, encoding: 'utf8' | 'base64' = 'utf8') => {
+    try {
+      // Validate file path for security
+      if (!filePath || filePath.includes('..')) {
+        throw new Error('Invalid file path');
+      }
+
+      if (encoding === 'base64') {
+        const buffer = Buffer.from(content, 'base64');
+        fs.writeFileSync(filePath, buffer);
+      } else {
+        fs.writeFileSync(filePath, content, 'utf8');
+      }
+
+      console.log(`File written successfully: ${filePath}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Error writing file:', error);
+      return { success: false, error: (error as Error).message };
     }
   });
 
@@ -837,6 +955,65 @@ function registerIpcHandlers() {
       console.error('Error closing window:', error);
       return { success: false, error: (error as Error).message };
     }
+  });
+
+  // Platform detection handler
+  ipcMain.handle('get-platform', async () => {
+    try {
+      const platform = os.platform();
+      console.log('Platform detected:', platform);
+      return {
+        success: true,
+        platform
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  });
+
+  // General-purpose command execution handler for plugins
+  ipcMain.handle('execute-command', async (_event, command: string, options?: { timeout?: number }) => {
+    return new Promise((resolve) => {
+      try {
+        const execOptions = {
+          timeout: options?.timeout || 30000, // 30 second default timeout
+          maxBuffer: 1024 * 1024 // 1MB buffer limit
+        };
+
+        exec(command, execOptions, (error, stdout, stderr) => {
+          if (error) {
+            console.error('Command execution error:', error);
+            resolve({
+              success: false,
+              error: error.message,
+              stdout: stdout || '',
+              stderr: stderr || '',
+              code: error.code
+            });
+            return;
+          }
+
+          console.log(`Command executed successfully: ${command.substring(0, 100)}${command.length > 100 ? '...' : ''}`);
+          resolve({
+            success: true,
+            stdout: stdout || '',
+            stderr: stderr || '',
+            code: 0
+          });
+        });
+      } catch (error) {
+        resolve({
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          stdout: '',
+          stderr: '',
+          code: -1
+        });
+      }
+    });
   });
 
   console.log('All IPC handlers registered successfully');

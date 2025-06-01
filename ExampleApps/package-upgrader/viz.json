@@ -2,7 +2,7 @@
   "name": "Package Upgrader",
   "description": "Analyze and upgrade package.json dependencies to their latest versions",
   "version": "1.0.0",
-  "author": "Viberunner",
+  "author": "Vizor",
 
   "matchers": [
     {
