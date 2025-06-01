@@ -1855,12 +1855,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.6;
   z-index: 50;
 }
 
 .settings-icon:hover {
-  opacity: 1;
   color: var(--text-primary);
   border-color: var(--border-hover);
   transform: scale(1.05);
