@@ -610,7 +610,7 @@ const createWindow = (): void => {
       contextIsolation: false,
       webSecurity: true,
       // sandbox: false,
-      // nodeIntegrationInSubApps: true,
+      // nodeIntegrationInSubFrames: true,
     },
     titleBarStyle: 'hiddenInset',
     vibrancy: 'under-window',
@@ -682,7 +682,7 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('load-app');
   ipcMain.removeAllListeners('get-mimetype');
   ipcMain.removeAllListeners('read-file');
-  ipcMain.removeAllListeners('change-apps-directory');
+  ipcMain.removeAllListeners('change-frames-directory');
   ipcMain.removeAllListeners('reload-apps');
   ipcMain.removeAllListeners('read-directory');
   ipcMain.removeAllListeners('find-matching-apps');
@@ -763,31 +763,20 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle('change-apps-directory', async () => {
+  ipcMain.handle('change-frames-directory', async () => {
     try {
-      console.log('change-apps-directory handler called');
-      const mainWindow = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
-      const result = await dialog.showOpenDialog(mainWindow, {
-        properties: ['openDirectory'],
-        title: 'Select Apps Directory'
-      });
-
-      if (!result.canceled && result.filePaths.length > 0) {
-        const newDir = result.filePaths[0];
-        console.log('Changed apps directory to:', newDir);
-
-        // Store the new directory in preferences
-        const Store = require('electron-store');
-        const store = new Store();
-        store.set('preferences.appsDir', newDir);
-
+      console.log('change-frames-directory handler called');
+      const newDir = await selectAppsDirectory();
+      if (newDir) {
+        selectedAppsDir = newDir;
+        savePreferences({ appsDir: newDir });
+        console.log('Changed frames directory to:', newDir);
         return { success: true, directory: newDir };
       }
-
       return { success: false, directory: null };
     } catch (error) {
-      console.error('Error in change-apps-directory handler:', error);
-      return { success: false, directory: null, error: (error as Error).message };
+      console.error('Error in change-frames-directory handler:', error);
+      throw error;
     }
   });
 

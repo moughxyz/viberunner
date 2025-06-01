@@ -384,54 +384,58 @@ body {
   overflow: hidden; /* Prevent content area from scrolling */
 }
 
-/* For apps, full width with no padding */
-.vf-content-area:has(.tab-app-container[style*="display: block"]) {
-  --vf-content-padding: 0;
-  --vf-content-border-radius: 0;
-  overflow: hidden;
+/* For frames, full width with no padding */
+.vf-content-area:has(.tab-frame-container[style*="display: block"]) {
+  padding: 0;
 }
 
-/* App selection gets full viewport */
-.vf-content-area:has(.vf-app-selection) {
-  --vf-content-padding: 0;
+/* For new tabs, add padding */
+.vf-content-area:has(.vf-new-tab-unified) {
+  padding: var(--space-8);
 }
 
-/* App viewport gets full space when apps are active */
-.app-viewport-container {
-  width: 100%;
-  height: 100%;
-  position: relative;
+/* Frame selection gets full viewport */
+.vf-content-area:has(.vf-frame-selection) {
+  padding: 0;
 }
 
-/* Override container height for app selection to allow natural sizing */
-.vf-content-area:has(.vf-app-selection) .app-viewport-container {
+/* Frame viewport gets full space when frames are active */
+.frame-viewport-container {
+  height: calc(100vh - 41px);
+  max-height: calc(100vh - 41px);
+}
+
+/* Override container height for frame selection to allow natural sizing */
+.vf-content-area:has(.vf-frame-selection) .frame-viewport-container {
   height: auto;
-  min-height: 100%;
+  max-height: none;
 }
 
-.app-viewport {
-  width: 100%;
+.frame-viewport {
   height: 100%;
-  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: var(--background);
-  border-radius: var(--border-radius);
+  position: relative;
 }
 
-/* Remove border and radius when apps are active */
-.vf-content-area:has(.tab-app-container[style*="display: block"]) .app-viewport {
-  border-radius: 0;
+/* Remove border and radius when frames are active */
+.vf-content-area:has(.tab-frame-container[style*="display: block"]) .frame-viewport {
   border: none;
+  border-radius: 0;
 }
 
-/* Hide app viewport completely when on new tab */
-.vf-content-area:has(.vf-new-tab-unified) .app-viewport {
-  display: none;
+/* Hide frame viewport completely when on new tab */
+.vf-content-area:has(.vf-new-tab-unified) .frame-viewport {
+  border: none;
+  background: transparent;
 }
 
-/* Hide app viewport completely when on app selection */
-.vf-content-area:has(.vf-app-selection) .app-viewport {
-  display: none;
+/* Hide frame viewport completely when on frame selection */
+.vf-content-area:has(.vf-frame-selection) .frame-viewport {
+  border: none;
+  background: transparent;
 }
 
 /* Unified New Tab Interface */
@@ -620,59 +624,53 @@ body {
 }
 
 /* File apps - simple list without heavy containers */
-.apps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 15px;
-  margin-top: 15px;
-}
-
-.app-info-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 15px;
-  transition: all 0.2s ease;
-}
-
-.app-info-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.app-info-header {
+.frames-grid {
   display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.frame-info-card {
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+}
+
+.frame-info-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+.frame-info-header {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-2);
 }
 
-.app-info-title {
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0;
+.frame-info-title {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-primary);
 }
 
-.app-info-status {
-  font-size: 11px;
-  color: #4ade80;
+.frame-info-status {
+  display: flex;
+  align-items: center;
 }
 
-.app-info-description {
-  color: #b3b3b3;
-  font-size: 12px;
-  margin: 8px 0;
+.frame-info-description {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
   line-height: 1.4;
+  margin-bottom: var(--space-2);
 }
 
-.app-info-formats {
-  font-size: 11px;
-  color: #808080;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 4px 8px;
-  border-radius: 4px;
-  margin-top: 8px;
+.frame-info-formats {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
 }
 
 /* Loading state */
@@ -782,16 +780,15 @@ body {
 }
 
 /* App Selection */
-.vf-app-selection {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+.vf-frame-selection {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--space-8);
+  position: relative;
+  z-index: 20;
+  background: var(--background);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  flex-direction: column;
 }
 
 .selection-header {
@@ -829,14 +826,14 @@ body {
   font-weight: 500;
 }
 
-.app-grid {
+.frame-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  margin: 30px 0;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+  margin-bottom: var(--space-8);
 }
 
-.app-card {
+.frame-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -846,7 +843,7 @@ body {
   position: relative;
 }
 
-.app-card:hover {
+.frame-card:hover {
   background: var(--surface-hover);
   border-color: var(--border-hover);
   transform: translateY(-2px);
@@ -854,7 +851,7 @@ body {
   cursor: pointer;
 }
 
-.app-card:active {
+.frame-card:active {
   transform: translateY(0);
   box-shadow: var(--shadow);
   background: var(--accent-light);
@@ -944,24 +941,61 @@ body {
   margin-bottom: var(--space-6);
 }
 
-/* App List */
-.app-list {
+/* Frame List */
+.frame-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
+  gap: var(--space-4);
 }
 
-.app-item {
+.frame-item {
+  padding: var(--space-4);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+}
+
+.frame-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+.item-header {
   display: flex;
   align-items: center;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
 }
 
-.app-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+.item-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.item-status {
+  display: flex;
+  align-items: center;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.item-description {
+  color: var(--text-secondary);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+  margin-bottom: var(--space-3);
+}
+
+.item-formats {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
 }
 
 /* Empty state */
@@ -986,7 +1020,7 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .app-grid {
+  .frame-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -997,7 +1031,7 @@ body {
     padding: var(--space-4);
   }
 
-  .app-grid {
+  .frame-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1010,7 +1044,7 @@ body {
   }
 }
 
-/* Standalone app items */
+/* Standalone frame items */
 .standalone-item .item-header {
   display: flex;
   align-items: flex-start;
@@ -1027,7 +1061,7 @@ body {
   flex-shrink: 0;
 }
 
-/* Standalone Apps in Drop Zone */
+/* Standalone Frames in Drop Zone */
 .drop-zone-divider {
   display: flex;
   align-items: center;
@@ -1049,14 +1083,15 @@ body {
   white-space: nowrap;
 }
 
-.standalone-apps-grid {
+.standalone-frames-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 15px;
-  margin-top: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 800px;
 }
 
-.standalone-app-card {
+.standalone-frame-card {
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -1071,14 +1106,14 @@ body {
   min-height: 80px;
 }
 
-.standalone-app-card:hover {
+.standalone-frame-card:hover {
   background: var(--surface-hover);
   border-color: var(--border-hover);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.standalone-app-icon {
+.standalone-frame-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1091,19 +1126,19 @@ body {
   flex-shrink: 0;
 }
 
-.standalone-app-content {
+.standalone-frame-content {
   flex: 1;
   min-width: 0;
 }
 
-.standalone-app-title {
+.standalone-frame-title {
   font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--text-primary);
   margin: 0 0 var(--space-1) 0;
 }
 
-.standalone-app-description {
+.standalone-frame-description {
   font-size: var(--font-size-sm);
   color: var(--text-secondary);
   margin: 0;
@@ -1112,7 +1147,7 @@ body {
   white-space: nowrap;
 }
 
-.standalone-app-action {
+.standalone-frame-action {
   color: var(--accent);
   font-size: var(--font-size-sm);
   font-weight: 500;
@@ -1164,8 +1199,8 @@ body {
   font-weight: 500;
 }
 
-/* Tab App Containers - for background tab persistence */
-.tab-app-container {
+/* Tab Frame Containers - for background tab persistence */
+.tab-frame-container {
   position: absolute;
   top: 0;
   left: 0;
@@ -1173,149 +1208,155 @@ body {
   bottom: 0;
   width: 100%;
   height: 100%;
-  background: var(--background);
-  overflow: hidden; /* Prevent apps from breaking out */
-  z-index: 1; /* Ensure apps stay below UI elements */
-}
+  overflow: hidden; /* Prevent frames from breaking out */
+  z-index: 1; /* Ensure frames stay below UI elements */
 
-/* Specific display control for tab containers */
-.tab-app-container[style*="display: block"] {
-  display: block !important;
+  /* Complete CSS isolation */
+  contain: layout style size;
+  isolation: isolate;
+
+  /* Create a new formatting context */
+  display: block;
+
+  /* Solid background to prevent bleed-through */
+  background: var(--background) !important;
+
+  /* Reset essential properties */
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
   width: 100%;
   height: 100%;
-  z-index: 10;
-  visibility: visible;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+
+  /* Ensure proper stacking when visible */
   opacity: 1;
 }
 
-.tab-app-container[style*="display: none"] {
-  display: none !important;
-  position: absolute;
-  visibility: hidden;
-  opacity: 0;
-  z-index: -1;
+/* Hidden tab containers should be completely invisible */
+.tab-frame-container[style*="display: none"] {
+  visibility: hidden !important;
+  z-index: -1 !important;
+  opacity: 0 !important;
 }
 
-.tab-app-container[style*="display: block"] {
-  /* When app tab is active, it should take full space */
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
+/* Active tab containers should be on top */
+.tab-frame-container[style*="display: block"] {
+  z-index: 10 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
-/* Scope ALL app content to prevent global CSS pollution */
-.tab-app-container * {
-  /* Prevent app styles from leaking out */
-  box-sizing: border-box;
-
-  /* Force containment */
-  max-width: 100% !important;
-  max-height: 100vh !important;
-
-  /* Prevent position issues */
-  position: relative !important;
-}
-
-/* Block universal selectors from apps */
-.tab-app-container *,
-.tab-app-container *::before,
-.tab-app-container *::after {
-  /* Prevent app CSS from affecting anything outside */
-  all: revert;
-}
-
-/* Prevent global resets from apps */
-.tab-app-container > * {
-  /* Force app root elements to stay contained */
-  position: relative !important;
+/* Scope ALL frame content to prevent global CSS pollution */
+.tab-frame-container * {
+  /* Prevent any styles from escaping the container */
   max-width: 100% !important;
   max-height: 100% !important;
-  overflow: auto !important;
+  position: relative !important;
+  z-index: auto !important;
 
-  /* Prevent viewport units from breaking layout */
-  width: 100% !important;
-  height: 100% !important;
-  min-width: 0 !important;
-  min-height: 0 !important;
+  /* Reset any viewport-based units */
+  width: auto !important;
+  height: auto !important;
 }
 
-.tab-app-container body,
-.tab-app-container html {
-  /* Override any body/html styles from apps */
+/* Block universal selectors from frames */
+.tab-frame-container *,
+.tab-frame-container *::before,
+.tab-frame-container *::after {
+  /* Prevent frame CSS from affecting anything outside */
+  box-sizing: border-box !important;
+}
+
+/* Prevent global resets from frames */
+.tab-frame-container > * {
+  /* First child should take full space */
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  position: relative !important;
+  display: block !important;
+  overflow: hidden !important; /* Let the app handle its own scrolling */
+}
+
+/* Override any attempts to style body/html */
+.tab-frame-container body,
+.tab-frame-container html {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  max-width: 100% !important;
-  max-height: 100% !important;
-  overflow: auto !important;
+  overflow: visible !important; /* Allow natural scrolling */
+  background: transparent !important;
+}
+
+/* Prevent any fixed positioning */
+.tab-frame-container [style*="position: fixed"],
+.tab-frame-container [style*="position:fixed"] {
   position: relative !important;
 }
 
-.tab-app-container [style*="position: fixed"],
-.tab-app-container [style*="position:fixed"] {
-  position: absolute !important;
-  z-index: 1 !important;
-}
-
-.tab-app-container [style*="100vh"],
-.tab-app-container [style*="100VH"] {
+/* Override viewport units */
+.tab-frame-container [style*="100vh"],
+.tab-frame-container [style*="100VH"] {
   height: 100% !important;
 }
 
-.tab-app-container [style*="100vw"],
-.tab-app-container [style*="100VW"] {
+.tab-frame-container [style*="100vw"],
+.tab-frame-container [style*="100VW"] {
   width: 100% !important;
 }
 
-.tab-app-container [style*="min-height: 100vh"],
-.tab-app-container [style*="min-height:100vh"] {
+.tab-frame-container [style*="min-height: 100vh"],
+.tab-frame-container [style*="min-height:100vh"] {
   min-height: 100% !important;
 }
 
-/* Force containment on common app container classes */
-.tab-app-container .dotfile-editor,
-.tab-app-container [class*="App"],
-.tab-app-container [class*="app"],
-.tab-app-container [class*="main"],
-.tab-app-container [class*="container"],
-.tab-app-container [class*="wrapper"],
-.tab-app-container [class*="root"] {
+/* Force containment on common frame container classes */
+.tab-frame-container .dotfile-editor,
+.tab-frame-container [class*="App"],
+.tab-frame-container [class*="app"],
+.tab-frame-container [class*="main"],
+.tab-frame-container [class*="container"],
+.tab-frame-container [class*="wrapper"],
+.tab-frame-container [class*="root"] {
   position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
   max-width: 100% !important;
   max-height: 100% !important;
-  overflow: auto !important;
+  overflow: visible !important; /* Allow apps to handle their own scrolling */
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
 
-  /* Contain the content */
-  contain: layout style size !important;
-
-  /* Prevent breaking out */
-  width: 100% !important;
+/* Reset any viewport units to 100% */
+.tab-frame-container [style*="100vh"],
+.tab-frame-container [style*="100VH"] {
   height: 100% !important;
 }
 
-.tab-app-container [style*="100vh"],
-.tab-app-container [style*="100VH"] {
-  height: 100% !important;
-}
-
-.tab-app-container [style*="100vw"],
-.tab-app-container [style*="100VW"] {
+.tab-frame-container [style*="100vw"],
+.tab-frame-container [style*="100VW"] {
   width: 100% !important;
 }
 
-/* Constrain all children to container bounds */
-.tab-app-container * {
-  max-width: 100% !important;
+/* Prevent z-index issues */
+.tab-frame-container * {
+  z-index: auto !important;
 }
 
-.tab-app-container [style*="min-height: 100vh"],
-.tab-app-container [style*="min-height:100vh"] {
+/* Override any min-height that could cause issues */
+.tab-frame-container [style*="min-height: 100vh"],
+.tab-frame-container [style*="min-height:100vh"] {
   min-height: 100% !important;
 }
 
@@ -1334,7 +1375,7 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .app-grid {
+  .frame-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1644,9 +1685,9 @@ body {
   border: 1px solid var(--border);
 }
 
-.two-column-layout .apps-grid .app-info-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.two-column-layout .frames-grid .frame-info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
 .two-column-layout .drop-zone {

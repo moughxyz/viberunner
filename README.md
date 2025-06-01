@@ -34,14 +34,14 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 - **📱 Chrome-style Tabbed Interface**: Open multiple files and apps simultaneously with smooth tab switching
 - **🎨 Enhanced File Matching**: Go beyond MIME types with filename patterns, content analysis, and priority-based selection
 - **⚙️ User Preferences System**: Apps can store and retrieve user preferences with a powerful API
-- **🔧 Direct Node.js Access**: Apps have full access to Node.js APIs for maximum flexibility and performance
+- **🔧 Direct Node.js Access**: Frames have full access to Node.js APIs for maximum flexibility and performance
 - **🌙 Modern Dark UI**: Beautiful glassmorphism interface with smooth animations and native tab styling
 - **⚛️ React-Based Visualizers**: Build components using React 18+ with TypeScript support
 - **🔄 Hot Reloading**: Instant visualizer updates during development
 - **📂 File Interaction**: Read, analyze, and even modify files with user permission
 - **🎯 Priority System**: Ensure the most specific visualizer wins for each file
 - **🚀 Standalone Apps**: Create utility apps that don't require file input
-- **🔒 App Isolation**: Perfect CSS and JavaScript isolation between tabs
+- **🔒 Frame Isolation**: Perfect CSS and JavaScript isolation between tabs
 - **🎭 Custom App Icons**: Personalize your apps with custom icons
 
 ## 📚 Table of Contents
@@ -50,7 +50,7 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 2. [Visualizer Architecture](#-visualizer-architecture)
 3. [Tabbed Interface](#-tabbed-interface)
 4. [User Preferences System](#-user-preferences-system)
-5. [App API - Direct Node.js Access](#-app-api---direct-nodejs-access)
+5. [Frame API - Direct Node.js Access](#-frame-api---direct-nodejs-access)
 6. [Enhanced Matching System](#-enhanced-matching-system)
 7. [Creating Your First Visualizer](#-creating-your-first-visualizer)
 8. [Configuration Reference](#-configuration-reference)
@@ -61,7 +61,7 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 13. [Build & Distribution](#-build--distribution)
 14. [Best Practices](#-best-practices)
 15. [Troubleshooting](#-troubleshooting)
-16. [App Cleanup API](#app-cleanup-api)
+16. [Frame Cleanup API](#frame-cleanup-api)
 
 ## 🎨 Custom App Icons
 
@@ -225,12 +225,12 @@ Viberunner features a Chrome-style tabbed interface that allows users to work wi
 - **Hover Effects**: Interactive feedback for better user experience
 - **Active State**: Clear visual distinction for the currently active tab
 
-### App Isolation
+### Frame Isolation
 
 Each tab runs in a completely isolated container:
 
 - **CSS Isolation**: Styles are scoped to prevent cross-tab interference
-- **JavaScript Isolation**: Each app has its own execution context
+- **JavaScript Isolation**: Each frame has its own execution context
 - **Memory Management**: Proper cleanup when tabs are closed
 - **Z-index Management**: Perfect stacking order prevents content bleed-through
 
@@ -504,17 +504,17 @@ The preferences system includes robust error handling:
 - **Write Errors**: Returns `false` for failed operations, `true` for success
 - **Type Safety**: Helper methods ensure correct data types are returned
 
-## 🚀 App API - Direct Node.js Access
+## 🚀 Frame API - Direct Node.js Access
 
 ### Overview
 
-Apps now have direct access to Node.js APIs instead of receiving pre-processed file content. This provides better performance, flexibility, and avoids data corruption issues.
+Frames now have direct access to Node.js APIs instead of receiving pre-processed file content. This provides better performance, flexibility, and avoids data corruption issues.
 
-### App Props
+### Frame Props
 
-#### File-based Apps
+#### File-based Frames
 ```typescript
-interface AppProps {
+interface FrameProps {
   fileInput: {
     path: string;      // Full file path
     mimetype: string;  // Detected MIME type
@@ -533,9 +533,9 @@ interface AppProps {
 }
 ```
 
-#### Standalone Apps
+#### Standalone Frames
 ```typescript
-interface AppProps {
+interface FrameProps {
   container: HTMLElement; // Mount point
   tabId: string;          // Unique tab identifier for cleanup
   appId: string;          // App identifier for preferences access
@@ -544,7 +544,7 @@ interface AppProps {
 
 ### Available APIs
 
-Apps have access to the global `api` object and direct Node.js modules:
+Frames have access to the global `api` object and direct Node.js modules:
 
 ```javascript
 // File operations
@@ -1717,9 +1717,9 @@ const checkLatestVersions = async (dependencies: Record<string, string>) => {
 };
 ```
 
-### App Cleanup API
+### Frame Cleanup API
 
-**⚠️ Important:** Apps should register cleanup callbacks to prevent memory leaks and ensure proper resource management when tabs are closed.
+**⚠️ Important:** Frames should register cleanup callbacks to prevent memory leaks and ensure proper resource management when tabs are closed.
 
 #### Available Functions
 
@@ -1731,7 +1731,7 @@ registerCleanup(tabId, cleanupFunction)
 #### Basic Usage
 
 ```javascript
-function MyApp({ tabId }) {
+function MyFrame({ tabId }) {
   const [interval, setInterval] = useState(null);
 
   useEffect(() => {
@@ -1753,7 +1753,7 @@ function MyApp({ tabId }) {
     };
   }, [tabId]);
 
-  return <div>My App Content</div>;
+  return <div>My Frame Content</div>;
 }
 ```
 
@@ -1761,7 +1761,7 @@ function MyApp({ tabId }) {
 
 ```javascript
 // Multiple cleanup callbacks
-function AdvancedApp({ tabId }) {
+function AdvancedFrame({ tabId }) {
   useEffect(() => {
     // WebSocket connection
     const ws = new WebSocket('ws://localhost:8080');
@@ -1798,7 +1798,7 @@ Cleanup callbacks are automatically executed when:
 
 #### Best Practices
 
-1. **Always register cleanup**: Even if you think your app doesn't need it
+1. **Always register cleanup**: Even if you think your frame doesn't need it
 2. **Multiple callbacks**: Register separate callbacks for different types of cleanup
 3. **Error handling**: Cleanup callbacks are wrapped in try-catch, but handle your own errors when possible
 4. **Immediate cleanup**: Also implement React's `useEffect` cleanup for immediate component unmounting
@@ -1818,6 +1818,22 @@ useEffect(() => {
   };
 }, [tabId]);
 ```
+
+---
+
+## 🎉 Conclusion
+
+You now have everything needed to create powerful, sophisticated visualizers for Viberunner! The enhanced matching system allows for precise file targeting, while the React-based architecture provides a familiar development experience.
+
+Start with simple visualizers and gradually add complexity. The priority-based matching ensures your visualizers activate exactly when they should, creating a seamless user experience.
+
+Happy visualizing! 🚀
+
+## 🔧 System Command Execution & External Tool Detection
+
+### Overview
+
+Viberunner apps have full access to Node.js APIs, including the ability to execute system commands and detect external tools. However, robust execution requires careful error handling and proper command structure.
 
 ### Robust Command Execution
 
