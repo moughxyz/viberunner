@@ -1,0 +1,23 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Clipboard base -->
+  <rect x="6" y="4" width="16" height="22" rx="2" ry="2" fill="none" stroke="white" stroke-width="1.5"/>
+
+  <!-- Clipboard clip -->
+  <rect x="11" y="2" width="6" height="3" rx="1" ry="1" fill="none" stroke="white" stroke-width="1.5"/>
+
+  <!-- Paper content lines -->
+  <line x1="9" y1="10" x2="19" y2="10" stroke="white" stroke-width="1" opacity="0.7"/>
+  <line x1="9" y1="13" x2="17" y2="13" stroke="white" stroke-width="1" opacity="0.7"/>
+  <line x1="9" y1="16" x2="15" y2="16" stroke="white" stroke-width="1" opacity="0.7"/>
+
+  <!-- Eye symbol for "watching" -->
+  <ellipse cx="14" cy="20" rx="4" ry="2.5" fill="none" stroke="white" stroke-width="1.5"/>
+  <circle cx="14" cy="20" r="1.5" fill="white"/>
+  <circle cx="14" cy="20" r="0.8" fill="#333"/>
+
+  <!-- Small dots around eye to indicate monitoring/activity -->
+  <circle cx="10" cy="18" r="0.5" fill="white" opacity="0.6"/>
+  <circle cx="18" cy="18" r="0.5" fill="white" opacity="0.6"/>
+  <circle cx="12" cy="23" r="0.5" fill="white" opacity="0.6"/>
+  <circle cx="16" cy="23" r="0.5" fill="white" opacity="0.6"/>
+</svg>

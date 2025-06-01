@@ -1,0 +1,38 @@
+{
+  "name": "Image Redactor",
+  "description": "Redact sensitive areas of images by painting over them with blur, pixelation, or solid colors",
+  "version": "1.0.0",
+  "author": "Viberunner Team",
+  "matchers": [
+    {
+      "type": "mimetype",
+      "mimetype": "image/png",
+      "priority": 70
+    },
+    {
+      "type": "mimetype",
+      "mimetype": "image/jpeg",
+      "priority": 70
+    },
+    {
+      "type": "mimetype",
+      "mimetype": "image/jpg",
+      "priority": 70
+    },
+    {
+      "type": "mimetype",
+      "mimetype": "image/gif",
+      "priority": 70
+    },
+    {
+      "type": "mimetype",
+      "mimetype": "image/bmp",
+      "priority": 70
+    },
+    {
+      "type": "mimetype",
+      "mimetype": "image/webp",
+      "priority": 70
+    }
+  ]
+}

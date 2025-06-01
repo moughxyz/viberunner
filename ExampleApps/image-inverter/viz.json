@@ -1,0 +1,6 @@
+{
+  "name": "Image Inverter",
+  "description": "Inverts the colors of PNG and JPEG images",
+  "mimetypes": ["image/png", "image/jpeg", "image/jpg"],
+  "version": "1.0.0"
+}

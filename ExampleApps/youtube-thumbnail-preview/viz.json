@@ -1,0 +1,87 @@
+{
+  "name": "YouTube Thumbnail Preview",
+  "description": "Preview image files as YouTube thumbnails with customizable title and realistic YouTube interface",
+  "version": "1.0.0",
+  "author": "Vizor",
+
+  "matchers": [
+    {
+      "type": "combined",
+      "operator": "AND",
+      "priority": 95,
+      "conditions": [
+        {
+          "type": "mimetype",
+          "mimetype": "image/jpeg",
+          "priority": 50
+        },
+        {
+          "type": "filename",
+          "pattern": "*thumbnail*",
+          "priority": 40
+        }
+      ]
+    },
+    {
+      "type": "combined",
+      "operator": "AND",
+      "priority": 90,
+      "conditions": [
+        {
+          "type": "mimetype",
+          "mimetype": "image/png",
+          "priority": 50
+        },
+        {
+          "type": "filename",
+          "pattern": "*thumb*",
+          "priority": 40
+        }
+      ]
+    },
+    {
+      "type": "mimetype",
+      "mimetype": "image/jpeg",
+      "priority": 80
+    },
+    {
+      "type": "mimetype",
+      "mimetype": "image/png",
+      "priority": 80
+    },
+    {
+      "type": "mimetype",
+      "mimetype": "image/webp",
+      "priority": 75
+    },
+    {
+      "type": "mimetype",
+      "mimetype": "image/gif",
+      "priority": 70
+    },
+    {
+      "type": "filename",
+      "pattern": "*.jpg",
+      "priority": 60
+    },
+    {
+      "type": "filename",
+      "pattern": "*.jpeg",
+      "priority": 60
+    },
+    {
+      "type": "filename",
+      "pattern": "*.png",
+      "priority": 60
+    },
+    {
+      "type": "filename",
+      "pattern": "*.webp",
+      "priority": 55
+    }
+  ],
+
+  "tags": ["youtube", "thumbnail", "preview", "content-creation", "social-media"],
+  "homepage": "https://github.com/vizor/youtube-thumbnail-preview",
+  "license": "MIT"
+}

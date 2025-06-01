@@ -1,0 +1,10 @@
+{
+  "name": "Mouse Jiggler",
+  "description": "Keep your screen active by automatically moving the mouse cursor at configurable intervals. Perfect for preventing screen locks during presentations, video calls, or long tasks.",
+  "version": "1.0.0",
+  "author": "Vibeframe Community",
+  "standalone": true,
+  "tags": ["productivity", "system", "utility", "automation"],
+  "homepage": "https://github.com/vibeframe/mouse-jiggler",
+  "license": "MIT"
+}

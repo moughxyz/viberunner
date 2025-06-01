@@ -1,0 +1,10 @@
+{
+  "name": "Port Sniffer",
+  "description": "Shows open ports and associated processes for debugging dev environments",
+  "version": "1.0.0",
+  "author": "Vibeframe Community",
+  "standalone": true,
+  "tags": ["network", "debugging", "system", "ports", "processes"],
+  "homepage": "https://github.com/vibeframe/port-sniffer",
+  "license": "MIT"
+}

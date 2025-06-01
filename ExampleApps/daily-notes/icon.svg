@@ -1,0 +1,28 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <!-- Calendar background -->
+  <rect x="4" y="6" width="24" height="20" rx="2" fill="#3b82f6" stroke="#1e40af" stroke-width="1"/>
+
+  <!-- Calendar header -->
+  <rect x="4" y="6" width="24" height="6" rx="2" fill="#1e40af"/>
+
+  <!-- Calendar rings -->
+  <circle cx="10" cy="4" r="1.5" fill="#6b7280"/>
+  <circle cx="22" cy="4" r="1.5" fill="#6b7280"/>
+  <rect x="9" y="2" width="2" height="6" fill="#6b7280"/>
+  <rect x="21" y="2" width="2" height="6" fill="#6b7280"/>
+
+  <!-- Calendar grid -->
+  <line x1="8" y1="16" x2="24" y2="16" stroke="#93c5fd" stroke-width="0.5"/>
+  <line x1="8" y1="20" x2="24" y2="20" stroke="#93c5fd" stroke-width="0.5"/>
+  <line x1="12" y1="12" x2="12" y2="26" stroke="#93c5fd" stroke-width="0.5"/>
+  <line x1="16" y1="12" x2="16" y2="26" stroke="#93c5fd" stroke-width="0.5"/>
+  <line x1="20" y1="12" x2="20" y2="26" stroke="#93c5fd" stroke-width="0.5"/>
+
+  <!-- Today highlight -->
+  <rect x="12.5" y="16.5" width="3" height="3" fill="#fbbf24" rx="0.5"/>
+
+  <!-- Pencil overlay -->
+  <path d="M24 20 L26 18 L29 21 L27 23 Z" fill="#fbbf24"/>
+  <path d="M24 20 L27 23 L26 24 L23 21 Z" fill="#f59e0b"/>
+  <circle cx="23.5" cy="20.5" r="0.5" fill="#374151"/>
+</svg>

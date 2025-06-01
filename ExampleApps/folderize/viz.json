@@ -1,0 +1,7 @@
+{
+  "name": "Folderize",
+  "description": "Grid-based folder content visualizer",
+  "version": "1.0.0",
+  "mimetypes": ["inode/directory"],
+  "author": "Vizor Framework"
+}
