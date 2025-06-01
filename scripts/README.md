@@ -5,10 +5,10 @@ This script automates the creation of all required icon formats for Electron For
 ## Quick Start
 
 ```bash
-# Using npm script (recommended)
-npm run convert-icon path/to/your/icon.png
+# Super simple - just drop your icon as source-icon.png in assets/
+npm run convert-icon
 
-# Or directly
+# Or specify a custom path
 node scripts/convert-icon.js path/to/your/icon.png
 ```
 
@@ -19,6 +19,12 @@ Converts a single source image into all formats needed for Electron Forge:
 - **`assets/icon.icns`** - macOS app icon (with all required resolutions)
 - **`assets/icon.ico`** - Windows app icon
 - **`assets/icon.png`** - Linux app icon (copy of source)
+
+## Simple Workflow
+
+1. **Drop your icon** as `assets/source-icon.png` (1024x1024 recommended)
+2. **Run the command**: `npm run convert-icon`
+3. **Done!** All icon formats are generated automatically
 
 ## Requirements
 
@@ -39,14 +45,14 @@ Converts a single source image into all formats needed for Electron Forge:
 ## Usage Examples
 
 ```bash
-# Convert an icon in the current directory
-npm run convert-icon my-app-icon.png
+# Standard workflow (recommended)
+# 1. Save your icon as assets/source-icon.png
+# 2. Run:
+npm run convert-icon
 
-# Convert with full path
-npm run convert-icon /Users/you/Desktop/logo.png
-
-# Convert from assets directory
-npm run convert-icon assets/source-logo.png
+# Custom icon path
+node scripts/convert-icon.js my-app-icon.png
+node scripts/convert-icon.js /Users/you/Desktop/logo.png
 ```
 
 ## Output
@@ -54,9 +60,10 @@ npm run convert-icon assets/source-logo.png
 After running the script, you'll have:
 ```
 assets/
-├── icon.icns    # macOS (multiple resolutions bundled)
-├── icon.ico     # Windows
-└── icon.png     # Linux
+├── source-icon.png  # Your source file (not committed to git)
+├── icon.icns        # macOS (multiple resolutions bundled)
+├── icon.ico         # Windows
+└── icon.png         # Linux
 ```
 
 Your `forge.config.js` should then use:
@@ -66,6 +73,7 @@ icon: './assets/icon'  // No extension needed!
 
 ## Features
 
+- ✅ **One-command workflow** (just `npm run convert-icon`)
 - ✅ **Automatic dependency checking** (installs ImageMagick if missing)
 - ✅ **Input validation** (checks dimensions, format, etc.)
 - ✅ **Cross-platform support** (macOS, Windows, Linux)
@@ -75,16 +83,16 @@ icon: './assets/icon'  // No extension needed!
 
 ## Troubleshooting
 
+### "Input file not found"
+Make sure you have saved your icon as `assets/source-icon.png`:
+```bash
+ls -la assets/source-icon.png
+```
+
 ### "Command not found: convert"
 Install ImageMagick:
 ```bash
 brew install imagemagick
-```
-
-### "Input file not found"
-Make sure the path to your source image is correct:
-```bash
-ls -la path/to/your/icon.png
 ```
 
 ### "Image is not square"
@@ -95,7 +103,4 @@ ICNS files can only be created on macOS. The script will skip this step on other
 
 ---
 
-**Pro tip**: Save your source icon as `source-icon.png` in the assets directory, then you can easily regenerate all formats anytime:
-```bash
-npm run convert-icon assets/source-icon.png
-```
+**Workflow**: Just save your high-res icon as `assets/source-icon.png` and run `npm run convert-icon` anytime you want to regenerate all icon formats!

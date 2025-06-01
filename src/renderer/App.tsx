@@ -441,6 +441,7 @@ const App: React.FC = () => {
   const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
   const [appIcons, setAppIcons] = useState<Record<string, string>>({});
   const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
+  const [showSettings, setShowSettings] = useState(false);
 
   const frameRootRef = useRef<HTMLDivElement>(null);
   const hasLaunchedStartupApps = useRef<boolean>(false);
@@ -673,12 +674,6 @@ const App: React.FC = () => {
           // Ensure we stay on the New Tab after all apps are launched
           if (currentNewTabId) {
             switchToTab(currentNewTabId);
-          } else {
-            // Find any New Tab that exists
-            const newTab = openTabs.find(tab => tab.type === 'newtab');
-            if (newTab) {
-              switchToTab(newTab.id);
-            }
           }
         }).catch(error => {
           console.error('Error during parallel startup app launch:', error);
@@ -1694,7 +1689,6 @@ const App: React.FC = () => {
                           <div className="section-card">
                             <div className="section-header">
                               <h4 className="section-title">
-                                <span className="section-icon">⚡</span>
                                 Standalone Apps
                               </h4>
                               <span className="section-count">{frames.filter(f => f.standalone).length}</span>
@@ -1769,7 +1763,6 @@ const App: React.FC = () => {
                           <div className="section-card">
                             <div className="section-header">
                               <h4 className="section-title">
-                                <span className="section-icon">🎨</span>
                                 Contextual Apps
                               </h4>
                               <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
@@ -1800,34 +1793,82 @@ const App: React.FC = () => {
                           </div>
                         </div>
                       )}
-
-                      {/* Persistent Directory Controls in bottom right */}
-                      <div className="directory-controls-persistent">
-                        <button
-                          className="directory-btn directory-change-btn"
-                          onClick={handleChangeFramesDirectory}
-                          title="Change apps directory"
-                        >
-                          <span className="btn-icon">📁</span>
-                          <span className="btn-text">Change Directory</span>
-                        </button>
-                        <button
-                          className="directory-btn directory-reload-btn"
-                          onClick={handleReloadFrames}
-                          disabled={isLoadingFrames}
-                          title="Reload apps"
-                        >
-                          <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
-                          <span className="btn-text">Reload</span>
-                        </button>
-                        <div className="directory-path-mini">
-                          {framesDirectory}
-                        </div>
-                      </div>
                     </>
                   )}
                 </div>
               </div>
+            )}
+
+            {/* Directory Controls - Fixed outside scrollable content */}
+            {activeTab?.type === 'newtab' && !showFrameSelection && framesDirectory && framesDirectory !== 'Not set' && frames.length > 0 && (
+              <div className="directory-controls-persistent">
+                <button
+                  className="directory-btn directory-change-btn"
+                  onClick={handleChangeFramesDirectory}
+                  title="Change apps directory"
+                >
+                  <span className="btn-icon">📁</span>
+                  <span className="btn-text">Change Directory</span>
+                </button>
+                <button
+                  className="directory-btn directory-reload-btn"
+                  onClick={handleReloadFrames}
+                  disabled={isLoadingFrames}
+                  title="Reload apps"
+                >
+                  <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
+                  <span className="btn-text">Reload</span>
+                </button>
+                <div className="directory-path-mini">
+                  {framesDirectory}
+                </div>
+              </div>
+            )}
+
+            {/* Settings Modal */}
+            {showSettings && (
+              <div className="settings-modal-overlay" onClick={() => setShowSettings(false)}>
+                <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+                  <div className="settings-header">
+                    <h3>Settings</h3>
+                    <button onClick={() => setShowSettings(false)} className="close-btn">✕</button>
+                  </div>
+                  <div className="settings-content">
+                    <div className="setting-group">
+                      <label>Apps Directory</label>
+                      <div className="directory-path-display">
+                        {framesDirectory}
+                      </div>
+                      <div className="setting-actions">
+                        <button
+                          className="btn btn-primary"
+                          onClick={handleChangeFramesDirectory}
+                        >
+                          Choose Directory
+                        </button>
+                        <button
+                          className="btn btn-outline"
+                          onClick={handleReloadFrames}
+                          disabled={isLoadingFrames}
+                        >
+                          {isLoadingFrames ? 'Reloading...' : 'Reload Apps'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Settings Icon */}
+            {activeTab?.type === 'newtab' && !showFrameSelection && (
+              <button
+                className="settings-icon"
+                onClick={() => setShowSettings(true)}
+                title="Settings"
+              >
+                ⚙️
+              </button>
             )}
           </div>
         </main>
