@@ -1,6 +1,6 @@
 # 🍅 Micro Pomodoro Timer
 
-A minimalist Pomodoro timer for Vibeframe with script execution capabilities for enhanced productivity automation.
+A minimalist Pomodoro timer for Viberunner with script execution capabilities for enhanced productivity automation.
 
 ## Features
 
@@ -142,7 +142,7 @@ micro-pomodoro-timer/
 ├── index.html           # HTML template
 ├── package.json         # Dependencies
 ├── vite.config.ts       # Build configuration
-└── viz.json            # Vibeframe metadata
+└── viz.json            # Viberunner metadata
 ```
 
 ### Building
@@ -213,4 +213,4 @@ MIT License - Free to use, modify, and distribute.
 
 ---
 
-**Note**: This is a standalone Vibeframe visualizer that enhances productivity through the proven Pomodoro Technique with modern automation capabilities.
+**Note**: This is a standalone Viberunner visualizer that enhances productivity through the proven Pomodoro Technique with modern automation capabilities.

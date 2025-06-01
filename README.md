@@ -41,7 +41,7 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 - **📂 File Interaction**: Read, analyze, and even modify files with user permission
 - **🎯 Priority System**: Ensure the most specific visualizer wins for each file
 - **🚀 Standalone Apps**: Create utility apps that don't require file input
-- **🔒 Frame Isolation**: Perfect CSS and JavaScript isolation between tabs
+- **🔒 App Isolation**: Perfect CSS and JavaScript isolation between tabs
 - **🎭 Custom App Icons**: Personalize your apps with custom icons
 
 ## 📚 Table of Contents
@@ -50,7 +50,7 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 2. [Visualizer Architecture](#-visualizer-architecture)
 3. [Tabbed Interface](#-tabbed-interface)
 4. [User Preferences System](#-user-preferences-system)
-5. [Frame API - Direct Node.js Access](#-frame-api---direct-nodejs-access)
+5. [App API - Direct Node.js Access](#-frame-api---direct-nodejs-access)
 6. [Enhanced Matching System](#-enhanced-matching-system)
 7. [Creating Your First Visualizer](#-creating-your-first-visualizer)
 8. [Configuration Reference](#-configuration-reference)
@@ -61,7 +61,7 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 13. [Build & Distribution](#-build--distribution)
 14. [Best Practices](#-best-practices)
 15. [Troubleshooting](#-troubleshooting)
-16. [Frame Cleanup API](#frame-cleanup-api)
+16. [App Cleanup API](#frame-cleanup-api)
 
 ## 🎨 Custom App Icons
 
@@ -225,7 +225,7 @@ Viberunner features a Chrome-style tabbed interface that allows users to work wi
 - **Hover Effects**: Interactive feedback for better user experience
 - **Active State**: Clear visual distinction for the currently active tab
 
-### Frame Isolation
+### App Isolation
 
 Each tab runs in a completely isolated container:
 
@@ -504,17 +504,17 @@ The preferences system includes robust error handling:
 - **Write Errors**: Returns `false` for failed operations, `true` for success
 - **Type Safety**: Helper methods ensure correct data types are returned
 
-## 🚀 Frame API - Direct Node.js Access
+## 🚀 App API - Direct Node.js Access
 
 ### Overview
 
 Apps now have direct access to Node.js APIs instead of receiving pre-processed file content. This provides better performance, flexibility, and avoids data corruption issues.
 
-### Frame Props
+### App Props
 
 #### File-based Apps
 ```typescript
-interface FrameProps {
+interface AppProps {
   fileInput: {
     path: string;      // Full file path
     mimetype: string;  // Detected MIME type
@@ -535,7 +535,7 @@ interface FrameProps {
 
 #### Standalone Apps
 ```typescript
-interface FrameProps {
+interface AppProps {
   container: HTMLElement; // Mount point
   tabId: string;          // Unique tab identifier for cleanup
   appId: string;          // App identifier for preferences access
@@ -1717,7 +1717,7 @@ const checkLatestVersions = async (dependencies: Record<string, string>) => {
 };
 ```
 
-### Frame Cleanup API
+### App Cleanup API
 
 **⚠️ Important:** Apps should register cleanup callbacks to prevent memory leaks and ensure proper resource management when tabs are closed.
 
@@ -1731,7 +1731,7 @@ registerCleanup(tabId, cleanupFunction)
 #### Basic Usage
 
 ```javascript
-function MyFrame({ tabId }) {
+function MyApp({ tabId }) {
   const [interval, setInterval] = useState(null);
 
   useEffect(() => {
@@ -1753,7 +1753,7 @@ function MyFrame({ tabId }) {
     };
   }, [tabId]);
 
-  return <div>My Frame Content</div>;
+  return <div>My App Content</div>;
 }
 ```
 
@@ -1761,7 +1761,7 @@ function MyFrame({ tabId }) {
 
 ```javascript
 // Multiple cleanup callbacks
-function AdvancedFrame({ tabId }) {
+function AdvancedApp({ tabId }) {
   useEffect(() => {
     // WebSocket connection
     const ws = new WebSocket('ws://localhost:8080');

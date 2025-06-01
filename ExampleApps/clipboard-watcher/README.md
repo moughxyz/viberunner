@@ -1,6 +1,6 @@
 # 📋 Clipboard Watcher
 
-A real-time clipboard monitoring visualizer for Vibeframe that tracks clipboard history with advanced search and filtering capabilities.
+A real-time clipboard monitoring visualizer for Viberunner that tracks clipboard history with advanced search and filtering capabilities.
 
 ## Features
 
@@ -9,7 +9,7 @@ A real-time clipboard monitoring visualizer for Vibeframe that tracks clipboard 
 - **Content Type Detection**: Identifies text, HTML, images, and other content types
 - **Copy Functionality**: Click to copy any historical entry back to clipboard
 - **Export History**: Download clipboard history as JSON
-- **Dark Theme**: Integrated with Vibeframe's dark UI design
+- **Dark Theme**: Integrated with Viberunner's dark UI design
 - **Pause/Resume**: Control monitoring with easy toggle
 - **Size Tracking**: Shows content size for each entry
 - **History Limit**: Maintains last 100 clipboard entries for performance
@@ -24,7 +24,7 @@ A real-time clipboard monitoring visualizer for Vibeframe that tracks clipboard 
 
 ## Usage
 
-1. **Launch**: Open as a standalone visualizer in Vibeframe
+1. **Launch**: Open as a standalone visualizer in Viberunner
 2. **Monitor**: Copy text/content - it will automatically appear in the history
 3. **Search**: Use the search box to find specific content
 4. **Regex**: Enable regex mode for pattern matching
@@ -157,4 +157,4 @@ MIT License - Feel free to modify and distribute.
 
 ---
 
-**Note**: This is a standalone Vibeframe visualizer. It does not require any file input and runs independently as a utility application.
+**Note**: This is a standalone Viberunner visualizer. It does not require any file input and runs independently as a utility application.

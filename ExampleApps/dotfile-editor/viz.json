@@ -2,9 +2,9 @@
   "name": "Dotfile Editor",
   "description": "Edit your dotfiles (.bashrc, .zshrc, .gitconfig, etc.) with Monaco editor",
   "version": "1.0.0",
-  "author": "Vibeframe",
+  "author": "Viberunner",
   "standalone": true,
   "tags": ["editor", "dotfiles", "configuration", "monaco"],
-  "homepage": "https://github.com/vibeframe/dotfile-editor",
+  "homepage": "https://github.com/viberunner/dotfile-editor",
   "license": "MIT"
 }

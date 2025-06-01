@@ -4,7 +4,7 @@ Keep your screen active by automatically moving the mouse cursor at configurable
 
 ## ✨ Features
 
-- **🚀 Standalone Utility**: Launch directly from Vibeframe's Utilities section - no file needed!
+- **🚀 Standalone Utility**: Launch directly from Viberunner's Utilities section - no file needed!
 - **🎯 Configurable Intervals**: Set custom jiggle intervals from 1-300 seconds
 - **🔄 Multiple Movement Patterns**: Choose from 4 different movement patterns
 - **📊 Real-time Statistics**: Track total moves, timing, and activity
@@ -36,8 +36,8 @@ Keep your screen active by automatically moving the mouse cursor at configurable
 
 ## 🚀 Quick Start
 
-### 1. Launch from Vibeframe
-- Open Vibeframe
+### 1. Launch from Viberunner
+- Open Viberunner
 - Navigate to the **Utilities** section in the sidebar
 - Click the **Launch** button next to "Mouse Jiggler"
 - The utility will open instantly - no file needed!
@@ -78,7 +78,7 @@ Choose based on your needs:
 
 ### Windows
 - **Built-in support**: Uses native PowerShell and .NET Framework
-- **Permissions**: May require running Vibeframe as administrator
+- **Permissions**: May require running Viberunner as administrator
 - **Compatibility**: Works on Windows 7+
 
 ### Linux
@@ -171,7 +171,7 @@ The visualizer provides real-time statistics:
 1. **macOS**: Ensure `osascript` is available (built-in on all macOS)
 2. **Windows**: Ensure PowerShell is available (built-in on Windows 7+)
 3. **Linux**: Install xdotool: `sudo apt-get install xdotool`
-4. **All**: Restart Vibeframe after system changes
+4. **All**: Restart Viberunner after system changes
 
 ### Mouse not moving visibly
 - This is normal for "Tiny" pattern (only 2-pixel movement)
@@ -180,7 +180,7 @@ The visualizer provides real-time statistics:
 
 ### "Command failed" errors
 - **macOS**: Check if accessibility permissions are needed
-- **Windows**: Try running Vibeframe as administrator
+- **Windows**: Try running Viberunner as administrator
 - **Linux**: Verify xdotool is installed and X11 is running
 - **All**: Check console logs for specific error details
 
@@ -211,7 +211,7 @@ MIT License - Free for personal and commercial use.
 
 ## 🤝 Contributing
 
-This visualizer is part of the Vibeframe ecosystem. Contributions welcome!
+This visualizer is part of the Viberunner ecosystem. Contributions welcome!
 
 ---
 

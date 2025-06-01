@@ -14,7 +14,7 @@ const { app } = require('@electron/remote') || require('electron').remote?.app;
 
 // Simplified API - only direct operations, no IPC
 const api = {
-  // Direct file operations using Node.js - exposed to frames
+  // Direct file operations using Node.js - exposed to apps
   readFile: (filePath: string, encoding: 'utf8' | 'base64' = 'utf8') => {
     if (encoding === 'base64') {
       return fs.readFileSync(filePath).toString('base64');
@@ -186,10 +186,10 @@ const api = {
   };
 };
 
-// Frame cleanup system
+// App cleanup system
 const frameCleanupCallbacks = new Map<string, (() => void)[]>();
 
-// Global cleanup registration function for frames
+// Global cleanup registration function for apps
 const registerCleanup = (tabId: string, cleanupFn: () => void) => {
   if (!frameCleanupCallbacks.has(tabId)) {
     frameCleanupCallbacks.set(tabId, []);
@@ -213,7 +213,7 @@ const executeCleanup = (tabId: string) => {
   }
 };
 
-// Make cleanup functions available globally for frames
+// Make cleanup functions available globally for apps
 (window as any).registerCleanup = registerCleanup;
 (window as any).executeCleanup = executeCleanup;
 
@@ -229,7 +229,7 @@ const getAppsDirectory = () => {
     if (fs.existsSync(prefsPath)) {
       const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
       if (prefs.appsDir && fs.existsSync(prefs.appsDir)) {
-        console.log('Using saved frames directory:', prefs.appsDir);
+        console.log('Using saved apps directory:', prefs.appsDir);
         return prefs.appsDir;
       }
     }
@@ -240,7 +240,7 @@ const getAppsDirectory = () => {
   // Fallback to default location
   const userDataPath = app?.getPath('userData') || path.join(require('os').homedir(), '.viberunner');
   const fallback = path.join(userDataPath, 'apps');
-  console.log('Using fallback frames directory:', fallback);
+  console.log('Using fallback apps directory:', fallback);
   return fallback;
 };
 
@@ -286,9 +286,9 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
   };
 }
 
-async function loadApps(): Promise<Frame[]> {
+async function loadApps(): Promise<App[]> {
   const FRAMES_DIR = getAppsDirectory();
-  console.log('loadApps: Looking for frames in:', FRAMES_DIR);
+  console.log('loadApps: Looking for apps in:', FRAMES_DIR);
 
   if (!fs.existsSync(FRAMES_DIR)) {
     console.log('loadApps: Directory does not exist, creating it');
@@ -308,7 +308,7 @@ async function loadApps(): Promise<Frame[]> {
     });
     console.log('loadApps: Found directories:', directories);
 
-    const frames = directories.map((dir: string) => {
+    const apps = directories.map((dir: string) => {
       const framePath = path.join(FRAMES_DIR, dir);
       const metadataPath = path.join(framePath, 'viz.json');
       console.log(`loadApps: Checking for metadata at: ${metadataPath}`);
@@ -331,17 +331,17 @@ async function loadApps(): Promise<Frame[]> {
         return null;
       }
     })
-    .filter(Boolean) as Frame[];
+    .filter(Boolean) as App[];
 
-    console.log('loadApps: Final frames array:', frames);
-    return frames;
+    console.log('loadApps: Final apps array:', apps);
+    return apps;
   } catch (error) {
     console.error('Error in loadApps function:', error);
     throw error;
   }
 }
 
-async function loadFrame(id: string) {
+async function loadApp(id: string) {
   const FRAMES_DIR = getAppsDirectory();
   const framePath = path.join(FRAMES_DIR, id);
   const bundlePath = path.join(framePath, 'dist', 'bundle.iife.js');
@@ -366,10 +366,10 @@ async function loadFrame(id: string) {
 interface FileInput {
   path: string;
   mimetype: string;
-  // Remove content and analysis - frames will handle these directly
+  // Remove content and analysis - apps will handle these directly
 }
 
-interface Frame {
+interface App {
   id: string;
   name: string;
   description: string;
@@ -383,7 +383,7 @@ interface Frame {
 
 interface OpenTab {
   id: string;
-  frame?: Frame; // Optional for new tab - represents the app/visualization
+  frame?: App; // Optional for new tab - represents the app/visualization
   fileInput?: FileInput; // undefined for standalone apps and new tab
   title: string;
   type: 'file' | 'standalone' | 'newtab';
@@ -429,15 +429,15 @@ const getSupportedFormats = (frame: any): string => {
 };
 
 const App: React.FC = () => {
-  const [frames, setApps] = useState<Frame[]>([]);
-  const [framesDirectory, setAppsDirectory] = useState<string>('');
+  const [apps, setApps] = useState<App[]>([]);
+  const [appsDirectory, setAppsDirectory] = useState<string>('');
   const [isLoadingApps, setIsLoadingApps] = useState(false);
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
     { id: 'default-tab', title: 'New Tab', type: 'newtab' }
   ]);
   const [activeTabId, setActiveTabId] = useState('default-tab');
-  const [showFrameSelection, setShowFrameSelection] = useState(false);
-  const [availableApps, setAvailableApps] = useState<Frame[]>([]);
+  const [showAppSelection, setShowAppSelection] = useState(false);
+  const [availableApps, setAvailableApps] = useState<App[]>([]);
   const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
   const [appIcons, setAppIcons] = useState<Record<string, string>>({});
   const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
@@ -454,7 +454,7 @@ const App: React.FC = () => {
   const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
 
   // Function to load app icon
-  const loadAppIcon = async (frame: Frame): Promise<string | null> => {
+  const loadAppIcon = async (frame: App): Promise<string | null> => {
     if (!frame.icon) return null;
 
     // Check if already cached
@@ -571,19 +571,19 @@ const App: React.FC = () => {
     }
   };
 
-  // Load icons for all frames when frames change
+  // Load icons for all apps when apps change
   useEffect(() => {
-    frames.forEach(frame => {
+    apps.forEach(frame => {
       if (frame.icon && !appIcons[frame.id]) {
         loadAppIcon(frame);
       }
     });
-  }, [frames]);
+  }, [apps]);
 
-  // Load startup apps when component mounts and when frames change
+  // Load startup apps when component mounts and when apps change
   useEffect(() => {
     loadStartupApps();
-  }, [frames]);
+  }, [apps]);
 
   // Keyboard shortcuts for tab/window management
   useEffect(() => {
@@ -624,16 +624,16 @@ const App: React.FC = () => {
     };
   }, [openTabs, activeTabId, activeTab]);
 
-  // Auto-launch startup apps when frames are loaded
+  // Auto-launch startup apps when apps are loaded
   useEffect(() => {
     console.log('Auto-launch useEffect triggered:', {
-      framesLength: frames.length,
+      appsLength: apps.length,
       startupAppsCount: Object.keys(startupApps).length,
       hasLaunched: hasLaunchedStartupApps.current,
       startupApps
     });
 
-    if (frames.length > 0 && Object.keys(startupApps).length > 0 && !hasLaunchedStartupApps.current) {
+    if (apps.length > 0 && Object.keys(startupApps).length > 0 && !hasLaunchedStartupApps.current) {
       const enabledStartupApps = Object.entries(startupApps)
         .filter(([_, config]) => config.enabled)
         .sort(([, a], [, b]) => a.tabOrder - b.tabOrder);
@@ -649,12 +649,12 @@ const App: React.FC = () => {
         // Launch all apps in parallel without delays
         const launchPromises = enabledStartupApps.map(async ([appId, config]) => {
           try {
-            const frame = frames.find(f => f.id === appId);
+            const frame = apps.find(f => f.id === appId);
             console.log(`Launching startup app: ${appId} (tab order: ${config.tabOrder})`);
 
             if (frame && frame.standalone) {
               // Launch the app but don't wait for tab switching
-              await openFrameInNewTab(frame, undefined, true, false);
+              await openAppInNewTab(frame, undefined, true, false);
               console.log(`Successfully launched startup app: ${appId}`);
             } else {
               console.warn(`Could not launch ${appId}:`, {
@@ -681,10 +681,10 @@ const App: React.FC = () => {
       }
       hasLaunchedStartupApps.current = true;
     }
-  }, [frames, startupApps]);
+  }, [apps, startupApps]);
 
   // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
-  const getAppIcon = (frame: Frame): string => {
+  const getAppIcon = (frame: App): string => {
     if (appIcons[frame.id]) {
       return appIcons[frame.id];
     }
@@ -727,14 +727,14 @@ const App: React.FC = () => {
     styleElement?: HTMLStyleElement;
   }>>(new Map());
 
-  // Load frames directory info
+  // Load apps directory info
   useEffect(() => {
     const loadDirectoryInfo = async () => {
       try {
         const dir = getAppsDirectory();
         setAppsDirectory(dir || 'Not set');
       } catch (error) {
-        console.error('Error loading frames directory:', error);
+        console.error('Error loading apps directory:', error);
       }
     };
     loadDirectoryInfo();
@@ -745,10 +745,10 @@ const App: React.FC = () => {
       setIsLoadingApps(true);
       // Reset startup apps launch flag so they can launch again after reload
       hasLaunchedStartupApps.current = false;
-      const frames = await loadApps();
-      setApps(frames);
+      const apps = await loadApps();
+      setApps(apps);
     } catch (error) {
-      console.error('Error loading frames:', error);
+      console.error('Error loading apps:', error);
       alert('Failed to load apps. Please check your apps directory.');
     } finally {
       setIsLoadingApps(false);
@@ -761,13 +761,13 @@ const App: React.FC = () => {
 
   const handleChangeAppsDirectory = async () => {
     try {
-      const result = await ipcRenderer.invoke('change-frames-directory');
+      const result = await ipcRenderer.invoke('change-apps-directory');
       if (result.success && result.directory) {
         setAppsDirectory(result.directory);
         await reloadApps();
       }
     } catch (error) {
-      console.error('Error changing frames directory:', error);
+      console.error('Error changing apps directory:', error);
       alert('Failed to change apps directory.');
     }
   };
@@ -780,12 +780,12 @@ const App: React.FC = () => {
   const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   // Imperative function to create a frame container
-  const createFrameContainer = async (tab: OpenTab): Promise<boolean> => {
+  const createAppContainer = async (tab: OpenTab): Promise<boolean> => {
     if (!frameRootRef.current || !tab.frame || !tab.frameData) {
       console.error('Cannot create frame container:', {
-        hasFrameRoot: !!frameRootRef.current,
-        hasFrame: !!tab.frame,
-        hasFrameData: !!tab.frameData
+        hasAppRoot: !!frameRootRef.current,
+        hasApp: !!tab.frame,
+        hasAppData: !!tab.frameData
       });
       return false;
     }
@@ -938,7 +938,7 @@ const App: React.FC = () => {
 
       script.textContent = frameStyleInterceptor + '\n' + processedBundleContent;
 
-      const frameLoader = (FrameComponent: any) => {
+      const frameLoader = (AppComponent: any) => {
         try {
           // Create an isolation wrapper div
           const isolationWrapper = document.createElement('div');
@@ -961,7 +961,7 @@ const App: React.FC = () => {
           isolationWrapper.setAttribute('data-frame-id', tab.id);
 
           const root = createRoot(isolationWrapper);
-          root.render(React.createElement(FrameComponent, props));
+          root.render(React.createElement(AppComponent, props));
 
           // Store container reference in tabContainersRef for tab switching
           tabContainersRef.current.set(tab.id, {
@@ -1044,7 +1044,7 @@ const App: React.FC = () => {
     setActiveTabId(tabId);
   };
 
-  const openFrameInNewTab = async (frame: Frame, fileInput?: FileInput, forceNewTab: boolean = false, switchToTab_: boolean = true) => {
+  const openAppInNewTab = async (frame: App, fileInput?: FileInput, forceNewTab: boolean = false, switchToTab_: boolean = true) => {
     const title = fileInput
       ? fileInput.path.split('/').pop() || 'Unknown File'
       : frame.name;
@@ -1053,7 +1053,7 @@ const App: React.FC = () => {
 
     // Load frame data
     try {
-      frameData = await loadFrame(frame.id);
+      frameData = await loadApp(frame.id);
     } catch (error) {
       console.error('Failed to load frame data:', error);
       alert(`Failed to load ${frame.name}: ${error}`);
@@ -1079,7 +1079,7 @@ const App: React.FC = () => {
       ));
 
       // Create the frame container and wait for it to be ready
-      const success = await createFrameContainer(transformedTab);
+      const success = await createAppContainer(transformedTab);
 
       if (success) {
         // Only switch to this tab if switchToTab_ is true
@@ -1114,7 +1114,7 @@ const App: React.FC = () => {
       setOpenTabs(prev => [...prev, newTab]);
 
       // Create the frame container and wait for it to be ready
-      const success = await createFrameContainer(newTab);
+      const success = await createAppContainer(newTab);
 
       if (success) {
         // Only switch to this tab if switchToTab_ is true
@@ -1136,7 +1136,7 @@ const App: React.FC = () => {
       }
     }
 
-    setShowFrameSelection(false);
+    setShowAppSelection(false);
     setPendingFileInput(null);
   };
 
@@ -1197,7 +1197,7 @@ const App: React.FC = () => {
   // Handle tab switching
   const handleTabSwitch = (tabId: string) => {
     // Reset frame selection state when switching tabs
-    setShowFrameSelection(false);
+    setShowAppSelection(false);
     setPendingFileInput(null);
     switchToTab(tabId);
   };
@@ -1259,16 +1259,16 @@ const App: React.FC = () => {
     setDragOverTabId(null);
   };
 
-  const selectFrame = async (frame: Frame) => {
+  const selectApp = async (frame: App) => {
     if (pendingFileInput) {
-      await openFrameInNewTab(frame, pendingFileInput);
+      await openAppInNewTab(frame, pendingFileInput);
     }
   };
 
-  const launchStandaloneFrame = async (frame: Frame) => {
+  const launchStandaloneApp = async (frame: App) => {
     try {
       console.log('Launching standalone frame:', frame.name, frame.id);
-      await openFrameInNewTab(frame);
+      await openAppInNewTab(frame);
     } catch (error) {
       console.error('Failed to launch standalone frame:', error);
       alert(`Failed to launch ${frame.name}: ${error}`);
@@ -1335,12 +1335,12 @@ const App: React.FC = () => {
     }
   }
 
-  async function findMatchingApps(filePath: string): Promise<Array<{frame: Frame, priority: number}>> {
-    const frames = await loadApps();
+  async function findMatchingApps(filePath: string): Promise<Array<{frame: App, priority: number}>> {
+    const apps = await loadApps();
     const fileAnalysis = await analyzeFile(filePath);
-    const matches: Array<{frame: Frame, priority: number}> = [];
+    const matches: Array<{frame: App, priority: number}> = [];
 
-    for (const frame of frames) {
+    for (const frame of apps) {
       let bestPriority = -1;
 
       // Check enhanced matchers first
@@ -1386,7 +1386,7 @@ const App: React.FC = () => {
         };
         console.log('handleFileDrop: File input prepared:', fileInput);
 
-        // Find matching frames directly
+        // Find matching apps directly
         const matches = await findMatchingApps(filePath);
         console.log('handleFileDrop: Found matches:', matches);
 
@@ -1395,7 +1395,7 @@ const App: React.FC = () => {
           alert(`No app found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
         } else if (matches.length === 1) {
           console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].frame.name);
-          await openFrameInNewTab(matches[0].frame, fileInput);
+          await openAppInNewTab(matches[0].frame, fileInput);
           console.log('handleFileDrop: Opened in new tab');
         } else {
           console.log('handleFileDrop: Multiple matches found, showing selection');
@@ -1404,7 +1404,7 @@ const App: React.FC = () => {
             ...m.frame,
             matchPriority: m.priority
           })));
-          setShowFrameSelection(true);
+          setShowAppSelection(true);
           console.log('handleFileDrop: State set for multiple matches');
         }
         console.log('=== FILE DROP COMPLETED ===');
@@ -1434,7 +1434,7 @@ const App: React.FC = () => {
       window.removeEventListener('drop', onDrop);
       window.removeEventListener('dragover', onDragOver);
     };
-  }, [frames]);
+  }, [apps]);
 
   const createNewTab = () => {
     const tabId = generateTabId();
@@ -1446,7 +1446,7 @@ const App: React.FC = () => {
 
     setOpenTabs(prev => [...prev, newTab]);
     switchToTab(tabId);
-    setShowFrameSelection(false);
+    setShowAppSelection(false);
     setPendingFileInput(null);
   };
 
@@ -1547,7 +1547,7 @@ const App: React.FC = () => {
 
       <div id="vf-main-layout">
         <main className="vf-content-area">
-          {showFrameSelection && activeTab?.type === 'newtab' ? (
+          {showAppSelection && activeTab?.type === 'newtab' ? (
             <div className="vf-frame-selection">
               <div className="selection-header">
                 <h2 className="selection-title">Choose an app</h2>
@@ -1565,7 +1565,7 @@ const App: React.FC = () => {
                   <div
                     key={frame.id}
                     className="frame-card"
-                    onClick={() => selectFrame(frame)}
+                    onClick={() => selectApp(frame)}
                   >
                     <div className="card-header">
                       <div className="card-icon">
@@ -1596,7 +1596,7 @@ const App: React.FC = () => {
               <div className="selection-actions">
                 <button
                   className="btn btn-secondary"
-                  onClick={() => setShowFrameSelection(false)}
+                  onClick={() => setShowAppSelection(false)}
                 >
                   Cancel
                 </button>
@@ -1609,11 +1609,11 @@ const App: React.FC = () => {
             <div ref={frameRootRef} className="frame-viewport" />
 
             {/* Unified new tab interface when active tab is new tab */}
-            {activeTab?.type === 'newtab' && !showFrameSelection && (
+            {activeTab?.type === 'newtab' && !showAppSelection && (
               <div className="vf-new-tab-unified">
                 <div className="unified-content">
-                  {/* Show only directory setup if no frames directory is properly configured */}
-                  {!framesDirectory || framesDirectory === 'Not set' || frames.length === 0 ? (
+                  {/* Show only directory setup if no apps directory is properly configured */}
+                  {!appsDirectory || appsDirectory === 'Not set' || apps.length === 0 ? (
                     <div className="directory-setup-only">
                       <div className="setup-header">
                         <div className="setup-icon">📁</div>
@@ -1627,7 +1627,7 @@ const App: React.FC = () => {
                         <div className="directory-info">
                           <h4 className="directory-label">Current Directory</h4>
                           <div className="directory-path">
-                            {framesDirectory || 'No directory selected'}
+                            {appsDirectory || 'No directory selected'}
                           </div>
                         </div>
                         <div className="directory-actions">
@@ -1638,7 +1638,7 @@ const App: React.FC = () => {
                             <span className="btn-icon">📁</span>
                             Choose Directory
                           </button>
-                          {framesDirectory && framesDirectory !== 'Not set' && (
+                          {appsDirectory && appsDirectory !== 'Not set' && (
                             <button
                               className="btn btn-outline"
                               onClick={handleReloadApps}
@@ -1651,7 +1651,7 @@ const App: React.FC = () => {
                         </div>
                       </div>
 
-                      {framesDirectory && framesDirectory !== 'Not set' && frames.length === 0 && (
+                      {appsDirectory && appsDirectory !== 'Not set' && apps.length === 0 && (
                         <div className="setup-hint">
                           <p>No visualization apps found in this directory.</p>
                           <p>Make sure your directory contains properly configured apps with viz.json files.</p>
@@ -1683,25 +1683,25 @@ const App: React.FC = () => {
                       {/* Divider */}
                       <div className="section-divider"></div>
 
-                      {/* Standalone frames section */}
-                      {frames.filter(f => f.standalone).length > 0 && (
+                      {/* Standalone apps section */}
+                      {apps.filter(f => f.standalone).length > 0 && (
                         <div className="utilities-section">
                           <div className="section-card">
                             <div className="section-header">
                               <h4 className="section-title">
                                 Standalone Apps
                               </h4>
-                              <span className="section-count">{frames.filter(f => f.standalone).length}</span>
+                              <span className="section-count">{apps.filter(f => f.standalone).length}</span>
                             </div>
                             <div className="utilities-grid">
-                              {frames.filter(f => f.standalone).map(frame => {
+                              {apps.filter(f => f.standalone).map(frame => {
                                 const startupConfig = startupApps[frame.id];
                                 const isStartupEnabled = startupConfig?.enabled || false;
                                 const tabOrder = startupConfig?.tabOrder || 1;
 
                                 return (
                                   <div key={frame.id} className="utility-card-container">
-                                    <div className="utility-card" onClick={() => launchStandaloneFrame(frame)}>
+                                    <div className="utility-card" onClick={() => launchStandaloneApp(frame)}>
                                       <div className="utility-icon">
                                         <img
                                           src={getAppIcon(frame)}
@@ -1757,15 +1757,15 @@ const App: React.FC = () => {
                         </div>
                       )}
 
-                      {/* File-based frames section */}
-                      {frames.filter(f => !f.standalone).length > 0 && (
-                        <div className="frames-section">
+                      {/* File-based apps section */}
+                      {apps.filter(f => !f.standalone).length > 0 && (
+                        <div className="apps-section">
                           <div className="section-card">
                             <div className="section-header">
                               <h4 className="section-title">
                                 Contextual Apps
                               </h4>
-                              <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
+                              <span className="section-count">{apps.filter(f => !f.standalone).length}</span>
                             </div>
                             {isLoadingApps ? (
                               <div className="loading-state">
@@ -1773,8 +1773,8 @@ const App: React.FC = () => {
                                 Loading apps...
                               </div>
                             ) : (
-                              <div className="frames-grid">
-                                {frames.filter(f => !f.standalone).map(frame => (
+                              <div className="apps-grid">
+                                {apps.filter(f => !f.standalone).map(frame => (
                                   <div key={frame.id} className="frame-info-card">
                                     <div className="frame-info-header">
                                       <h5 className="frame-info-title">{frame.name}</h5>
@@ -1800,7 +1800,7 @@ const App: React.FC = () => {
             )}
 
             {/* Directory Controls - Fixed outside scrollable content */}
-            {activeTab?.type === 'newtab' && !showFrameSelection && framesDirectory && framesDirectory !== 'Not set' && frames.length > 0 && (
+            {activeTab?.type === 'newtab' && !showAppSelection && appsDirectory && appsDirectory !== 'Not set' && apps.length > 0 && (
               <div className="directory-controls-persistent">
                 <button
                   className="directory-btn directory-change-btn"
@@ -1820,7 +1820,7 @@ const App: React.FC = () => {
                   <span className="btn-text">Reload</span>
                 </button>
                 <div className="directory-path-mini">
-                  {framesDirectory}
+                  {appsDirectory}
                 </div>
               </div>
             )}
@@ -1837,7 +1837,7 @@ const App: React.FC = () => {
                     <div className="setting-group">
                       <label>Apps Directory</label>
                       <div className="directory-path-display">
-                        {framesDirectory}
+                        {appsDirectory}
                       </div>
                       <div className="setting-actions">
                         <button
@@ -1861,7 +1861,7 @@ const App: React.FC = () => {
             )}
 
             {/* Settings Icon */}
-            {activeTab?.type === 'newtab' && !showFrameSelection && (
+            {activeTab?.type === 'newtab' && !showAppSelection && (
               <button
                 className="settings-icon"
                 onClick={() => setShowSettings(true)}

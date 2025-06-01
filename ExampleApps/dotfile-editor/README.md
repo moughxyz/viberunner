@@ -1,6 +1,6 @@
 # 🔧 Dotfile Editor
 
-A powerful dotfile editor for Vibeframe that helps you manage and edit your configuration files (.bashrc, .zshrc, .gitconfig, etc.) with Monaco editor integration.
+A powerful dotfile editor for Viberunner that helps you manage and edit your configuration files (.bashrc, .zshrc, .gitconfig, etc.) with Monaco editor integration.
 
 ## Features
 
@@ -11,7 +11,7 @@ A powerful dotfile editor for Vibeframe that helps you manage and edit your conf
 - **Search & Filter**: Find dotfiles quickly with text search
 - **Unsaved Changes Tracking**: Visual indicators for modified files
 - **Create New Files**: Add custom dotfiles on the fly
-- **Dark Theme**: Integrated with Vibeframe's dark UI design
+- **Dark Theme**: Integrated with Viberunner's dark UI design
 - **Responsive Design**: Works on desktop and mobile devices
 
 ## Screenshots
@@ -68,7 +68,7 @@ The editor automatically scans for these common configuration files:
 ## Usage
 
 ### Getting Started
-1. **Launch**: Open the Dotfile Editor in Vibeframe
+1. **Launch**: Open the Dotfile Editor in Viberunner
 2. **Browse**: See all your dotfiles in the sidebar
 3. **Filter**: Use "Show only existing files" to see just the files you have
 4. **Search**: Type in the search box to find specific dotfiles
@@ -102,9 +102,9 @@ The editor automatically detects file types and applies appropriate syntax highl
 
 ## Technical Implementation
 
-### Vibeframe Build Requirements
+### Viberunner Build Requirements
 
-**Important**: This frame is specifically configured for Vibeframe compatibility. Vibeframe expects:
+**Important**: This frame is specifically configured for Viberunner compatibility. Viberunner expects:
 - **Bundle Format**: IIFE (Immediately Invoked Function Expression) instead of ES modules
 - **Specific Filename**: `dist/bundle.iife.js` (not hashed filenames)
 - **Single Bundle**: All code must be bundled into one file using `inlineDynamicImports: true`
@@ -118,7 +118,7 @@ export default defineConfig({
     outDir: 'dist',
     rollupOptions: {
       output: {
-        format: 'iife',                    // Required: IIFE format for Vibeframe
+        format: 'iife',                    // Required: IIFE format for Viberunner
         entryFileNames: 'bundle.iife.js',  // Required: Specific filename
         chunkFileNames: 'bundle.iife.js',  // Ensure chunks use same name
         assetFileNames: 'bundle.css',      // CSS bundle name
@@ -141,7 +141,7 @@ The editor uses a fallback system to avoid CDN dependencies:
 - **Fallback**: Simple textarea-based editor if Monaco fails to load
 - **No CDN**: All resources are bundled locally, no external dependencies
 
-This approach ensures the frame works reliably in Vibeframe's sandboxed environment.
+This approach ensures the frame works reliably in Viberunner's sandboxed environment.
 
 ### Mock File System
 Since this runs in a browser environment, the editor uses a mock file system that:
@@ -179,11 +179,11 @@ npm install
 # Start development server
 npm run dev
 
-# Build for production (Vibeframe-compatible)
+# Build for production (Viberunner-compatible)
 npm run build
 ```
 
-**Note**: The build process is configured specifically for Vibeframe compatibility. The output will be a single `bundle.iife.js` file instead of the typical ES modules with hashed names that Vite normally generates.
+**Note**: The build process is configured specifically for Viberunner compatibility. The output will be a single `bundle.iife.js` file instead of the typical ES modules with hashed names that Vite normally generates.
 
 ### Dependencies
 - `@monaco-editor/react` - Monaco editor React component
@@ -210,7 +210,7 @@ npm run build
 
 **Vite generating wrong file format**
 - Default Vite generates ES modules with hashed filenames
-- Vibeframe requires IIFE format with specific naming
+- Viberunner requires IIFE format with specific naming
 - Use the provided `vite.config.ts` without modifications
 
 **Monaco Editor CDN errors**
@@ -260,4 +260,4 @@ MIT License - Feel free to modify and distribute.
 
 ---
 
-**Note**: This is a Vibeframe visualizer. The current implementation uses mock data for demonstration purposes. In a production environment, proper file system APIs would be integrated for real file operations.
+**Note**: This is a Viberunner visualizer. The current implementation uses mock data for demonstration purposes. In a production environment, proper file system APIs would be integrated for real file operations.

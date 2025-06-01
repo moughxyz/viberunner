@@ -1006,7 +1006,7 @@ end tell
   );
 };
 
-// Export the component for Vibeframe to load
+// Export the component for Viberunner to load
 export default MouseJiggler;
 
 // Global registration for IIFE bundle

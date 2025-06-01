@@ -384,7 +384,7 @@ body {
   overflow: hidden; /* Prevent content area from scrolling */
 }
 
-/* For frames, full width with no padding */
+/* For apps, full width with no padding */
 .vf-content-area:has(.tab-frame-container[style*="display: block"]) {
   padding: 0;
 }
@@ -394,12 +394,12 @@ body {
   padding: var(--space-8);
 }
 
-/* Frame selection gets full viewport */
+/* App selection gets full viewport */
 .vf-content-area:has(.vf-frame-selection) {
   padding: 0;
 }
 
-/* Frame viewport gets full space when frames are active */
+/* App viewport gets full space when apps are active */
 .frame-viewport-container {
   height: calc(100vh - 41px);
   max-height: calc(100vh - 41px);
@@ -420,7 +420,7 @@ body {
   position: relative;
 }
 
-/* Remove border and radius when frames are active */
+/* Remove border and radius when apps are active */
 .vf-content-area:has(.tab-frame-container[style*="display: block"]) .frame-viewport {
   border: none;
   border-radius: 0;
@@ -624,7 +624,7 @@ body {
 }
 
 /* File apps - simple list without heavy containers */
-.frames-grid {
+.apps-grid {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -941,7 +941,7 @@ body {
   margin-bottom: var(--space-6);
 }
 
-/* Frame List */
+/* App List */
 .frame-list {
   display: flex;
   flex-direction: column;
@@ -1083,7 +1083,7 @@ body {
   white-space: nowrap;
 }
 
-.standalone-frames-grid {
+.standalone-apps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: var(--space-4);
@@ -1199,7 +1199,7 @@ body {
   font-weight: 500;
 }
 
-/* Tab Frame Containers - for background tab persistence */
+/* Tab App Containers - for background tab persistence */
 .tab-frame-container {
   position: absolute;
   top: 0;
@@ -1208,8 +1208,8 @@ body {
   bottom: 0;
   width: 100%;
   height: 100%;
-  overflow: hidden; /* Prevent frames from breaking out */
-  z-index: 1; /* Ensure frames stay below UI elements */
+  overflow: hidden; /* Prevent apps from breaking out */
+  z-index: 1; /* Ensure apps stay below UI elements */
 
   /* Complete CSS isolation */
   contain: layout style size;
@@ -1263,7 +1263,7 @@ body {
   height: auto !important;
 }
 
-/* Block universal selectors from frames */
+/* Block universal selectors from apps */
 .tab-frame-container *,
 .tab-frame-container *::before,
 .tab-frame-container *::after {
@@ -1271,7 +1271,7 @@ body {
   box-sizing: border-box !important;
 }
 
-/* Prevent global resets from frames */
+/* Prevent global resets from apps */
 .tab-frame-container > * {
   /* First child should take full space */
   width: 100% !important;
@@ -1685,7 +1685,7 @@ body {
   border: 1px solid var(--border);
 }
 
-.two-column-layout .frames-grid .frame-info-card {
+.two-column-layout .apps-grid .frame-info-card {
   background: var(--surface);
   border: 1px solid var(--border);
 }

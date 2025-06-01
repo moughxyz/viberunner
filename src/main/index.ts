@@ -682,7 +682,7 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('load-app');
   ipcMain.removeAllListeners('get-mimetype');
   ipcMain.removeAllListeners('read-file');
-  ipcMain.removeAllListeners('change-frames-directory');
+  ipcMain.removeAllListeners('change-apps-directory');
   ipcMain.removeAllListeners('reload-apps');
   ipcMain.removeAllListeners('read-directory');
   ipcMain.removeAllListeners('find-matching-apps');
@@ -763,19 +763,19 @@ function registerIpcHandlers() {
     }
   });
 
-  ipcMain.handle('change-frames-directory', async () => {
+  ipcMain.handle('change-apps-directory', async () => {
     try {
-      console.log('change-frames-directory handler called');
+      console.log('change-apps-directory handler called');
       const newDir = await selectAppsDirectory();
       if (newDir) {
         selectedAppsDir = newDir;
         savePreferences({ appsDir: newDir });
-        console.log('Changed frames directory to:', newDir);
+        console.log('Changed apps directory to:', newDir);
         return { success: true, directory: newDir };
       }
       return { success: false, directory: null };
     } catch (error) {
-      console.error('Error in change-frames-directory handler:', error);
+      console.error('Error in change-apps-directory handler:', error);
       throw error;
     }
   });

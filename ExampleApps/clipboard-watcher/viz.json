@@ -2,10 +2,10 @@
   "name": "Clipboard Watcher",
   "description": "Real-time clipboard history with search and regex filtering",
   "version": "1.0.0",
-  "author": "Vibeframe",
+  "author": "Viberunner",
   "standalone": true,
   "icon": "icon.svg",
   "tags": ["utility", "clipboard", "history", "search"],
-  "homepage": "https://github.com/vibeframe/clipboard-watcher",
+  "homepage": "https://github.com/viberunner/clipboard-watcher",
   "license": "MIT"
 }

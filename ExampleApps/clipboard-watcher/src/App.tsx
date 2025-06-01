@@ -429,7 +429,7 @@ const ClipboardWatcher: React.FC<ClipboardWatcherProps> = () => {
   );
 };
 
-// Export the component for Vibeframe to load
+// Export the component for Viberunner to load
 export default ClipboardWatcher;
 
 // Global registration for IIFE bundle

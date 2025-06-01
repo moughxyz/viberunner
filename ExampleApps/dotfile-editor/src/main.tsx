@@ -1,6 +1,6 @@
 import App from './App.tsx'
 
-// Export the component for Vibeframe to load
+// Export the component for Viberunner to load
 export default App;
 
 // Global registration for IIFE bundle

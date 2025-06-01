@@ -8,7 +8,7 @@ electron.contextBridge.exposeInMainWorld(
     getMimetype: (filePath) => electron.ipcRenderer.invoke("get-mimetype", filePath),
     readFile: (filePath) => electron.ipcRenderer.invoke("read-file", filePath),
     handleFileDrop: (filePath) => electron.ipcRenderer.invoke("handle-file-drop", filePath),
-    changeAppsDirectory: () => electron.ipcRenderer.invoke("change-frames-directory"),
+    changeAppsDirectory: () => electron.ipcRenderer.invoke("change-apps-directory"),
     reloadApps: () => electron.ipcRenderer.invoke("reload-apps"),
     readDirectory: (dirPath) => electron.ipcRenderer.invoke("read-directory", dirPath),
     findMatchingApps: (filePath) => electron.ipcRenderer.invoke("find-matching-apps", filePath),

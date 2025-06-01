@@ -11962,7 +11962,7 @@ function registerIpcHandlers() {
   require$$3.ipcMain.removeAllListeners("load-app");
   require$$3.ipcMain.removeAllListeners("get-mimetype");
   require$$3.ipcMain.removeAllListeners("read-file");
-  require$$3.ipcMain.removeAllListeners("change-frames-directory");
+  require$$3.ipcMain.removeAllListeners("change-apps-directory");
   require$$3.ipcMain.removeAllListeners("reload-apps");
   require$$3.ipcMain.removeAllListeners("read-directory");
   require$$3.ipcMain.removeAllListeners("find-matching-apps");
@@ -12029,19 +12029,19 @@ function registerIpcHandlers() {
       };
     }
   });
-  require$$3.ipcMain.handle("change-frames-directory", async () => {
+  require$$3.ipcMain.handle("change-apps-directory", async () => {
     try {
-      console.log("change-frames-directory handler called");
+      console.log("change-apps-directory handler called");
       const newDir = await selectAppsDirectory();
       if (newDir) {
         selectedAppsDir = newDir;
         savePreferences({ appsDir: newDir });
-        console.log("Changed frames directory to:", newDir);
+        console.log("Changed apps directory to:", newDir);
         return { success: true, directory: newDir };
       }
       return { success: false, directory: null };
     } catch (error) {
-      console.error("Error in change-frames-directory handler:", error);
+      console.error("Error in change-apps-directory handler:", error);
       throw error;
     }
   });

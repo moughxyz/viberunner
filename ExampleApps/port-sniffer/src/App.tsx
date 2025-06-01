@@ -388,7 +388,7 @@ const PortSniffer: React.FC<StandaloneVisualizerProps> = ({ fileData }) => {
   );
 };
 
-// Export the component for Vibeframe to load
+// Export the component for Viberunner to load
 export default PortSniffer;
 
 // Global registration for IIFE bundle
