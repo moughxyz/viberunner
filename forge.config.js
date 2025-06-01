@@ -34,11 +34,6 @@ module.exports = {
     osxSign: {
       // Add your Apple Developer info when ready for distribution
       identity: process.env.OSX_SIGN_IDENTITY,
-      teamId: process.env.APPLE_TEAM_ID,
-      'hardened-runtime': true,
-      'gatekeeper-assess': false,
-      entitlements: 'build/entitlements.mac.plist',
-      'entitlements-inherit': 'build/entitlements.mac.plist',
     },
     osxNotarize: {
       // Add your Apple ID info when ready for distribution
