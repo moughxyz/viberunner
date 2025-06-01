@@ -54,8 +54,44 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    # Force rebuild native modules for the target platform
+    - name: Rebuild native modules
+      run: npm rebuild
+
     - name: Build renderer
       run: npm run build
+
+    # Clear electron cache to ensure fresh build
+    - name: Clear Electron cache
+      shell: bash
+      run: |
+        if [ "${{ matrix.os }}" = "macos-latest" ]; then
+          rm -rf ~/Library/Caches/electron
+          rm -rf ~/.cache/electron
+        elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
+          rm -rf ~/.cache/electron
+        else
+          rm -rf %LOCALAPPDATA%\electron\Cache || true
+        fi
+
+    # Add architecture-specific handling for macOS
+    - name: Set macOS architecture
+      if: matrix.os == 'macos-latest'
+      shell: bash
+      run: |
+        # Check system architecture and set appropriate target
+        if [[ $(uname -m) == "arm64" ]]; then
+          echo "TARGET_ARCH=arm64" >> $GITHUB_ENV
+        else
+          echo "TARGET_ARCH=x64" >> $GITHUB_ENV
+        fi
+
+    # Force electron rebuild for macOS
+    - name: Rebuild Electron for macOS
+      if: matrix.os == 'macos-latest'
+      shell: bash
+      run: |
+        npx electron-rebuild
 
     - name: Create distributables
       run: npm run make
@@ -69,6 +105,9 @@ jobs:
         elif [ "${{ matrix.os }}" = "macos-latest" ]; then
           test -d "out/Viberunner-darwin-x64" || test -d "out/Viberunner-darwin-arm64" || test -d "out/make"
           echo "✅ macOS package created successfully"
+          # Show package contents for debugging
+          ls -la out/ || true
+          find out/ -name "*.dmg" -exec ls -lh {} \; || true
         else
           test -d "out/Viberunner-linux-x64" || test -d "out/make"
           echo "✅ Linux package created successfully"

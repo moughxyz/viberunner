@@ -8,7 +8,10 @@ module.exports = {
     appBundleId: 'com.viberunner.app',
     appCategoryType: 'public.app-category.productivity',
     icon: './assets/icon', // Electron-forge will auto-select .ico/.icns/.png based on platform
-    asar: true, // Enable asar packaging for AutoUnpackNatives plugin
+    asar: {
+      // Configure asar to handle native modules properly
+      unpack: '*.{node,dll,dylib,so}',
+    },
     // Point to the main entry in dist-electron (built by vite-plugin-electron)
     out: 'out',
     ignore: [
@@ -24,6 +27,8 @@ module.exports = {
     extraResource: [
       './assets'
     ],
+    // Ensure proper architecture handling
+    arch: process.env.TARGET_ARCH || process.arch,
     // osxSign: {
     //   // Add your Apple Developer info when ready for distribution
     //   // identity: 'Developer ID Application: Your Name (XXXXXXXXXX)',
@@ -36,7 +41,10 @@ module.exports = {
     //   // teamId: process.env.APPLE_TEAM_ID,
     // }
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    // Force rebuild native modules
+    force: true,
+  },
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
@@ -77,7 +85,23 @@ module.exports = {
       config: {
         name: 'Viberunner',
         title: 'Viberunner ${version}',
-        overwrite: true
+        overwrite: true,
+        // Add background and icon settings for better DMG
+        background: './assets/dmg-background.png', // Optional: add if you have one
+        icon: './assets/icon.icns', // Ensure proper icon
+        iconSize: 128,
+        contents: [
+          { x: 448, y: 344, type: 'link', path: '/Applications' },
+          { x: 192, y: 344, type: 'file', path: 'Viberunner.app' }
+        ],
+        additionalDMGOptions: {
+          window: {
+            size: {
+              width: 640,
+              height: 500
+            }
+          }
+        }
       },
       platforms: ['darwin']
     }
@@ -99,7 +123,14 @@ module.exports = {
   plugins: [
     {
       name: '@electron-forge/plugin-auto-unpack-natives',
-      config: {},
+      config: {
+        // Ensure native modules are unpacked properly
+        unpack: [
+          '@electron/remote',
+          'electron-updater',
+          'mime-types'
+        ]
+      },
     },
     // Fuses are used to enable/disable various Electron functionality
     // at package time, before code signing the application
@@ -120,6 +151,14 @@ module.exports = {
       const { execSync } = require('child_process');
       console.log('Building app with Vite...');
       execSync('npm run build', { stdio: 'inherit' });
+
+      // Additional step: Ensure native modules are rebuilt for the target platform
+      console.log('Rebuilding native modules for target platform...');
+      try {
+        execSync('npx electron-rebuild', { stdio: 'inherit', cwd: buildPath });
+      } catch (error) {
+        console.warn('electron-rebuild failed, continuing anyway:', error.message);
+      }
     }
   }
 };
