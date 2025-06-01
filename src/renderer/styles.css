@@ -1937,6 +1937,13 @@ body {
   color: var(--text-primary);
 }
 
+.setting-description {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
 .directory-path-display {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: var(--font-size-sm);

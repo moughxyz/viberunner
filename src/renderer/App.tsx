@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
-import UpdateNotification from './components/UpdateNotification';
+import UpdateNotification, { UpdateNotificationRef } from './components/UpdateNotification';
 
 // Direct Node.js access with full integration
 const { ipcRenderer } = require('electron');
@@ -422,6 +422,9 @@ const App: React.FC = () => {
 
   const appRootRef = useRef<HTMLDivElement>(null);
   const hasLaunchedStartupApps = useRef<boolean>(false);
+
+  // Ref for update notification component
+  const updateNotificationRef = useRef<UpdateNotificationRef>(null);
 
   // Get the currently active tab
   const activeTab = openTabs.find(tab => tab.id === activeTabId);
@@ -1829,6 +1832,19 @@ const App: React.FC = () => {
                         </button>
                       </div>
                     </div>
+
+                    <div className="setting-group">
+                      <label>Updates</label>
+                      <p className="setting-description">Check for the latest version of Viberunner</p>
+                      <div className="setting-actions">
+                        <button
+                          className="btn btn-outline"
+                          onClick={() => updateNotificationRef.current?.checkForUpdates()}
+                        >
+                          Check for Updates
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1848,7 +1864,7 @@ const App: React.FC = () => {
         </main>
 
         {/* Update Notification Component */}
-        <UpdateNotification />
+        <UpdateNotification ref={updateNotificationRef} />
       </div>
     </div>
   );

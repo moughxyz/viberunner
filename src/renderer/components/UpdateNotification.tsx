@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 
 interface UpdateInfo {
   version: string;
@@ -10,10 +10,12 @@ interface UpdateNotificationProps {
   onClose?: () => void;
 }
 
-const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose }) => {
-  const [updateAvailable, setUpdateAvailable] = useState(false);
+export interface UpdateNotificationRef {
+  checkForUpdates: () => Promise<void>;
+}
+
+const UpdateNotification = forwardRef<UpdateNotificationRef, UpdateNotificationProps>(({ onClose }, ref) => {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
-  const [checking, setChecking] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [currentVersion, setCurrentVersion] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -39,14 +41,12 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose }) => {
   }, []);
 
   const checkForUpdates = async () => {
-    setChecking(true);
     setError(null);
 
     try {
       const result = await window.api.checkForUpdates();
 
       if (result.success && result.updateInfo) {
-        setUpdateAvailable(true);
         setUpdateInfo({
           version: result.updateInfo.version || 'Unknown',
           releaseDate: result.updateInfo.releaseDate,
@@ -54,16 +54,18 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose }) => {
         });
         setShowModal(true);
       } else {
-        setUpdateAvailable(false);
         setUpdateInfo(null);
       }
     } catch (error) {
       console.error('Error checking for updates:', error);
       setError(error instanceof Error ? error.message : 'Failed to check for updates');
-    } finally {
-      setChecking(false);
     }
   };
+
+  // Expose checkForUpdates function through ref
+  useImperativeHandle(ref, () => ({
+    checkForUpdates
+  }));
 
   const downloadUpdate = async () => {
     setDownloading(true);
@@ -90,33 +92,7 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose }) => {
     }
   };
 
-  if (!showModal && !updateAvailable) {
-    return (
-      <div style={{
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        zIndex: 1000
-      }}>
-        <button
-          onClick={checkForUpdates}
-          disabled={checking}
-          style={{
-            background: checking ? '#666' : '#007acc',
-            color: 'white',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '4px',
-            cursor: checking ? 'not-allowed' : 'pointer',
-            fontSize: '12px'
-          }}
-        >
-          {checking ? 'Checking...' : 'Check for Updates'}
-        </button>
-      </div>
-    );
-  }
-
+  // Only show the modal when there's an update available
   if (!showModal) return null;
 
   return (
@@ -248,6 +224,8 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose }) => {
       </div>
     </div>
   );
-};
+});
+
+UpdateNotification.displayName = 'UpdateNotification';
 
 export default UpdateNotification;
