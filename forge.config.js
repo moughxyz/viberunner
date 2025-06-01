@@ -86,22 +86,22 @@ module.exports = {
         name: 'Viberunner',
         title: 'Viberunner ${version}',
         overwrite: true,
-        // Add background and icon settings for better DMG
-        background: './assets/dmg-background.png', // Optional: add if you have one
-        icon: './assets/icon.icns', // Ensure proper icon
-        iconSize: 128,
-        contents: [
-          { x: 448, y: 344, type: 'link', path: '/Applications' },
-          { x: 192, y: 344, type: 'file', path: 'Viberunner.app' }
-        ],
-        additionalDMGOptions: {
-          window: {
-            size: {
-              width: 640,
-              height: 500
-            }
-          }
-        }
+        // Remove problematic DMG customizations that might be causing path issues
+        // background: './assets/dmg-background.png', // Optional: add if you have one
+        // icon: './assets/icon.icns', // Ensure proper icon
+        // iconSize: 128,
+        // contents: [
+        //   { x: 448, y: 344, type: 'link', path: '/Applications' },
+        //   { x: 192, y: 344, type: 'file', path: 'Viberunner.app' }
+        // ],
+        // additionalDMGOptions: {
+        //   window: {
+        //     size: {
+        //       width: 640,
+        //       height: 500
+        //     }
+        //   }
+        // }
       },
       platforms: ['darwin']
     }
@@ -152,13 +152,9 @@ module.exports = {
       console.log('Building app with Vite...');
       execSync('npm run build', { stdio: 'inherit' });
 
-      // Additional step: Ensure native modules are rebuilt for the target platform
-      console.log('Rebuilding native modules for target platform...');
-      try {
-        execSync('npx electron-rebuild', { stdio: 'inherit', cwd: buildPath });
-      } catch (error) {
-        console.warn('electron-rebuild failed, continuing anyway:', error.message);
-      }
+      // Remove the problematic electron-rebuild step for now
+      // The CI workflow handles this better
+      console.log('Skipping electron-rebuild in hook (handled by CI)');
     }
   }
 };
