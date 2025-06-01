@@ -45,8 +45,8 @@ const api = {
   // User Preferences API for apps
   getAppPreferences: (appId: string) => {
     try {
-      const FRAMES_DIR = getAppsDirectory();
-      const framePath = path.join(FRAMES_DIR, appId);
+      const APPS_DIR = getAppsDirectory();
+      const framePath = path.join(APPS_DIR, appId);
       const metadataPath = path.join(framePath, 'viz.json');
 
       if (!fs.existsSync(metadataPath)) {
@@ -66,8 +66,8 @@ const api = {
 
   setAppPreferences: (appId: string, preferences: any) => {
     try {
-      const FRAMES_DIR = getAppsDirectory();
-      const framePath = path.join(FRAMES_DIR, appId);
+      const APPS_DIR = getAppsDirectory();
+      const framePath = path.join(APPS_DIR, appId);
       const metadataPath = path.join(framePath, 'viz.json');
 
       if (!fs.existsSync(metadataPath)) {
@@ -287,21 +287,21 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
 }
 
 async function loadApps(): Promise<App[]> {
-  const FRAMES_DIR = getAppsDirectory();
-  console.log('loadApps: Looking for apps in:', FRAMES_DIR);
+  const APPS_DIR = getAppsDirectory();
+  console.log('loadApps: Looking for apps in:', APPS_DIR);
 
-  if (!fs.existsSync(FRAMES_DIR)) {
+  if (!fs.existsSync(APPS_DIR)) {
     console.log('loadApps: Directory does not exist, creating it');
-    fs.mkdirSync(FRAMES_DIR, { recursive: true });
+    fs.mkdirSync(APPS_DIR, { recursive: true });
     return [];
   }
 
   try {
-    const dirContents = fs.readdirSync(FRAMES_DIR);
+    const dirContents = fs.readdirSync(APPS_DIR);
     console.log('loadApps: Directory contents:', dirContents);
 
     const directories = dirContents.filter((dir: string) => {
-      const fullPath = path.join(FRAMES_DIR, dir);
+      const fullPath = path.join(APPS_DIR, dir);
       const isDir = fs.statSync(fullPath).isDirectory();
       console.log(`loadApps: ${dir} is directory: ${isDir}`);
       return isDir;
@@ -309,7 +309,7 @@ async function loadApps(): Promise<App[]> {
     console.log('loadApps: Found directories:', directories);
 
     const apps = directories.map((dir: string) => {
-      const framePath = path.join(FRAMES_DIR, dir);
+      const framePath = path.join(APPS_DIR, dir);
       const metadataPath = path.join(framePath, 'viz.json');
       console.log(`loadApps: Checking for metadata at: ${metadataPath}`);
 
@@ -342,8 +342,8 @@ async function loadApps(): Promise<App[]> {
 }
 
 async function loadApp(id: string) {
-  const FRAMES_DIR = getAppsDirectory();
-  const framePath = path.join(FRAMES_DIR, id);
+  const APPS_DIR = getAppsDirectory();
+  const framePath = path.join(APPS_DIR, id);
   const bundlePath = path.join(framePath, 'dist', 'bundle.iife.js');
 
   if (!fs.existsSync(bundlePath)) {
@@ -463,8 +463,8 @@ const App: React.FC = () => {
     }
 
     try {
-      const FRAMES_DIR = getAppsDirectory();
-      const appDir = path.join(FRAMES_DIR, frame.id);
+      const APPS_DIR = getAppsDirectory();
+      const appDir = path.join(APPS_DIR, frame.id);
       const fullIconPath = path.join(appDir, frame.icon);
 
       // Ensure the icon path is within the app directory
