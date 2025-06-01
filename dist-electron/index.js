@@ -11994,10 +11994,6 @@ function registerIpcHandlers() {
   require$$3.ipcMain.handle("get-mimetype", async (_event, filePath) => {
     return await getMimetype(filePath);
   });
-  require$$3.ipcMain.handle("read-file", async (_event, filePath) => {
-    const content = fs.readFileSync(filePath);
-    return content.toString("base64");
-  });
   require$$3.ipcMain.handle("handle-file-drop", async (_event, filePath) => {
     const fileAnalysis = await analyzeFile(filePath);
     if (fileAnalysis.mimetype === "inode/directory") {
@@ -12046,53 +12042,6 @@ function registerIpcHandlers() {
     }
     return { success: false, apps: [] };
   });
-  require$$3.ipcMain.handle("read-directory", async (_event, dirPath) => {
-    try {
-      console.log("Reading directory:", dirPath);
-      if (!fs.existsSync(dirPath)) {
-        throw new Error(`Directory does not exist: ${dirPath}`);
-      }
-      const stats = fs.statSync(dirPath);
-      if (!stats.isDirectory()) {
-        throw new Error(`Path is not a directory: ${dirPath}`);
-      }
-      const items = fs.readdirSync(dirPath);
-      const fileInfos = items.map((item) => {
-        const itemPath = path.join(dirPath, item);
-        try {
-          const itemStats = fs.statSync(itemPath);
-          const isDirectory = itemStats.isDirectory();
-          let extension = "";
-          if (!isDirectory) {
-            extension = path.extname(item).toLowerCase().replace(".", "");
-          }
-          return {
-            name: item,
-            path: itemPath,
-            isDirectory,
-            size: isDirectory ? 0 : itemStats.size,
-            extension: extension || void 0,
-            modified: itemStats.mtime.toISOString()
-          };
-        } catch (error) {
-          console.warn(`Could not stat ${itemPath}:`, error);
-          return {
-            name: item,
-            path: itemPath,
-            isDirectory: false,
-            size: 0,
-            extension: "",
-            modified: (/* @__PURE__ */ new Date()).toISOString()
-          };
-        }
-      });
-      console.log(`Found ${fileInfos.length} items in ${dirPath}`);
-      return { success: true, files: fileInfos };
-    } catch (error) {
-      console.error("Error reading directory:", error);
-      return { success: false, error: error.message, files: [] };
-    }
-  });
   require$$3.ipcMain.handle("find-matching-apps", async (_event, filePath) => {
     try {
       const apps = await loadApps();
@@ -12116,42 +12065,6 @@ function registerIpcHandlers() {
         matches: [],
         fileAnalysis: null
       };
-    }
-  });
-  require$$3.ipcMain.handle("write-file", async (_event, filePath, content, encoding = "utf8") => {
-    try {
-      if (!filePath || filePath.includes("..")) {
-        throw new Error("Invalid file path");
-      }
-      if (encoding === "base64") {
-        const buffer = Buffer.from(content, "base64");
-        fs.writeFileSync(filePath, buffer);
-      } else {
-        fs.writeFileSync(filePath, content, "utf8");
-      }
-      console.log(`File written successfully: ${filePath}`);
-      return { success: true };
-    } catch (error) {
-      console.error("Error writing file:", error);
-      return { success: false, error: error.message };
-    }
-  });
-  require$$3.ipcMain.handle("backup-file", async (_event, filePath) => {
-    try {
-      if (!filePath || filePath.includes("..")) {
-        throw new Error("Invalid file path");
-      }
-      if (!fs.existsSync(filePath)) {
-        throw new Error("File does not exist");
-      }
-      const timestamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-");
-      const backupPath = `${filePath}.backup.${timestamp}`;
-      fs.copyFileSync(filePath, backupPath);
-      console.log(`Backup created: ${backupPath}`);
-      return { success: true, backupPath };
-    } catch (error) {
-      console.error("Error creating backup:", error);
-      return { success: false, error: error.message };
     }
   });
   require$$3.ipcMain.handle("save-file-dialog", async (_event, options = {}) => {

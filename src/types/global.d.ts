@@ -6,7 +6,6 @@ interface Window {
     handleFileDrop: (filePath: string) => Promise<any>;
     changeAppsDirectory: () => Promise<{ success: boolean; directory: string | null }>;
     reloadApps: () => Promise<{ success: boolean; apps: any[] }>;
-    readDirectory: (dirPath: string) => Promise<{ success: boolean; files: any[]; error?: string }>;
     findMatchingApps: (filePath: string) => Promise<{
       success: boolean;
       matches: Array<{

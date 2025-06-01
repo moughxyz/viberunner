@@ -10,7 +10,6 @@ electron.contextBridge.exposeInMainWorld(
     handleFileDrop: (filePath) => electron.ipcRenderer.invoke("handle-file-drop", filePath),
     changeAppsDirectory: () => electron.ipcRenderer.invoke("change-apps-directory"),
     reloadApps: () => electron.ipcRenderer.invoke("reload-apps"),
-    readDirectory: (dirPath) => electron.ipcRenderer.invoke("read-directory", dirPath),
     findMatchingApps: (filePath) => electron.ipcRenderer.invoke("find-matching-apps", filePath),
     // File writing and backup operations
     writeFile: (filePath, content, encoding) => electron.ipcRenderer.invoke("write-file", filePath, content, encoding),

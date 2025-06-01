@@ -1155,9 +1155,6 @@ interface VisualizerProps {
 Visualizers can access these APIs through the global `window.api`:
 
 ```typescript
-// Read directories (for folder visualizers)
-const dirResult = await window.api.readDirectory('/path/to/dir');
-
 // Get file MIME type
 const mimetype = await window.api.getMimetype('/path/to/file');
 
@@ -1628,12 +1625,6 @@ const analyzeProject = async (packageJsonPath: string) => {
   // Read related files
   const lockFile = path.join(dir, 'package-lock.json');
   const nodeModules = path.join(dir, 'node_modules');
-
-  // Use the directory API to analyze project structure
-  const dirResult = await window.api.readDirectory(dir);
-  if (dirResult.success) {
-    return dirResult.files.filter(f => f.name.endsWith('.json'));
-  }
 };
 ```
 

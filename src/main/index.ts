@@ -723,11 +723,6 @@ function registerIpcHandlers() {
     return await getMimetype(filePath);
   });
 
-  ipcMain.handle('read-file', async (_event, filePath: string) => {
-    const content = fs.readFileSync(filePath);
-    return content.toString('base64');
-  });
-
   ipcMain.handle('handle-file-drop', async (_event, filePath: string) => {
     const fileAnalysis = await analyzeFile(filePath);
 
@@ -782,61 +777,6 @@ function registerIpcHandlers() {
     return { success: false, apps: [] };
   });
 
-  // Read directory contents for folder visualization
-  ipcMain.handle('read-directory', async (_event, dirPath: string) => {
-    try {
-      console.log('Reading directory:', dirPath);
-
-      if (!fs.existsSync(dirPath)) {
-        throw new Error(`Directory does not exist: ${dirPath}`);
-      }
-
-      const stats = fs.statSync(dirPath);
-      if (!stats.isDirectory()) {
-        throw new Error(`Path is not a directory: ${dirPath}`);
-      }
-
-      const items = fs.readdirSync(dirPath);
-      const fileInfos = items.map(item => {
-        const itemPath = path.join(dirPath, item);
-        try {
-          const itemStats = fs.statSync(itemPath);
-          const isDirectory = itemStats.isDirectory();
-
-          let extension = '';
-          if (!isDirectory) {
-            extension = path.extname(item).toLowerCase().replace('.', '');
-          }
-
-          return {
-            name: item,
-            path: itemPath,
-            isDirectory,
-            size: isDirectory ? 0 : itemStats.size,
-            extension: extension || undefined,
-            modified: itemStats.mtime.toISOString()
-          };
-        } catch (error) {
-          console.warn(`Could not stat ${itemPath}:`, error);
-          return {
-            name: item,
-            path: itemPath,
-            isDirectory: false,
-            size: 0,
-            extension: '',
-            modified: new Date().toISOString()
-          };
-        }
-      });
-
-      console.log(`Found ${fileInfos.length} items in ${dirPath}`);
-      return { success: true, files: fileInfos };
-    } catch (error) {
-      console.error('Error reading directory:', error);
-      return { success: false, error: (error as Error).message, files: [] };
-    }
-  });
-
   // New enhanced app matching endpoint
   ipcMain.handle('find-matching-apps', async (_event, filePath: string) => {
     try {
@@ -861,52 +801,6 @@ function registerIpcHandlers() {
         matches: [],
         fileAnalysis: null
       };
-    }
-  });
-
-  // File writing and backup operations for apps
-  ipcMain.handle('write-file', async (_event, filePath: string, content: string, encoding: 'utf8' | 'base64' = 'utf8') => {
-    try {
-      // Validate file path for security
-      if (!filePath || filePath.includes('..')) {
-        throw new Error('Invalid file path');
-      }
-
-      if (encoding === 'base64') {
-        const buffer = Buffer.from(content, 'base64');
-        fs.writeFileSync(filePath, buffer);
-      } else {
-        fs.writeFileSync(filePath, content, 'utf8');
-      }
-
-      console.log(`File written successfully: ${filePath}`);
-      return { success: true };
-    } catch (error) {
-      console.error('Error writing file:', error);
-      return { success: false, error: (error as Error).message };
-    }
-  });
-
-  ipcMain.handle('backup-file', async (_event, filePath: string) => {
-    try {
-      // Validate file path for security
-      if (!filePath || filePath.includes('..')) {
-        throw new Error('Invalid file path');
-      }
-
-      if (!fs.existsSync(filePath)) {
-        throw new Error('File does not exist');
-      }
-
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupPath = `${filePath}.backup.${timestamp}`;
-      fs.copyFileSync(filePath, backupPath);
-
-      console.log(`Backup created: ${backupPath}`);
-      return { success: true, backupPath };
-    } catch (error) {
-      console.error('Error creating backup:', error);
-      return { success: false, error: (error as Error).message };
     }
   });
 
