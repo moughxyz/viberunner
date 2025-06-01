@@ -27,9 +27,6 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
-    - name: Build renderer
-      run: npm run build
-
     - name: Package app
       run: npm run package
 

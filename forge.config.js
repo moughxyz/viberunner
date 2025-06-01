@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 
@@ -32,6 +34,10 @@ module.exports = {
     osxSign: {
       // Add your Apple Developer info when ready for distribution
       identity: process.env.OSX_SIGN_IDENTITY,
+      'hardened-runtime': true,
+      'gatekeeper-assess': false,
+      entitlements: 'build/entitlements.mac.plist',
+      'entitlements-inherit': 'build/entitlements.mac.plist',
     },
     osxNotarize: {
       // Add your Apple ID info when ready for distribution
@@ -146,15 +152,12 @@ module.exports = {
     }),
   ],
   hooks: {
-    packageAfterCopy: async (config, buildPath) => {
-      // Build the app with Vite before packaging
+    generateAssets: async () => {
+      // Build the app with Vite before any packaging starts
       const { execSync } = require('child_process');
       console.log('Building app with Vite...');
-      execSync('npm run build', { stdio: 'inherit' });
-
-      // Remove the problematic electron-rebuild step for now
-      // The CI workflow handles this better
-      console.log('Skipping electron-rebuild in hook (handled by CI)');
+      execSync('npm run build', { stdio: 'inherit', cwd: process.cwd() });
+      console.log('Build completed, ready for packaging...');
     }
   }
 };
