@@ -1665,6 +1665,7 @@ const App: React.FC = () => {
                     </div>
                   ) : (
                     <>
+                      {/* Single column layout */}
                       {/* Main drop zone section */}
                       <div className="drop-zone-section">
                         <div className="drop-zone">
@@ -1762,46 +1763,14 @@ const App: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Directory controls section */}
-                      <div className="controls-section">
-                        <div className="section-card">
-                          <div className="section-header">
-                            <h4 className="section-title">
-                              <span className="section-icon">🔧</span>
-                              Directory
-                            </h4>
-                          </div>
-                          <div className="directory-path">
-                            {framesDirectory}
-                          </div>
-                          <div className="section-actions">
-                            <button
-                              className="btn btn-outline btn-sm"
-                              onClick={handleChangeFramesDirectory}
-                            >
-                              <span className="btn-icon">📁</span>
-                              Change
-                            </button>
-                            <button
-                              className="btn btn-outline btn-sm"
-                              onClick={handleReloadFrames}
-                              disabled={isLoadingFrames}
-                            >
-                              <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
-                              Reload
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* File-based frames section - always visible */}
+                      {/* File-based frames section */}
                       {frames.filter(f => !f.standalone).length > 0 && (
                         <div className="frames-section">
                           <div className="section-card">
                             <div className="section-header">
                               <h4 className="section-title">
                                 <span className="section-icon">🎨</span>
-                                File Apps
+                                Contextual Apps
                               </h4>
                               <span className="section-count">{frames.filter(f => !f.standalone).length}</span>
                             </div>
@@ -1831,11 +1800,35 @@ const App: React.FC = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* Persistent Directory Controls in bottom right */}
+                      <div className="directory-controls-persistent">
+                        <button
+                          className="directory-btn directory-change-btn"
+                          onClick={handleChangeFramesDirectory}
+                          title="Change apps directory"
+                        >
+                          <span className="btn-icon">📁</span>
+                          <span className="btn-text">Change Directory</span>
+                        </button>
+                        <button
+                          className="directory-btn directory-reload-btn"
+                          onClick={handleReloadFrames}
+                          disabled={isLoadingFrames}
+                          title="Reload apps"
+                        >
+                          <span className="btn-icon">{isLoadingFrames ? '⟳' : '🔄'}</span>
+                          <span className="btn-text">Reload</span>
+                        </button>
+                        <div className="directory-path-mini">
+                          {framesDirectory}
+                        </div>
+                      </div>
                     </>
                   )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
           </div>
         </main>
       </div>

@@ -7,7 +7,7 @@ module.exports = {
     executableName: 'Viberunner',
     appBundleId: 'com.viberunner.app',
     appCategoryType: 'public.app-category.productivity',
-    // icon: './assets/icon', // Add your icon files (without extension)
+    icon: './assets/icon', // Electron-forge will auto-select .ico/.icns/.png based on platform
     asar: true, // Enable asar packaging for AutoUnpackNatives plugin
     // Point to the main entry in dist-electron (built by vite-plugin-electron)
     out: 'out',
