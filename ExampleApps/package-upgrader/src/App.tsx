@@ -140,7 +140,7 @@ const PackageUpgrader: React.FC<PackageUpgraderProps> = ({ fileInput, fileData, 
         }
 
         // Read file directly using Node API
-        const content = window.api.readFile(filePath, 'utf8');
+        const content = window.api.fs.readFileSync(filePath, 'utf8');
 
         if (!content) {
           throw new Error('File is empty or could not be read');

@@ -130,10 +130,10 @@ const YouTubeThumbnailPreview: React.FC<YouTubeThumbnailPreviewProps> = ({ fileI
           console.warn('Detected UTF-8 corruption in image data - attempting to work with Vizor file system API');
 
           // Try to get the original file content if window.api is available
-          if (window.api && window.api.readFile && fileData.path) {
+          if (window.api && window.api.fs.readFileSync && fileData.path) {
             try {
               console.log('Attempting to re-read file with proper binary handling...');
-              const binaryContent = await window.api.readFile(fileData.path, { encoding: 'base64' });
+              const binaryContent = await window.api.fs.readFileSync(fileData.path, { encoding: 'base64' });
               if (binaryContent && typeof binaryContent === 'string') {
                 processedData = binaryContent;
                 console.log('Successfully re-read file as proper base64');

@@ -1203,7 +1203,7 @@ const dirResult = await window.api.readDirectory('/path/to/dir');
 const mimetype = await window.api.getMimetype('/path/to/file');
 
 // Read file content
-const content = await window.api.readFile('/path/to/file');
+const content = await window.api.fs.readFileSync('/path/to/file');
 
 // Find matching visualizers for a file
 const matches = await window.api.findMatchingVisualizers('/path/to/file');
