@@ -225,18 +225,20 @@ function evaluateMatcher(matcher: FileMatcher, fileAnalysis: FileAnalysis): bool
       }
       return false;
 
-    case 'file-size':
+    case 'file-size': {
       const size = fileAnalysis.size;
       if (matcher.minSize !== undefined && size < matcher.minSize) return false;
       if (matcher.maxSize !== undefined && size > matcher.maxSize) return false;
       return true;
+    }
 
-    case 'combined':
+    case 'combined': {
       if (!matcher.conditions) return false;
       const results = matcher.conditions.map(condition => evaluateMatcher(condition, fileAnalysis));
       return matcher.operator === 'OR'
         ? results.some(Boolean)
         : results.every(Boolean);
+    }
 
     default:
       return false;

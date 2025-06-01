@@ -7,7 +7,7 @@ const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const mime = require('mime-types');
-const { app } = require('@electron/remote') || require('electron').remote?.app;
+const { app } = require('@electron/remote') || { app: require('electron').remote?.app };
 
 // Expose React and ReactDOM globally for apps
 (window as any).React = React;
@@ -95,7 +95,7 @@ const api = {
   getAppPreference: (appId: string, key: string, defaultValue: any = null) => {
     try {
       const preferences = api.getAppPreferences(appId);
-      return preferences.hasOwnProperty(key) ? preferences[key] : defaultValue;
+      return Object.prototype.hasOwnProperty.call(preferences, key) ? preferences[key] : defaultValue;
     } catch (error) {
       console.error(`Failed to get preference ${key} for app ${appId}:`, error);
       return defaultValue;
@@ -263,7 +263,7 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
   };
 }
 
-async function loadApps(): Promise<App[]> {
+async function loadApps(): Promise<AppConfig[]> {
   const APPS_DIR = getAppsDirectory();
   console.log('loadApps: Looking for apps in:', APPS_DIR);
 
@@ -308,7 +308,7 @@ async function loadApps(): Promise<App[]> {
         return null;
       }
     })
-    .filter(Boolean) as App[];
+    .filter(Boolean) as AppConfig[];
 
     console.log('loadApps: Final apps array:', apps);
     return apps;
@@ -346,7 +346,7 @@ interface FileInput {
   // Remove content and analysis - apps will handle these directly
 }
 
-interface App {
+interface AppConfig {
   id: string;
   name: string;
   description: string;
@@ -360,7 +360,7 @@ interface App {
 
 interface OpenTab {
   id: string;
-  app?: App; // Optional for new tab - represents the app/visualization
+  app?: AppConfig; // Optional for new tab - represents the app/visualization
   fileInput?: FileInput; // undefined for standalone apps and new tab
   title: string;
   type: 'file' | 'standalone' | 'newtab';
@@ -406,7 +406,7 @@ const getSupportedFormats = (app: any): string => {
 };
 
 const App: React.FC = () => {
-  const [apps, setApps] = useState<App[]>([]);
+  const [apps, setApps] = useState<AppConfig[]>([]);
   const [appsDirectory, setAppsDirectory] = useState<string>('');
   const [isLoadingApps, setIsLoadingApps] = useState(false);
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
@@ -414,7 +414,7 @@ const App: React.FC = () => {
   ]);
   const [activeTabId, setActiveTabId] = useState('default-tab');
   const [showAppSelection, setShowAppSelection] = useState(false);
-  const [availableApps, setAvailableApps] = useState<App[]>([]);
+  const [availableApps, setAvailableApps] = useState<AppConfig[]>([]);
   const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
   const [appIcons, setAppIcons] = useState<Record<string, string>>({});
   const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
@@ -431,7 +431,7 @@ const App: React.FC = () => {
   const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
 
   // Function to load app icon
-  const loadAppIcon = async (app: App): Promise<string | null> => {
+  const loadAppIcon = async (app: AppConfig): Promise<string | null> => {
     if (!app.icon) return null;
 
     // Check if already cached
@@ -661,7 +661,7 @@ const App: React.FC = () => {
   }, [apps, startupApps]);
 
   // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
-  const getAppIcon = (app: App): string => {
+  const getAppIcon = (app: AppConfig): string => {
     if (appIcons[app.id]) {
       return appIcons[app.id];
     }
@@ -1017,7 +1017,7 @@ const App: React.FC = () => {
     setActiveTabId(tabId);
   };
 
-  const openAppInNewTab = async (app: App, fileInput?: FileInput, forceNewTab: boolean = false, switchToTab_: boolean = true) => {
+  const openAppInNewTab = async (app: AppConfig, fileInput?: FileInput, forceNewTab: boolean = false, switchToTab_: boolean = true) => {
     const title = fileInput
       ? fileInput.path.split('/').pop() || 'Unknown File'
       : app.name;
@@ -1232,13 +1232,13 @@ const App: React.FC = () => {
     setDragOverTabId(null);
   };
 
-  const selectApp = async (app: App) => {
+  const selectApp = async (app: AppConfig) => {
     if (pendingFileInput) {
       await openAppInNewTab(app, pendingFileInput);
     }
   };
 
-  const launchStandaloneApp = async (app: App) => {
+  const launchStandaloneApp = async (app: AppConfig) => {
     try {
       console.log('Launching standalone app:', app.name, app.id);
       await openAppInNewTab(app);
@@ -1297,21 +1297,22 @@ const App: React.FC = () => {
         }
         return true;
 
-      case 'file-size':
+      case 'file-size': {
         const size = fileAnalysis.size;
         if (matcher.minSize !== undefined && size < matcher.minSize) return false;
         if (matcher.maxSize !== undefined && size > matcher.maxSize) return false;
         return true;
+      }
 
       default:
         return false;
     }
   }
 
-  async function findMatchingApps(filePath: string): Promise<Array<{app: App, priority: number}>> {
+  async function findMatchingApps(filePath: string): Promise<Array<{app: AppConfig, priority: number}>> {
     const apps = await loadApps();
     const fileAnalysis = await analyzeFile(filePath);
-    const matches: Array<{app: App, priority: number}> = [];
+    const matches: Array<{app: AppConfig, priority: number}> = [];
 
     for (const app of apps) {
       let bestPriority = -1;
