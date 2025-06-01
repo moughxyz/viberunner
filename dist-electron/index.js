@@ -2,8 +2,6 @@
 const require$$3 = require("electron");
 const path = require("path");
 const fs = require("fs");
-const child_process = require("child_process");
-const os = require("os");
 const require$$0$1 = require("events");
 var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};
 function getDefaultExportFromCjs(x) {
@@ -11960,13 +11958,9 @@ require$$3.app.on("open-file", (event, filePath) => {
 function registerIpcHandlers() {
   require$$3.ipcMain.removeAllListeners("get-apps");
   require$$3.ipcMain.removeAllListeners("load-app");
-  require$$3.ipcMain.removeAllListeners("get-mimetype");
-  require$$3.ipcMain.removeAllListeners("read-file");
   require$$3.ipcMain.removeAllListeners("change-apps-directory");
   require$$3.ipcMain.removeAllListeners("reload-apps");
-  require$$3.ipcMain.removeAllListeners("read-directory");
   require$$3.ipcMain.removeAllListeners("find-matching-apps");
-  require$$3.ipcMain.removeAllListeners("write-file");
   require$$3.ipcMain.removeAllListeners("backup-file");
   require$$3.ipcMain.removeAllListeners("save-file-dialog");
   require$$3.ipcMain.removeAllListeners("get-platform");
@@ -11998,37 +11992,6 @@ function registerIpcHandlers() {
     const bundleContent = fs.readFileSync(bundlePath, "utf-8");
     return { bundleContent, config: appInstance };
   });
-  require$$3.ipcMain.handle("get-mimetype", async (_event, filePath) => {
-    return await getMimetype(filePath);
-  });
-  require$$3.ipcMain.handle("read-file", async (_event, filePath) => {
-    const content = fs.readFileSync(filePath);
-    return content.toString("base64");
-  });
-  require$$3.ipcMain.handle("handle-file-drop", async (_event, filePath) => {
-    const fileAnalysis = await analyzeFile(filePath);
-    if (fileAnalysis.mimetype === "inode/directory") {
-      return {
-        path: filePath,
-        mimetype: fileAnalysis.mimetype,
-        content: "",
-        // Empty content for directories
-        analysis: fileAnalysis
-      };
-    } else {
-      let content = fileAnalysis.content;
-      if (!content && fs.existsSync(filePath)) {
-        const binaryContent = fs.readFileSync(filePath);
-        content = binaryContent.toString("base64");
-      }
-      return {
-        path: filePath,
-        mimetype: fileAnalysis.mimetype,
-        content,
-        analysis: fileAnalysis
-      };
-    }
-  });
   require$$3.ipcMain.handle("change-apps-directory", async () => {
     try {
       console.log("change-apps-directory handler called");
@@ -12053,53 +12016,6 @@ function registerIpcHandlers() {
     }
     return { success: false, apps: [] };
   });
-  require$$3.ipcMain.handle("read-directory", async (_event, dirPath) => {
-    try {
-      console.log("Reading directory:", dirPath);
-      if (!fs.existsSync(dirPath)) {
-        throw new Error(`Directory does not exist: ${dirPath}`);
-      }
-      const stats = fs.statSync(dirPath);
-      if (!stats.isDirectory()) {
-        throw new Error(`Path is not a directory: ${dirPath}`);
-      }
-      const items = fs.readdirSync(dirPath);
-      const fileInfos = items.map((item) => {
-        const itemPath = path.join(dirPath, item);
-        try {
-          const itemStats = fs.statSync(itemPath);
-          const isDirectory = itemStats.isDirectory();
-          let extension = "";
-          if (!isDirectory) {
-            extension = path.extname(item).toLowerCase().replace(".", "");
-          }
-          return {
-            name: item,
-            path: itemPath,
-            isDirectory,
-            size: isDirectory ? 0 : itemStats.size,
-            extension: extension || void 0,
-            modified: itemStats.mtime.toISOString()
-          };
-        } catch (error) {
-          console.warn(`Could not stat ${itemPath}:`, error);
-          return {
-            name: item,
-            path: itemPath,
-            isDirectory: false,
-            size: 0,
-            extension: "",
-            modified: (/* @__PURE__ */ new Date()).toISOString()
-          };
-        }
-      });
-      console.log(`Found ${fileInfos.length} items in ${dirPath}`);
-      return { success: true, files: fileInfos };
-    } catch (error) {
-      console.error("Error reading directory:", error);
-      return { success: false, error: error.message, files: [] };
-    }
-  });
   require$$3.ipcMain.handle("find-matching-apps", async (_event, filePath) => {
     try {
       const apps = await loadApps();
@@ -12123,24 +12039,6 @@ function registerIpcHandlers() {
         matches: [],
         fileAnalysis: null
       };
-    }
-  });
-  require$$3.ipcMain.handle("write-file", async (_event, filePath, content, encoding = "utf8") => {
-    try {
-      if (!filePath || filePath.includes("..")) {
-        throw new Error("Invalid file path");
-      }
-      if (encoding === "base64") {
-        const buffer = Buffer.from(content, "base64");
-        fs.writeFileSync(filePath, buffer);
-      } else {
-        fs.writeFileSync(filePath, content, "utf8");
-      }
-      console.log(`File written successfully: ${filePath}`);
-      return { success: true };
-    } catch (error) {
-      console.error("Error writing file:", error);
-      return { success: false, error: error.message };
     }
   });
   require$$3.ipcMain.handle("backup-file", async (_event, filePath) => {
@@ -12192,61 +12090,6 @@ function registerIpcHandlers() {
       console.error("Error closing window:", error);
       return { success: false, error: error.message };
     }
-  });
-  require$$3.ipcMain.handle("get-platform", async () => {
-    try {
-      const platform = os.platform();
-      console.log("Platform detected:", platform);
-      return {
-        success: true,
-        platform
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error"
-      };
-    }
-  });
-  require$$3.ipcMain.handle("execute-command", async (_event, command, options) => {
-    return new Promise((resolve) => {
-      try {
-        const execOptions = {
-          timeout: (options == null ? void 0 : options.timeout) || 3e4,
-          // 30 second default timeout
-          maxBuffer: 1024 * 1024
-          // 1MB buffer limit
-        };
-        child_process.exec(command, execOptions, (error, stdout, stderr) => {
-          if (error) {
-            console.error("Command execution error:", error);
-            resolve({
-              success: false,
-              error: error.message,
-              stdout: stdout || "",
-              stderr: stderr || "",
-              code: error.code
-            });
-            return;
-          }
-          console.log(`Command executed successfully: ${command.substring(0, 100)}${command.length > 100 ? "..." : ""}`);
-          resolve({
-            success: true,
-            stdout: stdout || "",
-            stderr: stderr || "",
-            code: 0
-          });
-        });
-      } catch (error) {
-        resolve({
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-          stdout: "",
-          stderr: "",
-          code: -1
-        });
-      }
-    });
   });
   console.log("All IPC handlers registered successfully");
 }

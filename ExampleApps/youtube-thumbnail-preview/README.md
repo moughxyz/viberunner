@@ -58,8 +58,8 @@ video-cover.jpg
 stream-image.png
 ```
 
-### 3. Preview in Vizor
-Drop your image into Vizor and instantly see how it will look on YouTube!
+### 3. Preview in Viberunner
+Drop your image into Viberunner and instantly see how it will look on YouTube!
 
 ## 🎮 Usage Guide
 

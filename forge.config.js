@@ -43,7 +43,7 @@ module.exports = {
       config: {
         name: 'Viberunner',
         authors: 'Viberunner Team',
-        description: 'Modern file visualization platform and app runner'
+        description: 'Desktop Vibe App Manager'
       },
     },
     {

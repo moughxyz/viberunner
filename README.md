@@ -50,7 +50,7 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 2. [Visualizer Architecture](#-visualizer-architecture)
 3. [Tabbed Interface](#-tabbed-interface)
 4. [User Preferences System](#-user-preferences-system)
-5. [App API - Direct Node.js Access](#-frame-api---direct-nodejs-access)
+5. [App API - Direct Node.js Access](#-app-api---direct-nodejs-access)
 6. [Enhanced Matching System](#-enhanced-matching-system)
 7. [Creating Your First Visualizer](#-creating-your-first-visualizer)
 8. [Configuration Reference](#-configuration-reference)
@@ -61,7 +61,7 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 13. [Build & Distribution](#-build--distribution)
 14. [Best Practices](#-best-practices)
 15. [Troubleshooting](#-troubleshooting)
-16. [App Cleanup API](#frame-cleanup-api)
+16. [App Cleanup API](#app-cleanup-api)
 
 ## 🎨 Custom App Icons
 
@@ -230,7 +230,7 @@ Viberunner features a Chrome-style tabbed interface that allows users to work wi
 Each tab runs in a completely isolated container:
 
 - **CSS Isolation**: Styles are scoped to prevent cross-tab interference
-- **JavaScript Isolation**: Each frame has its own execution context
+- **JavaScript Isolation**: Each app has its own execution context
 - **Memory Management**: Proper cleanup when tabs are closed
 - **Z-index Management**: Perfect stacking order prevents content bleed-through
 
@@ -1011,8 +1011,8 @@ const JsonFormatter: React.FC<JsonFormatterProps> = ({ fileData }) => {
 export default JsonFormatter;
 
 // Global registration for IIFE bundle
-if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
-  (window as any).__LOAD_VISUALIZER__(JsonFormatter);
+if (typeof window !== 'undefined' && (window as any).__LOAD_APP__) {
+  (window as any).__LOAD_APP__(JsonFormatter);
 }
 ```
 
@@ -1215,22 +1215,8 @@ const content = await window.api.readFile('/path/to/file');
 // Find matching visualizers for a file
 const matches = await window.api.findMatchingVisualizers('/path/to/file');
 
-// File Writing & Backup Operations (NEW!)
-// Write content to a file (with automatic backup support)
-const writeResult = await window.api.writeFile('/path/to/file', content, 'utf8'); // or 'base64'
-
 // Create backup of original file before modifications
 const backupResult = await window.api.backupFile('/path/to/file');
-
-// Show native save dialog for "Save As" functionality
-const dialogResult = await window.api.saveFileDialog({
-  title: 'Save Modified File',
-  defaultPath: '/path/to/default.json',
-  filters: [
-    { name: 'JSON Files', extensions: ['json'] },
-    { name: 'All Files', extensions: ['*'] }
-  ]
-});
 ```
 
 ### Full Node.js Access
@@ -1325,10 +1311,10 @@ const MyVisualizer: React.FC<VisualizerProps> = ({ fileData }) => {
     return <div className="error">Failed to process file</div>;
   }
 
-  // 5. Return your visualization
+  // 5. Return your app
   return (
     <div className="visualizer-container">
-      {/* Your visualization here */}
+      {/* Your app here */}
     </div>
   );
 };
@@ -1798,7 +1784,7 @@ Cleanup callbacks are automatically executed when:
 
 #### Best Practices
 
-1. **Always register cleanup**: Even if you think your frame doesn't need it
+1. **Always register cleanup**: Even if you think your app doesn't need it
 2. **Multiple callbacks**: Register separate callbacks for different types of cleanup
 3. **Error handling**: Cleanup callbacks are wrapped in try-catch, but handle your own errors when possible
 4. **Immediate cleanup**: Also implement React's `useEffect` cleanup for immediate component unmounting

@@ -590,6 +590,6 @@ const DailyNotes: React.FC<DailyNotesProps> = ({ tabId, appId }) => {
 export default DailyNotes;
 
 // Global registration for IIFE bundle
-if (typeof window !== 'undefined' && (window as any).__LOAD_VISUALIZER__) {
-  (window as any).__LOAD_VISUALIZER__(DailyNotes);
+if (typeof window !== 'undefined' && (window as any).__LOAD_APP__) {
+  (window as any).__LOAD_APP__(DailyNotes);
 }

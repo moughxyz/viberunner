@@ -27,8 +27,7 @@ declare global {
     api?: {
       [key: string]: any;
     };
-    __LOAD_VISUALIZER__?: (component: any) => void;
-    __LOAD_FRAME__?: (component: any) => void;
+    __LOAD_APP__?: (component: any) => void;
   }
 }
 
@@ -127,7 +126,7 @@ const YouTubeThumbnailPreview: React.FC<YouTubeThumbnailPreviewProps> = ({ fileI
         // Step 2: Check for UTF-8 corruption (replacement characters)
         const hasUTF8Corruption = processedData.includes('') || processedData.includes('\uFFFD');
         if (hasUTF8Corruption) {
-          console.warn('Detected UTF-8 corruption in image data - attempting to work with Vizor file system API');
+          console.warn('Detected UTF-8 corruption in image data - attempting to work with Viberunner file system API');
 
           // Try to get the original file content if window.api is available
           if (window.api && window.api.readFile && fileData.path) {
@@ -852,16 +851,13 @@ const YouTubeThumbnailPreview: React.FC<YouTubeThumbnailPreviewProps> = ({ fileI
   );
 };
 
-// Export the component for Vizor to load
+// Export the component for Viberunner to load
 export default YouTubeThumbnailPreview;
 
 // Global registration for IIFE bundle
 if (typeof window !== 'undefined') {
-  // Support both new and legacy loader patterns
-  if ((window as any).__LOAD_FRAME__) {
-    (window as any).__LOAD_FRAME__(YouTubeThumbnailPreview);
-  }
-  if ((window as any).__LOAD_VISUALIZER__) {
-    (window as any).__LOAD_VISUALIZER__(YouTubeThumbnailPreview);
+
+  if ((window as any).__LOAD_APP__) {
+    (window as any).__LOAD_APP__(YouTubeThumbnailPreview);
   }
 }
