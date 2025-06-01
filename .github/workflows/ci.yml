@@ -97,6 +97,12 @@ jobs:
         npx @electron/rebuild --version=$ELECTRON_VERSION --force
 
     - name: Create distributables
+      env:
+        # Pass GitHub secrets as environment variables for macOS code signing
+        OSX_SIGN_IDENTITY: ${{ matrix.os == 'macos-latest' && secrets.OSX_SIGN_IDENTITY || '' }}
+        APPLE_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_ID || '' }}
+        APPLE_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.APPLE_PASSWORD || '' }}
+        APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_TEAM_ID || '' }}
       run: npm run make
 
     - name: Test packaged app exists
@@ -112,6 +118,13 @@ jobs:
           ls -la out/ || true
           find out/ -name "*.dmg" -exec ls -lh {} \; || true
           find out/ -name "*.app" -exec ls -lh {} \; || true
+          # Verify code signing (if signed)
+          if [ -d "out/Viberunner-darwin-arm64/Viberunner.app" ]; then
+            codesign --verify --deep --strict --verbose=2 out/Viberunner-darwin-arm64/Viberunner.app || echo "⚠️ Code signing verification failed or app is unsigned"
+          fi
+          if [ -d "out/Viberunner-darwin-x64/Viberunner.app" ]; then
+            codesign --verify --deep --strict --verbose=2 out/Viberunner-darwin-x64/Viberunner.app || echo "⚠️ Code signing verification failed or app is unsigned"
+          fi
         else
           test -d "out/Viberunner-linux-x64" || test -d "out/make"
           echo "✅ Linux package created successfully"

@@ -29,17 +29,17 @@ module.exports = {
     ],
     // Ensure proper architecture handling
     arch: process.env.TARGET_ARCH || process.arch,
-    // osxSign: {
-    //   // Add your Apple Developer info when ready for distribution
-    //   // identity: 'Developer ID Application: Your Name (XXXXXXXXXX)',
-    // },
-    // osxNotarize: {
-    //   // Add your Apple ID info when ready for distribution
-    //   // tool: 'notarytool',
-    //   // appleId: process.env.APPLE_ID,
-    //   // appleIdPassword: process.env.APPLE_PASSWORD,
-    //   // teamId: process.env.APPLE_TEAM_ID,
-    // }
+    osxSign: {
+      // Add your Apple Developer info when ready for distribution
+      identity: process.env.OSX_SIGN_IDENTITY,
+    },
+    osxNotarize: {
+      // Add your Apple ID info when ready for distribution
+      tool: 'notarytool',
+      appleId: process.env.APPLE_ID,
+      appleIdPassword: process.env.APPLE_PASSWORD,
+      teamId: process.env.APPLE_TEAM_ID,
+    }
   },
   rebuildConfig: {
     // Force rebuild native modules
