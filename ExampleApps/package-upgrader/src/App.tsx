@@ -60,11 +60,6 @@ interface PackageData {
 declare global {
   interface Window {
     api: {
-      readFile: (path: string, encoding?: string) => string;
-      writeFile: (path: string, content: string, encoding?: string) => { success: boolean; error?: string };
-      backupFile: (path: string) => { success: boolean; backupPath?: string; error?: string };
-      exists: (path: string) => boolean;
-      stat: (path: string) => { size: number; mtime: Date; isFile: boolean; isDirectory: boolean };
       path: {
         dirname: (path: string) => string;
         basename: (path: string) => string;
@@ -135,13 +130,14 @@ const PackageUpgrader: React.FC<PackageUpgraderProps> = ({ fileInput, fileData, 
           throw new Error('No file path provided');
         }
 
-        // Check if file exists
-        if (!window.api.exists(filePath)) {
+        // Check if file exists using new API
+        const fs = (window as any).api?.fs || require('fs');
+        if (!fs.existsSync(filePath)) {
           throw new Error(`File does not exist: ${filePath}`);
         }
 
-        // Read file directly using Node API
-        const content = window.api.readFile(filePath, 'utf8');
+        // Read file directly using new API
+        const content = fs.readFileSync(filePath, 'utf8');
 
         if (!content) {
           throw new Error('File is empty or could not be read');
@@ -346,18 +342,18 @@ const PackageUpgrader: React.FC<PackageUpgraderProps> = ({ fileInput, fileData, 
 
     try {
       // Create backup first using the new Node API
-      const backupResult = window.api.backupFile(filePath);
-      if (!backupResult.success) {
-        throw new Error(`Failed to create backup: ${backupResult.error}`);
-      }
+      const fs = (window as any).api?.fs || require('fs');
+
+      // Create backup manually
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupPath = `${filePath}.backup-${timestamp}`;
+      const originalContent = fs.readFileSync(filePath, 'utf8');
+      fs.writeFileSync(backupPath, originalContent, 'utf8');
 
       // Save the updated content using the new Node API
-      const saveResult = window.api.writeFile(filePath, updatedContent, 'utf8');
-      if (!saveResult.success) {
-        throw new Error(`Failed to save file: ${saveResult.error}`);
-      }
+      fs.writeFileSync(filePath, updatedContent, 'utf8');
 
-      alert(`✅ Updated package.json saved successfully!\n\n${selectedUpdates.size} dependencies upgraded.\n\nLocation: ${filePath}\nBackup created: ${backupResult.backupPath}`);
+      alert(`✅ Updated package.json saved successfully!\n\n${selectedUpdates.size} dependencies upgraded.\n\nLocation: ${filePath}\nBackup created: ${backupPath}`);
 
       // Optionally clear selected updates after successful save
       setSelectedUpdates(new Set());
