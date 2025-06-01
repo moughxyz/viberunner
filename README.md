@@ -1828,3 +1828,272 @@ You now have everything needed to create powerful, sophisticated visualizers for
 Start with simple visualizers and gradually add complexity. The priority-based matching ensures your visualizers activate exactly when they should, creating a seamless user experience.
 
 Happy visualizing! 🚀
+
+## 🔧 System Command Execution & External Tool Detection
+
+### Overview
+
+Viberunner apps have full access to Node.js APIs, including the ability to execute system commands and detect external tools. However, robust execution requires careful error handling and proper command structure.
+
+### Robust Command Execution
+
+#### Use `spawn` for Better Reliability
+
+When checking for external tools or executing commands, prefer `spawn` over `exec` for better error handling and output control:
+
+```javascript
+// ❌ Less reliable approach
+const { exec } = require('child_process');
+exec('python3 --version', (error, stdout, stderr) => {
+  // Can fail due to shell quirks, output buffering, etc.
+});
+
+// ✅ More reliable approach
+const { spawn } = require('child_process');
+const pythonCheck = spawn('python3', ['--version'], { shell: true });
+
+let output = '';
+let error = '';
+
+pythonCheck.stdout?.on('data', (data) => {
+  output += data.toString();
+});
+
+pythonCheck.stderr?.on('data', (data) => {
+  error += data.toString();
+});
+
+pythonCheck.on('close', (code) => {
+  const isAvailable = code === 0 && (output.includes('Python 3') || error.includes('Python 3'));
+  console.log('Python3 available:', isAvailable);
+});
+
+pythonCheck.on('error', (err) => {
+  console.log('Python3 check failed:', err);
+  // Handle gracefully
+});
+```
+
+#### Multi-Stage Tool Detection
+
+For complex tool detection (e.g., checking both the tool and its dependencies), use a multi-stage approach:
+
+```javascript
+const checkToolAvailability = (childProcess) => {
+  const { spawn } = childProcess;
+
+  // Stage 1: Check if base tool exists
+  const toolCheck = spawn('python3', ['--version'], { shell: true });
+
+  toolCheck.on('close', (code) => {
+    if (code === 0) {
+      console.log('Python3 is available, checking dependencies...');
+      checkToolDependencies(childProcess);
+    } else {
+      console.log('Python3 not available, using fallback approach');
+      useFallbackApproach();
+    }
+  });
+
+  toolCheck.on('error', (err) => {
+    console.log('Tool check failed:', err);
+    useFallbackApproach();
+  });
+};
+
+const checkToolDependencies = (childProcess) => {
+  const { spawn } = childProcess;
+
+  // Stage 2: Check if required modules/dependencies exist
+  const depCheck = spawn('python3', ['-c', 'import some_required_module; print("available")'], { shell: true });
+
+  let output = '';
+
+  depCheck.stdout?.on('data', (data) => {
+    output += data.toString();
+  });
+
+  depCheck.on('close', (code) => {
+    if (code === 0 && output.includes('available')) {
+      console.log('All dependencies available');
+      enableFullFunctionality();
+    } else {
+      console.log('Dependencies missing, using limited functionality');
+      useLimitedFunctionality();
+    }
+  });
+};
+```
+
+#### Graceful Fallback Systems
+
+Always implement fallback approaches when external tools aren't available:
+
+```javascript
+const executeWithFallback = () => {
+  // Try preferred approach first
+  checkToolAvailability((isAvailable) => {
+    if (isAvailable) {
+      useAdvancedApproach();
+    } else {
+      // Fall back to alternative methods
+      useAlternativeApproach();
+    }
+  });
+};
+
+const useAdvancedApproach = () => {
+  // Use external tool for full functionality
+  console.log('Using advanced features with external tool');
+};
+
+const useAlternativeApproach = () => {
+  // Use built-in or simpler methods
+  console.log('Using fallback approach with built-in tools');
+};
+```
+
+### Platform-Specific Considerations
+
+Handle platform differences gracefully:
+
+```javascript
+const getPlatformSpecificCommand = () => {
+  const os = require('os');
+  const platform = os.platform();
+
+  switch (platform) {
+    case 'darwin': // macOS
+      return ['python3', '--version'];
+    case 'win32': // Windows
+      return ['python', '--version']; // Often just 'python' on Windows
+    case 'linux': // Linux
+      return ['python3', '--version'];
+    default:
+      throw new Error(`Unsupported platform: ${platform}`);
+  }
+};
+
+const checkCrossPlatform = () => {
+  try {
+    const [command, ...args] = getPlatformSpecificCommand();
+    const check = spawn(command, args, { shell: true });
+    // ... handle as above
+  } catch (error) {
+    console.error('Platform not supported:', error);
+    // Use most basic fallback
+  }
+};
+```
+
+### Permission Detection Patterns
+
+For apps that need special permissions (like accessibility access), implement robust detection:
+
+```javascript
+const checkPermissions = (childProcess) => {
+  // Primary permission check
+  const primaryCheck = spawn('primary-permission-test-command', [], { shell: true });
+
+  primaryCheck.on('close', (code) => {
+    if (code === 0) {
+      console.log('Permissions granted');
+      enableFullFeatures();
+    } else {
+      console.log('Permissions needed, trying fallback detection...');
+      tryFallbackPermissionCheck(childProcess);
+    }
+  });
+
+  primaryCheck.on('error', () => {
+    tryFallbackPermissionCheck(childProcess);
+  });
+};
+
+const tryFallbackPermissionCheck = (childProcess) => {
+  // Alternative permission detection method
+  const fallbackCheck = spawn('alternative-permission-test', [], { shell: true });
+
+  fallbackCheck.on('close', (code) => {
+    const hasPermissions = code === 0;
+
+    if (hasPermissions) {
+      console.log('Permissions detected via fallback method');
+      enableLimitedFeatures();
+    } else {
+      console.log('No permissions detected, using basic mode');
+      enableBasicMode();
+    }
+  });
+};
+```
+
+### Error Handling Best Practices
+
+1. **Always handle both `error` and `close` events** for spawned processes
+2. **Provide clear console logging** for debugging
+3. **Implement progressive fallbacks** rather than hard failures
+4. **Cache detection results** to avoid repeated expensive checks
+5. **Handle edge cases** like command not found, permission denied, etc.
+
+```javascript
+const robustToolCheck = (toolName, args = ['--version']) => {
+  return new Promise((resolve) => {
+    const { spawn } = require('child_process');
+
+    const process = spawn(toolName, args, { shell: true });
+    let output = '';
+    let errorOutput = '';
+
+    process.stdout?.on('data', (data) => {
+      output += data.toString();
+    });
+
+    process.stderr?.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+
+    process.on('close', (code) => {
+      resolve({
+        available: code === 0,
+        output,
+        error: errorOutput,
+        exitCode: code
+      });
+    });
+
+    process.on('error', (err) => {
+      resolve({
+        available: false,
+        output: '',
+        error: err.message,
+        exitCode: -1
+      });
+    });
+
+    // Timeout protection
+    setTimeout(() => {
+      process.kill();
+      resolve({
+        available: false,
+        output: '',
+        error: 'Command timeout',
+        exitCode: -1
+      });
+    }, 5000); // 5 second timeout
+  });
+};
+
+// Usage
+const checkTool = async () => {
+  const result = await robustToolCheck('python3');
+
+  if (result.available) {
+    console.log('Tool available:', result.output);
+  } else {
+    console.log('Tool not available:', result.error);
+  }
+};
+```
+
+This approach ensures your Viberunner apps can reliably detect and work with external tools while providing graceful fallbacks when tools aren't available.
