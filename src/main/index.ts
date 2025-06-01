@@ -866,7 +866,9 @@ const createWindow = (): void => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: true
+      webSecurity: false,
+      sandbox: false,
+      nodeIntegrationInSubFrames: true,
     },
     titleBarStyle: 'hiddenInset',
     vibrancy: 'under-window',

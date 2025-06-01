@@ -5,6 +5,8 @@ var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "sy
 const require$$3 = require("electron");
 const path = require("path");
 const fs = require("fs");
+const child_process = require("child_process");
+const os = require("os");
 const require$$0$1 = require("events");
 var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};
 function getDefaultExportFromCjs(x) {
@@ -12124,7 +12126,8 @@ const createWindow = () => {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: true
+      webSecurity: false,
+      sandbox: false
     },
     titleBarStyle: "hiddenInset",
     vibrancy: "under-window",
@@ -12178,6 +12181,8 @@ function registerIpcHandlers() {
   require$$3.ipcMain.removeAllListeners("request-directory-access");
   require$$3.ipcMain.removeAllListeners("get-granted-paths");
   require$$3.ipcMain.removeAllListeners("read-file-secure");
+  require$$3.ipcMain.removeAllListeners("get-platform");
+  require$$3.ipcMain.removeAllListeners("execute-command");
   console.log("Registering IPC handlers...");
   require$$3.ipcMain.handle("get-apps", async () => {
     try {
@@ -12476,6 +12481,61 @@ function registerIpcHandlers() {
         error: error instanceof Error ? error.message : "Unknown error"
       };
     }
+  });
+  require$$3.ipcMain.handle("get-platform", async () => {
+    try {
+      const platform = os.platform();
+      console.log("Platform detected:", platform);
+      return {
+        success: true,
+        platform
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      };
+    }
+  });
+  require$$3.ipcMain.handle("execute-command", async (_event, command, options) => {
+    return new Promise((resolve) => {
+      try {
+        const execOptions = {
+          timeout: (options == null ? void 0 : options.timeout) || 3e4,
+          // 30 second default timeout
+          maxBuffer: 1024 * 1024
+          // 1MB buffer limit
+        };
+        child_process.exec(command, execOptions, (error, stdout, stderr) => {
+          if (error) {
+            console.error("Command execution error:", error);
+            resolve({
+              success: false,
+              error: error.message,
+              stdout: stdout || "",
+              stderr: stderr || "",
+              code: error.code
+            });
+            return;
+          }
+          console.log(`Command executed successfully: ${command.substring(0, 100)}${command.length > 100 ? "..." : ""}`);
+          resolve({
+            success: true,
+            stdout: stdout || "",
+            stderr: stderr || "",
+            code: 0
+          });
+        });
+      } catch (error) {
+        resolve({
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+          stdout: "",
+          stderr: "",
+          code: -1
+        });
+      }
+    });
   });
   console.log("All IPC handlers registered successfully");
 }
