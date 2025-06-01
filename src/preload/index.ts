@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld(
       ipcRenderer.invoke('request-directory-access', directoryPath, reason),
     getGrantedPaths: () => ipcRenderer.invoke('get-granted-paths'),
     readFileSecure: (filePath: string) => ipcRenderer.invoke('read-file-secure', filePath),
+    // System operations for plugins
+    getPlatform: () => ipcRenderer.invoke('get-platform'),
+    executeCommand: (command: string, options?: { timeout?: number }) =>
+      ipcRenderer.invoke('execute-command', command, options),
     // Launch standalone apps
     launchStandaloneApp: (id: string) => ipcRenderer.invoke('launch-standalone-app', id),
     // Startup app management

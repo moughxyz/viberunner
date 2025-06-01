@@ -1,1 +1,34 @@
-"use strict";const r=require("electron");r.contextBridge.exposeInMainWorld("api",{getApps:()=>r.ipcRenderer.invoke("get-apps"),loadApp:e=>r.ipcRenderer.invoke("load-app",e),getMimetype:e=>r.ipcRenderer.invoke("get-mimetype",e),readFile:e=>r.ipcRenderer.invoke("read-file",e),handleFileDrop:e=>r.ipcRenderer.invoke("handle-file-drop",e),changeAppsDirectory:()=>r.ipcRenderer.invoke("change-frames-directory"),reloadApps:()=>r.ipcRenderer.invoke("reload-apps"),readDirectory:e=>r.ipcRenderer.invoke("read-directory",e),findMatchingApps:e=>r.ipcRenderer.invoke("find-matching-apps",e),writeFile:(e,p,i)=>r.ipcRenderer.invoke("write-file",e,p,i),backupFile:e=>r.ipcRenderer.invoke("backup-file",e),saveFileDialog:e=>r.ipcRenderer.invoke("save-file-dialog",e),checkDirectoryAccess:e=>r.ipcRenderer.invoke("check-directory-access",e),requestDirectoryAccess:(e,p)=>r.ipcRenderer.invoke("request-directory-access",e,p),getGrantedPaths:()=>r.ipcRenderer.invoke("get-granted-paths"),readFileSecure:e=>r.ipcRenderer.invoke("read-file-secure",e),launchStandaloneApp:e=>r.ipcRenderer.invoke("launch-standalone-app",e),getStartupApps:()=>r.ipcRenderer.invoke("get-startup-apps"),setStartupApp:(e,p)=>r.ipcRenderer.invoke("set-startup-app",e,p),removeStartupApp:e=>r.ipcRenderer.invoke("remove-startup-app",e),onLaunchStartupApp:e=>r.ipcRenderer.on("launch-startup-app",e),removeStartupAppListeners:()=>r.ipcRenderer.removeAllListeners("launch-startup-app")});
+"use strict";
+const electron = require("electron");
+electron.contextBridge.exposeInMainWorld(
+  "api",
+  {
+    getApps: () => electron.ipcRenderer.invoke("get-apps"),
+    loadApp: (id) => electron.ipcRenderer.invoke("load-app", id),
+    getMimetype: (filePath) => electron.ipcRenderer.invoke("get-mimetype", filePath),
+    readFile: (filePath) => electron.ipcRenderer.invoke("read-file", filePath),
+    handleFileDrop: (filePath) => electron.ipcRenderer.invoke("handle-file-drop", filePath),
+    changeAppsDirectory: () => electron.ipcRenderer.invoke("change-frames-directory"),
+    reloadApps: () => electron.ipcRenderer.invoke("reload-apps"),
+    readDirectory: (dirPath) => electron.ipcRenderer.invoke("read-directory", dirPath),
+    findMatchingApps: (filePath) => electron.ipcRenderer.invoke("find-matching-apps", filePath),
+    // File writing and backup operations
+    writeFile: (filePath, content, encoding) => electron.ipcRenderer.invoke("write-file", filePath, content, encoding),
+    backupFile: (filePath) => electron.ipcRenderer.invoke("backup-file", filePath),
+    saveFileDialog: (options) => electron.ipcRenderer.invoke("save-file-dialog", options),
+    // Permission system
+    checkDirectoryAccess: (directoryPath) => electron.ipcRenderer.invoke("check-directory-access", directoryPath),
+    requestDirectoryAccess: (directoryPath, reason) => electron.ipcRenderer.invoke("request-directory-access", directoryPath, reason),
+    getGrantedPaths: () => electron.ipcRenderer.invoke("get-granted-paths"),
+    readFileSecure: (filePath) => electron.ipcRenderer.invoke("read-file-secure", filePath),
+    // Launch standalone apps
+    launchStandaloneApp: (id) => electron.ipcRenderer.invoke("launch-standalone-app", id),
+    // Startup app management
+    getStartupApps: () => electron.ipcRenderer.invoke("get-startup-apps"),
+    setStartupApp: (appId, config) => electron.ipcRenderer.invoke("set-startup-app", appId, config),
+    removeStartupApp: (appId) => electron.ipcRenderer.invoke("remove-startup-app", appId),
+    // Listen for startup app launch events from main process
+    onLaunchStartupApp: (callback) => electron.ipcRenderer.on("launch-startup-app", callback),
+    removeStartupAppListeners: () => electron.ipcRenderer.removeAllListeners("launch-startup-app")
+  }
+);
