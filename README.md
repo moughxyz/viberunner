@@ -547,6 +547,16 @@ interface AppProps {
 Apps have access to the global `api` object and direct Node.js modules:
 
 ```javascript
+// File operations
+const content = api.readFile(filePath, 'utf8');
+api.writeFile(filePath, content);
+const backupPath = api.backupFile(filePath);
+
+// File system operations
+const exists = api.exists(filePath);
+const stats = api.stat(filePath);
+const files = api.readDir(dirPath);
+
 // Path utilities
 const dirname = api.path.dirname(filePath);
 const basename = api.path.basename(filePath);
@@ -911,8 +921,10 @@ const JsonFormatter: React.FC<JsonFormatterProps> = ({ fileData }) => {
       }
 
       // Save the formatted JSON back to the original file
-      const fs = (window as any).api?.fs || require('fs');
-      fs.writeFileSync(fileData.path, formatted, 'utf8');
+      const saveResult = await window.api.writeFile(fileData.path, formatted, 'utf8');
+      if (!saveResult.success) {
+        throw new Error(`Failed to save file: ${saveResult.error}`);
+      }
 
       alert(`JSON saved successfully!\nBackup created: ${backupResult.backupPath}`);
     } catch (err) {
@@ -1627,8 +1639,8 @@ const JsonEditor: React.FC<VisualizerProps> = ({ fileData }) => {
       const backupResult = await window.api.backupFile(fileData.path);
       if (!backupResult.success) throw new Error(backupResult.error);
 
-      const fs = (window as any).api?.fs || require('fs');
-      fs.writeFileSync(fileData.path, content, 'utf8');
+      const saveResult = await window.api.writeFile(fileData.path, content, 'utf8');
+      if (!saveResult.success) throw new Error(saveResult.error);
 
       alert(`JSON saved and formatted!\nBackup: ${backupResult.backupPath}`);
     } catch (error) {

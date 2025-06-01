@@ -3,9 +3,11 @@ interface Window {
     getApps: () => Promise<any[]>;
     loadApp: (id: string) => Promise<any>;
     getMimetype: (filePath: string) => Promise<string>;
+    readFile: (filePath: string) => Promise<string>;
     handleFileDrop: (filePath: string) => Promise<any>;
     changeAppsDirectory: () => Promise<{ success: boolean; directory: string | null }>;
     reloadApps: () => Promise<{ success: boolean; apps: any[] }>;
+    readDirectory: (dirPath: string) => Promise<{ success: boolean; files: any[]; error?: string }>;
     findMatchingApps: (filePath: string) => Promise<{
       success: boolean;
       matches: Array<{
@@ -14,6 +16,16 @@ interface Window {
         matchReasons: string[];
       }>;
       fileAnalysis: any;
+    }>;
+    // File writing and backup operations
+    writeFile: (filePath: string, content: string, encoding?: 'utf8' | 'base64') => Promise<{
+      success: boolean;
+      error?: string
+    }>;
+    backupFile: (filePath: string) => Promise<{
+      success: boolean;
+      backupPath?: string;
+      error?: string
     }>;
     launchStandaloneApp: (id: string) => Promise<any>;
     // Icon loading for apps

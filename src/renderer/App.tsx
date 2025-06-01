@@ -14,6 +14,34 @@ const { app } = require('@electron/remote') || require('electron').remote?.app;
 
 // Simplified API - only direct operations, no IPC
 const api = {
+  // Direct file operations using Node.js - exposed to apps
+  readFile: (filePath: string, encoding: 'utf8' | 'base64' = 'utf8') => {
+    if (encoding === 'base64') {
+      return fs.readFileSync(filePath).toString('base64');
+    }
+    return fs.readFileSync(filePath, 'utf8');
+  },
+  writeFile: (filePath: string, content: string, encoding: 'utf8' | 'base64' = 'utf8') => {
+    if (encoding === 'base64') {
+      const buffer = Buffer.from(content, 'base64');
+      fs.writeFileSync(filePath, buffer);
+    } else {
+      fs.writeFileSync(filePath, content, 'utf8');
+    }
+  },
+  backupFile: (filePath: string) => {
+    if (fs.existsSync(filePath)) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const backupPath = `${filePath}.backup.${timestamp}`;
+      fs.copyFileSync(filePath, backupPath);
+      return backupPath;
+    }
+    return null;
+  },
+  exists: (filePath: string) => fs.existsSync(filePath),
+  stat: (filePath: string) => fs.statSync(filePath),
+  readDir: (dirPath: string) => fs.readdirSync(dirPath),
+
   // User Preferences API for apps
   getAppPreferences: (appId: string) => {
     try {
