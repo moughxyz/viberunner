@@ -547,15 +547,6 @@ interface AppProps {
 Apps have access to the global `api` object and direct Node.js modules:
 
 ```javascript
-// File operations
-const content = api.readFile(filePath, 'utf8');
-api.writeFile(filePath, content);
-
-// File system operations
-const exists = api.exists(filePath);
-const stats = api.stat(filePath);
-const files = api.readDir(dirPath);
-
 // Path utilities
 const dirname = api.path.dirname(filePath);
 const basename = api.path.basename(filePath);
@@ -568,38 +559,6 @@ const mimeType = api.mime.lookup(filePath);
 const fs = api.fs;
 const path = api.path;
 const customModule = api.require('some-module');
-```
-
-### Migration Guide
-
-#### Before (Legacy)
-```javascript
-const KanbanBoard = ({ fileData }) => {
-  // Had to handle base64 decoding, etc.
-  let content = fileData.content;
-  if (!content.includes('\n') && content.length > 100) {
-    content = atob(content); // Base64 decode
-  }
-
-  // Limited to pre-analyzed data
-  const isLarge = fileData.analysis.size > 1000000;
-};
-```
-
-#### After (Recommended)
-```javascript
-const KanbanBoard = ({ fileInput }) => {
-  // Direct file access - much simpler!
-  const content = api.readFile(fileInput.path, 'utf8');
-
-  // Full control over file operations
-  const stats = api.stat(fileInput.path);
-  const isLarge = stats.size > 1000000;
-
-  // Can read related files in same directory
-  const dirname = api.path.dirname(fileInput.path);
-  const relatedFiles = api.readDir(dirname);
-};
 ```
 
 ### Benefits

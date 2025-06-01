@@ -681,16 +681,9 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('get-apps');
   ipcMain.removeAllListeners('load-app');
   ipcMain.removeAllListeners('get-mimetype');
-  ipcMain.removeAllListeners('read-file');
   ipcMain.removeAllListeners('change-apps-directory');
   ipcMain.removeAllListeners('reload-apps');
-  ipcMain.removeAllListeners('read-directory');
   ipcMain.removeAllListeners('find-matching-apps');
-  ipcMain.removeAllListeners('write-file');
-  ipcMain.removeAllListeners('backup-file');
-  ipcMain.removeAllListeners('save-file-dialog');
-  ipcMain.removeAllListeners('get-platform');
-  ipcMain.removeAllListeners('execute-command');
 
   console.log('Registering IPC handlers...');
 

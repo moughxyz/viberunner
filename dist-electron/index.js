@@ -11961,16 +11961,9 @@ function registerIpcHandlers() {
   require$$3.ipcMain.removeAllListeners("get-apps");
   require$$3.ipcMain.removeAllListeners("load-app");
   require$$3.ipcMain.removeAllListeners("get-mimetype");
-  require$$3.ipcMain.removeAllListeners("read-file");
   require$$3.ipcMain.removeAllListeners("change-apps-directory");
   require$$3.ipcMain.removeAllListeners("reload-apps");
-  require$$3.ipcMain.removeAllListeners("read-directory");
   require$$3.ipcMain.removeAllListeners("find-matching-apps");
-  require$$3.ipcMain.removeAllListeners("write-file");
-  require$$3.ipcMain.removeAllListeners("backup-file");
-  require$$3.ipcMain.removeAllListeners("save-file-dialog");
-  require$$3.ipcMain.removeAllListeners("get-platform");
-  require$$3.ipcMain.removeAllListeners("execute-command");
   console.log("Registering IPC handlers...");
   require$$3.ipcMain.handle("get-apps", async () => {
     try {
