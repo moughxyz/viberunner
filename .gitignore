@@ -26,3 +26,8 @@ npm-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Icon source files (keep generated icons, ignore sources)
+**/source-icon.*
+**/icon-source.*
+**/original-icon.*
