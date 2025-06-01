@@ -1,0 +1,52 @@
+{
+  "name": "Kanban Board",
+  "description": "Interactive kanban board for text files containing 'kanban' - drag & drop tasks between columns",
+  "version": "1.0.0",
+  "author": "Viberunner",
+
+  "matchers": [
+    {
+      "type": "filename-contains",
+      "substring": "kanban",
+      "priority": 95
+    },
+    {
+      "type": "combined",
+      "operator": "AND",
+      "priority": 90,
+      "conditions": [
+        {
+          "type": "mimetype",
+          "mimetype": "text/plain",
+          "priority": 50
+        },
+        {
+          "type": "filename-contains",
+          "substring": "kanban",
+          "priority": 50
+        }
+      ]
+    },
+    {
+      "type": "combined",
+      "operator": "AND",
+      "priority": 85,
+      "conditions": [
+        {
+          "type": "filename",
+          "pattern": "*.txt",
+          "priority": 50
+        },
+        {
+          "type": "filename-contains",
+          "substring": "board",
+          "priority": 40
+        }
+      ]
+    }
+  ],
+
+  "tags": ["productivity", "kanban", "task-management", "board", "drag-drop"],
+  "homepage": "https://github.com/Viberunner/kanban-visualizer",
+  "license": "MIT"
+}
