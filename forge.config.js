@@ -34,6 +34,8 @@ module.exports = {
     osxSign: {
       // Add your Apple Developer info when ready for distribution
       identity: process.env.OSX_SIGN_IDENTITY,
+      keychain: process.env.CI ? 'build.keychain' : undefined, // Use temp keychain in CI
+      type: 'distribution',
     },
     osxNotarize: {
       // Add your Apple ID info when ready for distribution
