@@ -22,20 +22,12 @@ const api = {
   // User Preferences API for apps
   getAppPreferences: (appId: string) => {
     try {
-      // First try user apps directory
-      const USER_APPS_DIR = getAppsDirectory();
-      let appPath = path.join(USER_APPS_DIR, appId);
-      let metadataPath = path.join(appPath, 'viz.json');
-
-      // If not found in user apps, try default apps directory
-      if (!fs.existsSync(metadataPath)) {
-        const DEFAULT_APPS_DIR = getDefaultAppsDirectory();
-        appPath = path.join(DEFAULT_APPS_DIR, appId);
-        metadataPath = path.join(appPath, 'viz.json');
-      }
+      const APPS_DIR = getAppsDirectory();
+      const appPath = path.join(APPS_DIR, appId);
+      const metadataPath = path.join(appPath, 'viz.json');
 
       if (!fs.existsSync(metadataPath)) {
-        console.warn(`No viz.json found for app ${appId} in either directory`);
+        console.warn(`No viz.json found for app ${appId}`);
         return {};
       }
 
@@ -51,20 +43,12 @@ const api = {
 
   setAppPreferences: (appId: string, preferences: any) => {
     try {
-      // First try user apps directory
-      const USER_APPS_DIR = getAppsDirectory();
-      let appPath = path.join(USER_APPS_DIR, appId);
-      let metadataPath = path.join(appPath, 'viz.json');
-
-      // If not found in user apps, try default apps directory
-      if (!fs.existsSync(metadataPath)) {
-        const DEFAULT_APPS_DIR = getDefaultAppsDirectory();
-        appPath = path.join(DEFAULT_APPS_DIR, appId);
-        metadataPath = path.join(appPath, 'viz.json');
-      }
+      const APPS_DIR = getAppsDirectory();
+      const appPath = path.join(APPS_DIR, appId);
+      const metadataPath = path.join(appPath, 'viz.json');
 
       if (!fs.existsSync(metadataPath)) {
-        throw new Error(`No viz.json found for app ${appId} in either directory`);
+        throw new Error(`No viz.json found for app ${appId}`);
       }
 
       // Read current metadata
@@ -237,104 +221,6 @@ const getAppsDirectory = () => {
   return fallback;
 };
 
-// New function to get the default apps directory
-const getDefaultAppsDirectory = () => {
-  const userDataPath = app?.getPath('userData') || path.join(require('os').homedir(), '.viberunner');
-  return path.join(userDataPath, 'DefaultApps');
-};
-
-// New function to get the example apps directory
-const getExampleAppsDirectory = () => {
-  // Get the path to the ExampleApps directory in the application bundle/resources
-  try {
-    const { app } = require('@electron/remote');
-    const appPath = app.getAppPath();
-    return path.join(appPath, 'ExampleApps');
-  } catch (error) {
-    // Fallback for development environment
-    return path.resolve(process.cwd(), 'ExampleApps');
-  }
-};
-
-// New function to copy example apps to default apps directory
-const copyExampleAppsToDefault = async () => {
-  const exampleAppsDir = getExampleAppsDirectory();
-  const defaultAppsDir = getDefaultAppsDirectory();
-
-  console.log('copyExampleAppsToDefault: Checking example apps copy...');
-  console.log('Example apps directory:', exampleAppsDir);
-  console.log('Default apps directory:', defaultAppsDir);
-
-  // Check if example apps directory exists
-  if (!fs.existsSync(exampleAppsDir)) {
-    console.log('copyExampleAppsToDefault: Example apps directory not found, skipping copy');
-    return;
-  }
-
-  // Create default apps directory if it doesn't exist
-  if (!fs.existsSync(defaultAppsDir)) {
-    console.log('copyExampleAppsToDefault: Creating default apps directory');
-    fs.mkdirSync(defaultAppsDir, { recursive: true });
-  }
-
-  try {
-    const exampleAppDirs = fs.readdirSync(exampleAppsDir).filter((item: string) => {
-      const fullPath = path.join(exampleAppsDir, item);
-      return fs.statSync(fullPath).isDirectory();
-    });
-
-    console.log('copyExampleAppsToDefault: Found example app directories:', exampleAppDirs);
-
-    for (const appDir of exampleAppDirs) {
-      const sourcePath = path.join(exampleAppsDir, appDir);
-      const targetPath = path.join(defaultAppsDir, appDir);
-
-      // Check if the app already exists in default apps (skip if it does)
-      if (fs.existsSync(targetPath)) {
-        console.log(`copyExampleAppsToDefault: App ${appDir} already exists in default apps, skipping`);
-        continue;
-      }
-
-      console.log(`copyExampleAppsToDefault: Copying ${appDir} from ${sourcePath} to ${targetPath}`);
-
-      // Copy the entire app directory
-      await copyDirectory(sourcePath, targetPath);
-
-      console.log(`copyExampleAppsToDefault: Successfully copied ${appDir}`);
-    }
-  } catch (error) {
-    console.error('copyExampleAppsToDefault: Error copying example apps:', error);
-  }
-};
-
-// Helper function to recursively copy a directory
-const copyDirectory = async (source: string, target: string) => {
-  // Create target directory
-  if (!fs.existsSync(target)) {
-    fs.mkdirSync(target, { recursive: true });
-  }
-
-  const items = fs.readdirSync(source);
-
-  for (const item of items) {
-    const sourcePath = path.join(source, item);
-    const targetPath = path.join(target, item);
-    const stat = fs.statSync(sourcePath);
-
-    if (stat.isDirectory()) {
-      // Skip node_modules and other build directories to save space
-      if (item === 'node_modules' || item === '.git' || item === 'dist') {
-        console.log(`copyDirectory: Skipping directory ${item}`);
-        continue;
-      }
-      await copyDirectory(sourcePath, targetPath);
-    } else {
-      // Copy file
-      fs.copyFileSync(sourcePath, targetPath);
-    }
-  }
-};
-
 // Helper functions for direct file operations
 async function getMimetype(filePath: string): Promise<string> {
   try {
@@ -378,113 +264,63 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
 }
 
 async function loadApps(): Promise<AppConfig[]> {
-  const USER_APPS_DIR = getAppsDirectory();
-  const DEFAULT_APPS_DIR = getDefaultAppsDirectory();
+  const APPS_DIR = getAppsDirectory();
+  console.log('loadApps: Looking for apps in:', APPS_DIR);
 
-  console.log('loadApps: Looking for apps in user directory:', USER_APPS_DIR);
-  console.log('loadApps: Looking for apps in default directory:', DEFAULT_APPS_DIR);
+  if (!fs.existsSync(APPS_DIR)) {
+    console.log('loadApps: Directory does not exist, creating it');
+    fs.mkdirSync(APPS_DIR, { recursive: true });
+    return [];
+  }
 
-  // Copy example apps on first load if needed
-  await copyExampleAppsToDefault();
+  try {
+    const dirContents = fs.readdirSync(APPS_DIR);
+    console.log('loadApps: Directory contents:', dirContents);
 
-  const allApps: AppConfig[] = [];
+    const directories = dirContents.filter((dir: string) => {
+      const fullPath = path.join(APPS_DIR, dir);
+      const isDir = fs.statSync(fullPath).isDirectory();
+      console.log(`loadApps: ${dir} is directory: ${isDir}`);
+      return isDir;
+    });
+    console.log('loadApps: Found directories:', directories);
 
-  // Function to load apps from a specific directory
-  const loadAppsFromDirectory = (appsDir: string, source: 'user' | 'default'): AppConfig[] => {
-    console.log(`loadAppsFromDirectory: Loading ${source} apps from:`, appsDir);
+    const apps = directories.map((dir: string) => {
+      const appPath = path.join(APPS_DIR, dir);
+      const metadataPath = path.join(appPath, 'viz.json');
+      console.log(`loadApps: Checking for metadata at: ${metadataPath}`);
 
-    if (!fs.existsSync(appsDir)) {
-      console.log(`loadAppsFromDirectory: ${source} directory does not exist, creating it`);
-      fs.mkdirSync(appsDir, { recursive: true });
-      return [];
-    }
+      if (!fs.existsSync(metadataPath)) {
+        console.log(`loadApps: No viz.json found for ${dir}`);
+        return null;
+      }
 
-    try {
-      const dirContents = fs.readdirSync(appsDir);
-      console.log(`loadAppsFromDirectory: ${source} directory contents:`, dirContents);
+      try {
+        const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
+        const metadata = JSON.parse(metadataContent);
+        console.log(`loadApps: Successfully loaded metadata for ${dir}:`, metadata);
+        return {
+          ...metadata,
+          id: dir,
+        };
+      } catch (parseError) {
+        console.error(`Error parsing metadata for ${dir}:`, parseError);
+        return null;
+      }
+    })
+    .filter(Boolean) as AppConfig[];
 
-      const directories = dirContents.filter((dir: string) => {
-        const fullPath = path.join(appsDir, dir);
-        const isDir = fs.statSync(fullPath).isDirectory();
-        console.log(`loadAppsFromDirectory: ${dir} is directory: ${isDir}`);
-        return isDir;
-      });
-      console.log(`loadAppsFromDirectory: Found ${source} directories:`, directories);
-
-      const apps = directories.map((dir: string) => {
-        const appPath = path.join(appsDir, dir);
-        const metadataPath = path.join(appPath, 'viz.json');
-        console.log(`loadAppsFromDirectory: Checking for metadata at: ${metadataPath}`);
-
-        if (!fs.existsSync(metadataPath)) {
-          console.log(`loadAppsFromDirectory: No viz.json found for ${dir}`);
-          return null;
-        }
-
-        try {
-          const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
-          const metadata = JSON.parse(metadataContent);
-          console.log(`loadAppsFromDirectory: Successfully loaded metadata for ${dir}:`, metadata);
-          return {
-            ...metadata,
-            id: dir,
-            source: source, // Mark the source of the app
-          };
-        } catch (parseError) {
-          console.error(`Error parsing metadata for ${dir}:`, parseError);
-          return null;
-        }
-      })
-      .filter(Boolean) as AppConfig[];
-
-      console.log(`loadAppsFromDirectory: Final ${source} apps array:`, apps);
-      return apps;
-    } catch (error) {
-      console.error(`Error in loadAppsFromDirectory for ${source} apps:`, error);
-      return [];
-    }
-  };
-
-  // Load apps from both directories
-  const userApps = loadAppsFromDirectory(USER_APPS_DIR, 'user');
-  const defaultApps = loadAppsFromDirectory(DEFAULT_APPS_DIR, 'default');
-
-  // Combine apps, giving priority to user apps if there are duplicates
-  const allAppIds = new Set();
-
-  // Add user apps first (higher priority)
-  userApps.forEach(app => {
-    allApps.push(app);
-    allAppIds.add(app.id);
-  });
-
-  // Add default apps only if not already present
-  defaultApps.forEach(app => {
-    if (!allAppIds.has(app.id)) {
-      allApps.push(app);
-      allAppIds.add(app.id);
-    } else {
-      console.log(`loadApps: Skipping default app ${app.id} because user app with same ID exists`);
-    }
-  });
-
-  console.log('loadApps: Final combined apps array:', allApps);
-  console.log(`loadApps: Loaded ${userApps.length} user apps and ${defaultApps.filter(app => !userApps.some(userApp => userApp.id === app.id)).length} default apps`);
-
-  return allApps;
+    console.log('loadApps: Final apps array:', apps);
+    return apps;
+  } catch (error) {
+    console.error('Error in loadApps function:', error);
+    throw error;
+  }
 }
 
 async function loadApp(id: string) {
-  // First try user apps directory
-  const USER_APPS_DIR = getAppsDirectory();
-  let appPath = path.join(USER_APPS_DIR, id);
-
-  // If not found in user apps, try default apps directory
-  if (!fs.existsSync(appPath)) {
-    const DEFAULT_APPS_DIR = getDefaultAppsDirectory();
-    appPath = path.join(DEFAULT_APPS_DIR, id);
-  }
-
+  const APPS_DIR = getAppsDirectory();
+  const appPath = path.join(APPS_DIR, id);
   const bundlePath = path.join(appPath, 'dist', 'bundle.iife.js');
 
   if (!fs.existsSync(bundlePath)) {
@@ -520,7 +356,6 @@ interface AppConfig {
   standalone?: boolean; // Optional standalone property
   icon?: string; // Custom icon path
   userPreferences?: Record<string, any>; // User preferences storage
-  source?: 'user' | 'default'; // Track the source of the app
 }
 
 interface OpenTab {
@@ -608,16 +443,8 @@ const App: React.FC = () => {
     }
 
     try {
-      // First try user apps directory
-      const USER_APPS_DIR = getAppsDirectory();
-      let appDir = path.join(USER_APPS_DIR, app.id);
-
-      // If not found in user apps, try default apps directory
-      if (!fs.existsSync(appDir)) {
-        const DEFAULT_APPS_DIR = getDefaultAppsDirectory();
-        appDir = path.join(DEFAULT_APPS_DIR, app.id);
-      }
-
+      const APPS_DIR = getAppsDirectory();
+      const appDir = path.join(APPS_DIR, app.id);
       const fullIconPath = path.join(appDir, app.icon);
 
       // Ensure the icon path is within the app directory
