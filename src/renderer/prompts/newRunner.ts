@@ -99,6 +99,9 @@ export const getNewRunnerPrompt = (userPrompt: string) => {
 
   Our system will read this tag and execute the commands for you.
 
+  Design Principles and Rules:
+    - Prefer Node API over Web APIs (for file system access, clipboard history, etc)
+
   Here are the contents of the promised attachments:
 
   README.md for Viberunner:

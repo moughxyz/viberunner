@@ -195,6 +195,28 @@
   cursor: not-allowed;
 }
 
+.discard-btn {
+  padding: 8px 16px;
+  background: #666;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.discard-btn:hover:not(:disabled) {
+  background: #555;
+}
+
+.discard-btn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
 .close-btn {
   padding: 8px 12px;
   background: transparent;
@@ -225,6 +247,8 @@
   display: flex;
   flex-direction: column;
   background: #1a1a1a;
+  position: relative;
+  overflow: hidden;
 }
 
 /* Chat Interface */
@@ -387,11 +411,69 @@
 }
 
 .message-content code {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2px 4px;
+  background: #2d2d2d;
+  color: #f8f8f2;
+  padding: 3px 6px;
   border-radius: 4px;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+  font-size: 12px;
+  border: 1px solid #444;
+  font-weight: 500;
+}
+
+.message-content pre {
+  background: #2d2d2d;
+  color: #f8f8f2;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 8px 0;
+  overflow-x: auto;
+  border: 1px solid #444;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
   font-size: 13px;
+  line-height: 1.4;
+}
+
+.message-content pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+/* Style command output blocks */
+.message-content pre.command-output {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #e6e6e6;
+}
+
+/* Style specific command types */
+.message-content code.command {
+  background: #2a4d3a;
+  color: #90ee90;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', monospace;
+  font-size: 13px;
+  border: 1px solid #4a7c59;
+  font-weight: 500;
+  display: inline-block;
+  margin: 2px 0;
+}
+
+.message-content code.error {
+  background: #4d2a2a;
+  color: #ff9999;
+  border: 1px solid #7c4a4a;
+}
+
+.message-content code.warning {
+  background: #4d4d2a;
+  color: #ffff99;
+  border: 1px solid #7c7c4a;
 }
 
 /* File Changes */
@@ -1014,10 +1096,20 @@
   border-bottom: 1px solid var(--border);
   background: var(--surface);
   gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  flex-shrink: 0;
 }
 
 .tab-agent-header .runner-name-input {
   flex: 1;
+}
+
+.tab-agent-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* Update colors for tab version to match app theme */
@@ -1035,4 +1127,13 @@
 .ai-agent-interface.ai-agent-in-tab .chat-input-form {
   background: var(--surface);
   border-top: 1px solid var(--border);
+}
+
+/* Ensure tab-agent-header stays visible in tab mode */
+.ai-agent-interface.ai-agent-in-tab .tab-agent-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }

@@ -303,6 +303,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
   const [isSaving, setIsSaving] = useState(false)
   const [rightPanelMode, setRightPanelMode] = useState<'preview' | 'files'>('preview')
   const [previewRefreshKey, setPreviewRefreshKey] = useState(0)
+  const [isDiscarding, setIsDiscarding] = useState(false)
+  const [isNewRunner, setIsNewRunner] = useState(true)
 
   const claudeService = useRef<ClaudeAPIService | null>(null)
   const fileManager = useRef<FileManagerService | null>(null)
@@ -331,6 +333,61 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
 
   const refreshPreview = () => {
     setPreviewRefreshKey(prev => prev + 1)
+  }
+
+  const handleDiscard = async () => {
+    if (!runnerName || !isNewRunner) {
+      return
+    }
+
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to discard "${runnerName}"?\n\nThis will permanently delete the runner and all its files. This action cannot be undone.`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setIsDiscarding(true)
+    try {
+      if (fileManager.current) {
+        await fileManager.current.deleteRunner(runnerName)
+
+        // Show success message
+        const discardMessage: Message = {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `🗑️ Runner "${runnerName}" has been discarded and deleted.`,
+          timestamp: new Date()
+        }
+        setMessages(prev => [...prev, discardMessage])
+
+        // Clear the current state
+        setRunnerName('')
+        setCurrentFiles({})
+        setActiveFile(null)
+        setIsNewRunner(true)
+
+        // Close the AI Agent after a short delay
+        setTimeout(() => {
+          if (onClose) {
+            onClose()
+          }
+        }, 1500)
+      }
+    } catch (error) {
+      console.error('Error discarding runner:', error)
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `❌ Error discarding runner: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        timestamp: new Date()
+      }
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsDiscarding(false)
+    }
   }
 
   const handleSendMessage = async (content: string) => {
@@ -409,10 +466,12 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
               // Update runner name to the sanitized version
               setRunnerName(savedName)
               currentRunnerName = savedName
+              // Keep isNewRunner as true since this is auto-save of a new runner
             } else {
               // Already have a runner - update the existing one
               savedName = await fileManager.current.updateRunner(runnerName, newFiles)
               currentRunnerName = runnerName
+              // Keep isNewRunner state as-is since we're updating existing
             }
 
             console.log(`${runnerName ? 'Updated' : 'Created'} runner: ${savedName}`)
@@ -554,7 +613,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
       const successMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: `✅ Runner "${savedName}" has been successfully created and saved!\n\nYou can now build it by running:\n\`\`\`\nnpm run build\n\`\`\``,
+        content: `✅ Runner "${savedName}" has been successfully created and saved!`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, successMessage])
@@ -568,19 +627,15 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
             id: Date.now().toString(),
             role: 'assistant',
             content: buildResult.success
-              ? `🎉 Runner built successfully! It's now ready to use in Viberunner.\n\n${buildResult.output}`
+              ? `🎉 Runner built successfully!`
               : `⚠️ Runner saved but build failed. You may need to fix some issues:\n\n${buildResult.error}`,
             timestamp: new Date()
           }
 
           setMessages(prev => [...prev, buildMessage])
 
-          // If build was successful, refresh the preview
-          if (buildResult.success) {
-            setTimeout(() => {
-              refreshPreview()
-            }, 1000)
-          }
+          // Don't auto-close the interface - let user decide when to close
+
         } catch (buildError) {
           console.error('Auto-build failed:', buildError)
         }
@@ -666,10 +721,17 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
           <div className="ai-agent-actions">
             <button
               onClick={handleSaveRunner}
-              disabled={Object.keys(currentFiles).length === 0 || isSaving}
+              disabled={Object.keys(currentFiles).length === 0 || isSaving || isDiscarding}
               className="save-btn"
             >
-              {isSaving ? 'Saving...' : 'Save & Build Runner'}
+              {isSaving ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              onClick={handleDiscard}
+              disabled={isSaving || isDiscarding}
+              className="discard-btn"
+            >
+              {isDiscarding ? 'Discarding...' : 'Discard'}
             </button>
             <button onClick={onClose} className="close-btn">
               ✕
@@ -690,13 +752,22 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
                   onChange={(e) => setRunnerName(e.target.value)}
                 />
               </div>
-              <button
-                onClick={handleSaveRunner}
-                disabled={Object.keys(currentFiles).length === 0 || isSaving}
-                className="save-btn"
-              >
-                {isSaving ? 'Saving...' : 'Save & Build Runner'}
-              </button>
+              <div className="tab-agent-actions">
+                <button
+                  onClick={handleSaveRunner}
+                  disabled={Object.keys(currentFiles).length === 0 || isSaving || isDiscarding}
+                  className="save-btn"
+                >
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={handleDiscard}
+                  disabled={isSaving || isDiscarding}
+                  className="discard-btn"
+                >
+                  {isDiscarding ? 'Discarding...' : 'Discard'}
+                </button>
+              </div>
             </div>
           )}
           <ChatInterface

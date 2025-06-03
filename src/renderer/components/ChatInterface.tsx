@@ -53,12 +53,23 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }
 
   const formatMessage = (content: string) => {
-    // Convert markdown-like formatting
-    return content
+    // First handle code blocks (triple backticks) before inline code
+    let formatted = content
+      // Handle code blocks with language specification
+      .replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+        const className = lang ? ` class="language-${lang}"` : ''
+        return `<pre${className}><code>${code.trim()}</code></pre>`
+      })
+      // Handle inline code (single backticks)
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      // Handle bold text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Handle italic text
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`(.*?)`/g, '<code>$1</code>')
+      // Handle line breaks
       .replace(/\n/g, '<br>')
+
+    return formatted
   }
 
   const formatTimestamp = (date: Date) => {
