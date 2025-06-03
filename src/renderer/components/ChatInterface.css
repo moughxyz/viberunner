@@ -349,6 +349,7 @@
 .loading-content {
   flex: 1;
   max-width: 32rem;
+  text-align: left;
 }
 
 .loading-bubble {
