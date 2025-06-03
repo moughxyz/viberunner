@@ -484,9 +484,9 @@ body {
 }
 
 .unified-content {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 4rem var(--space-8) var(--space-6) var(--space-8);
+  width: 100%;
+  margin: 0;
+  padding: 4rem clamp(var(--space-8), 15vw, 20rem) var(--space-6) clamp(var(--space-8), 15vw, 20rem);
   display: flex;
   flex-direction: column;
   gap: var(--space-8);
@@ -1431,8 +1431,8 @@ body {
 /* Responsive layout */
 @media (max-width: 768px) {
   .unified-content {
-    max-width: 100%;
-    padding: var(--space-4);
+    width: 100%;
+    padding: var(--space-4) var(--space-4) var(--space-4) var(--space-4);
   }
 
   .vr-content-area:has(.vr-new-tab-unified) {
