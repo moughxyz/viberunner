@@ -1363,9 +1363,10 @@ const App: React.FC = () => {
   }
 
   // Handler for build prompt submission
-  const handleBuildPromptSubmit = (prompt: string) => {
-    // TODO: Implement build prompt handling logic
+  const handleBuildPromptSubmit = async (prompt: string) => {
+    // Open AI Agent with the build prompt
     console.log("App received build prompt:", prompt)
+    await openAIAgentInNewTab()
   }
 
   // Function to open AI Agent in a new tab
@@ -1656,7 +1657,7 @@ const App: React.FC = () => {
               <div className="vr-new-tab-unified">
                 <div className="unified-content">
                   {/* Build Prompt Component */}
-                  <BuildPrompt onSubmit={handleBuildPromptSubmit} onOpenAIAgent={openAIAgentInNewTab} />
+                  <BuildPrompt onSubmit={handleBuildPromptSubmit} />
 
                   {/* Existing runners section - show only if runners are available */}
                   {runners.length > 0 && (

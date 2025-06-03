@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 
 interface BuildPromptProps {
   onSubmit?: (prompt: string) => void;
-  onOpenAIAgent?: () => void;
 }
 
-const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit, onOpenAIAgent }) => {
+const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit }) => {
   const [buildPrompt, setBuildPrompt] = useState<string>('');
 
   const handleSubmit = () => {
     if (buildPrompt.trim()) {
       onSubmit?.(buildPrompt.trim());
-      // TODO: Handle build prompt submission
-      console.log('Build prompt submitted:', buildPrompt);
+      setBuildPrompt(''); // Clear input after submit
     }
   };
 
@@ -22,56 +20,38 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit, onOpenAIAgent }) =>
     }
   };
 
-  const handleOpenAIAgent = () => {
-    onOpenAIAgent?.();
-  };
-
   return (
-    <div className="ai-agent-prompt">
-      <div className="prompt-header">
-        <h2 className="prompt-title">What do you want to build today?</h2>
-        <p className="prompt-subtitle">Describe your idea and I'll help you create it</p>
+    <div className="flex flex-col items-center justify-center p-8">
+      <div className="text-center mb-12 max-w-2xl">
+        <h2 className="text-4xl font-bold text-white mb-4">
+          What do you want to build today?
+        </h2>
+        <p className="text-xl text-gray-300">
+          Describe your idea and I'll help you create it
+        </p>
       </div>
-      <div className="prompt-input-container">
+
+      <div className="relative w-full max-w-2xl">
         <input
           type="text"
-          className="prompt-input"
           placeholder="I want to build..."
           value={buildPrompt}
           onChange={(e) => setBuildPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
+          className="w-full px-6 py-4 pr-14 text-lg bg-black border border-gray-500 rounded-full text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
         />
-        <div className="prompt-actions">
-          <button
-            className="prompt-submit-btn secondary"
-            onClick={handleSubmit}
-          >
-            Quick Build
-          </button>
-          <button
-            className="prompt-submit-btn primary"
-            onClick={handleOpenAIAgent}
-          >
-            Build with AI Agent
-          </button>
-        </div>
-      </div>
 
-      <div className="build-options">
-        <div className="build-option">
-          <div className="option-icon">🚀</div>
-          <div className="option-content">
-            <h3>Quick Build</h3>
-            <p>Get a basic runner structure instantly based on your description</p>
-          </div>
-        </div>
-        <div className="build-option highlighted">
-          <div className="option-icon">🤖</div>
-          <div className="option-content">
-            <h3>AI Agent Builder</h3>
-            <p>Interactive conversation with AI to build complex, customized runners</p>
-          </div>
-        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={!buildPrompt.trim()}
+          className={`absolute right-2 top-1/2 transform -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-semibold transition-all duration-200 ${
+            buildPrompt.trim()
+              ? 'bg-blue-500 hover:bg-blue-600 hover:scale-105 cursor-pointer'
+              : 'bg-gray-500 cursor-not-allowed opacity-50'
+          }`}
+        >
+          ↗
+        </button>
       </div>
     </div>
   );
