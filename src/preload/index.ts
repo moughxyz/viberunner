@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 
-// Expose protected methods that allow the renderer process to use
-// the ipcRenderer without exposing the entire object
+Expose protected methods that allow the renderer process to use
+the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld(
   'api', {
     getApps: () => ipcRenderer.invoke('get-apps'),
@@ -15,11 +15,11 @@ contextBridge.exposeInMainWorld(
     launchStandaloneApp: (id: string) => ipcRenderer.invoke('launch-standalone-app', id),
     // Startup app management
     getStartupApps: () => ipcRenderer.invoke('get-startup-apps'),
-    setStartupApp: (appId: string, config: { enabled: boolean; tabOrder: number }) =>
-      ipcRenderer.invoke('set-startup-app', appId, config),
-    removeStartupApp: (appId: string) => ipcRenderer.invoke('remove-startup-app', appId),
+    setStartupApp: (runnerId: string, config: { enabled: boolean; tabOrder: number }) =>
+      ipcRenderer.invoke('set-startup-app', runnerId, config),
+    removeStartupApp: (runnerId: string) => ipcRenderer.invoke('remove-startup-app', runnerId),
     // Listen for startup app launch events from main process
-    onLaunchStartupApp: (callback: (event: any, data: { appId: string; config: any }) => void) =>
+    onLaunchStartupApp: (callback: (event: any, data: { runnerId: string; config: any }) => void) =>
       ipcRenderer.on('launch-startup-app', callback),
     removeStartupAppListeners: () => ipcRenderer.removeAllListeners('launch-startup-app'),
     // Autoupdate methods

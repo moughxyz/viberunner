@@ -225,7 +225,7 @@ Viberunner features a Chrome-style tabbed interface that allows users to work wi
 Cleanup:
 
 ```javascript
-function MyRunner({ tabId, appId, fileInput }) {
+function MyRunner({ tabId, runnerId, fileInput }) {
   // Each tab has a unique tabId for cleanup registration
   React.useEffect(() => {
     const cleanup = () => {
@@ -277,19 +277,19 @@ Access preferences through the global `api` object:
 
 ```javascript
 // Get all preferences for your app
-const prefs = api.getRunnerPreferences(appId)
+const prefs = api.getRunnerPreferences(runnerId)
 
 // Get a specific preference with default fallback
-const theme = api.getRunnerPreference(appId, "theme", "light")
+const theme = api.getRunnerPreference(runnerId, "theme", "light")
 
 // Set a single preference
-api.updateRunnerPreference(appId, "theme", "dark")
+api.updateRunnerPreference(runnerId, "theme", "dark")
 
 // Replace all preferences
-api.setRunnerPreferences(appId, { theme: "dark", fontSize: 16 })
+api.setRunnerPreferences(runnerId, { theme: "dark", fontSize: 16 })
 
 // Remove a preference
-api.removeRunnerPreference(appId, "oldSetting")
+api.removeRunnerPreference(runnerId, "oldSetting")
 ```
 
 ### Enhanced Preferences Helper
@@ -297,9 +297,9 @@ api.removeRunnerPreference(appId, "oldSetting")
 For easier usage, create a preferences helper with your app ID:
 
 ```javascript
-function MyRunner({ appId }) {
+function MyRunner({ runnerId }) {
   // Create preferences helper
-  const prefs = window.createPreferencesHelper(appId)
+  const prefs = window.createPreferencesHelper(runnerId)
 
   // Type-safe getters with defaults
   const theme = prefs.getString("theme", "light")
@@ -325,7 +325,7 @@ function MyRunner({ appId }) {
 #### **Type-Safe Getters**
 
 ```javascript
-const prefs = window.createPreferencesHelper(appId)
+const prefs = window.createPreferencesHelper(runnerId)
 
 // String with default
 const theme = prefs.getString("theme", "light")
@@ -378,8 +378,8 @@ prefs.clear()
 #### **Theme Persistence**
 
 ```javascript
-function ThemedRunner({ appId }) {
-  const prefs = window.createPreferencesHelper(appId)
+function ThemedRunner({ runnerId }) {
+  const prefs = window.createPreferencesHelper(runnerId)
   const [theme, setTheme] = React.useState(prefs.getString("theme", "light"))
 
   const toggleTheme = () => {
@@ -434,7 +434,7 @@ interface RunnerProps {
   }
   container: HTMLElement // Mount point
   tabId: string // Unique tab identifier for cleanup
-  appId: string // Runner identifier for preferences access
+  runnerId: string // Runner identifier for preferences access
 }
 ```
 
@@ -444,7 +444,7 @@ interface RunnerProps {
 interface RunnerProps {
   container: HTMLElement // Mount point
   tabId: string // Unique tab identifier for cleanup
-  appId: string // Runner identifier for preferences access
+  runnerId: string // Runner identifier for preferences access
 }
 ```
 

@@ -25,6 +25,7 @@ const UpdateNotification = forwardRef<UpdateNotificationRef, UpdateNotificationP
     // Get current version
     const getCurrentVersion = async () => {
       try {
+        console.log(' getCurrentVersion > window.api:', window.api)
         const result = await window.api.getAppVersion();
         if (result.success) {
           setCurrentVersion(result.version);

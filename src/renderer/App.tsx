@@ -1,17 +1,20 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { createRoot } from 'react-dom/client';
-import UpdateNotification, { UpdateNotificationRef } from './components/UpdateNotification';
-import BuildPrompt from './components/BuildPrompt';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useEffect, useState, useRef } from "react"
+import { createRoot } from "react-dom/client"
+import UpdateNotification, {
+  UpdateNotificationRef,
+} from "./components/UpdateNotification"
+import BuildPrompt from "./components/BuildPrompt"
 
 // Direct Node.js access with full integration
-const { ipcRenderer } = require('electron');
-const fs = require('fs');
-const path = require('path');
-const mime = require('mime-types');
+const { ipcRenderer } = require("electron")
+const fs = require("fs")
+const path = require("path")
+const mime = require("mime-types")
 
-// Expose React and ReactDOM globally for apps
-(window as any).React = React;
-(window as any).ReactDOM = { createRoot };
+// Expose React and ReactDOM globally for runners
+;(window as any).React = React
+;(window as any).ReactDOM = { createRoot }
 
 // Simplified API - only direct operations, no IPC
 const api = {
@@ -19,86 +22,101 @@ const api = {
   stat: (filePath: string) => fs.statSync(filePath),
   readDir: (dirPath: string) => fs.readdirSync(dirPath),
 
-  // User Preferences API for apps
-  getAppPreferences: (appId: string) => {
+  // User Preferences API for runners
+  getAppPreferences: (runnerId: string) => {
     try {
-      const APPS_DIR = getAppsDirectory();
-      const appPath = path.join(APPS_DIR, appId);
-      const metadataPath = path.join(appPath, 'viz.json');
+      const APPS_DIR = getRunnersDirectory()
+      const appPath = path.join(APPS_DIR, runnerId)
+      const metadataPath = path.join(appPath, "viz.json")
 
       if (!fs.existsSync(metadataPath)) {
-        console.warn(`No viz.json found for app ${appId}`);
-        return {};
+        console.warn(`No viz.json found for app ${runnerId}`)
+        return {}
       }
 
-      const metadataContent = fs.readFileSync(metadataPath, 'utf8');
-      const metadata = JSON.parse(metadataContent);
+      const metadataContent = fs.readFileSync(metadataPath, "utf8")
+      const metadata = JSON.parse(metadataContent)
 
-      return metadata.userPreferences || {};
+      return metadata.userPreferences || {}
     } catch (error) {
-      console.error(`Failed to read preferences for app ${appId}:`, error);
-      return {};
+      console.error(`Failed to read preferences for app ${runnerId}:`, error)
+      return {}
     }
   },
 
-  setAppPreferences: (appId: string, preferences: any) => {
+  setAppPreferences: (runnerId: string, preferences: any) => {
     try {
-      const APPS_DIR = getAppsDirectory();
-      const appPath = path.join(APPS_DIR, appId);
-      const metadataPath = path.join(appPath, 'viz.json');
+      const APPS_DIR = getRunnersDirectory()
+      const appPath = path.join(APPS_DIR, runnerId)
+      const metadataPath = path.join(appPath, "viz.json")
 
       if (!fs.existsSync(metadataPath)) {
-        throw new Error(`No viz.json found for app ${appId}`);
+        throw new Error(`No viz.json found for app ${runnerId}`)
       }
 
       // Read current metadata
-      const metadataContent = fs.readFileSync(metadataPath, 'utf8');
-      const metadata = JSON.parse(metadataContent);
+      const metadataContent = fs.readFileSync(metadataPath, "utf8")
+      const metadata = JSON.parse(metadataContent)
 
       // Update preferences
-      metadata.userPreferences = preferences;
+      metadata.userPreferences = preferences
 
       // Write back to file with pretty formatting
-      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), 'utf8');
+      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), "utf8")
 
-      console.log(`Updated preferences for app ${appId}`);
-      return true;
+      console.log(`Updated preferences for app ${runnerId}`)
+      return true
     } catch (error) {
-      console.error(`Failed to write preferences for app ${appId}:`, error);
-      return false;
+      console.error(`Failed to write preferences for app ${runnerId}:`, error)
+      return false
     }
   },
 
-  updateAppPreference: (appId: string, key: string, value: any) => {
+  updateAppPreference: (runnerId: string, key: string, value: any) => {
     try {
-      const currentPreferences = api.getAppPreferences(appId);
-      const updatedPreferences = { ...currentPreferences, [key]: value };
-      return api.setAppPreferences(appId, updatedPreferences);
+      const currentPreferences = api.getAppPreferences(runnerId)
+      const updatedPreferences = { ...currentPreferences, [key]: value }
+      return api.setAppPreferences(runnerId, updatedPreferences)
     } catch (error) {
-      console.error(`Failed to update preference ${key} for app ${appId}:`, error);
-      return false;
+      console.error(
+        `Failed to update preference ${key} for app ${runnerId}:`,
+        error
+      )
+      return false
     }
   },
 
-  removeAppPreference: (appId: string, key: string) => {
+  removeAppPreference: (runnerId: string, key: string) => {
     try {
-      const currentPreferences = api.getAppPreferences(appId);
-      const updatedPreferences = { ...currentPreferences };
-      delete updatedPreferences[key];
-      return api.setAppPreferences(appId, updatedPreferences);
+      const currentPreferences = api.getAppPreferences(runnerId)
+      const updatedPreferences = { ...currentPreferences }
+      delete updatedPreferences[key]
+      return api.setAppPreferences(runnerId, updatedPreferences)
     } catch (error) {
-      console.error(`Failed to remove preference ${key} for app ${appId}:`, error);
-      return false;
+      console.error(
+        `Failed to remove preference ${key} for app ${runnerId}:`,
+        error
+      )
+      return false
     }
   },
 
-  getAppPreference: (appId: string, key: string, defaultValue: any = null) => {
+  getAppPreference: (
+    runnerId: string,
+    key: string,
+    defaultValue: any = null
+  ) => {
     try {
-      const preferences = api.getAppPreferences(appId);
-      return Object.prototype.hasOwnProperty.call(preferences, key) ? preferences[key] : defaultValue;
+      const preferences = api.getAppPreferences(runnerId)
+      return Object.prototype.hasOwnProperty.call(preferences, key)
+        ? preferences[key]
+        : defaultValue
     } catch (error) {
-      console.error(`Failed to get preference ${key} for app ${appId}:`, error);
-      return defaultValue;
+      console.error(
+        `Failed to get preference ${key} for app ${runnerId}:`,
+        error
+      )
+      return defaultValue
     }
   },
 
@@ -108,724 +126,810 @@ const api = {
 
   // Exposed modules for advanced usage
   fs: fs,
-  require: require
-};
+  require: require,
+}
 
-// Make API available globally for apps
-(window as any).api = api;
+// Make API available globally for runners
+;(window as any).api = api
 
 // Enhanced preferences helper for easier app usage
-(window as any).createPreferencesHelper = (appId: string) => {
+;(window as any).createPreferencesHelper = (runnerId: string) => {
   return {
-    get: (key: string, defaultValue: any = null) => api.getAppPreference(appId, key, defaultValue),
-    set: (key: string, value: any) => api.updateAppPreference(appId, key, value),
-    remove: (key: string) => api.removeAppPreference(appId, key),
-    getAll: () => api.getAppPreferences(appId),
-    setAll: (preferences: Record<string, any>) => api.setAppPreferences(appId, preferences),
-    clear: () => api.setAppPreferences(appId, {}),
+    get: (key: string, defaultValue: any = null) =>
+      api.getAppPreference(runnerId, key, defaultValue),
+    set: (key: string, value: any) =>
+      api.updateAppPreference(runnerId, key, value),
+    remove: (key: string) => api.removeAppPreference(runnerId, key),
+    getAll: () => api.getAppPreferences(runnerId),
+    setAll: (preferences: Record<string, any>) =>
+      api.setAppPreferences(runnerId, preferences),
+    clear: () => api.setAppPreferences(runnerId, {}),
 
     // Convenience methods for common data types
-    getString: (key: string, defaultValue: string = '') => {
-      const value = api.getAppPreference(appId, key, defaultValue);
-      return typeof value === 'string' ? value : defaultValue;
+    getString: (key: string, defaultValue: string = "") => {
+      const value = api.getAppPreference(runnerId, key, defaultValue)
+      return typeof value === "string" ? value : defaultValue
     },
     getNumber: (key: string, defaultValue: number = 0) => {
-      const value = api.getAppPreference(appId, key, defaultValue);
-      return typeof value === 'number' ? value : defaultValue;
+      const value = api.getAppPreference(runnerId, key, defaultValue)
+      return typeof value === "number" ? value : defaultValue
     },
     getBoolean: (key: string, defaultValue: boolean = false) => {
-      const value = api.getAppPreference(appId, key, defaultValue);
-      return typeof value === 'boolean' ? value : defaultValue;
+      const value = api.getAppPreference(runnerId, key, defaultValue)
+      return typeof value === "boolean" ? value : defaultValue
     },
     getObject: (key: string, defaultValue: any = {}) => {
-      const value = api.getAppPreference(appId, key, defaultValue);
-      return (typeof value === 'object' && value !== null) ? value : defaultValue;
+      const value = api.getAppPreference(runnerId, key, defaultValue)
+      return typeof value === "object" && value !== null ? value : defaultValue
     },
 
     // Array helpers
     getArray: (key: string, defaultValue: any[] = []) => {
-      const value = api.getAppPreference(appId, key, defaultValue);
-      return Array.isArray(value) ? value : defaultValue;
+      const value = api.getAppPreference(runnerId, key, defaultValue)
+      return Array.isArray(value) ? value : defaultValue
     },
     pushToArray: (key: string, item: any) => {
-      const currentArray = api.getAppPreference(appId, key, []);
-      const newArray = Array.isArray(currentArray) ? [...currentArray, item] : [item];
-      return api.updateAppPreference(appId, key, newArray);
+      const currentArray = api.getAppPreference(runnerId, key, [])
+      const newArray = Array.isArray(currentArray)
+        ? [...currentArray, item]
+        : [item]
+      return api.updateAppPreference(runnerId, key, newArray)
     },
     removeFromArray: (key: string, item: any) => {
-      const currentArray = api.getAppPreference(appId, key, []);
+      const currentArray = api.getAppPreference(runnerId, key, [])
       if (Array.isArray(currentArray)) {
-        const newArray = currentArray.filter(existing => existing !== item);
-        return api.updateAppPreference(appId, key, newArray);
+        const newArray = currentArray.filter((existing) => existing !== item)
+        return api.updateAppPreference(runnerId, key, newArray)
       }
-      return false;
-    }
-  };
-};
+      return false
+    },
+  }
+}
 
 // App cleanup system
-const appCleanupCallbacks = new Map<string, (() => void)[]>();
+const appCleanupCallbacks = new Map<string, (() => void)[]>()
 
-// Global cleanup registration function for apps
+// Global cleanup registration function for runners
 const registerCleanup = (tabId: string, cleanupFn: () => void) => {
   if (!appCleanupCallbacks.has(tabId)) {
-    appCleanupCallbacks.set(tabId, []);
+    appCleanupCallbacks.set(tabId, [])
   }
-  appCleanupCallbacks.get(tabId)!.push(cleanupFn);
-};
+  appCleanupCallbacks.get(tabId)!.push(cleanupFn)
+}
 
 // Global cleanup execution function
 const executeCleanup = (tabId: string) => {
-  const callbacks = appCleanupCallbacks.get(tabId);
+  const callbacks = appCleanupCallbacks.get(tabId)
   if (callbacks) {
-    console.log(`Executing ${callbacks.length} cleanup callbacks for tab ${tabId}`);
-    callbacks.forEach(callback => {
+    console.log(
+      `Executing ${callbacks.length} cleanup callbacks for tab ${tabId}`
+    )
+    callbacks.forEach((callback) => {
       try {
-        callback();
+        callback()
       } catch (error) {
-        console.error('Error in app cleanup callback:', error);
+        console.error("Error in app cleanup callback:", error)
       }
-    });
-    appCleanupCallbacks.delete(tabId);
+    })
+    appCleanupCallbacks.delete(tabId)
   }
-};
+}
 
-// Make cleanup functions available globally for apps
-(window as any).registerCleanup = registerCleanup;
+// Make cleanup functions available globally for runners
+;(window as any).registerCleanup = registerCleanup
 
 // Constants
-const getAppsDirectory = () => {
-  // Use the hardcoded Apps directory
+const getRunnersDirectory = () => {
+  // Use the hardcoded Runners directory
   try {
-    const { app } = require('@electron/remote');
-    const path = require('path');
+    const { app } = require("@electron/remote")
+    const path = require("path")
 
-    const appsDir = path.join(app.getPath('userData'), 'Apps');
-    console.log('Using hardcoded Apps directory:', appsDir);
-    return appsDir;
+    const runnersDir = path.join(app.getPath("userData"), "Runners")
+    console.log("Using hardcoded Runners directory:", runnersDir)
+    return runnersDir
   } catch (error) {
-    console.warn('Could not access app.getPath:', error);
+    console.warn("Could not access runner.getPath:", error)
     // Fallback for development or if remote is not available
-    const userDataPath = require('os').homedir();
-    const fallback = path.join(userDataPath, '.viberunner', 'Apps');
-    console.log('Using fallback Apps directory:', fallback);
-    return fallback;
+    const userDataPath = require("os").homedir()
+    const fallback = path.join(userDataPath, ".viberunner", "Runners")
+    console.log("Using fallback Runners directory:", fallback)
+    return fallback
   }
-};
+}
 
 // Helper functions for direct file operations
 async function getMimetype(filePath: string): Promise<string> {
   try {
-    const stats = fs.statSync(filePath);
+    const stats = fs.statSync(filePath)
     if (stats.isDirectory()) {
-      return 'inode/directory';
+      return "inode/directory"
     }
   } catch (error) {
     // File doesn't exist or can't be accessed
   }
 
-  const mimetype = mime.lookup(filePath);
-  return mimetype || 'application/octet-stream';
+  const mimetype = mime.lookup(filePath)
+  return mimetype || "application/octet-stream"
 }
 
 interface FileAnalysis {
-  path: string;
-  filename: string;
-  mimetype: string;
-  content: string;
-  size: number;
-  isJson?: boolean;
-  jsonContent?: any;
+  path: string
+  filename: string
+  mimetype: string
+  content: string
+  size: number
+  isJson?: boolean
+  jsonContent?: any
 }
 
 async function analyzeFile(filePath: string): Promise<FileAnalysis> {
-  const stats = fs.statSync(filePath);
-  const filename = path.basename(filePath);
-  const mimetype = await getMimetype(filePath);
+  const stats = fs.statSync(filePath)
+  const filename = path.basename(filePath)
+  const mimetype = await getMimetype(filePath)
 
   // Simplified analysis - just basic metadata for matching
   return {
     path: filePath,
     filename,
     mimetype,
-    content: '', // Don't read content here anymore
+    content: "", // Don't read content here anymore
     size: stats.size,
-    isJson: mimetype === 'application/json' || filename.endsWith('.json'),
-    jsonContent: null // Don't parse JSON here anymore
-  };
+    isJson: mimetype === "application/json" || filename.endsWith(".json"),
+    jsonContent: null, // Don't parse JSON here anymore
+  }
 }
 
-async function loadApps(): Promise<AppConfig[]> {
-  const APPS_DIR = getAppsDirectory();
-  console.log('loadApps: Looking for apps in:', APPS_DIR);
+async function loadRunners(): Promise<RunnerConfig[]> {
+  const APPS_DIR = getRunnersDirectory()
+  console.log("loadRunners: Looking for runners in:", APPS_DIR)
 
   if (!fs.existsSync(APPS_DIR)) {
-    console.log('loadApps: Directory does not exist, creating it');
-    fs.mkdirSync(APPS_DIR, { recursive: true });
-    return [];
+    console.log("loadRunners: Directory does not exist, creating it")
+    fs.mkdirSync(APPS_DIR, { recursive: true })
+    return []
   }
 
   try {
-    const dirContents = fs.readdirSync(APPS_DIR);
-    console.log('loadApps: Directory contents:', dirContents);
+    const dirContents = fs.readdirSync(APPS_DIR)
+    console.log("loadRunners: Directory contents:", dirContents)
 
     const directories = dirContents.filter((dir: string) => {
-      const fullPath = path.join(APPS_DIR, dir);
-      const isDir = fs.statSync(fullPath).isDirectory();
-      console.log(`loadApps: ${dir} is directory: ${isDir}`);
-      return isDir;
-    });
-    console.log('loadApps: Found directories:', directories);
-
-    const apps = directories.map((dir: string) => {
-      const appPath = path.join(APPS_DIR, dir);
-      const metadataPath = path.join(appPath, 'viz.json');
-      console.log(`loadApps: Checking for metadata at: ${metadataPath}`);
-
-      if (!fs.existsSync(metadataPath)) {
-        console.log(`loadApps: No viz.json found for ${dir}`);
-        return null;
-      }
-
-      try {
-        const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
-        const metadata = JSON.parse(metadataContent);
-        console.log(`loadApps: Successfully loaded metadata for ${dir}:`, metadata);
-        return {
-          ...metadata,
-          id: dir,
-        };
-      } catch (parseError) {
-        console.error(`Error parsing metadata for ${dir}:`, parseError);
-        return null;
-      }
+      const fullPath = path.join(APPS_DIR, dir)
+      const isDir = fs.statSync(fullPath).isDirectory()
+      console.log(`loadRunners: ${dir} is directory: ${isDir}`)
+      return isDir
     })
-    .filter(Boolean) as AppConfig[];
+    console.log("loadRunners: Found directories:", directories)
 
-    console.log('loadApps: Final apps array:', apps);
-    return apps;
+    const runners = directories
+      .map((dir: string) => {
+        const appPath = path.join(APPS_DIR, dir)
+        const metadataPath = path.join(appPath, "viz.json")
+        console.log(`loadRunners: Checking for metadata at: ${metadataPath}`)
+
+        if (!fs.existsSync(metadataPath)) {
+          console.log(`loadRunners: No viz.json found for ${dir}`)
+          return null
+        }
+
+        try {
+          const metadataContent = fs.readFileSync(metadataPath, "utf-8")
+          const metadata = JSON.parse(metadataContent)
+          console.log(
+            `loadRunners: Successfully loaded metadata for ${dir}:`,
+            metadata
+          )
+          return {
+            ...metadata,
+            id: dir,
+          }
+        } catch (parseError) {
+          console.error(`Error parsing metadata for ${dir}:`, parseError)
+          return null
+        }
+      })
+      .filter(Boolean) as RunnerConfig[]
+
+    console.log("loadRunners: Final runners array:", runners)
+    return runners
   } catch (error) {
-    console.error('Error in loadApps function:', error);
-    throw error;
+    console.error("Error in loadRunners function:", error)
+    throw error
   }
 }
 
 async function loadApp(id: string) {
-  const APPS_DIR = getAppsDirectory();
-  const appPath = path.join(APPS_DIR, id);
-  const bundlePath = path.join(appPath, 'dist', 'bundle.iife.js');
+  const APPS_DIR = getRunnersDirectory()
+  const appPath = path.join(APPS_DIR, id)
+  const bundlePath = path.join(appPath, "dist", "bundle.iife.js")
 
   if (!fs.existsSync(bundlePath)) {
-    throw new Error(`Bundle not found: ${bundlePath}`);
+    throw new Error(`Bundle not found: ${bundlePath}`)
   }
 
-  const bundleContent = fs.readFileSync(bundlePath, 'utf-8');
+  const bundleContent = fs.readFileSync(bundlePath, "utf-8")
 
   // Also load the metadata
-  const metadataPath = path.join(appPath, 'viz.json');
-  let config = null;
+  const metadataPath = path.join(appPath, "viz.json")
+  let config = null
   if (fs.existsSync(metadataPath)) {
-    const metadataContent = fs.readFileSync(metadataPath, 'utf-8');
-    config = JSON.parse(metadataContent);
+    const metadataContent = fs.readFileSync(metadataPath, "utf-8")
+    config = JSON.parse(metadataContent)
   }
 
-  return { bundleContent, config };
+  return { bundleContent, config }
 }
 
 interface FileInput {
-  path: string;
-  mimetype: string;
+  path: string
+  mimetype: string
 }
 
-interface AppConfig {
-  id: string;
-  name: string;
-  description: string;
-  version: string;
-  mimetypes: string[];
-  author: string;
-  standalone?: boolean; // Optional standalone property
-  icon?: string; // Custom icon path
-  userPreferences?: Record<string, any>; // User preferences storage
+interface RunnerConfig {
+  id: string
+  name: string
+  description: string
+  version: string
+  mimetypes: string[]
+  author: string
+  standalone?: boolean // Optional standalone property
+  icon?: string // Custom icon path
+  userPreferences?: Record<string, any> // User preferences storage
 }
 
 interface OpenTab {
-  id: string;
-  app?: AppConfig; // Optional for new tab - represents the app/visualization
-  fileInput?: FileInput; // undefined for standalone apps and new tab
-  title: string;
-  type: 'file' | 'standalone' | 'newtab';
-  appData?: any; // Store the loaded app data for reloading
-  reactRoot?: any; // Store the React root for each tab
-  domContainer?: HTMLDivElement; // Store the DOM container for each tab
+  id: string
+  runner?: RunnerConfig // Optional for new tab - represents the app/visualization
+  fileInput?: FileInput // undefined for standalone runners and new tab
+  title: string
+  type: "file" | "standalone" | "newtab"
+  runnerData?: any // Store the loaded app data for reloading
+  reactRoot?: any // Store the React root for each tab
+  domContainer?: HTMLDivElement // Store the DOM container for each tab
 }
 
 // Helper function to get supported formats for a app
-const getSupportedFormats = (app: any): string => {
-  if (app.standalone) {
-    return 'Standalone utility';
+const getSupportedFormats = (runner: any): string => {
+  if (runner.standalone) {
+    return "Standalone utility"
   }
 
-  if (app.mimetypes && app.mimetypes.length > 0) {
-    return app.mimetypes.join(', ');
+  if (runner.mimetypes && runner.mimetypes.length > 0) {
+    return runner.mimetypes.join(", ")
   }
 
-  if (app.matchers && app.matchers.length > 0) {
-    const formats = new Set<string>();
+  if (runner.matchers && runner.matchers.length > 0) {
+    const formats = new Set<string>()
 
-    app.matchers.forEach((matcher: any) => {
-      if (matcher.type === 'mimetype' && matcher.mimetype) {
-        formats.add(matcher.mimetype);
-      } else if (matcher.type === 'filename' && matcher.pattern) {
-        formats.add(`*.${matcher.pattern.split('.').pop() || 'file'}`);
-      } else if (matcher.type === 'filename-contains' && matcher.substring) {
-        const ext = matcher.extension ? `.${matcher.extension}` : '';
-        formats.add(`*${matcher.substring}*${ext}`);
-      } else if (matcher.type === 'content-json') {
-        formats.add('JSON');
-      } else if (matcher.type === 'file-size') {
-        formats.add('Size-based');
+    runner.matchers.forEach((matcher: any) => {
+      if (matcher.type === "mimetype" && matcher.mimetype) {
+        formats.add(matcher.mimetype)
+      } else if (matcher.type === "filename" && matcher.pattern) {
+        formats.add(`*.${matcher.pattern.split(".").pop() || "file"}`)
+      } else if (matcher.type === "filename-contains" && matcher.substring) {
+        const ext = matcher.extension ? `.${matcher.extension}` : ""
+        formats.add(`*${matcher.substring}*${ext}`)
+      } else if (matcher.type === "content-json") {
+        formats.add("JSON")
+      } else if (matcher.type === "file-size") {
+        formats.add("Size-based")
       } else {
-        formats.add(matcher.type);
+        formats.add(matcher.type)
       }
-    });
+    })
 
-    return Array.from(formats).join(', ') || 'Enhanced matching';
+    return Array.from(formats).join(", ") || "Enhanced matching"
   }
 
-  return 'All files';
-};
+  return "All files"
+}
 
 const App: React.FC = () => {
-  const [apps, setApps] = useState<AppConfig[]>([]);
-  const [isLoadingApps, setIsLoadingApps] = useState(false);
+  const [runners, setRunners] = useState<RunnerConfig[]>([])
+  const [isLoadingRunners, setIsLoadingRunners] = useState(false)
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
-    { id: 'default-tab', title: 'New Tab', type: 'newtab' }
-  ]);
-  const [activeTabId, setActiveTabId] = useState('default-tab');
-  const [showAppSelection, setShowAppSelection] = useState(false);
-  const [availableApps, setAvailableApps] = useState<AppConfig[]>([]);
-  const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(null);
-  const [appIcons, setAppIcons] = useState<Record<string, string>>({});
-  const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
-  const [showSettings, setShowSettings] = useState(false);
+    { id: "default-tab", title: "New Tab", type: "newtab" },
+  ])
+  const [activeTabId, setActiveTabId] = useState("default-tab")
+  const [showAppSelection, setShowAppSelection] = useState(false)
+  const [availableRunners, setAvailableRunners] = useState<RunnerConfig[]>([])
+  const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(
+    null
+  )
+  const [appIcons, setAppIcons] = useState<Record<string, string>>({})
+  const [startupRunners, setStartupRunners] = useState<
+    Record<string, { enabled: boolean; tabOrder: number }>
+  >({})
+  const [showSettings, setShowSettings] = useState(false)
 
-  const appRootRef = useRef<HTMLDivElement>(null);
-  const hasLaunchedStartupApps = useRef<boolean>(false);
+  const appRootRef = useRef<HTMLDivElement>(null)
+  const hasLaunchedStartupRunners = useRef<boolean>(false)
 
   // Ref for update notification component
-  const updateNotificationRef = useRef<UpdateNotificationRef>(null);
+  const updateNotificationRef = useRef<UpdateNotificationRef>(null)
 
   // Get the currently active tab
-  const activeTab = openTabs.find(tab => tab.id === activeTabId);
+  const activeTab = openTabs.find((tab) => tab.id === activeTabId)
 
   // Tab drag and drop state
-  const [draggedTabId, setDraggedTabId] = useState<string | null>(null);
-  const [dragOverTabId, setDragOverTabId] = useState<string | null>(null);
+  const [draggedTabId, setDraggedTabId] = useState<string | null>(null)
+  const [dragOverTabId, setDragOverTabId] = useState<string | null>(null)
 
   // Function to load app icon
-  const loadAppIcon = async (app: AppConfig): Promise<string | null> => {
-    if (!app.icon) return null;
+  const loadRunnerIcon = async (
+    runner: RunnerConfig
+  ): Promise<string | null> => {
+    if (!runner.icon) return null
 
     // Check if already cached
-    if (appIcons[app.id]) {
-      return appIcons[app.id];
+    if (appIcons[runner.id]) {
+      return appIcons[runner.id]
     }
 
     try {
-      const APPS_DIR = getAppsDirectory();
-      const appDir = path.join(APPS_DIR, app.id);
-      const fullIconPath = path.join(appDir, app.icon);
+      const RUNNERS_DIR = getRunnersDirectory()
+      const runnerDir = path.join(RUNNERS_DIR, runner.id)
+      const fullIconPath = path.join(runnerDir, runner.icon)
 
       // Ensure the icon path is within the app directory
-      if (!fullIconPath.startsWith(appDir)) {
-        throw new Error('Icon path must be within app directory');
+      if (!fullIconPath.startsWith(runnerDir)) {
+        throw new Error("Icon path must be within app directory")
       }
 
       if (!fs.existsSync(fullIconPath)) {
-        throw new Error(`Icon file not found: ${app.icon}`);
+        throw new Error(`Icon file not found: ${runner.icon}`)
       }
 
       // Read the icon file as base64
-      const iconBuffer = fs.readFileSync(fullIconPath);
-      const mimeType = mime.lookup(fullIconPath) || 'application/octet-stream';
-      const iconData = `data:${mimeType};base64,${iconBuffer.toString('base64')}`;
+      const iconBuffer = fs.readFileSync(fullIconPath)
+      const mimeType = mime.lookup(fullIconPath) || "application/octet-stream"
+      const iconData = `data:${mimeType};base64,${iconBuffer.toString(
+        "base64"
+      )}`
 
-      setAppIcons(prev => ({ ...prev, [app.id]: iconData }));
-      return iconData;
+      setAppIcons((prev) => ({ ...prev, [runner.id]: iconData }))
+      return iconData
     } catch (error) {
-      console.error(`Failed to load icon for ${app.name}:`, error);
+      console.error(`Failed to load icon for ${runner.name}:`, error)
     }
 
-    return null;
-  };
+    return null
+  }
 
   // Load startup app preferences
-  const loadStartupApps = async () => {
+  const loadStartupRunners = async () => {
     try {
-      const { app } = require('@electron/remote');
-      const prefsPath = path.join(app.getPath('userData'), 'preferences.json');
+      const { app } = require("@electron/remote")
+      const prefsPath = path.join(app.getPath("userData"), "preferences.json")
 
       if (fs.existsSync(prefsPath)) {
-        const prefsContent = fs.readFileSync(prefsPath, 'utf8');
-        const prefs = JSON.parse(prefsContent);
-        setStartupApps(prefs.startupApps || {});
+        const prefsContent = fs.readFileSync(prefsPath, "utf8")
+        const prefs = JSON.parse(prefsContent)
+        setStartupRunners(prefs.startupRunners || {})
       }
     } catch (error) {
-      console.error('Error loading startup apps:', error);
+      console.error("Error loading startup runners:", error)
     }
-  };
+  }
 
   // Save startup app preferences
-  const saveStartupApps = (newStartupApps: Record<string, { enabled: boolean; tabOrder: number }>) => {
+  const saveStartupRunners = (
+    newStartupRunners: Record<string, { enabled: boolean; tabOrder: number }>
+  ) => {
     try {
-      const { app } = require('@electron/remote');
-      const prefsPath = path.join(app.getPath('userData'), 'preferences.json');
+      const { app } = require("@electron/remote")
+      const prefsPath = path.join(app.getPath("userData"), "preferences.json")
 
       // Load existing preferences
-      let prefs = {};
+      let prefs = {}
       if (fs.existsSync(prefsPath)) {
-        const prefsContent = fs.readFileSync(prefsPath, 'utf8');
-        prefs = JSON.parse(prefsContent);
+        const prefsContent = fs.readFileSync(prefsPath, "utf8")
+        prefs = JSON.parse(prefsContent)
       }
 
-      // Update startup apps
-      (prefs as any).startupApps = newStartupApps;
+      // Update startup runners
+      // eslint-disable-next-line no-extra-semi
+      ;(prefs as any).startupRunners = newStartupRunners
 
       // Save back to file
-      fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2), 'utf8');
+      fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2), "utf8")
 
-      setStartupApps(newStartupApps);
+      setStartupRunners(newStartupRunners)
     } catch (error) {
-      console.error('Error saving startup apps:', error);
+      console.error("Error saving startup runners:", error)
     }
-  };
+  }
 
   // Toggle startup app enabled state
-  const toggleStartupApp = async (appId: string, enabled: boolean) => {
+  const toggleStartupApp = async (runnerId: string, enabled: boolean) => {
     try {
-      const newStartupApps = { ...startupApps };
+      const newStartupRunners = { ...startupRunners }
 
       if (enabled) {
         // If enabling, set a default tab order if not already set
-        const currentConfig = startupApps[appId] || { enabled: false, tabOrder: 1 };
-        if (!currentConfig.tabOrder) {
-          const maxTabOrder = Math.max(0, ...Object.values(startupApps).map(app => app.tabOrder));
-          currentConfig.tabOrder = maxTabOrder + 1;
+        const currentConfig = startupRunners[runnerId] || {
+          enabled: false,
+          tabOrder: 1,
         }
-        newStartupApps[appId] = { ...currentConfig, enabled: true };
+        if (!currentConfig.tabOrder) {
+          const maxTabOrder = Math.max(
+            0,
+            ...Object.values(startupRunners).map((runner) => runner.tabOrder)
+          )
+          currentConfig.tabOrder = maxTabOrder + 1
+        }
+        newStartupRunners[runnerId] = { ...currentConfig, enabled: true }
       } else {
-        delete newStartupApps[appId];
+        delete newStartupRunners[runnerId]
       }
 
-      saveStartupApps(newStartupApps);
+      saveStartupRunners(newStartupRunners)
     } catch (error) {
-      console.error('Error toggling startup app:', error);
+      console.error("Error toggling startup app:", error)
     }
-  };
+  }
 
   // Update tab order for startup app
-  const updateStartupAppTabOrder = async (appId: string, tabOrder: number) => {
+  const updateStartupAppTabOrder = async (
+    runnerId: string,
+    tabOrder: number
+  ) => {
     try {
-      const currentConfig = startupApps[appId];
-      if (!currentConfig || !currentConfig.enabled) return;
+      const currentConfig = startupRunners[runnerId]
+      if (!currentConfig || !currentConfig.enabled) return
 
-      const newStartupApps = {
-        ...startupApps,
-        [appId]: { ...currentConfig, tabOrder }
-      };
-
-      saveStartupApps(newStartupApps);
-    } catch (error) {
-      console.error('Error updating startup app tab order:', error);
-    }
-  };
-
-  // Load icons for all apps when apps change
-  useEffect(() => {
-    apps.forEach(app => {
-      if (app.icon && !appIcons[app.id]) {
-        loadAppIcon(app);
+      const newStartupRunners = {
+        ...startupRunners,
+        [runnerId]: { ...currentConfig, tabOrder },
       }
-    });
-  }, [apps]);
 
-  // Load startup apps when component mounts and when apps change
+      saveStartupRunners(newStartupRunners)
+    } catch (error) {
+      console.error("Error updating startup app tab order:", error)
+    }
+  }
+
+  // Load icons for all runners when runners change
   useEffect(() => {
-    loadStartupApps();
-  }, [apps]);
+    runners.forEach((runner) => {
+      if (runner.icon && !appIcons[runner.id]) {
+        loadRunnerIcon(runner)
+      }
+    })
+  }, [appIcons, loadRunnerIcon, runners])
+
+  // Load startup runners when component mounts and when runners change
+  useEffect(() => {
+    loadStartupRunners()
+  }, [runners])
 
   // Keyboard shortcuts for tab/window management
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Check for Cmd+T (macOS) or Ctrl+T (Windows/Linux) - Create new tab
-      if ((event.metaKey || event.ctrlKey) && event.key === 't') {
-        event.preventDefault();
-        createNewTab();
-        return;
+      if ((event.metaKey || event.ctrlKey) && event.key === "t") {
+        event.preventDefault()
+        createNewTab()
+        return
       }
 
       // Check for Cmd+W (macOS) or Ctrl+W (Windows/Linux)
-      if ((event.metaKey || event.ctrlKey) && event.key === 'w') {
-        event.preventDefault();
+      if ((event.metaKey || event.ctrlKey) && event.key === "w") {
+        event.preventDefault()
 
         // If multiple tabs or active tab is not a new tab, close the active tab
-        if (openTabs.length > 1 || (activeTab && activeTab.type !== 'newtab')) {
+        if (openTabs.length > 1 || (activeTab && activeTab.type !== "newtab")) {
           if (activeTabId) {
-            closeTab(activeTabId);
+            closeTab(activeTabId)
           }
         } else {
           // Only a new tab remains or no tabs, close the window
           try {
-            ipcRenderer.invoke('close-window');
+            ipcRenderer.invoke("close-window")
           } catch (error) {
-            console.error('Failed to close window:', error);
+            console.error("Failed to close window:", error)
             // Fallback: try to close via window object
-            window.close();
+            window.close()
           }
         }
       }
-    };
+    }
 
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown)
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [openTabs, activeTabId, activeTab]);
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [openTabs, activeTabId, activeTab])
 
-  // Auto-launch startup apps when apps are loaded
+  // Auto-launch startup runners when runners are loaded
   useEffect(() => {
-    console.log('Auto-launch useEffect triggered:', {
-      appsLength: apps.length,
-      startupAppsCount: Object.keys(startupApps).length,
-      hasLaunched: hasLaunchedStartupApps.current,
-      startupApps
-    });
+    console.log("Auto-launch useEffect triggered:", {
+      runnersLength: runners.length,
+      startupRunnersCount: Object.keys(startupRunners).length,
+      hasLaunched: hasLaunchedStartupRunners.current,
+      startupRunners,
+    })
 
-    if (apps.length > 0 && Object.keys(startupApps).length > 0 && !hasLaunchedStartupApps.current) {
-      const enabledStartupApps = Object.entries(startupApps)
+    if (
+      runners.length > 0 &&
+      Object.keys(startupRunners).length > 0 &&
+      !hasLaunchedStartupRunners.current
+    ) {
+      const enabledStartupRunners = Object.entries(startupRunners)
         .filter(([_, config]) => config.enabled)
-        .sort(([, a], [, b]) => a.tabOrder - b.tabOrder);
+        .sort(([, a], [, b]) => a.tabOrder - b.tabOrder)
 
-      console.log('Enabled startup apps:', enabledStartupApps);
+      console.log("Enabled startup runners:", enabledStartupRunners)
 
-      if (enabledStartupApps.length > 0) {
-        console.log(`Auto-launching ${enabledStartupApps.length} startup apps in parallel...`);
+      if (enabledStartupRunners.length > 0) {
+        console.log(
+          `Auto-launching ${enabledStartupRunners.length} startup runners in parallel...`
+        )
 
         // Store the current New Tab ID to maintain focus
-        const currentNewTabId = openTabs.find(tab => tab.type === 'newtab')?.id;
+        const currentNewTabId = openTabs.find(
+          (tab) => tab.type === "newtab"
+        )?.id
 
-        // Launch all apps in parallel without delays
-        const launchPromises = enabledStartupApps.map(async ([appId, config]) => {
-          try {
-            const app = apps.find(f => f.id === appId);
-            console.log(`Launching startup app: ${appId} (tab order: ${config.tabOrder})`);
+        // Launch all runners in parallel without delays
+        const launchPromises = enabledStartupRunners.map(
+          async ([runnerId, config]) => {
+            try {
+              const runner = runners.find((f) => f.id === runnerId)
+              console.log(
+                `Launching startup app: ${runnerId} (tab order: ${config.tabOrder})`
+              )
 
-            if (app && app.standalone) {
-              // Launch the app but don't wait for tab switching
-              await openAppInNewTab(app, undefined, true, false);
-              console.log(`Successfully launched startup app: ${appId}`);
-            } else {
-              console.warn(`Could not launch ${appId}:`, {
-                appFound: !!app,
-                isStandalone: app?.standalone
-              });
+              if (runner && runner.standalone) {
+                // Launch the app but don't wait for tab switching
+                await openAppInNewTab(runner, undefined, true, false)
+                console.log(`Successfully launched startup app: ${runnerId}`)
+              } else {
+                console.warn(`Could not launch ${runnerId}:`, {
+                  appFound: !!runner,
+                  isStandalone: runner?.standalone,
+                })
+              }
+            } catch (error) {
+              console.error(`Error launching startup app ${runnerId}:`, error)
             }
-          } catch (error) {
-            console.error(`Error launching startup app ${appId}:`, error);
           }
-        });
+        )
 
-        // Launch all apps in parallel and then return focus to New Tab
-        Promise.all(launchPromises).then(() => {
-          console.log('All startup apps launched, maintaining focus on New Tab');
+        // Launch all runners in parallel and then return focus to New Tab
+        Promise.all(launchPromises)
+          .then(() => {
+            console.log(
+              "All startup runners launched, maintaining focus on New Tab"
+            )
 
-          // Ensure we stay on the New Tab after all apps are launched
-          if (currentNewTabId) {
-            switchToTab(currentNewTabId);
-          }
-        }).catch(error => {
-          console.error('Error during parallel startup app launch:', error);
-        });
+            // Ensure we stay on the New Tab after all runners are launched
+            if (currentNewTabId) {
+              switchToTab(currentNewTabId)
+            }
+          })
+          .catch((error) => {
+            console.error("Error during parallel startup app launch:", error)
+          })
       }
-      hasLaunchedStartupApps.current = true;
+      hasLaunchedStartupRunners.current = true
     }
-  }, [apps, startupApps]);
+  }, [runners, startupRunners])
 
   // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
-  const getAppIcon = (app: AppConfig): string => {
-    if (appIcons[app.id]) {
-      return appIcons[app.id];
+  const getAppIcon = (runner: RunnerConfig): string => {
+    if (appIcons[runner.id]) {
+      return appIcons[runner.id]
     }
 
     // Return Viberunner SVG logo as fallback
-    return getViberunnerLogoPath();
-  };
+    return getViberunnerLogoPath()
+  }
 
   // Function to get Viberunner logo as data URL
   const getViberunnerLogoPath = (): string => {
     try {
       // Load SVG file and convert to data URL
-      const svgPath = path.resolve(__dirname, '../assets/viberunner-logo.svg');
+      const svgPath = path.resolve(__dirname, "../assets/viberunner-logo.svg")
       if (fs.existsSync(svgPath)) {
-        const svgContent = fs.readFileSync(svgPath, 'utf8');
-        return `data:image/svg+xml;base64,${btoa(svgContent)}`;
+        const svgContent = fs.readFileSync(svgPath, "utf8")
+        return `data:image/svg+xml;base64,${btoa(svgContent)}`
       } else {
         // Try alternative path
-        const altPath = path.resolve(process.cwd(), 'src/assets/viberunner-logo.svg');
+        const altPath = path.resolve(
+          process.cwd(),
+          "src/assets/viberunner-logo.svg"
+        )
         if (fs.existsSync(altPath)) {
-          const svgContent = fs.readFileSync(altPath, 'utf8');
-          return `data:image/svg+xml;base64,${btoa(svgContent)}`;
+          const svgContent = fs.readFileSync(altPath, "utf8")
+          return `data:image/svg+xml;base64,${btoa(svgContent)}`
         }
-        throw new Error('SVG file not found');
+        throw new Error("SVG file not found")
       }
     } catch (error) {
-      console.warn('Failed to load Viberunner logo SVG, using fallback:', error);
+      console.warn("Failed to load Viberunner logo SVG, using fallback:", error)
       // Fallback to inline SVG if file loading fails
       const svg = `<svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="white" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>`;
-      return `data:image/svg+xml;base64,${btoa(svg)}`;
+      </svg>`
+      return `data:image/svg+xml;base64,${btoa(svg)}`
     }
-  };
+  }
 
   // Imperative tab management - outside React state
-  const tabContainersRef = useRef<Map<string, {
-    domElement: HTMLDivElement;
-    reactRoot: any;
-    styleElement?: HTMLStyleElement;
-  }>>(new Map());
+  const tabContainersRef = useRef<
+    Map<
+      string,
+      {
+        domElement: HTMLDivElement
+        reactRoot: any
+        styleElement?: HTMLStyleElement
+      }
+    >
+  >(new Map())
 
-  // Load and initialize apps on component mount
+  // Load and initialize runners on component mount
   useEffect(() => {
     const loadDirectoryInfo = async () => {
       try {
-        setIsLoadingApps(true);
-        const loadedApps = await loadApps();
-        setApps(loadedApps);
-        console.log('Successfully loaded apps:', loadedApps.length);
+        setIsLoadingRunners(true)
+        const loadedRunners = await loadRunners()
+        setRunners(loadedRunners)
+        console.log("Successfully loaded runners:", loadedRunners.length)
       } catch (error) {
-        console.error('Failed to load apps:', error);
-        setApps([]);
+        console.error("Failed to load runners:", error)
+        setRunners([])
       } finally {
-        setIsLoadingApps(false);
+        setIsLoadingRunners(false)
       }
-    };
+    }
 
-    loadDirectoryInfo();
-  }, []);
+    loadDirectoryInfo()
+  }, [])
 
-  const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const generateTabId = () =>
+    `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
   // Imperative function to create a app container
   const createAppContainer = async (tab: OpenTab): Promise<boolean> => {
-    if (!appRootRef.current || !tab.app || !tab.appData) {
-      console.error('Cannot create app container:', {
+    if (!appRootRef.current || !tab.runner || !tab.runnerData) {
+      console.error("Cannot create app container:", {
         hasAppRoot: !!appRootRef.current,
-        hasApp: !!tab.app,
-        hasAppData: !!tab.appData
-      });
-      return false;
+        hasApp: !!tab.runner,
+        hasAppData: !!tab.runnerData,
+      })
+      return false
     }
 
-    console.log('Creating app container for tab:', tab.id);
+    console.log("Creating app container for tab:", tab.id)
 
     // Create DOM container
-    const container = document.createElement('div');
-    container.className = 'tab-app-container';
-    container.style.position = 'absolute';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.right = '0';
-    container.style.bottom = '0';
-    container.style.width = '100%';
-    container.style.height = '100%';
-    container.style.display = 'none'; // Start hidden
-    container.style.visibility = 'hidden';
-    container.style.zIndex = '-1';
-    container.style.opacity = '0';
-    container.style.background = 'var(--background)';
-    appRootRef.current.appendChild(container);
+    const container = document.createElement("div")
+    container.className = "tab-app-container"
+    container.style.position = "absolute"
+    container.style.top = "0"
+    container.style.left = "0"
+    container.style.right = "0"
+    container.style.bottom = "0"
+    container.style.width = "100%"
+    container.style.height = "100%"
+    container.style.display = "none" // Start hidden
+    container.style.visibility = "hidden"
+    container.style.zIndex = "-1"
+    container.style.opacity = "0"
+    container.style.background = "var(--background)"
+    appRootRef.current.appendChild(container)
 
     // Prepare props with cleanup support
-    let props;
+    let props
     if (!tab.fileInput) {
       props = {
         container,
         tabId: tab.id,
-        appId: tab.app.id
-      };
+        runnerId: tab.runner.id,
+      }
     } else {
       props = {
         fileInput: tab.fileInput,
         container,
         tabId: tab.id,
-        appId: tab.app.id
-      };
+        runnerId: tab.runner.id,
+      }
     }
 
     return new Promise<boolean>((resolve) => {
       // Create script and load app
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
+      const script = document.createElement("script")
+      script.type = "text/javascript"
 
-      let processedBundleContent = tab.appData.bundleContent;
+      let processedBundleContent = tab.runnerData.bundleContent
 
       // CSS scoping patterns for auto-scoping
       const cssPatterns = [
         /(['"`])([^'"`]*\.css[^'"`]*)\1/g,
-        /(['"`])([^'"`]*{[^}]*}[^'"`]*)\1/g
-      ];
+        /(['"`])([^'"`]*{[^}]*}[^'"`]*)\1/g,
+      ]
 
-      cssPatterns.forEach(pattern => {
-        processedBundleContent = processedBundleContent.replace(pattern, (match: string, quote: string, cssContent: string) => {
-          if (!cssContent) return match;
+      cssPatterns.forEach((pattern) => {
+        processedBundleContent = processedBundleContent.replace(
+          pattern,
+          (match: string, quote: string, cssContent: string) => {
+            if (!cssContent) return match
 
-          // Don't process if already scoped to .tab-app-container
-          if (cssContent.includes('.tab-app-container') || cssContent.includes(`[data-app-id="${tab.id}"]`)) {
-            return match;
+            // Don't process if already scoped to .tab-app-container
+            if (
+              cssContent.includes(".tab-app-container") ||
+              cssContent.includes(`[data-app-id="${tab.id}"]`)
+            ) {
+              return match
+            }
+
+            // Auto-scope CSS selectors
+            const scopedCSS = cssContent
+              // Scope universal selector
+              .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
+              // Scope element selectors
+              .replace(
+                /^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm,
+                `$1[data-app-id="${tab.id}"] $2 {`
+              )
+              // Scope class selectors
+              .replace(
+                /^(\s*)(\.[\w-]+)\s*\{/gm,
+                `$1[data-app-id="${tab.id}"] $2 {`
+              )
+              // Scope ID selectors
+              .replace(
+                /^(\s*)(#[\w-]+)\s*\{/gm,
+                `$1[data-app-id="${tab.id}"] $2 {`
+              )
+              // Scope descendant selectors
+              .replace(
+                /^(\s*)([.#]?[\w-]+(?:\s+[.#]?[\w-]+)*)\s*\{/gm,
+                `$1[data-app-id="${tab.id}"] $2 {`
+              )
+              // Handle @media queries by scoping the content inside
+              .replace(
+                /@media[^{]+\{([^{}]*(?:\{[^}]*\}[^{}]*)*)\}/g,
+                (mediaMatch: string, mediaContent: string) => {
+                  const scopedMediaContent = mediaContent
+                    .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
+                    .replace(
+                      /^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm,
+                      `$1[data-app-id="${tab.id}"] $2 {`
+                    )
+                    .replace(
+                      /^(\s*)(\.[\w-]+)\s*\{/gm,
+                      `$1[data-app-id="${tab.id}"] $2 {`
+                    )
+                    .replace(
+                      /^(\s*)(#[\w-]+)\s*\{/gm,
+                      `$1[data-app-id="${tab.id}"] $2 {`
+                    )
+                  return mediaMatch.replace(mediaContent, scopedMediaContent)
+                }
+              )
+
+            return quote ? `${quote}${scopedCSS}${quote}` : scopedCSS
           }
-
-          // Auto-scope CSS selectors
-          const scopedCSS = cssContent
-            // Scope universal selector
-            .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
-            // Scope element selectors
-            .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
-            // Scope class selectors
-            .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
-            // Scope ID selectors
-            .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
-            // Scope descendant selectors
-            .replace(/^(\s*)([.#]?[\w-]+(?:\s+[.#]?[\w-]+)*)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
-            // Handle @media queries by scoping the content inside
-            .replace(/@media[^{]+\{([^{}]*(?:\{[^}]*\}[^{}]*)*)\}/g, (mediaMatch: string, mediaContent: string) => {
-              const scopedMediaContent = mediaContent
-                .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
-                .replace(/^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
-                .replace(/^(\s*)(\.[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`)
-                .replace(/^(\s*)(#[\w-]+)\s*\{/gm, `$1[data-app-id="${tab.id}"] $2 {`);
-              return mediaMatch.replace(mediaContent, scopedMediaContent);
-            });
-
-          return quote ? `${quote}${scopedCSS}${quote}` : scopedCSS;
-        });
-      });
+        )
+      })
 
       // Also intercept any dynamic style injection
       const appStyleInterceptor = `
         // Intercept style injection for app isolation
         (function() {
           const originalCreateElement = document.createElement;
-          const appId = "${tab.id}";
+          const runnerId = "${tab.id}";
 
           document.createElement = function(tagName) {
             const element = originalCreateElement.call(this, tagName);
 
             if (tagName.toLowerCase() === 'style') {
               // Mark style elements created by this app
-              element.setAttribute('data-app-style', appId);
+              element.setAttribute('data-app-style', runnerId);
 
               // Override textContent to auto-scope CSS - with safety checks
               try {
@@ -840,10 +944,10 @@ const App: React.FC = () => {
                       if (value && typeof value === 'string') {
                         // Auto-scope the CSS
                         const scopedCSS = value
-                          .replace(/^\\s*\\*\\s*\\{/gm, \`[data-app-id="\${appId}"] * {\`)
-                          .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-app-id="\${appId}"] $2 {\`)
-                          .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${appId}"] $2 {\`)
-                          .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${appId}"] $2 {\`);
+                          .replace(/^\\s*\\*\\s*\\{/gm, \`[data-app-id="\${runnerId}"] * {\`)
+                          .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-app-id="\${runnerId}"] $2 {\`)
+                          .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${runnerId}"] $2 {\`)
+                          .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${runnerId}"] $2 {\`);
                         originalTextContentSetter.call(this, scopedCSS);
                       } else {
                         originalTextContentSetter.call(this, value);
@@ -862,14 +966,14 @@ const App: React.FC = () => {
             return element;
           };
         })();
-      `;
+      `
 
-      script.textContent = appStyleInterceptor + '\n' + processedBundleContent;
+      script.textContent = appStyleInterceptor + "\n" + processedBundleContent
 
       const appLoader = (AppComponent: any) => {
         try {
           // Create an isolation wrapper div
-          const isolationWrapper = document.createElement('div');
+          const isolationWrapper = document.createElement("div")
           isolationWrapper.style.cssText = `
             width: 100% !important;
             height: 100% !important;
@@ -881,505 +985,539 @@ const App: React.FC = () => {
             contain: layout style size !important;
             isolation: isolate !important;
             z-index: 1 !important;
-          `;
+          `
 
-          container.appendChild(isolationWrapper);
+          container.appendChild(isolationWrapper)
 
           // Render directly into the isolation wrapper
-          isolationWrapper.setAttribute('data-app-id', tab.id);
+          isolationWrapper.setAttribute("data-app-id", tab.id)
 
-          const root = createRoot(isolationWrapper);
-          root.render(React.createElement(AppComponent, props));
+          const root = createRoot(isolationWrapper)
+          root.render(React.createElement(AppComponent, props))
 
           // Store container reference in tabContainersRef for tab switching
           tabContainersRef.current.set(tab.id, {
             domElement: container,
             reactRoot: root,
-            styleElement: undefined
-          });
+            styleElement: undefined,
+          })
 
           // Show the container with proper stacking
-          container.style.display = 'block';
-          container.style.visibility = 'visible';
-          container.style.zIndex = '10';
-          container.style.opacity = '1';
+          container.style.display = "block"
+          container.style.visibility = "visible"
+          container.style.zIndex = "10"
+          container.style.opacity = "1"
 
-          resolve(true);
+          resolve(true)
         } catch (error) {
-          console.error('Error rendering app:', error);
-          resolve(false);
+          console.error("Error rendering app:", error)
+          resolve(false)
         }
-      };
+      }
 
       // Make the app loader available globally with backward compatibility
-      (window as any).__RENDER_RUNNER__ = appLoader;
+      ;(window as any).__RENDER_RUNNER__ = appLoader
 
       script.onload = () => {
         // Clean up after script loads
         setTimeout(() => {
           if (script.parentNode) {
-            script.parentNode.removeChild(script);
+            script.parentNode.removeChild(script)
           }
-          delete (window as any).__RENDER_RUNNER__;
-        }, 1000);
-      };
+          delete (window as any).__RENDER_RUNNER__
+        }, 1000)
+      }
 
       script.onerror = (error) => {
-        console.error('Script loading error:', error);
-        resolve(false);
-      };
+        console.error("Script loading error:", error)
+        resolve(false)
+      }
 
-      document.head.appendChild(script);
-    });
-  };
+      document.head.appendChild(script)
+    })
+  }
 
   // Imperative function to switch tab visibility
   const switchToTab = (tabId: string, tabData?: OpenTab) => {
     // Use provided tab data or look up from state
-    const activeTab = tabData || openTabs.find(tab => tab.id === tabId);
+    const activeTab = tabData || openTabs.find((tab) => tab.id === tabId)
 
-    console.log('Switching to tab:', tabId, 'type:', activeTab?.type);
+    console.log("Switching to tab:", tabId, "type:", activeTab?.type)
 
     // Hide all app containers with enhanced visibility control
     tabContainersRef.current.forEach((container, id) => {
-      console.log('Hiding container for tab:', id);
-      const element = container.domElement;
-      element.style.display = 'none';
-      element.style.visibility = 'hidden';
-      element.style.zIndex = '-1';
-      element.style.opacity = '0';
-    });
+      console.log("Hiding container for tab:", id)
+      const element = container.domElement
+      element.style.display = "none"
+      element.style.visibility = "hidden"
+      element.style.zIndex = "-1"
+      element.style.opacity = "0"
+    })
 
     // Show the active tab's container if it's not a new tab
-    if (activeTab && activeTab.type !== 'newtab') {
-      const container = tabContainersRef.current.get(tabId);
+    if (activeTab && activeTab.type !== "newtab") {
+      const container = tabContainersRef.current.get(tabId)
       if (container) {
-        console.log('Showing container for tab:', tabId);
-        const element = container.domElement;
-        element.style.display = 'block';
-        element.style.visibility = 'visible';
-        element.style.zIndex = '10';
-        element.style.opacity = '1';
+        console.log("Showing container for tab:", tabId)
+        const element = container.domElement
+        element.style.display = "block"
+        element.style.visibility = "visible"
+        element.style.zIndex = "10"
+        element.style.opacity = "1"
       } else {
-        console.warn('No container found for tab:', tabId);
+        console.warn("No container found for tab:", tabId)
       }
     }
 
-    setActiveTabId(tabId);
-  };
+    setActiveTabId(tabId)
+  }
 
-  const openAppInNewTab = async (app: AppConfig, fileInput?: FileInput, forceNewTab: boolean = false, switchToTab_: boolean = true) => {
+  const openAppInNewTab = async (
+    runner: RunnerConfig,
+    fileInput?: FileInput,
+    forceNewTab: boolean = false,
+    switchToTab_: boolean = true
+  ) => {
     const title = fileInput
-      ? fileInput.path.split('/').pop() || 'Unknown File'
-      : app.name;
+      ? fileInput.path.split("/").pop() || "Unknown File"
+      : runner.name
 
-    let appData;
+    let appData
 
     // Load app data
     try {
-      appData = await loadApp(app.id);
+      appData = await loadApp(runner.id)
     } catch (error) {
-      console.error('Failed to load app data:', error);
-      alert(`Failed to load ${app.name}: ${error}`);
-      return;
+      console.error("Failed to load app data:", error)
+      alert(`Failed to load ${runner.name}: ${error}`)
+      return
     }
 
     // Check if we have an active new tab to transform (but not if forceNewTab is true)
-    const currentTab = openTabs.find(tab => tab.id === activeTabId);
+    const currentTab = openTabs.find((tab) => tab.id === activeTabId)
 
-    if (!forceNewTab && currentTab && currentTab.type === 'newtab') {
+    if (!forceNewTab && currentTab && currentTab.type === "newtab") {
       // Transform the current new tab
       const transformedTab: OpenTab = {
         ...currentTab,
-        app,
+        runner: runner,
         fileInput,
         title,
-        type: fileInput ? 'file' : 'standalone',
-        appData
-      };
+        type: fileInput ? "file" : "standalone",
+        runnerData: appData,
+      }
 
-      setOpenTabs(prev => prev.map(tab =>
-        tab.id === activeTabId ? transformedTab : tab
-      ));
+      setOpenTabs((prev) =>
+        prev.map((tab) => (tab.id === activeTabId ? transformedTab : tab))
+      )
 
       // Create the app container and wait for it to be ready
-      const success = await createAppContainer(transformedTab);
+      const success = await createAppContainer(transformedTab)
 
       if (success) {
         // Only switch to this tab if switchToTab_ is true
         if (switchToTab_) {
-          switchToTab(transformedTab.id, transformedTab);
+          switchToTab(transformedTab.id, transformedTab)
         }
 
         // Reorder tabs to keep "New Tab" at the end
         setTimeout(() => {
-          setOpenTabs(prev => {
-            const newTabTabs = prev.filter(tab => tab.type === 'newtab');
-            const otherTabs = prev.filter(tab => tab.type !== 'newtab');
-            return [...otherTabs, ...newTabTabs];
-          });
-        }, 50); // Small delay to ensure tab is properly added first
+          setOpenTabs((prev) => {
+            const newTabTabs = prev.filter((tab) => tab.type === "newtab")
+            const otherTabs = prev.filter((tab) => tab.type !== "newtab")
+            return [...otherTabs, ...newTabTabs]
+          })
+        }, 50) // Small delay to ensure tab is properly added first
       } else {
-        console.error('Failed to create app container for transformed tab');
-        alert(`Failed to load ${app.name}`);
+        console.error("Failed to create app container for transformed tab")
+        alert(`Failed to load ${runner.name}`)
       }
     } else {
       // Create a new tab
-      const tabId = generateTabId();
+      const tabId = generateTabId()
       const newTab: OpenTab = {
         id: tabId,
-        app,
+        runner: runner,
         fileInput,
         title,
-        type: fileInput ? 'file' : 'standalone',
-        appData
-      };
+        type: fileInput ? "file" : "standalone",
+        runnerData: appData,
+      }
 
-      setOpenTabs(prev => [...prev, newTab]);
+      setOpenTabs((prev) => [...prev, newTab])
 
       // Create the app container and wait for it to be ready
-      const success = await createAppContainer(newTab);
+      const success = await createAppContainer(newTab)
 
       if (success) {
         // Only switch to this tab if switchToTab_ is true
         if (switchToTab_) {
-          switchToTab(tabId, newTab);
+          switchToTab(tabId, newTab)
         }
 
         // Reorder tabs to keep "New Tab" at the end
         setTimeout(() => {
-          setOpenTabs(prev => {
-            const newTabTabs = prev.filter(tab => tab.type === 'newtab');
-            const otherTabs = prev.filter(tab => tab.type !== 'newtab');
-            return [...otherTabs, ...newTabTabs];
-          });
-        }, 50); // Small delay to ensure tab is properly added first
+          setOpenTabs((prev) => {
+            const newTabTabs = prev.filter((tab) => tab.type === "newtab")
+            const otherTabs = prev.filter((tab) => tab.type !== "newtab")
+            return [...otherTabs, ...newTabTabs]
+          })
+        }, 50) // Small delay to ensure tab is properly added first
       } else {
-        console.error('Failed to create app container for new tab');
-        alert(`Failed to load ${app.name}`);
+        console.error("Failed to create app container for new tab")
+        alert(`Failed to load ${runner.name}`)
       }
     }
 
-    setShowAppSelection(false);
-    setPendingFileInput(null);
-  };
+    setShowAppSelection(false)
+    setPendingFileInput(null)
+  }
 
   const closeTab = (tabId: string) => {
-    console.log('Closing tab:', tabId);
+    console.log("Closing tab:", tabId)
 
     // Execute cleanup callbacks for this tab
-    executeCleanup(tabId);
+    executeCleanup(tabId)
 
     // Cleanup the tab's container
-    const container = tabContainersRef.current.get(tabId);
+    const container = tabContainersRef.current.get(tabId)
     if (container) {
-      console.log('Cleaning up container for tab:', tabId);
+      console.log("Cleaning up container for tab:", tabId)
       try {
-        container.reactRoot.unmount();
+        container.reactRoot.unmount()
 
         // Remove the app-specific style element
-        if (container.styleElement && document.head.contains(container.styleElement)) {
-          document.head.removeChild(container.styleElement);
+        if (
+          container.styleElement &&
+          document.head.contains(container.styleElement)
+        ) {
+          document.head.removeChild(container.styleElement)
         }
 
-        if (appRootRef.current && appRootRef.current.contains(container.domElement)) {
-          appRootRef.current.removeChild(container.domElement);
+        if (
+          appRootRef.current &&
+          appRootRef.current.contains(container.domElement)
+        ) {
+          appRootRef.current.removeChild(container.domElement)
         }
       } catch (error) {
-        console.warn('Error cleaning up tab container:', error);
+        console.warn("Error cleaning up tab container:", error)
       }
-      tabContainersRef.current.delete(tabId);
+      tabContainersRef.current.delete(tabId)
     }
 
-    setOpenTabs(prev => {
-      const filtered = prev.filter(tab => tab.id !== tabId);
+    setOpenTabs((prev) => {
+      const filtered = prev.filter((tab) => tab.id !== tabId)
 
       // If we closed the active tab, activate another one
       if (activeTabId === tabId) {
-        const currentIndex = prev.findIndex(tab => tab.id === tabId);
+        const currentIndex = prev.findIndex((tab) => tab.id === tabId)
         if (filtered.length > 0) {
-          const newActiveIndex = Math.min(currentIndex, filtered.length - 1);
-          const newActiveTab = filtered[newActiveIndex];
-          switchToTab(newActiveTab.id);
+          const newActiveIndex = Math.min(currentIndex, filtered.length - 1)
+          const newActiveTab = filtered[newActiveIndex]
+          switchToTab(newActiveTab.id)
         } else {
           // If no tabs left, create a new tab
           const newTab: OpenTab = {
             id: generateTabId(),
-            title: 'New Tab',
-            type: 'newtab'
-          };
-          setOpenTabs([newTab]);
-          switchToTab(newTab.id);
-          return [newTab];
+            title: "New Tab",
+            type: "newtab",
+          }
+          setOpenTabs([newTab])
+          switchToTab(newTab.id)
+          return [newTab]
         }
       }
 
-      return filtered;
-    });
-  };
+      return filtered
+    })
+  }
 
   // Handle tab switching
   const handleTabSwitch = (tabId: string) => {
     // Reset app selection state when switching tabs
-    setShowAppSelection(false);
-    setPendingFileInput(null);
-    switchToTab(tabId);
-  };
+    setShowAppSelection(false)
+    setPendingFileInput(null)
+    switchToTab(tabId)
+  }
 
   // Tab drag and drop handlers
   const handleTabDragStart = (e: React.DragEvent, tabId: string) => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', tabId);
-    setDraggedTabId(tabId);
-  };
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("text/plain", tabId)
+    setDraggedTabId(tabId)
+  }
 
   const handleTabDragEnd = () => {
-    setDraggedTabId(null);
-    setDragOverTabId(null);
-  };
+    setDraggedTabId(null)
+    setDragOverTabId(null)
+  }
 
   const handleTabDragOver = (e: React.DragEvent, tabId: string) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
 
     if (draggedTabId && draggedTabId !== tabId) {
-      setDragOverTabId(tabId);
+      setDragOverTabId(tabId)
     }
-  };
+  }
 
   const handleTabDragLeave = (e: React.DragEvent, _tabId: string) => {
     // Only clear if we're actually leaving this tab (not entering a child element)
     if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setDragOverTabId(null);
+      setDragOverTabId(null)
     }
-  };
+  }
 
   const handleTabDrop = (e: React.DragEvent, dropTargetTabId: string) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    const draggedId = e.dataTransfer.getData('text/plain');
+    const draggedId = e.dataTransfer.getData("text/plain")
     if (!draggedId || draggedId === dropTargetTabId) {
-      return;
+      return
     }
 
     // Reorder tabs
-    setOpenTabs(prev => {
-      const newTabs = [...prev];
-      const draggedIndex = newTabs.findIndex(tab => tab.id === draggedId);
-      const targetIndex = newTabs.findIndex(tab => tab.id === dropTargetTabId);
+    setOpenTabs((prev) => {
+      const newTabs = [...prev]
+      const draggedIndex = newTabs.findIndex((tab) => tab.id === draggedId)
+      const targetIndex = newTabs.findIndex((tab) => tab.id === dropTargetTabId)
 
       if (draggedIndex === -1 || targetIndex === -1) {
-        return prev;
+        return prev
       }
 
       // Remove dragged tab and insert at target position
-      const [draggedTab] = newTabs.splice(draggedIndex, 1);
-      newTabs.splice(targetIndex, 0, draggedTab);
+      const [draggedTab] = newTabs.splice(draggedIndex, 1)
+      newTabs.splice(targetIndex, 0, draggedTab)
 
-      return newTabs;
-    });
+      return newTabs
+    })
 
-    setDraggedTabId(null);
-    setDragOverTabId(null);
-  };
+    setDraggedTabId(null)
+    setDragOverTabId(null)
+  }
 
-  const selectApp = async (app: AppConfig) => {
+  const selectApp = async (runner: RunnerConfig) => {
     if (pendingFileInput) {
-      await openAppInNewTab(app, pendingFileInput);
+      await openAppInNewTab(runner, pendingFileInput)
     }
-  };
+  }
 
-  const launchStandaloneApp = async (app: AppConfig) => {
+  const launchStandaloneApp = async (runner: RunnerConfig) => {
     try {
-      console.log('Launching standalone app:', app.name, app.id);
-      await openAppInNewTab(app);
+      console.log("Launching standalone app:", runner.name, runner.id)
+      await openAppInNewTab(runner)
     } catch (error) {
-      console.error('Failed to launch standalone app:', error);
-      alert(`Failed to launch ${app.name}: ${error}`);
+      console.error("Failed to launch standalone app:", error)
+      alert(`Failed to launch ${runner.name}: ${error}`)
     }
-  };
+  }
 
   // Enhanced file matching functions
   function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {
     switch (matcher.type) {
-      case 'mimetype':
-        return matcher.mimetype === fileAnalysis.mimetype;
+      case "mimetype":
+        return matcher.mimetype === fileAnalysis.mimetype
 
-      case 'filename':
+      case "filename":
         if (matcher.pattern) {
           // Support exact match or glob pattern
-          if (matcher.pattern.includes('*') || matcher.pattern.includes('?')) {
+          if (matcher.pattern.includes("*") || matcher.pattern.includes("?")) {
             // Simple glob pattern matching
             const regexPattern = matcher.pattern
-              .replace(/\*/g, '.*')
-              .replace(/\?/g, '.');
-            return new RegExp(`^${regexPattern}$`).test(fileAnalysis.filename);
+              .replace(/\*/g, ".*")
+              .replace(/\?/g, ".")
+            return new RegExp(`^${regexPattern}$`).test(fileAnalysis.filename)
           } else {
             // Exact match
-            return matcher.pattern === fileAnalysis.filename;
+            return matcher.pattern === fileAnalysis.filename
           }
         }
-        return false;
+        return false
 
-      case 'filename-contains':
+      case "filename-contains":
         if (matcher.substring) {
           // Case-insensitive substring matching
-          const hasSubstring = fileAnalysis.filename.toLowerCase().includes(matcher.substring.toLowerCase());
+          const hasSubstring = fileAnalysis.filename
+            .toLowerCase()
+            .includes(matcher.substring.toLowerCase())
 
           // If extension is specified, also check that
           if (matcher.extension) {
-            const fileExtension = path.extname(fileAnalysis.filename).toLowerCase();
-            const targetExtension = matcher.extension.startsWith('.')
+            const fileExtension = path
+              .extname(fileAnalysis.filename)
+              .toLowerCase()
+            const targetExtension = matcher.extension.startsWith(".")
               ? matcher.extension.toLowerCase()
-              : `.${matcher.extension.toLowerCase()}`;
-            return hasSubstring && fileExtension === targetExtension;
+              : `.${matcher.extension.toLowerCase()}`
+            return hasSubstring && fileExtension === targetExtension
           }
 
-          return hasSubstring;
+          return hasSubstring
         }
-        return false;
+        return false
 
-      case 'content-json':
-        if (!fileAnalysis.isJson || !fileAnalysis.jsonContent) return false;
+      case "content-json":
+        if (!fileAnalysis.isJson || !fileAnalysis.jsonContent) return false
         if (matcher.requiredProperties) {
-          return matcher.requiredProperties.every((prop: string) =>
-            fileAnalysis.jsonContent && fileAnalysis.jsonContent[prop] !== undefined
-          );
+          return matcher.requiredProperties.every(
+            (prop: string) =>
+              fileAnalysis.jsonContent &&
+              fileAnalysis.jsonContent[prop] !== undefined
+          )
         }
-        return true;
+        return true
 
-      case 'file-size': {
-        const size = fileAnalysis.size;
-        if (matcher.minSize !== undefined && size < matcher.minSize) return false;
-        if (matcher.maxSize !== undefined && size > matcher.maxSize) return false;
-        return true;
+      case "file-size": {
+        const size = fileAnalysis.size
+        if (matcher.minSize !== undefined && size < matcher.minSize)
+          return false
+        if (matcher.maxSize !== undefined && size > matcher.maxSize)
+          return false
+        return true
       }
 
       default:
-        return false;
+        return false
     }
   }
 
-  async function findMatchingApps(filePath: string): Promise<Array<{app: AppConfig, priority: number}>> {
-    const apps = await loadApps();
-    const fileAnalysis = await analyzeFile(filePath);
-    const matches: Array<{app: AppConfig, priority: number}> = [];
+  async function findMatchingRunners(
+    filePath: string
+  ): Promise<Array<{ runner: RunnerConfig; priority: number }>> {
+    const runners = await loadRunners()
+    const fileAnalysis = await analyzeFile(filePath)
+    const matches: Array<{ runner: RunnerConfig; priority: number }> = []
 
-    for (const app of apps) {
-      let bestPriority = -1;
+    for (const runner of runners) {
+      let bestPriority = -1
 
       // Check enhanced matchers first
-      if ((app as any).matchers) {
-        for (const matcher of (app as any).matchers) {
+      if ((runner as any).matchers) {
+        for (const matcher of (runner as any).matchers) {
           if (evaluateMatcher(matcher, fileAnalysis)) {
-            bestPriority = Math.max(bestPriority, matcher.priority);
+            bestPriority = Math.max(bestPriority, matcher.priority)
           }
         }
       }
 
       // Fallback to legacy mimetype matching
-      if (bestPriority === -1 && app.mimetypes) {
-        if (app.mimetypes.includes(fileAnalysis.mimetype)) {
-          bestPriority = 50; // Default priority for legacy matchers
+      if (bestPriority === -1 && runner.mimetypes) {
+        if (runner.mimetypes.includes(fileAnalysis.mimetype)) {
+          bestPriority = 50 // Default priority for legacy matchers
         }
       }
 
       if (bestPriority > -1) {
-        matches.push({ app, priority: bestPriority });
+        matches.push({ runner: runner, priority: bestPriority })
       }
     }
 
     // Sort by priority (highest first)
-    return matches.sort((a, b) => b.priority - a.priority);
+    return matches.sort((a, b) => b.priority - a.priority)
   }
 
   useEffect(() => {
     // Handle file drops
     const handleFileDrop = async (filePath: string) => {
       try {
-        console.log('=== FILE DROP STARTED ===');
-        console.log('handleFileDrop: Processing file:', filePath);
+        console.log("=== FILE DROP STARTED ===")
+        console.log("handleFileDrop: Processing file:", filePath)
 
         // Simplified file analysis for matching only
-        const fileAnalysis = await analyzeFile(filePath);
-        console.log('handleFileDrop: File analysis:', fileAnalysis);
+        const fileAnalysis = await analyzeFile(filePath)
+        console.log("handleFileDrop: File analysis:", fileAnalysis)
 
         // Create simplified file input - just path and mimetype
         const fileInput: FileInput = {
           path: filePath,
-          mimetype: fileAnalysis.mimetype
-        };
-        console.log('handleFileDrop: File input prepared:', fileInput);
+          mimetype: fileAnalysis.mimetype,
+        }
+        console.log("handleFileDrop: File input prepared:", fileInput)
 
-        // Find matching apps directly
-        const matches = await findMatchingApps(filePath);
-        console.log('handleFileDrop: Found matches:', matches);
+        // Find matching runners directly
+        const matches = await findMatchingRunners(filePath)
+        console.log("handleFileDrop: Found matches:", matches)
 
         if (matches.length === 0) {
-          console.log('handleFileDrop: No matches found');
-          alert(`No app found for this file.\n\nFile: ${fileAnalysis.filename}\nType: ${fileAnalysis.mimetype}\nSize: ${(fileAnalysis.size / 1024).toFixed(1)} KB`);
+          console.log("handleFileDrop: No matches found")
+          alert(
+            `No app found for this file.\n\nFile: ${
+              fileAnalysis.filename
+            }\nType: ${fileAnalysis.mimetype}\nSize: ${(
+              fileAnalysis.size / 1024
+            ).toFixed(1)} KB`
+          )
         } else if (matches.length === 1) {
-          console.log('handleFileDrop: Single match found, auto-selecting:', matches[0].app.name);
-          await openAppInNewTab(matches[0].app, fileInput);
-          console.log('handleFileDrop: Opened in new tab');
+          console.log(
+            "handleFileDrop: Single match found, auto-selecting:",
+            matches[0].runner.name
+          )
+          await openAppInNewTab(matches[0].runner, fileInput)
+          console.log("handleFileDrop: Opened in new tab")
         } else {
-          console.log('handleFileDrop: Multiple matches found, showing selection');
-          setPendingFileInput(fileInput);
-          setAvailableApps(matches.map((m: any) => ({
-            ...m.app,
-            matchPriority: m.priority
-          })));
-          setShowAppSelection(true);
-          console.log('handleFileDrop: State set for multiple matches');
+          console.log(
+            "handleFileDrop: Multiple matches found, showing selection"
+          )
+          setPendingFileInput(fileInput)
+          setAvailableRunners(
+            matches.map((m: any) => ({
+              ...m.app,
+              matchPriority: m.priority,
+            }))
+          )
+          setShowAppSelection(true)
+          console.log("handleFileDrop: State set for multiple matches")
         }
-        console.log('=== FILE DROP COMPLETED ===');
+        console.log("=== FILE DROP COMPLETED ===")
       } catch (error) {
-        console.error('Error handling file drop:', error);
-        alert(`Error handling file: ${error}`);
+        console.error("Error handling file drop:", error)
+        alert(`Error handling file: ${error}`)
       }
-    };
+    }
 
     // Listen for file drops
     const onDrop = (event: DragEvent) => {
-      event.preventDefault();
-      const filePath = event.dataTransfer?.files[0]?.path;
+      event.preventDefault()
+      const filePath = event.dataTransfer?.files[0]?.path
       if (filePath) {
-        handleFileDrop(filePath);
+        handleFileDrop(filePath)
       }
-    };
+    }
 
     const onDragOver = (event: DragEvent) => {
-      event.preventDefault();
-    };
+      event.preventDefault()
+    }
 
-    window.addEventListener('drop', onDrop);
-    window.addEventListener('dragover', onDragOver);
+    window.addEventListener("drop", onDrop)
+    window.addEventListener("dragover", onDragOver)
 
     return () => {
-      window.removeEventListener('drop', onDrop);
-      window.removeEventListener('dragover', onDragOver);
-    };
-  }, [apps]);
+      window.removeEventListener("drop", onDrop)
+      window.removeEventListener("dragover", onDragOver)
+    }
+  }, [runners])
 
   const createNewTab = () => {
-    const tabId = generateTabId();
+    const tabId = generateTabId()
     const newTab: OpenTab = {
       id: tabId,
-      title: 'New Tab',
-      type: 'newtab'
-    };
+      title: "New Tab",
+      type: "newtab",
+    }
 
-    setOpenTabs(prev => [...prev, newTab]);
-    switchToTab(tabId);
-    setShowAppSelection(false);
-    setPendingFileInput(null);
-  };
+    setOpenTabs((prev) => [...prev, newTab])
+    switchToTab(tabId)
+    setShowAppSelection(false)
+    setPendingFileInput(null)
+  }
 
   // Handler for build prompt submission
   const handleBuildPromptSubmit = (prompt: string) => {
     // TODO: Implement build prompt handling logic
-    console.log('App received build prompt:', prompt);
-  };
+    console.log("App received build prompt:", prompt)
+  }
 
   return (
     <div className="vf-app">
@@ -1388,13 +1526,13 @@ const App: React.FC = () => {
           {/* Tabs first, right after macOS traffic lights */}
           <div className="vf-header-tabs">
             <div className="vf-tabs-list">
-              {openTabs.map(tab => (
+              {openTabs.map((tab) => (
                 <div
                   key={tab.id}
-                  className={`vf-tab ${tab.id === activeTabId ? 'vf-tab-active' : ''} ${
-                    draggedTabId === tab.id ? 'vf-tab-dragging' : ''
-                  } ${
-                    dragOverTabId === tab.id ? 'vf-tab-drop-target' : ''
+                  className={`vf-tab ${
+                    tab.id === activeTabId ? "vf-tab-active" : ""
+                  } ${draggedTabId === tab.id ? "vf-tab-dragging" : ""} ${
+                    dragOverTabId === tab.id ? "vf-tab-drop-target" : ""
                   }`}
                   onClick={() => handleTabSwitch(tab.id)}
                   draggable={true}
@@ -1405,43 +1543,57 @@ const App: React.FC = () => {
                   onDrop={(e) => handleTabDrop(e, tab.id)}
                 >
                   <div className="vf-tab-icon">
-                    {tab.type === 'newtab' ? (
+                    {tab.type === "newtab" ? (
                       <img
                         src={getViberunnerLogoPath()}
                         alt="New Tab"
-                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          objectFit: "contain",
+                        }}
                       />
-                    ) : tab.app ? (
+                    ) : tab.runner ? (
                       <img
-                        src={getAppIcon(tab.app)}
-                        alt={tab.app.name}
-                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+                        src={getAppIcon(tab.runner)}
+                        alt={tab.runner.name}
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          objectFit: "contain",
+                        }}
                       />
                     ) : (
                       <img
                         src={getViberunnerLogoPath()}
                         alt="Default"
-                        style={{ width: '16px', height: '16px', objectFit: 'contain' }}
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          objectFit: "contain",
+                        }}
                       />
                     )}
                   </div>
                   <div className="vf-tab-content">
                     <span className="vf-tab-title">{tab.title}</span>
-                    {tab.app && <span className="vf-tab-subtitle">{tab.app.name}</span>}
+                    {tab.runner && (
+                      <span className="vf-tab-subtitle">{tab.runner.name}</span>
+                    )}
                   </div>
-                  {tab.type !== 'newtab' || openTabs.length > 1 ? (
+                  {tab.type !== "newtab" || openTabs.length > 1 ? (
                     <button
                       className="vf-tab-close"
                       onClick={(e) => {
-                        e.stopPropagation();
-                        closeTab(tab.id);
+                        e.stopPropagation()
+                        closeTab(tab.id)
                       }}
                       onMouseDown={(e) => {
-                        e.stopPropagation();
+                        e.stopPropagation()
                       }}
                       onDragStart={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                        e.preventDefault()
+                        e.stopPropagation()
                       }}
                       title="Close tab"
                     >
@@ -1468,7 +1620,7 @@ const App: React.FC = () => {
               <img
                 src={getViberunnerLogoPath()}
                 alt="Viberunner Logo"
-                style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+                style={{ width: "24px", height: "24px", objectFit: "contain" }}
               />
             </div>
             Viberunner
@@ -1478,46 +1630,55 @@ const App: React.FC = () => {
 
       <div id="vf-main-layout">
         <main className="vf-content-area">
-          {showAppSelection && activeTab?.type === 'newtab' ? (
+          {showAppSelection && activeTab?.type === "newtab" ? (
             <div className="vf-app-selection">
               <div className="selection-header">
                 <h2 className="selection-title">Choose an app</h2>
                 <p className="selection-subtitle">
-                  Multiple apps can handle this file type. Choose one to continue:
+                  Multiple runners can handle this file type. Choose one to
+                  continue:
                 </p>
                 <div className="file-meta">
-                  <span className="filename">{path.basename(pendingFileInput?.path || '')}</span>
-                  <span className="file-type">{pendingFileInput?.mimetype}</span>
+                  <span className="filename">
+                    {path.basename(pendingFileInput?.path || "")}
+                  </span>
+                  <span className="file-type">
+                    {pendingFileInput?.mimetype}
+                  </span>
                 </div>
               </div>
 
               <div className="app-grid">
-                {availableApps.map(app => (
+                {availableRunners.map((runner) => (
                   <div
-                    key={app.id}
+                    key={runner.id}
                     className="app-card"
-                    onClick={() => selectApp(app)}
+                    onClick={() => selectApp(runner)}
                   >
                     <div className="card-header">
                       <div className="card-icon">
                         <img
-                          src={getAppIcon(app)}
-                          alt={app.name}
-                          style={{ width: '32px', height: '32px', objectFit: 'contain' }}
+                          src={getAppIcon(runner)}
+                          alt={runner.name}
+                          style={{
+                            width: "32px",
+                            height: "32px",
+                            objectFit: "contain",
+                          }}
                         />
                       </div>
                       <div className="card-title-section">
-                        <h3 className="card-title">{app.name}</h3>
+                        <h3 className="card-title">{runner.name}</h3>
                         <div className="card-badge">
                           <div className="badge-dot"></div>
                           Ready
                         </div>
                       </div>
                     </div>
-                    <p className="card-description">{app.description}</p>
+                    <p className="card-description">{runner.description}</p>
                     <div className="card-footer">
                       <div className="supported-formats">
-                        {getSupportedFormats(app)}
+                        {getSupportedFormats(runner)}
                       </div>
                     </div>
                   </div>
@@ -1540,14 +1701,14 @@ const App: React.FC = () => {
             <div ref={appRootRef} className="app-viewport" />
 
             {/* Unified new tab interface when active tab is new tab */}
-            {activeTab?.type === 'newtab' && !showAppSelection && (
+            {activeTab?.type === "newtab" && !showAppSelection && (
               <div className="vf-new-tab-unified">
                 <div className="unified-content">
                   {/* Build Prompt Component */}
                   <BuildPrompt onSubmit={handleBuildPromptSubmit} />
 
-                  {/* Existing apps section - show only if apps are available */}
-                  {apps.length > 0 && (
+                  {/* Existing runners section - show only if runners are available */}
+                  {runners.length > 0 && (
                     <>
                       {/* Drop zone section */}
                       <div className="drop-zone-section">
@@ -1555,120 +1716,179 @@ const App: React.FC = () => {
                           <div className="drop-zone-content">
                             <div className="drop-zone-header">
                               <div className="drop-zone-icon">⬇</div>
-                              <h3 className="drop-zone-title">Drop files here</h3>
+                              <h3 className="drop-zone-title">
+                                Drop files here
+                              </h3>
                             </div>
                             <p className="drop-zone-description">
-                              Drag and drop files to automatically find compatible apps
+                              Drag and drop files to automatically find
+                              compatible runners
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Utility apps section */}
-                      {apps.filter(a => a.standalone).length > 0 && (
+                      {/* Utility runners section */}
+                      {runners.filter((a) => a.standalone).length > 0 && (
                         <div className="utility-section">
                           <div className="section-card">
                             <div className="section-header">
-                              <h4 className="section-title">
-                                Utility Apps
-                              </h4>
-                              <span className="section-count">{apps.filter(a => a.standalone).length}</span>
+                              <h4 className="section-title">Utility Runners</h4>
+                              <span className="section-count">
+                                {runners.filter((a) => a.standalone).length}
+                              </span>
                             </div>
                             <div className="utility-cards">
-                              {apps.filter(a => a.standalone).map(app => {
-                                const startupConfig = startupApps[app.id];
-                                const isStartupEnabled = startupConfig?.enabled || false;
-                                const tabOrder = startupConfig?.tabOrder || 1;
+                              {runners
+                                .filter((a) => a.standalone)
+                                .map((runner) => {
+                                  const startupConfig =
+                                    startupRunners[runner.id]
+                                  const isStartupEnabled =
+                                    startupConfig?.enabled || false
+                                  const tabOrder = startupConfig?.tabOrder || 1
 
-                                return (
-                                  <div key={app.id} className="utility-card-container">
-                                    <div className="utility-card" onClick={() => launchStandaloneApp(app)}>
-                                      <div className="utility-icon">
-                                        <img
-                                          src={getAppIcon(app)}
-                                          alt={app.name}
-                                          style={{ width: '24px', height: '24px', objectFit: 'contain' }}
-                                        />
-                                      </div>
-                                      <div className="utility-content">
-                                        <h5 className="utility-title">{app.name}</h5>
-                                        <p className="utility-description">{app.description}</p>
-                                      </div>
-                                      <div className="utility-action">Launch</div>
-                                    </div>
-
-                                    {/* Startup controls */}
-                                    <div className="startup-controls" onClick={(e) => e.stopPropagation()}>
-                                      <div className="startup-toggle">
-                                        <label className="toggle-label" onClick={(e) => e.stopPropagation()}>
-                                          <input
-                                            type="checkbox"
-                                            checked={isStartupEnabled}
-                                            onChange={(e) => toggleStartupApp(app.id, e.target.checked)}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="toggle-checkbox"
+                                  return (
+                                    <div
+                                      key={runner.id}
+                                      className="utility-card-container"
+                                    >
+                                      <div
+                                        className="utility-card"
+                                        onClick={() =>
+                                          launchStandaloneApp(runner)
+                                        }
+                                      >
+                                        <div className="utility-icon">
+                                          <img
+                                            src={getAppIcon(runner)}
+                                            alt={runner.name}
+                                            style={{
+                                              width: "24px",
+                                              height: "24px",
+                                              objectFit: "contain",
+                                            }}
                                           />
-                                          <span className="toggle-slider"></span>
-                                          <span className="toggle-text">Start on launch</span>
-                                        </label>
+                                        </div>
+                                        <div className="utility-content">
+                                          <h5 className="utility-title">
+                                            {runner.name}
+                                          </h5>
+                                          <p className="utility-description">
+                                            {runner.description}
+                                          </p>
+                                        </div>
+                                        <div className="utility-action">
+                                          Launch
+                                        </div>
                                       </div>
 
-                                      {isStartupEnabled && (
-                                        <div className="tab-order-control">
-                                          <label className="tab-order-label">
-                                            Tab order:
+                                      {/* Startup controls */}
+                                      <div
+                                        className="startup-controls"
+                                        onClick={(e) => e.stopPropagation()}
+                                      >
+                                        <div className="startup-toggle">
+                                          <label
+                                            className="toggle-label"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
                                             <input
-                                              type="number"
-                                              min="1"
-                                              max="99"
-                                              value={tabOrder}
-                                              onChange={(e) => updateStartupAppTabOrder(app.id, parseInt(e.target.value) || 1)}
-                                              onClick={(e) => e.stopPropagation()}
-                                              className="tab-order-input"
+                                              type="checkbox"
+                                              checked={isStartupEnabled}
+                                              onChange={(e) =>
+                                                toggleStartupApp(
+                                                  runner.id,
+                                                  e.target.checked
+                                                )
+                                              }
+                                              onClick={(e) =>
+                                                e.stopPropagation()
+                                              }
+                                              className="toggle-checkbox"
                                             />
+                                            <span className="toggle-slider"></span>
+                                            <span className="toggle-text">
+                                              Start on launch
+                                            </span>
                                           </label>
                                         </div>
-                                      )}
+
+                                        {isStartupEnabled && (
+                                          <div className="tab-order-control">
+                                            <label className="tab-order-label">
+                                              Tab order:
+                                              <input
+                                                type="number"
+                                                min="1"
+                                                max="99"
+                                                value={tabOrder}
+                                                onChange={(e) =>
+                                                  updateStartupAppTabOrder(
+                                                    runner.id,
+                                                    parseInt(e.target.value) ||
+                                                      1
+                                                  )
+                                                }
+                                                onClick={(e) =>
+                                                  e.stopPropagation()
+                                                }
+                                                className="tab-order-input"
+                                              />
+                                            </label>
+                                          </div>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
+                                  )
+                                })}
                             </div>
                           </div>
                         </div>
                       )}
 
-                      {/* File-based apps section */}
-                      {apps.filter(f => !f.standalone).length > 0 && (
-                        <div className="apps-section">
+                      {/* File-based runners section */}
+                      {runners.filter((f) => !f.standalone).length > 0 && (
+                        <div className="runners-section">
                           <div className="section-card">
                             <div className="section-header">
                               <h4 className="section-title">
-                                Contextual Apps
+                                Contextual Runners
                               </h4>
-                              <span className="section-count">{apps.filter(f => !f.standalone).length}</span>
+                              <span className="section-count">
+                                {runners.filter((f) => !f.standalone).length}
+                              </span>
                             </div>
-                            {isLoadingApps ? (
+                            {isLoadingRunners ? (
                               <div className="loading-state">
                                 <span className="loading-spinner">⟳</span>
-                                Loading apps...
+                                Loading runners...
                               </div>
                             ) : (
-                              <div className="apps-grid">
-                                {apps.filter(f => !f.standalone).map(app => (
-                                  <div key={app.id} className="app-info-card">
-                                    <div className="app-info-header">
-                                      <h5 className="app-info-title">{app.name}</h5>
-                                      <div className="app-info-status">
-                                        <span className="status-dot"></span>
+                              <div className="runners-grid">
+                                {runners
+                                  .filter((f) => !f.standalone)
+                                  .map((runner) => (
+                                    <div
+                                      key={runner.id}
+                                      className="app-info-card"
+                                    >
+                                      <div className="app-info-header">
+                                        <h5 className="app-info-title">
+                                          {runner.name}
+                                        </h5>
+                                        <div className="app-info-status">
+                                          <span className="status-dot"></span>
+                                        </div>
+                                      </div>
+                                      <p className="app-info-description">
+                                        {runner.description}
+                                      </p>
+                                      <div className="app-info-formats">
+                                        {getSupportedFormats(runner)}
                                       </div>
                                     </div>
-                                    <p className="app-info-description">{app.description}</p>
-                                    <div className="app-info-formats">
-                                      {getSupportedFormats(app)}
-                                    </div>
-                                  </div>
-                                ))}
+                                  ))}
                               </div>
                             )}
                           </div>
@@ -1682,20 +1902,35 @@ const App: React.FC = () => {
 
             {/* Settings Modal - Remove directory controls */}
             {showSettings && (
-              <div className="settings-modal-overlay" onClick={() => setShowSettings(false)}>
-                <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
+              <div
+                className="settings-modal-overlay"
+                onClick={() => setShowSettings(false)}
+              >
+                <div
+                  className="settings-modal"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="settings-header">
                     <h3>Settings</h3>
-                    <button onClick={() => setShowSettings(false)} className="close-btn">✕</button>
+                    <button
+                      onClick={() => setShowSettings(false)}
+                      className="close-btn"
+                    >
+                      ✕
+                    </button>
                   </div>
                   <div className="settings-content">
                     <div className="setting-group">
                       <label>Updates</label>
-                      <p className="setting-description">Check for the latest version of Viberunner</p>
+                      <p className="setting-description">
+                        Check for the latest version of Viberunner
+                      </p>
                       <div className="setting-actions">
                         <button
                           className="btn btn-outline"
-                          onClick={() => updateNotificationRef.current?.checkForUpdates()}
+                          onClick={() =>
+                            updateNotificationRef.current?.checkForUpdates()
+                          }
                         >
                           Check for Updates
                         </button>
@@ -1707,7 +1942,7 @@ const App: React.FC = () => {
             )}
 
             {/* Settings Icon */}
-            {activeTab?.type === 'newtab' && !showAppSelection && (
+            {activeTab?.type === "newtab" && !showAppSelection && (
               <button
                 className="settings-icon"
                 onClick={() => setShowSettings(true)}
@@ -1723,7 +1958,7 @@ const App: React.FC = () => {
         <UpdateNotification ref={updateNotificationRef} />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App

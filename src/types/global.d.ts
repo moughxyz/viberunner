@@ -17,7 +17,7 @@ interface Window {
     }>;
     launchStandaloneApp: (id: string) => Promise<any>;
     // Icon loading for apps
-    getAppIcon: (appId: string, iconPath: string) => Promise<{
+    getAppIcon: (runnerId: string, iconPath: string) => Promise<{
       success: boolean;
       iconData?: string;
       error?: string;
