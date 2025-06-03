@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react"
 import { FileChange } from "./AIAgentInterface"
+import "./CodeEditor.css"
 
 // Monaco editor interface (we'll load it dynamically)
 interface MonacoEditor {
@@ -72,43 +73,43 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const currentFile = activeFile ? files[activeFile] : null
 
   return (
-    <div className="flex flex-col h-full bg-neutral-900 border border-neutral-800">
+    <div className="code-editor">
       {fileEntries.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center p-8">
-          <div className="text-4xl mb-4 opacity-50">📄</div>
-          <h4 className="text-white font-medium text-lg mb-2">No files yet</h4>
-          <p className="text-neutral-400 text-sm text-center max-w-xs">
+        <div className="empty-state">
+          <div className="empty-state-icon">📄</div>
+          <h4 className="empty-state-title">No files yet</h4>
+          <p className="empty-state-description">
             Start a conversation with the AI to generate runner files.
           </p>
         </div>
       ) : (
-        <div id="editor-content" className="flex-1 flex flex-col min-h-0">
+        <div id="editor-content" className="editor-content">
           {/* Editor Content */}
-          <div className="flex-1 flex min-h-0">
+          <div className="editor-main">
             {isLoading ? (
-              <div className="flex-1 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-2xl mb-2 animate-spin">⟳</div>
-                  <p className="text-neutral-400 text-sm">Loading editor...</p>
+              <div className="loading-container">
+                <div className="loading-content">
+                  <div className="loading-spinner">⟳</div>
+                  <p className="loading-text">Loading editor...</p>
                 </div>
               </div>
             ) : currentFile ? (
-              <div className="flex-1 flex flex-col min-h-0">
+              <div className="editor-container">
                 {/* Editor Toolbar */}
-                <div className="flex items-center justify-between px-4 py-2 bg-neutral-800 border-b border-neutral-700">
-                  <div className="text-neutral-300 text-xs font-mono truncate">
+                <div className="editor-toolbar">
+                  <div className="editor-toolbar-filename">
                     {activeFile}
                   </div>
-                  <div className="bg-neutral-700 text-neutral-300 px-2 py-1 rounded text-xs font-medium">
+                  <div className="editor-toolbar-language">
                     {currentFile.language}
                   </div>
                 </div>
 
                 {/* Editor */}
-                <div className="flex-1 relative">
+                <div className="editor-wrapper">
                   <textarea
                     ref={textareaRef}
-                    className="absolute inset-0 w-full h-full bg-neutral-900 text-white text-sm font-mono leading-relaxed p-4 border-0 resize-none focus:outline-none focus:ring-1 focus:ring-neutral-600"
+                    className="editor-textarea"
                     value={currentFile.content}
                     onChange={(e) => handleContentChange(e.target.value)}
                     spellCheck={false}
@@ -121,8 +122,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <p className="text-neutral-400 text-sm">
+              <div className="no-file-selected">
+                <p className="no-file-text">
                   Select a file to view its contents
                 </p>
               </div>
@@ -130,28 +131,26 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
             {/* File Structure Sidebar */}
             {fileEntries.length > 0 && (
-              <div className="w-64 border-l border-neutral-800 bg-neutral-900/50">
-                <div className="px-4 py-3 border-b border-neutral-800">
-                  <h4 className="text-white font-medium text-sm">
+              <div className="file-sidebar">
+                <div className="file-sidebar-header">
+                  <h4 className="file-sidebar-title">
                     File Structure
                   </h4>
                 </div>
-                <div className="p-2">
+                <div className="file-list">
                   {fileEntries.map(([path, file]) => (
                     <div
                       key={path}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs cursor-pointer transition-colors ${
-                        activeFile === path
-                          ? "bg-neutral-700 text-white"
-                          : "text-neutral-400 hover:text-white hover:bg-neutral-800"
+                      className={`file-item ${
+                        activeFile === path ? "active" : "inactive"
                       }`}
                       onClick={() => onFileSelect(path)}
                     >
-                      <span className="text-sm flex-shrink-0">
+                      <span className="file-icon">
                         {getFileIcon(file.language)}
                       </span>
-                      <span className="flex-1 font-mono truncate">{path}</span>
-                      <span className="text-neutral-500 text-xs flex-shrink-0">
+                      <span className="file-name">{path}</span>
+                      <span className="file-size">
                         {file.content.length}
                       </span>
                     </div>

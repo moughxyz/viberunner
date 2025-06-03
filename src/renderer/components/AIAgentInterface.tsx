@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+import "./AIAgentInterface.css"
 
 export interface FileChange {
   path: string
@@ -231,16 +232,10 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
 
   if (!runnerName || Object.keys(files).length === 0) {
     return (
-      <div
-        id="preview-empty-state"
-        className="h-full bg-transparent p-8 flex items-center justify-center"
-      >
-        <div className="text-center">
-          <div className="text-6xl mb-4 opacity-50">👁️</div>
-          <h3 className="text-xl font-light text-white mb-3">
-            No Runner to Preview
-          </h3>
-          <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
+      <div id="preview-empty-state" className="preview-empty-state">
+        <div className="empty-state-content">
+          <h3 className="empty-state-title">No Runner to Preview</h3>
+          <p className="empty-state-description">
             Start building a runner in the chat to see a live preview here.
           </p>
         </div>
@@ -249,50 +244,38 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
   }
 
   return (
-    <div
-      id="preview-content"
-      className="flex-1 bg-[#0a0a0a] relative overflow-hidden rounded-b-2xl"
-    >
+    <div id="preview-content" className="preview-content">
       {isLoading && (
-        <div
-          id="preview-loading"
-          className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-md rounded-2xl"
-        >
-          <div className="text-center">
-            <div className="animate-spin text-4xl mb-4">⟳</div>
-            <p className="text-white text-lg font-medium">Loading preview...</p>
+        <div id="preview-loading" className="preview-loading">
+          <div className="loading-content">
+            <div className="loading-spinner">⟳</div>
+            <p className="loading-text">Loading preview...</p>
           </div>
         </div>
       )}
       {error && error === "Waiting for build..." ? (
-        <div
-          id="preview-waiting-build"
-          className="absolute inset-0 flex items-center justify-center rounded-2xl"
-        >
-          <div className="text-center">
-            <div className="animate-spin text-4xl mb-4">⟳</div>
-            <p className="text-white mb-4 text-lg font-medium">{error}</p>
+        <div id="preview-waiting-build" className="preview-waiting-build">
+          <div className="waiting-content">
+            <div className="loading-spinner">⟳</div>
+            <p className="waiting-text">{error}</p>
             <button
               id="preview-check-again-btn-1"
               onClick={handleRefresh}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+              className="preview-action-btn"
             >
               Check Again
             </button>
           </div>
         </div>
       ) : error ? (
-        <div
-          id="preview-error"
-          className="absolute inset-0 flex items-center justify-center rounded-2xl"
-        >
-          <div className="text-center">
-            <div className="text-4xl mb-4">⚠️</div>
-            <p className="text-red-400 mb-4 text-lg font-medium">{error}</p>
+        <div id="preview-error" className="preview-error">
+          <div className="error-content">
+            <div className="error-icon">⚠️</div>
+            <p className="error-text">{error}</p>
             <button
               id="preview-try-again-btn"
               onClick={handleRefresh}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+              className="preview-action-btn"
             >
               Try Again
             </button>
@@ -300,22 +283,17 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
         </div>
       ) : null}
       {!isLoading && !error && !hasRunner && (
-        <div
-          id="preview-not-built"
-          className="absolute inset-0 flex items-center justify-center rounded-2xl"
-        >
-          <div className="text-center">
-            <div className="text-6xl mb-4 opacity-50">🔧</div>
-            <h3 className="text-xl font-light text-white mb-3">
-              Runner Not Built
-            </h3>
-            <p className="text-gray-400 text-base mb-6 leading-relaxed">
+        <div id="preview-not-built" className="preview-not-built">
+          <div className="not-built-content">
+            <div className="not-built-icon">🔧</div>
+            <h3 className="not-built-title">Runner Not Built</h3>
+            <p className="not-built-description">
               Build the runner to see a preview here.
             </p>
             <button
               id="preview-check-again-btn-2"
               onClick={handleRefresh}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+              className="preview-action-btn"
             >
               Check Again
             </button>
@@ -325,10 +303,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
       <div
         id="preview-container"
         ref={previewContainerRef}
-        className="w-full h-full"
-        style={{
-          display: hasRunner ? "block" : "none",
-        }}
+        className={`preview-container ${hasRunner ? "visible" : "hidden"}`}
       />
     </div>
   )
@@ -700,29 +675,21 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
 
   if (showApiKeyPrompt) {
     return (
-      <div
-        id="api-key-prompt"
-        className="h-full bg-[#0a0a0a] flex items-center justify-center px-6"
-      >
+      <div id="api-key-prompt" className="api-key-prompt">
         <div className="w-full max-w-md">
-          <div
-            id="api-key-form"
-            className="bg-white/5 border border-white/10 p-8"
-          >
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-light text-white mb-4 tracking-tight">
+          <div id="api-key-form" className="api-key-form">
+            <div className="api-key-title">
+              <h2 className="api-key-heading">
                 Claude API Key{" "}
-                <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent font-medium">
-                  Required
-                </span>
+                <span className="api-key-gradient-text">Required</span>
               </h2>
-              <p className="text-gray-400 text-sm leading-relaxed">
+              <p className="api-key-description">
                 To use the AI Agent for creating runners, please provide your
                 Claude API key.
               </p>
             </div>
 
-            <div className="mb-6">
+            <div className="api-key-input-container">
               <input
                 id="api-key-input"
                 type="password"
@@ -734,37 +701,37 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                     handleSetApiKey(apiKey.trim())
                   }
                 }}
-                className="w-full bg-white/5 border border-white/10 px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-400/50 focus:bg-white/8 transition-all duration-300"
+                className="api-key-input"
               />
             </div>
 
-            <div className="flex gap-3 mb-6">
+            <div className="api-key-buttons">
               <button
                 id="api-key-continue-btn"
                 onClick={() => handleSetApiKey(apiKey.trim())}
                 disabled={!apiKey.trim()}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 font-medium hover:from-purple-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="api-key-continue-btn"
               >
                 Continue
               </button>
               <button
                 id="api-key-cancel-btn"
                 onClick={onClose}
-                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3 font-medium transition-all duration-200"
+                className="api-key-cancel-btn"
               >
                 Cancel
               </button>
             </div>
 
-            <div className="text-center">
-              <p className="text-gray-500 text-xs">
+            <div className="api-key-footer">
+              <p className="api-key-footer-text">
                 Get your API key from{" "}
                 <a
                   id="anthropic-console-link"
                   href="https://console.anthropic.com/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-purple-400 hover:text-purple-300 transition-colors"
+                  className="anthropic-console-link"
                 >
                   Anthropic Console
                 </a>
@@ -779,31 +746,32 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   return (
     <div
       id="ai-agent-interface"
-      className={`bg-[#0a0a0a] ${
-        inTab ? "h-full rounded-none" : "min-h-screen p-6"
-      }`}
+      className={`ai-agent-interface ${inTab ? "in-tab" : ""}`}
     >
-      <div id="ai-agent-content" className="h-full flex flex-col rounded-none">
+      <div id="ai-agent-content" className="ai-agent-content">
         {!inTab && (
-          <Card className="mb-4">
-            <CardHeader className="flex flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <CardTitle className="text-xl">AI Runner Builder</CardTitle>
+          <Card className="header-card">
+            <CardHeader className="header-card-content">
+              <div className="header-left">
+                <CardTitle className="header-title">
+                  AI Runner Builder
+                </CardTitle>
                 <Input
                   id="runner-name-input"
                   type="text"
                   placeholder="Runner name (optional)"
                   value={runnerName}
                   onChange={(e) => setRunnerName(e.target.value)}
-                  className="max-w-xs"
+                  className="runner-name-input"
                 />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="header-buttons">
                 <Button
                   onClick={handleSaveRunner}
                   disabled={
                     Object.keys(currentFiles).length === 0 || isDiscarding
                   }
+                  className="header-btn header-btn-primary"
                 >
                   Done
                 </Button>
@@ -812,11 +780,16 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                     variant="secondary"
                     onClick={handleDiscard}
                     disabled={isDiscarding}
+                    className="header-btn header-btn-secondary"
                   >
                     {isDiscarding ? "Discarding..." : "Discard"}
                   </Button>
                 )}
-                <Button variant="outline" onClick={onClose}>
+                <Button
+                  variant="outline"
+                  onClick={onClose}
+                  className="header-btn header-btn-outline"
+                >
                   ✕
                 </Button>
               </div>
@@ -824,7 +797,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
           </Card>
         )}
 
-        <div className="flex-1 flex h-0">
+        <div className="main-layout">
           <ChatInterface
             messages={messages}
             onSendMessage={handleSendMessage}
@@ -836,33 +809,37 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
             isDiscarding={isDiscarding}
             hasFiles={Object.keys(currentFiles).length > 0}
           />
-          <div id="preview-panel" className="flex-1 m-5 border rounded-[8px]">
-            <Tabs defaultValue="preview" value={activeTab} onValueChange={setActiveTab} className="h-full">
-              <div
-                id="preview-header"
-                className="bg-neutral-900 border-b border-neutral-800 px-4 py-3 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <div id="preview-panel" className="preview-panel">
+            <Tabs
+              defaultValue="preview"
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="preview-panel-tabs"
+            >
+              <div id="preview-header" className="preview-header">
+                <div className="preview-status">
+                  <div className="status-indicator"></div>
                   <div>
-                    <h3 className="text-white font-medium text-sm">{activeTab === "preview" ? "Preview" : "Code"}</h3>
+                    <h3 className="preview-title">
+                      {activeTab === "preview" ? "Preview" : "Code"}
+                    </h3>
                     {runnerName && (
-                      <p className="text-neutral-400 text-xs">{runnerName}</p>
+                      <p className="preview-subtitle">{runnerName}</p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  <TabsList className="relative flex w-fit min-w-0 items-center gap-2 overflow-x-auto">
+                <div className="preview-controls">
+                  <TabsList className="preview-tabs-list">
                     <TabsTrigger
                       value="preview"
-                      className="font-regular group h-7 max-w-56 select-none whitespace-nowrap rounded-md px-2 text-sm font-medium transition-all border border-transparent data-[state=active]:border-gray-400 data-[state=active]:bg-white/5 data-[state=active]:text-white data-[state=inactive]:bg-neutral-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:bg-white/10"
+                      className="preview-tab-trigger"
                       data-testid="tab-file-button"
                     >
                       <div className="truncate">
-                        <div className="flex items-center gap-2">
+                        <div className="tab-content">
                           <svg
-                            className="group-disabled:hidden"
+                            className="tab-icon"
                             data-testid="geist-icon"
                             height="16"
                             stroke-linejoin="round"
@@ -883,17 +860,18 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                     </TabsTrigger>
                     <TabsTrigger
                       value="files"
-                      className="font-regular group h-7 max-w-56 select-none whitespace-nowrap rounded-md px-2 text-sm font-medium transition-all border border-transparent data-[state=active]:border-gray-400 data-[state=active]:bg-white/5 data-[state=active]:text-white data-[state=inactive]:bg-neutral-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:bg-white/10"
+                      className="preview-tab-trigger"
                       data-testid="tab-file-button"
                     >
                       <div className="truncate">
-                        <div className="flex items-center gap-2">
+                        <div className="tab-content">
                           <svg
                             data-testid="geist-icon"
                             height="16"
                             stroke-linejoin="round"
                             viewBox="0 0 16 16"
                             width="16"
+                            className="tab-icon"
                             style={{ color: "currentcolor" }}
                           >
                             <path
@@ -913,14 +891,14 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                     id="preview-refresh-btn"
                     onClick={refreshPreview}
                     disabled={isLoading}
-                    className="h-8 px-3 text-xs font-medium rounded-md transition-colors bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed border border-neutral-700"
+                    className="preview-refresh-btn"
                   >
                     {isLoading ? "..." : "Refresh"}
                   </button>
                 </div>
               </div>
 
-              <TabsContent value="preview" className="h-[calc(100%-57px)]">
+              <TabsContent value="preview" className="preview-tab-content">
                 <PreviewPanel
                   key={refreshKey}
                   runnerName={runnerName}
@@ -929,7 +907,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                 />
               </TabsContent>
 
-              <TabsContent value="files" className="h-[calc(100%-57px)]">
+              <TabsContent value="files" className="preview-tab-content">
                 <CodeEditor
                   files={currentFiles}
                   activeFile={activeFile}

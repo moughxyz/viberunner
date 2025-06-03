@@ -130,7 +130,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           {messages.length === 0 && (
             <div className="empty-state">
               <div className="empty-state-icon">
-                <span>✨</span>
+                <svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
               </div>
               <h3 className="empty-state-title">
                 Start building with Viberunner
