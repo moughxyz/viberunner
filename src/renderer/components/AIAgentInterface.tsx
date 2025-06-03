@@ -5,7 +5,10 @@ import { ClaudeAPIService } from '../services/ClaudeAPIService'
 import { FileManagerService } from '../services/FileManagerService'
 import { CommandExecutorService } from '../services/CommandExecutorService'
 import { getRunnersDirectory } from '../util'
-import '../styles/AIAgentInterface.css'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Card, CardHeader, CardTitle } from '@/components/ui/card'
 
 export interface FileChange {
   path: string
@@ -219,79 +222,98 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
 
   if (!runnerName || Object.keys(files).length === 0) {
     return (
-      <div className="preview-panel">
-        <div className="preview-empty">
-          <div className="empty-state">
-            <div className="empty-icon">👁️</div>
-            <h3>No Runner to Preview</h3>
-            <p>Start building a runner in the chat to see a live preview here.</p>
-          </div>
+      <div id="preview-empty-state" className="h-full bg-transparent p-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4 opacity-50">👁️</div>
+          <h3 className="text-xl font-light text-white mb-3">No Runner to Preview</h3>
+          <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
+            Start building a runner in the chat to see a live preview here.
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="preview-panel">
-      <div className="preview-header">
-        <div className="preview-title">
-          <span className="preview-icon">👁️</span>
-          Preview: {runnerName}
+    <div id="preview-panel" className="h-full flex flex-col rounded-2xl shadow-lg overflow-hidden">
+      <div id="preview-header" className="bg-gradient-to-r from-[#18181b]/80 to-[#0a0a0a]/80 border-b border-white/10 px-8 py-4 flex items-center justify-between rounded-t-2xl">
+        <div className="flex items-center gap-4">
+          <span className="text-2xl">👁️</span>
+          <div>
+            <h3 className="text-white font-semibold text-lg">Preview</h3>
+            <p className="text-gray-400 text-sm">{runnerName}</p>
+          </div>
         </div>
         <button
+          id="preview-refresh-btn"
           onClick={handleRefresh}
-          className="refresh-btn"
           disabled={isLoading}
+          className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-5 py-2 text-sm font-semibold rounded-lg shadow-md hover:from-purple-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           ↻ Refresh
         </button>
       </div>
-
-      <div className="preview-content">
+      <div id="preview-content" className="flex-1 bg-[#0a0a0a] relative overflow-hidden rounded-b-2xl">
         {isLoading && (
-          <div className="preview-loading">
-            <div className="loading-spinner">⟳</div>
-            <p>Loading preview...</p>
+          <div id="preview-loading" className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-md rounded-2xl">
+            <div className="text-center">
+              <div className="animate-spin text-4xl mb-4">⟳</div>
+              <p className="text-white text-lg font-medium">Loading preview...</p>
+            </div>
           </div>
         )}
-
         {error && error === 'Waiting for build...' ? (
-          <div className="preview-loading">
-            <div className="loading-spinner">⟳</div>
-            <p>{error}</p>
-            <button onClick={handleRefresh} className="refresh-btn">
-              Check Again
-            </button>
+          <div id="preview-waiting-build" className="absolute inset-0 flex items-center justify-center rounded-2xl">
+            <div className="text-center">
+              <div className="animate-spin text-4xl mb-4">⟳</div>
+              <p className="text-white mb-4 text-lg font-medium">{error}</p>
+              <button
+                id="preview-check-again-btn-1"
+                onClick={handleRefresh}
+                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+              >
+                Check Again
+              </button>
+            </div>
           </div>
         ) : error ? (
-          <div className="preview-error">
-            <div className="error-icon">⚠️</div>
-            <p>{error}</p>
-            <button onClick={handleRefresh} className="retry-btn">
-              Try Again
-            </button>
+          <div id="preview-error" className="absolute inset-0 flex items-center justify-center rounded-2xl">
+            <div className="text-center">
+              <div className="text-4xl mb-4">⚠️</div>
+              <p className="text-red-400 mb-4 text-lg font-medium">{error}</p>
+              <button
+                id="preview-try-again-btn"
+                onClick={handleRefresh}
+                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         ) : null}
-
         {!isLoading && !error && !hasRunner && (
-          <div className="preview-empty">
-            <div className="empty-state">
-              <div className="empty-icon">🔧</div>
-              <h3>Runner Not Built</h3>
-              <p>Build the runner to see a preview here.</p>
-              <button onClick={handleRefresh} className="refresh-btn">
+          <div id="preview-not-built" className="absolute inset-0 flex items-center justify-center rounded-2xl">
+            <div className="text-center">
+              <div className="text-6xl mb-4 opacity-50">🔧</div>
+              <h3 className="text-xl font-light text-white mb-3">Runner Not Built</h3>
+              <p className="text-gray-400 text-base mb-6 leading-relaxed">
+                Build the runner to see a preview here.
+              </p>
+              <button
+                id="preview-check-again-btn-2"
+                onClick={handleRefresh}
+                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+              >
                 Check Again
               </button>
             </div>
           </div>
         )}
-
         <div
+          id="preview-container"
           ref={previewContainerRef}
-          className="preview-runner-container"
+          className="w-full h-full"
           style={{
-            width: '100%',
-            height: '100%',
             display: hasRunner ? 'block' : 'none'
           }}
         />
@@ -308,10 +330,9 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
   const [currentFiles, setCurrentFiles] = useState<Record<string, FileChange>>({})
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [runnerName, setRunnerName] = useState<string>('')
-  const [rightPanelMode, setRightPanelMode] = useState<'preview' | 'files'>('preview')
-  const [previewRefreshKey, setPreviewRefreshKey] = useState(0)
   const [isDiscarding, setIsDiscarding] = useState(false)
   const [isNewRunner, setIsNewRunner] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const claudeService = useRef<ClaudeAPIService | null>(null)
   const fileManager = useRef<FileManagerService | null>(null)
@@ -336,10 +357,6 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
     localStorage.setItem('claude-api-key', key)
     claudeService.current = new ClaudeAPIService(key)
     setShowApiKeyPrompt(false)
-  }
-
-  const refreshPreview = () => {
-    setPreviewRefreshKey(prev => prev + 1)
   }
 
   const handleDiscard = async () => {
@@ -621,37 +638,74 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
     }))
   }
 
+  const refreshPreview = () => {
+    setRefreshKey(prev => prev + 1)
+  }
+
   if (showApiKeyPrompt) {
     return (
-      <div className="ai-agent-interface">
-        <div className="api-key-prompt">
-          <div className="api-key-card">
-            <h2>Claude API Key Required</h2>
-            <p>To use the AI Agent for creating runners, please provide your Claude API key.</p>
-            <input
-              type="password"
-              placeholder="Enter your Claude API key"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && apiKey.trim()) {
-                  handleSetApiKey(apiKey.trim())
-                }
-              }}
-            />
-            <div className="api-key-actions">
+      <div id="api-key-prompt" className="h-full bg-[#0a0a0a] flex items-center justify-center px-6">
+        <div className="w-full max-w-md">
+          <div id="api-key-form" className="bg-white/5 border border-white/10 p-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-light text-white mb-4 tracking-tight">
+                Claude API Key{' '}
+                <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent font-medium">
+                  Required
+                </span>
+              </h2>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                To use the AI Agent for creating runners, please provide your Claude API key.
+              </p>
+            </div>
+
+            <div className="mb-6">
+              <input
+                id="api-key-input"
+                type="password"
+                placeholder="Enter your Claude API key"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && apiKey.trim()) {
+                    handleSetApiKey(apiKey.trim())
+                  }
+                }}
+                className="w-full bg-white/5 border border-white/10 px-6 py-4 text-white placeholder:text-gray-500 focus:outline-none focus:border-purple-400/50 focus:bg-white/8 transition-all duration-300"
+              />
+            </div>
+
+            <div className="flex gap-3 mb-6">
               <button
+                id="api-key-continue-btn"
                 onClick={() => handleSetApiKey(apiKey.trim())}
                 disabled={!apiKey.trim()}
+                className="flex-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 font-medium hover:from-purple-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue
               </button>
-              <button onClick={onClose} className="cancel-btn">
+              <button
+                id="api-key-cancel-btn"
+                onClick={onClose}
+                className="bg-white/10 hover:bg-white/20 border border-white/20 text-white px-6 py-3 font-medium transition-all duration-200"
+              >
                 Cancel
               </button>
             </div>
-            <div className="api-key-help">
-              <p>Get your API key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer">Anthropic Console</a></p>
+
+            <div className="text-center">
+              <p className="text-gray-500 text-xs">
+                Get your API key from{' '}
+                <a
+                  id="anthropic-console-link"
+                  href="https://console.anthropic.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Anthropic Console
+                </a>
+              </p>
             </div>
           </div>
         </div>
@@ -660,115 +714,105 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
   }
 
   return (
-    <div className={`ai-agent-interface ${inTab ? 'ai-agent-in-tab' : ''}`}>
-      {!inTab && (
-        <div className="ai-agent-header">
-          <div className="ai-agent-title">
-            <h2>AI Runner Builder</h2>
-            <div className="runner-name-input">
-              <input
-                type="text"
-                placeholder="Runner name (optional)"
-                value={runnerName}
-                onChange={(e) => setRunnerName(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="ai-agent-actions">
-            <button
-              onClick={handleSaveRunner}
-              disabled={Object.keys(currentFiles).length === 0 || isDiscarding}
-              className="save-btn"
-            >
-              Done
-            </button>
-            {Object.keys(currentFiles).length > 0 && (
-              <button
-                onClick={handleDiscard}
-                disabled={isDiscarding}
-                className="discard-btn"
-              >
-                {isDiscarding ? 'Discarding...' : 'Discard'}
-              </button>
-            )}
-            <button onClick={onClose} className="close-btn">
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="ai-agent-content">
-        <div className="chat-column">
-          {inTab && (
-            <div className="tab-agent-header">
-              <div className="runner-name-input">
-                <input
+    <div id="ai-agent-interface" className={`bg-[#0a0a0a] ${inTab ? 'h-full rounded-none' : 'min-h-screen p-6'}`}>
+      <div id="ai-agent-content" className="h-full flex flex-col rounded-none">
+        {!inTab && (
+          <Card className="mb-4">
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <CardTitle className="text-xl">AI Runner Builder</CardTitle>
+                <Input
+                  id="runner-name-input"
                   type="text"
                   placeholder="Runner name (optional)"
                   value={runnerName}
                   onChange={(e) => setRunnerName(e.target.value)}
+                  className="max-w-xs"
                 />
               </div>
-              <div className="tab-agent-actions">
-                <button
-                  onClick={handleSaveRunner}
-                  disabled={Object.keys(currentFiles).length === 0 || isDiscarding}
-                  className="save-btn"
-                >
+              <div className="flex items-center gap-2">
+                <Button onClick={handleSaveRunner} disabled={Object.keys(currentFiles).length === 0 || isDiscarding}>
                   Done
-                </button>
+                </Button>
                 {Object.keys(currentFiles).length > 0 && (
-                  <button
-                    onClick={handleDiscard}
-                    disabled={isDiscarding}
-                    className="discard-btn"
-                  >
+                  <Button variant="secondary" onClick={handleDiscard} disabled={isDiscarding}>
                     {isDiscarding ? 'Discarding...' : 'Discard'}
-                  </button>
+                  </Button>
                 )}
+                <Button variant="outline" onClick={onClose}>✕</Button>
               </div>
-            </div>
-          )}
-          <ChatInterface
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            isLoading={isLoading}
-          />
-        </div>
+            </CardHeader>
+          </Card>
+        )}
 
-        <div className="right-panel">
-          <div className="right-panel-tabs">
-            <button
-              className={`tab-btn ${rightPanelMode === 'preview' ? 'active' : ''}`}
-              onClick={() => setRightPanelMode('preview')}
-            >
-              👁️ Preview
-            </button>
-            <button
-              className={`tab-btn ${rightPanelMode === 'files' ? 'active' : ''}`}
-              onClick={() => setRightPanelMode('files')}
-            >
-              📁 Files
-            </button>
+        <div className="flex-1 flex">
+          <div className="flex-1 flex flex-col">
+            <ChatInterface
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              isLoading={isLoading}
+              runnerName={runnerName}
+              onRunnerNameChange={setRunnerName}
+              onSave={handleSaveRunner}
+              onDiscard={handleDiscard}
+              isDiscarding={isDiscarding}
+              hasFiles={Object.keys(currentFiles).length > 0}
+            />
           </div>
-
-          <div className="right-panel-content">
-            {rightPanelMode === 'preview' ? (
-              <PreviewPanel
-                runnerName={runnerName}
-                files={currentFiles}
-                onRefresh={refreshPreview}
-                key={previewRefreshKey}
-              />
-            ) : (
-              <CodeEditor
-                files={currentFiles}
-                activeFile={activeFile}
-                onFileSelect={setActiveFile}
-                onFileChange={handleFileChange}
-              />
-            )}
+          <div className="w-[600px] border-l border-white/10">
+            <Tabs defaultValue="preview" className="h-full">
+              <TabsList className="w-full bg-white/5 border-b border-white/10 rounded-none p-0">
+                <TabsTrigger
+                  value="preview"
+                  className="flex-1 data-[state=active]:bg-white/10"
+                >
+                  Preview
+                </TabsTrigger>
+                <TabsTrigger
+                  value="files"
+                  className="flex-1 data-[state=active]:bg-white/10"
+                >
+                  Files
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="preview" className="h-[calc(100%-49px)]">
+                <PreviewPanel
+                  key={refreshKey}
+                  runnerName={runnerName}
+                  files={currentFiles}
+                  onRefresh={refreshPreview}
+                />
+              </TabsContent>
+              <TabsContent value="files" className="h-[calc(100%-49px)]">
+                <div className="h-full bg-[#0a0a0a] p-4">
+                  <div className="space-y-2">
+                    {Object.entries(currentFiles).map(([path]) => (
+                      <button
+                        key={path}
+                        onClick={() => setActiveFile(path)}
+                        className={`w-full text-left px-4 py-2 rounded ${
+                          activeFile === path
+                            ? 'bg-white/10 text-white'
+                            : 'text-white/60 hover:bg-white/5'
+                        }`}
+                      >
+                        {path}
+                      </button>
+                    ))}
+                  </div>
+                  {activeFile && (
+                    <div className="mt-4">
+                      <CodeEditor
+                        files={currentFiles}
+                        activeFile={activeFile}
+                        onFileSelect={setActiveFile}
+                        onFileChange={handleFileChange}
+                      />
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
