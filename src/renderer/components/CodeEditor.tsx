@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { FileChange } from './AIAgentInterface'
+import React, { useEffect, useRef, useState } from "react"
+import { FileChange } from "./AIAgentInterface"
 
 // Monaco editor interface (we'll load it dynamically)
 interface MonacoEditor {
@@ -18,7 +18,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   files,
   activeFile,
   onFileSelect,
-  onFileChange
+  onFileChange,
 }) => {
   const editorRef = useRef<any>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -43,7 +43,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
       setIsLoading(false)
       setMonaco({ editor: null, monaco: null })
     } catch (error) {
-      console.error('Failed to load Monaco Editor:', error)
+      console.error("Failed to load Monaco Editor:", error)
       setIsLoading(false)
     }
   }
@@ -72,91 +72,93 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
   const currentFile = activeFile ? files[activeFile] : null
 
   return (
-    <div className="code-editor">
-      <div className="editor-header">
-        <h3>Generated Files</h3>
-        <div className="file-count">
-          {fileEntries.length} {fileEntries.length === 1 ? 'file' : 'files'}
-        </div>
-      </div>
-
+    <div className="flex flex-col h-full bg-neutral-900 border border-neutral-800">
       {fileEntries.length === 0 ? (
-        <div className="editor-empty">
-          <div className="empty-icon">📄</div>
-          <h4>No files yet</h4>
-          <p>Start a conversation with the AI to generate runner files.</p>
+        <div className="flex-1 flex flex-col items-center justify-center p-8">
+          <div className="text-4xl mb-4 opacity-50">📄</div>
+          <h4 className="text-white font-medium text-lg mb-2">No files yet</h4>
+          <p className="text-neutral-400 text-sm text-center max-w-xs">
+            Start a conversation with the AI to generate runner files.
+          </p>
         </div>
       ) : (
-        <>
-          <div className="file-tabs">
-            {fileEntries.map(([path, file]) => (
-              <div
-                key={path}
-                className={`file-tab ${activeFile === path ? 'active' : ''}`}
-                onClick={() => onFileSelect(path)}
-              >
-                <span className="file-icon">
-                  {getFileIcon(file.language)}
-                </span>
-                <span className="file-name">
-                  {path.split('/').pop()}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="editor-content">
+        <div id="editor-content" className="flex-1 flex flex-col min-h-0">
+          {/* Editor Content */}
+          <div className="flex-1 flex min-h-0">
             {isLoading ? (
-              <div className="editor-loading">
-                <div className="loading-spinner">⟳</div>
-                Loading editor...
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-2xl mb-2 animate-spin">⟳</div>
+                  <p className="text-neutral-400 text-sm">Loading editor...</p>
+                </div>
               </div>
             ) : currentFile ? (
-              <div className="editor-container">
-                <div className="editor-toolbar">
-                  <div className="file-path">{activeFile}</div>
-                  <div className="language-badge">
+              <div className="flex-1 flex flex-col min-h-0">
+                {/* Editor Toolbar */}
+                <div className="flex items-center justify-between px-4 py-2 bg-neutral-800 border-b border-neutral-700">
+                  <div className="text-neutral-300 text-xs font-mono truncate">
+                    {activeFile}
+                  </div>
+                  <div className="bg-neutral-700 text-neutral-300 px-2 py-1 rounded text-xs font-medium">
                     {currentFile.language}
                   </div>
                 </div>
 
-                {/* Simple textarea for now - replace with Monaco in production */}
-                <textarea
-                  ref={textareaRef}
-                  className="simple-editor"
-                  value={currentFile.content}
-                  onChange={(e) => handleContentChange(e.target.value)}
-                  spellCheck={false}
-                  placeholder="File content will appear here..."
-                />
+                {/* Editor */}
+                <div className="flex-1 relative">
+                  <textarea
+                    ref={textareaRef}
+                    className="absolute inset-0 w-full h-full bg-neutral-900 text-white text-sm font-mono leading-relaxed p-4 border-0 resize-none focus:outline-none focus:ring-1 focus:ring-neutral-600"
+                    value={currentFile.content}
+                    onChange={(e) => handleContentChange(e.target.value)}
+                    spellCheck={false}
+                    placeholder="File content will appear here..."
+                    style={{
+                      fontFamily:
+                        'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+                    }}
+                  />
+                </div>
               </div>
             ) : (
-              <div className="editor-placeholder">
-                <p>Select a file to view its contents</p>
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-neutral-400 text-sm">
+                  Select a file to view its contents
+                </p>
               </div>
             )}
-          </div>
-        </>
-      )}
 
-      {/* File structure preview */}
-      {fileEntries.length > 0 && (
-        <div className="file-structure">
-          <div className="structure-header">
-            <h4>File Structure</h4>
-          </div>
-          <div className="structure-tree">
-            {fileEntries.map(([path, file]) => (
-              <div key={path} className="structure-item">
-                <span className="structure-icon">
-                  {getFileIcon(file.language)}
-                </span>
-                <span className="structure-path">{path}</span>
-                <span className="structure-size">
-                  {file.content.length} chars
-                </span>
+            {/* File Structure Sidebar */}
+            {fileEntries.length > 0 && (
+              <div className="w-64 border-l border-neutral-800 bg-neutral-900/50">
+                <div className="px-4 py-3 border-b border-neutral-800">
+                  <h4 className="text-white font-medium text-sm">
+                    File Structure
+                  </h4>
+                </div>
+                <div className="p-2">
+                  {fileEntries.map(([path, file]) => (
+                    <div
+                      key={path}
+                      className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs cursor-pointer transition-colors ${
+                        activeFile === path
+                          ? "bg-neutral-700 text-white"
+                          : "text-neutral-400 hover:text-white hover:bg-neutral-800"
+                      }`}
+                      onClick={() => onFileSelect(path)}
+                    >
+                      <span className="text-sm flex-shrink-0">
+                        {getFileIcon(file.language)}
+                      </span>
+                      <span className="flex-1 font-mono truncate">{path}</span>
+                      <span className="text-neutral-500 text-xs flex-shrink-0">
+                        {file.content.length}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       )}
@@ -166,19 +168,19 @@ const CodeEditor: React.FC<CodeEditorProps> = ({
 
 const getFileIcon = (language: string): string => {
   switch (language) {
-    case 'typescript':
-    case 'javascript':
-      return '📜'
-    case 'json':
-      return '⚙️'
-    case 'css':
-      return '🎨'
-    case 'html':
-      return '🌐'
-    case 'markdown':
-      return '📝'
+    case "typescript":
+    case "javascript":
+      return "📜"
+    case "json":
+      return "⚙️"
+    case "css":
+      return "🎨"
+    case "html":
+      return "🌐"
+    case "markdown":
+      return "📝"
     default:
-      return '📄'
+      return "📄"
   }
 }
 

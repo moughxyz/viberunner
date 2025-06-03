@@ -260,9 +260,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
         >
           <div className="text-center">
             <div className="animate-spin text-4xl mb-4">⟳</div>
-            <p className="text-white text-lg font-medium">
-              Loading preview...
-            </p>
+            <p className="text-white text-lg font-medium">Loading preview...</p>
           </div>
         </div>
       )}
@@ -352,6 +350,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   const [isDiscarding, setIsDiscarding] = useState(false)
   const [isNewRunner, setIsNewRunner] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [activeTab, setActiveTab] = useState("preview")
 
   const claudeService = useRef<ClaudeAPIService | null>(null)
   const fileManager = useRef<FileManagerService | null>(null)
@@ -838,7 +837,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
             hasFiles={Object.keys(currentFiles).length > 0}
           />
           <div id="preview-panel" className="flex-1 m-5 border rounded-[8px]">
-            <Tabs defaultValue="preview" className="h-full">
+            <Tabs defaultValue="preview" value={activeTab} onValueChange={setActiveTab} className="h-full">
               <div
                 id="preview-header"
                 className="bg-neutral-900 border-b border-neutral-800 px-4 py-3 flex items-center justify-between"
@@ -846,7 +845,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <div>
-                    <h3 className="text-white font-medium text-sm">Preview</h3>
+                    <h3 className="text-white font-medium text-sm">{activeTab === "preview" ? "Preview" : "Code"}</h3>
                     {runnerName && (
                       <p className="text-neutral-400 text-xs">{runnerName}</p>
                     )}
@@ -862,7 +861,22 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                     >
                       <div className="truncate">
                         <div className="flex items-center gap-2">
-                          <svg className="group-disabled:hidden" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style={{ color: 'currentcolor' }}><path fillRule="evenodd" clipRule="evenodd" d="M1.5 2.5H14.5V12.5C14.5 13.0523 14.0523 13.5 13.5 13.5H2.5C1.94772 13.5 1.5 13.0523 1.5 12.5V2.5ZM0 1H1.5H14.5H16V2.5V12.5C16 13.8807 14.8807 15 13.5 15H2.5C1.11929 15 0 13.8807 0 12.5V2.5V1ZM3.75 5.5C4.16421 5.5 4.5 5.16421 4.5 4.75C4.5 4.33579 4.16421 4 3.75 4C3.33579 4 3 4.33579 3 4.75C3 5.16421 3.33579 5.5 3.75 5.5ZM7 4.75C7 5.16421 6.66421 5.5 6.25 5.5C5.83579 5.5 5.5 5.16421 5.5 4.75C5.5 4.33579 5.83579 4 6.25 4C6.66421 4 7 4.33579 7 4.75ZM8.75 5.5C9.16421 5.5 9.5 5.16421 9.5 4.75C9.5 4.33579 9.16421 4 8.75 4C8.33579 4 8 4.33579 8 4.75C8 5.16421 8.33579 5.5 8.75 5.5Z" fill="currentColor"></path></svg>
+                          <svg
+                            className="group-disabled:hidden"
+                            data-testid="geist-icon"
+                            height="16"
+                            stroke-linejoin="round"
+                            viewBox="0 0 16 16"
+                            width="16"
+                            style={{ color: "currentcolor" }}
+                          >
+                            <path
+                              fillRule="evenodd"
+                              clipRule="evenodd"
+                              d="M1.5 2.5H14.5V12.5C14.5 13.0523 14.0523 13.5 13.5 13.5H2.5C1.94772 13.5 1.5 13.0523 1.5 12.5V2.5ZM0 1H1.5H14.5H16V2.5V12.5C16 13.8807 14.8807 15 13.5 15H2.5C1.11929 15 0 13.8807 0 12.5V2.5V1ZM3.75 5.5C4.16421 5.5 4.5 5.16421 4.5 4.75C4.5 4.33579 4.16421 4 3.75 4C3.33579 4 3 4.33579 3 4.75C3 5.16421 3.33579 5.5 3.75 5.5ZM7 4.75C7 5.16421 6.66421 5.5 6.25 5.5C5.83579 5.5 5.5 5.16421 5.5 4.75C5.5 4.33579 5.83579 4 6.25 4C6.66421 4 7 4.33579 7 4.75ZM8.75 5.5C9.16421 5.5 9.5 5.16421 9.5 4.75C9.5 4.33579 9.16421 4 8.75 4C8.33579 4 8 4.33579 8 4.75C8 5.16421 8.33579 5.5 8.75 5.5Z"
+                              fill="currentColor"
+                            ></path>
+                          </svg>
                           <span>Preview</span>
                         </div>
                       </div>
@@ -874,7 +888,21 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                     >
                       <div className="truncate">
                         <div className="flex items-center gap-2">
-                          <svg data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style={{ color: 'currentcolor' }}><path fillRule="evenodd" clipRule="evenodd" d="M7.22763 14.1819L10.2276 2.18193L10.4095 1.45432L8.95432 1.09052L8.77242 1.81812L5.77242 13.8181L5.59051 14.5457L7.04573 14.9095L7.22763 14.1819ZM3.75002 12.0607L3.21969 11.5304L0.39647 8.70713C0.00594559 8.31661 0.00594559 7.68344 0.39647 7.29292L3.21969 4.46969L3.75002 3.93936L4.81068 5.00002L4.28035 5.53035L1.81068 8.00003L4.28035 10.4697L4.81068 11L3.75002 12.0607ZM12.25 12.0607L12.7804 11.5304L15.6036 8.70713C15.9941 8.31661 15.9941 7.68344 15.6036 7.29292L12.7804 4.46969L12.25 3.93936L11.1894 5.00002L11.7197 5.53035L14.1894 8.00003L11.7197 10.4697L11.1894 11L12.25 12.0607Z" fill="currentColor"></path></svg>
+                          <svg
+                            data-testid="geist-icon"
+                            height="16"
+                            stroke-linejoin="round"
+                            viewBox="0 0 16 16"
+                            width="16"
+                            style={{ color: "currentcolor" }}
+                          >
+                            <path
+                              fillRule="evenodd"
+                              clipRule="evenodd"
+                              d="M7.22763 14.1819L10.2276 2.18193L10.4095 1.45432L8.95432 1.09052L8.77242 1.81812L5.77242 13.8181L5.59051 14.5457L7.04573 14.9095L7.22763 14.1819ZM3.75002 12.0607L3.21969 11.5304L0.39647 8.70713C0.00594559 8.31661 0.00594559 7.68344 0.39647 7.29292L3.21969 4.46969L3.75002 3.93936L4.81068 5.00002L4.28035 5.53035L1.81068 8.00003L4.28035 10.4697L4.81068 11L3.75002 12.0607ZM12.25 12.0607L12.7804 11.5304L15.6036 8.70713C15.9941 8.31661 15.9941 7.68344 15.6036 7.29292L12.7804 4.46969L12.25 3.93936L11.1894 5.00002L11.7197 5.53035L14.1894 8.00003L11.7197 10.4697L11.1894 11L12.25 12.0607Z"
+                              fill="currentColor"
+                            ></path>
+                          </svg>
                           <span>Code</span>
                         </div>
                       </div>
@@ -900,34 +928,14 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                   onRefresh={refreshPreview}
                 />
               </TabsContent>
+
               <TabsContent value="files" className="h-[calc(100%-57px)]">
-                <div className="h-full bg-[#0a0a0a] p-4">
-                  <div className="space-y-2">
-                    {Object.entries(currentFiles).map(([path]) => (
-                      <button
-                        key={path}
-                        onClick={() => setActiveFile(path)}
-                        className={`w-full text-left px-4 py-2 rounded ${
-                          activeFile === path
-                            ? "bg-white/10 text-white"
-                            : "text-white/60 hover:bg-white/5"
-                        }`}
-                      >
-                        {path}
-                      </button>
-                    ))}
-                  </div>
-                  {activeFile && (
-                    <div className="mt-4">
-                      <CodeEditor
-                        files={currentFiles}
-                        activeFile={activeFile}
-                        onFileSelect={setActiveFile}
-                        onFileChange={handleFileChange}
-                      />
-                    </div>
-                  )}
-                </div>
+                <CodeEditor
+                  files={currentFiles}
+                  activeFile={activeFile}
+                  onFileSelect={setActiveFile}
+                  onFileChange={handleFileChange}
+                />
               </TabsContent>
             </Tabs>
           </div>
