@@ -5,12 +5,14 @@ Viberunner is a powerful runtime container for your vibe-coded apps. It allows y
 Viberunner is a single-player utility meant to be used by one person on their own computer. It's not a way to ship your React product to your users. Rather, it allows you to easily manage, organize, and create vibe-coded system utilities that can do just about anything, including:
 
 **Standalone utilities:**
+
 - Realtime clipboard watcher and history
 - Dotfile editor to edit your most common global dotfiles (.bashrc, .vimprofile, .zshrc, etc)
 - Mouse jiggler that moves your mouse every X seconds
 - Port sniffer that shows open ports and associated processes
 
 **Contextual apps:**
+
 - Image redactor: drag and drop an image and draw to redact certain areas
 - YouTube Thumbnail Preview: drag a thumbnail and preview how it would look on YouTube with ability to set title and channel name.
 - Package upgrader: drag and drop a package.json file and check which packages need upgrading, and upgrade them with one click.
@@ -33,44 +35,44 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 
 - **📱 Chrome-style Tabbed Interface**: Open multiple files and apps simultaneously with smooth tab switching
 - **🎨 Enhanced File Matching**: Go beyond MIME types with filename patterns, content analysis, and priority-based selection
-- **⚙️ User Preferences System**: Apps can store and retrieve user preferences with a powerful API
-- **🔧 Direct Node.js Access**: Apps have full access to Node.js APIs for maximum flexibility and performance
+- **⚙️ User Preferences System**: Runners can store and retrieve user preferences with a powerful API
+- **🔧 Direct Node.js Access**: Runners have full access to Node.js APIs for maximum flexibility and performance
 - **🌙 Modern Dark UI**: Beautiful glassmorphism interface with smooth animations and native tab styling
-- **⚛️ React-Based Visualizers**: Build components using React 18+ with TypeScript support
-- **🔄 Hot Reloading**: Instant visualizer updates during development
+- **⚛️ React-Based Runners**: Build components using React 18+ with TypeScript support
+- **🔄 Hot Reloading**: Instant runner updates during development
 - **📂 File Interaction**: Read, analyze, and even modify files with user permission
-- **🎯 Priority System**: Ensure the most specific visualizer wins for each file
-- **🚀 Standalone Apps**: Create utility apps that don't require file input
-- **🔒 App Isolation**: Perfect CSS and JavaScript isolation between tabs
-- **🎭 Custom App Icons**: Personalize your apps with custom icons
+- **🎯 Priority System**: Ensure the most specific runner wins for each file
+- **🚀 Standalone Runners**: Create utility apps that don't require file input
+- **🔒 Runner Isolation**: Perfect CSS and JavaScript isolation between tabs
+- **🎭 Custom Runner Icons**: Personalize your apps with custom icons
 
 ## 📚 Table of Contents
 
 1. [Quick Start](#-quick-start)
-2. [Visualizer Architecture](#-visualizer-architecture)
+2. [Runner Architecture](#-runner-architecture)
 3. [Tabbed Interface](#-tabbed-interface)
 4. [User Preferences System](#-user-preferences-system)
-5. [App API - Direct Node.js Access](#-app -api---direct-nodejs-access)
+5. [Runner API - Direct Node.js Access](#-app -api---direct-nodejs-access)
 6. [Enhanced Matching System](#-enhanced-matching-system)
-7. [Creating Your First Visualizer](#-creating-your-first-visualizer)
+7. [Creating Your First Runner](#-creating-your-first-runner)
 8. [Configuration Reference](#-configuration-reference)
-9. [Custom App Icons](#-custom-app-icons)
+9. [Custom Runner Icons](#-custom-app-icons)
 10. [Component Development](#-component-development)
 11. [File Analysis & APIs](#-file-analysis--apis)
 12. [Advanced Examples](#-advanced-examples)
 13. [Build & Distribution](#-build--distribution)
 14. [Best Practices](#-best-practices)
 15. [Troubleshooting](#-troubleshooting)
-16. [App Cleanup API](#app-cleanup-api)
+16. [Runner Cleanup API](#app-cleanup-api)
 
-## 🎨 Custom App Icons
+## 🎨 Custom Runner Icons
 
-Viberunner supports custom icons for your visualizers, making them easily recognizable in the launcher and tabs.
+Viberunner supports custom icons for your runners, making them easily recognizable in the launcher and tabs.
 
-### Adding Icons to Your Visualizer
+### Adding Icons to Your Runner
 
-1. **Add an icon file** to your visualizer directory (PNG, SVG, JPG, etc.)
-2. **Reference it in viz.json** using the `icon` field with a relative path
+1. **Add an icon file** to your runner directory (PNG, SVG, JPG, etc.)
+2. **Reference it in package.json** using the `icon` field with a relative path
 
 ### Example Configuration
 
@@ -78,8 +80,6 @@ Viberunner supports custom icons for your visualizers, making them easily recogn
 {
   "name": "JSON Formatter",
   "description": "Pretty print and validate JSON files",
-  "version": "1.0.0",
-  "author": "Your Name",
   "icon": "icon.png",
   "matchers": [
     {
@@ -91,32 +91,20 @@ Viberunner supports custom icons for your visualizers, making them easily recogn
 }
 ```
 
-### File Structure with Icon
-
-```
-my-json-formatter/
-├── viz.json              # Visualizer configuration
-├── icon.png              # Custom icon (32x32 recommended)
-├── package.json          # NPM dependencies
-├── src/
-│   └── App.tsx           # Main React component
-└── dist/
-    └── bundle.iife.js    # Built output
-```
-
 ### Icon Guidelines
 
 - **Recommended size**: 32x32 pixels (will be scaled automatically)
 - **Supported formats**: PNG, SVG, JPG, GIF, WebP
-- **File location**: Must be within your visualizer directory
-- **Path**: Relative to your visualizer root (e.g., `"icon.png"`, `"assets/icon.svg"`)
+- **File location**: Must be within your runner directory
+- **Path**: Relative to your runner root (e.g., `"icon.png"`, `"assets/icon.svg"`)
 
 ### Where Icons Appear
 
 Custom icons are displayed in:
+
 - **Launcher**: Standalone app cards and file app listings
-- **Tabs**: Tab icons for opened visualizers
-- **App Selection**: When multiple apps match a file
+- **Tabs**: Tab icons for opened runners
+- **Runner Selection**: When multiple apps match a file
 
 ### Fallback Behavior
 
@@ -125,16 +113,17 @@ If no custom icon is provided, Viberunner uses the Viberunner logo as the defaul
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - npm or yarn
 - Viberunner app installed
 
-### Create a New Visualizer
+### Create a New Runner
 
 ```bash
-# 1. Create visualizer directory
-mkdir my-awesome-visualizer
-cd my-awesome-visualizer
+# 1. Create runner directory
+mkdir my-awesome-runner
+cd my-awesome-runner
 
 # 2. Initialize npm project
 npm init -y
@@ -144,15 +133,16 @@ npm install react react-dom
 npm install -D @types/react @types/react-dom @vitejs/plugin-react typescript vite
 
 # 4. Create required files
-touch viz.json tsconfig.json vite.config.ts src/App.tsx
+touch package.json tsconfig.json vite.config.ts src/App.tsx
 ```
 
 ### Basic File Structure
+
 ```
-my-awesome-visualizer/
-├── viz.json              # Visualizer configuration
+my-awesome-runner/
 ├── package.json          # NPM dependencies
 ├── tsconfig.json         # TypeScript config
+├── icon.png              # Custom icon (32x32 recommended)
 ├── vite.config.ts        # Build configuration
 ├── src/
 │   └── App.tsx           # Main React component
@@ -160,21 +150,21 @@ my-awesome-visualizer/
     └── bundle.iife.js    # Built output (generated)
 ```
 
-## 🏗️ Visualizer Architecture
+## 🏗️ Runner Architecture
 
-### How Visualizers Work
+### How Runners Work
 
 1. **File Drop**: User drops a file into Viberunner
 2. **Analysis**: Viberunner analyzes the file (path, content, metadata)
-3. **Matching**: Enhanced matcher system finds compatible visualizers
+3. **Matching**: Enhanced matcher system finds compatible runners
 4. **Selection**: Best match or user selection if multiple options
-5. **Loading**: Visualizer component is dynamically loaded
+5. **Loading**: Runner component is dynamically loaded
 6. **Rendering**: React component renders with file data
 
 ### Data Flow
 
 ```
-File Drop → File Analysis → Matcher Evaluation → Visualizer Selection → Component Loading → Rendering
+File Drop → File Analysis → Matcher Evaluation → Runner Selection → Component Loading → Rendering
 ```
 
 ## 📱 Tabbed Interface
@@ -186,16 +176,19 @@ Viberunner features a Chrome-style tabbed interface that allows users to work wi
 ### Tab Management
 
 #### **Opening New Tabs**
+
 - **File Drop**: Dropping a file opens it in a new tab (or transforms the current "New Tab")
-- **Standalone Apps**: Launching standalone apps creates dedicated tabs
+- **Standalone Runners**: Launching standalone apps creates dedicated tabs
 - **New Tab Button**: Click the "+" button to create a new empty tab
 
 #### **Tab Switching**
+
 - **Click to Switch**: Click any tab to switch to it instantly
 - **Visual Feedback**: Active tab is highlighted with proper visual hierarchy
 - **Content Isolation**: Each tab maintains completely isolated content and state
 
 #### **Tab Closing**
+
 - **Close Button**: Hover over tabs to reveal the close button (✕)
 - **Auto-cleanup**: Closing tabs automatically cleans up resources and React components
 - **Last Tab Protection**: New tab is automatically created if you close the last tab
@@ -203,16 +196,18 @@ Viberunner features a Chrome-style tabbed interface that allows users to work wi
 ### Tab Types
 
 1. **New Tab** 🌟
+
    - Clean interface for launching apps or dropping files
    - Shows directory controls and available apps
    - Transforms into a file/app tab when content is loaded
 
 2. **File Tabs** 📄
-   - Display file-based visualizers
+
+   - Display file-based runners
    - Show filename and app name in tab title
    - Include close button for easy management
 
-3. **Standalone App Tabs** ⚡
+3. **Standalone Runner Tabs** ⚡
    - Run utility applications that don't require file input
    - Show app name and icon in tab title
    - Independent of file operations
@@ -225,34 +220,25 @@ Viberunner features a Chrome-style tabbed interface that allows users to work wi
 - **Hover Effects**: Interactive feedback for better user experience
 - **Active State**: Clear visual distinction for the currently active tab
 
-### App Isolation
-
-Each tab runs in a completely isolated container:
-
-- **CSS Isolation**: Styles are scoped to prevent cross-tab interference
-- **JavaScript Isolation**: Each app has its own execution context
-- **Memory Management**: Proper cleanup when tabs are closed
-- **Z-index Management**: Perfect stacking order prevents content bleed-through
-
 ### Developer Considerations
 
-When building apps for the tabbed interface:
+Cleanup:
 
 ```javascript
-function MyApp({ tabId, appId, fileInput }) {
+function MyRunner({ tabId, appId, fileInput }) {
   // Each tab has a unique tabId for cleanup registration
   React.useEffect(() => {
     const cleanup = () => {
       // Cleanup timers, listeners, etc.
-    };
+    }
 
     // Register cleanup function for this tab
-    window.registerCleanup(tabId, cleanup);
+    window.registerCleanup(tabId, cleanup)
 
-    return cleanup;
-  }, [tabId]);
+    return cleanup
+  }, [tabId])
 
-  return <div>Your app content</div>;
+  return <div>Your app content</div>
 }
 ```
 
@@ -260,26 +246,26 @@ function MyApp({ tabId, appId, fileInput }) {
 
 ### Overview
 
-Viberunner provides a comprehensive user preferences system that allows apps to store and retrieve user settings persistently. Preferences are stored in each app's `viz.json` file and survive between sessions.
+Viberunner provides a comprehensive user preferences system that allows apps to store and retrieve user settings persistently. Preferences are stored in each app's `package.json` file and survive between sessions.
 
 ### Storage Location
 
-Preferences are automatically stored in your app's configuration file:
+Preferences are automatically stored in your runner's configuration entry in package.json:
 
 ```json
 {
-  "name": "My Awesome App",
-  "description": "A great visualizer",
-  "version": "1.0.0",
-  "mimetypes": ["application/json"],
-  "author": "Developer",
-  "userPreferences": {
-    "theme": "dark",
-    "fontSize": 14,
-    "autoSave": true,
-    "recentFiles": ["file1.json", "file2.json"],
-    "customSettings": {
-      "nested": "values"
+  "viberunner": {
+    "name": "My Awesome Runner",
+    "description": "A great runner",
+    "mimetypes": ["application/json"],
+    "userPreferences": {
+      "theme": "dark",
+      "fontSize": 14,
+      "autoSave": true,
+      "recentFiles": ["file1.json", "file2.json"],
+      "customSettings": {
+        "nested": "values"
+      }
     }
   }
 }
@@ -291,19 +277,19 @@ Access preferences through the global `api` object:
 
 ```javascript
 // Get all preferences for your app
-const prefs = api.getAppPreferences(appId);
+const prefs = api.getRunnerPreferences(appId)
 
 // Get a specific preference with default fallback
-const theme = api.getAppPreference(appId, 'theme', 'light');
+const theme = api.getRunnerPreference(appId, "theme", "light")
 
 // Set a single preference
-api.updateAppPreference(appId, 'theme', 'dark');
+api.updateRunnerPreference(appId, "theme", "dark")
 
 // Replace all preferences
-api.setAppPreferences(appId, { theme: 'dark', fontSize: 16 });
+api.setRunnerPreferences(appId, { theme: "dark", fontSize: 16 })
 
 // Remove a preference
-api.removeAppPreference(appId, 'oldSetting');
+api.removeRunnerPreference(appId, "oldSetting")
 ```
 
 ### Enhanced Preferences Helper
@@ -311,178 +297,104 @@ api.removeAppPreference(appId, 'oldSetting');
 For easier usage, create a preferences helper with your app ID:
 
 ```javascript
-function MyApp({ appId }) {
+function MyRunner({ appId }) {
   // Create preferences helper
-  const prefs = window.createPreferencesHelper(appId);
+  const prefs = window.createPreferencesHelper(appId)
 
   // Type-safe getters with defaults
-  const theme = prefs.getString('theme', 'light');
-  const fontSize = prefs.getNumber('fontSize', 12);
-  const autoSave = prefs.getBoolean('autoSave', false);
-  const settings = prefs.getObject('settings', {});
+  const theme = prefs.getString("theme", "light")
+  const fontSize = prefs.getNumber("fontSize", 12)
+  const autoSave = prefs.getBoolean("autoSave", false)
+  const settings = prefs.getObject("settings", {})
 
   // Simple setters
   const handleThemeChange = (newTheme) => {
-    prefs.set('theme', newTheme);
-  };
+    prefs.set("theme", newTheme)
+  }
 
   return (
     <div className={`app-${theme}`}>
-      <button onClick={() => handleThemeChange('dark')}>
-        Dark Theme
-      </button>
+      <button onClick={() => handleThemeChange("dark")}>Dark Theme</button>
     </div>
-  );
+  )
 }
 ```
 
 ### Helper Methods
 
 #### **Type-Safe Getters**
+
 ```javascript
-const prefs = window.createPreferencesHelper(appId);
+const prefs = window.createPreferencesHelper(appId)
 
 // String with default
-const theme = prefs.getString('theme', 'light');
+const theme = prefs.getString("theme", "light")
 
 // Number with default
-const fontSize = prefs.getNumber('fontSize', 12);
+const fontSize = prefs.getNumber("fontSize", 12)
 
 // Boolean with default
-const autoSave = prefs.getBoolean('autoSave', false);
+const autoSave = prefs.getBoolean("autoSave", false)
 
 // Object with default
-const config = prefs.getObject('config', {});
+const config = prefs.getObject("config", {})
 
 // Array with default
-const recentFiles = prefs.getArray('recentFiles', []);
+const recentFiles = prefs.getArray("recentFiles", [])
 ```
 
 #### **Array Operations**
+
 ```javascript
 // Add item to array
-prefs.pushToArray('recentFiles', '/path/to/new/file.json');
+prefs.pushToArray("recentFiles", "/path/to/new/file.json")
 
 // Remove item from array
-prefs.removeFromArray('recentFiles', '/path/to/old/file.json');
+prefs.removeFromArray("recentFiles", "/path/to/old/file.json")
 
 // Get array safely
-const files = prefs.getArray('recentFiles', []);
+const files = prefs.getArray("recentFiles", [])
 ```
 
 #### **Bulk Operations**
+
 ```javascript
 // Get all preferences
-const allPrefs = prefs.getAll();
+const allPrefs = prefs.getAll()
 
 // Replace all preferences
 prefs.setAll({
-  theme: 'dark',
+  theme: "dark",
   fontSize: 14,
-  autoSave: true
-});
+  autoSave: true,
+})
 
 // Clear all preferences
-prefs.clear();
+prefs.clear()
 ```
 
 ### React Integration Examples
 
 #### **Theme Persistence**
+
 ```javascript
-function ThemedApp({ appId }) {
-  const prefs = window.createPreferencesHelper(appId);
-  const [theme, setTheme] = React.useState(
-    prefs.getString('theme', 'light')
-  );
+function ThemedRunner({ appId }) {
+  const prefs = window.createPreferencesHelper(appId)
+  const [theme, setTheme] = React.useState(prefs.getString("theme", "light"))
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    prefs.set('theme', newTheme);
-  };
+    const newTheme = theme === "light" ? "dark" : "light"
+    setTheme(newTheme)
+    prefs.set("theme", newTheme)
+  }
 
   return (
     <div className={`app-${theme}`}>
       <button onClick={toggleTheme}>
-        Switch to {theme === 'light' ? 'dark' : 'light'} theme
+        Switch to {theme === "light" ? "dark" : "light"} theme
       </button>
     </div>
-  );
-}
-```
-
-#### **Settings Panel**
-```javascript
-function SettingsPanel({ appId }) {
-  const prefs = window.createPreferencesHelper(appId);
-
-  const [settings, setSettings] = React.useState(() => ({
-    fontSize: prefs.getNumber('fontSize', 14),
-    showLineNumbers: prefs.getBoolean('showLineNumbers', true),
-    autoSave: prefs.getBoolean('autoSave', false)
-  }));
-
-  const updateSetting = (key, value) => {
-    setSettings(prev => ({ ...prev, [key]: value }));
-    prefs.set(key, value);
-  };
-
-  return (
-    <div className="settings-panel">
-      <label>
-        Font Size:
-        <input
-          type="number"
-          value={settings.fontSize}
-          onChange={(e) => updateSetting('fontSize', parseInt(e.target.value))}
-        />
-      </label>
-
-      <label>
-        <input
-          type="checkbox"
-          checked={settings.showLineNumbers}
-          onChange={(e) => updateSetting('showLineNumbers', e.target.checked)}
-        />
-        Show Line Numbers
-      </label>
-    </div>
-  );
-}
-```
-
-#### **Recent Files List**
-```javascript
-function RecentFilesList({ appId }) {
-  const prefs = window.createPreferencesHelper(appId);
-  const [recentFiles, setRecentFiles] = React.useState(
-    prefs.getArray('recentFiles', [])
-  );
-
-  const addRecentFile = (filePath) => {
-    const updated = [filePath, ...recentFiles.filter(f => f !== filePath)].slice(0, 10);
-    setRecentFiles(updated);
-    prefs.set('recentFiles', updated);
-  };
-
-  const removeRecentFile = (filePath) => {
-    const updated = recentFiles.filter(f => f !== filePath);
-    setRecentFiles(updated);
-    prefs.set('recentFiles', updated);
-  };
-
-  return (
-    <div className="recent-files">
-      <h3>Recent Files</h3>
-      {recentFiles.map(file => (
-        <div key={file} className="recent-file">
-          <span>{file}</span>
-          <button onClick={() => removeRecentFile(file)}>✕</button>
-        </div>
-      ))}
-    </div>
-  );
+  )
 }
 ```
 
@@ -504,61 +416,55 @@ The preferences system includes robust error handling:
 - **Write Errors**: Returns `false` for failed operations, `true` for success
 - **Type Safety**: Helper methods ensure correct data types are returned
 
-## 🚀 App API - Direct Node.js Access
+## 🚀 Runner API - Direct Node.js Access
 
 ### Overview
 
-Apps now have direct access to Node.js APIs instead of receiving pre-processed file content. This provides better performance, flexibility, and avoids data corruption issues.
+Runners have direct access to Node.js APIs instead of receiving pre-processed file content. This provides better performance, flexibility, and avoids data corruption issues.
 
-### App Props
+### Runner Props
 
-#### File-based Apps
+#### File-based Runners
+
 ```typescript
-interface AppProps {
+interface RunnerProps {
   fileInput: {
-    path: string;      // Full file path
-    mimetype: string;  // Detected MIME type
-  };
-  container: HTMLElement; // Mount point
-  tabId: string;          // Unique tab identifier for cleanup
-  appId: string;          // App identifier for preferences access
-
-  // Legacy support (deprecated - use fileInput instead)
-  fileData?: {
-    path: string;
-    mimetype: string;
-    content: string;   // Empty - read files directly
-    analysis: object;  // Minimal metadata
-  };
+    path: string // Full file path
+    mimetype: string // Detected MIME type
+  }
+  container: HTMLElement // Mount point
+  tabId: string // Unique tab identifier for cleanup
+  appId: string // Runner identifier for preferences access
 }
 ```
 
-#### Standalone Apps
+#### Standalone Runners
+
 ```typescript
-interface AppProps {
-  container: HTMLElement; // Mount point
-  tabId: string;          // Unique tab identifier for cleanup
-  appId: string;          // App identifier for preferences access
+interface RunnerProps {
+  container: HTMLElement // Mount point
+  tabId: string // Unique tab identifier for cleanup
+  appId: string // Runner identifier for preferences access
 }
 ```
 
 ### Available APIs
 
-Apps have access to the global `api` object and direct Node.js modules:
+Runners have access to the global `api` object and direct Node.js modules:
 
 ```javascript
 // Path utilities
-const dirname = api.path.dirname(filePath);
-const basename = api.path.basename(filePath);
-const extname = api.path.extname(filePath);
+const dirname = api.path.dirname(filePath)
+const basename = api.path.basename(filePath)
+const extname = api.path.extname(filePath)
 
 // MIME type detection
-const mimeType = api.mime.lookup(filePath);
+const mimeType = api.mime.lookup(filePath)
 
 // Direct Node.js access
-const fs = api.fs;
-const path = api.path;
-const customModule = api.require('some-module');
+const fs = api.fs
+const path = api.path
+const customModule = api.require("some-module")
 ```
 
 ### Benefits
@@ -571,22 +477,13 @@ const customModule = api.require('some-module');
 
 ### Example: Reading an Image
 
-#### Before
-```javascript
-// Image data was pre-encoded as base64, could be corrupted
-const imageData = `data:${fileData.mimetype};base64,${fileData.content}`;
-```
-
-#### After
 ```javascript
 // Read image directly when needed, no corruption risk
-const imageBuffer = api.fs.readFileSync(fileInput.path);
-const imageData = `data:${fileInput.mimetype};base64,${imageBuffer.toString('base64')}`;
+const imageBuffer = api.fs.readFileSync(fileInput.path)
+const imageData = `data:${fileInput.mimetype};base64,${imageBuffer.toString(
+  "base64"
+)}`
 ```
-
-### Backward Compatibility
-
-For migration period, both `fileInput` (new) and `fileData` (legacy) props are provided. Use `fileInput.path` for all new development.
 
 ## 🎯 Enhanced Matching System
 
@@ -595,6 +492,7 @@ For migration period, both `fileInput` (new) and `fileData` (legacy) props are p
 The new matching system supports multiple criteria types with priority-based selection:
 
 #### 1. **Filename Matching**
+
 ```json
 {
   "type": "filename",
@@ -602,11 +500,13 @@ The new matching system supports multiple criteria types with priority-based sel
   "priority": 100
 }
 ```
+
 - **Exact match**: `"package.json"`
 - **Glob patterns**: `"*.config.js"`, `"test-*.json"`
 - **Wildcards**: `*` (any characters), `?` (single character)
 
 #### 2. **Filename Substring Matching**
+
 ```json
 {
   "type": "filename-contains",
@@ -614,6 +514,7 @@ The new matching system supports multiple criteria types with priority-based sel
   "priority": 80
 }
 ```
+
 - **Substring matching**: Matches if filename contains the specified text
 - **Case insensitive**: `"kanban"` matches `"Kanban"`, `"KANBAN"`, etc.
 - **Optional extension filter**: Add `"extension"` to also check file extension
@@ -629,6 +530,7 @@ The new matching system supports multiple criteria types with priority-based sel
   "priority": 85
 }
 ```
+
 - **With extension**: Only matches files containing "kanban" AND having `.txt` extension
 - **Extension formats**: Use `"txt"` or `".txt"` (both work the same)
 - **Examples**:
@@ -636,6 +538,7 @@ The new matching system supports multiple criteria types with priority-based sel
   - ❌ Doesn't match: `team-kanban.json`, `kanban-data.csv`
 
 #### 3. **Path Pattern Matching**
+
 ```json
 {
   "type": "path-pattern",
@@ -643,11 +546,13 @@ The new matching system supports multiple criteria types with priority-based sel
   "priority": 80
 }
 ```
+
 - **Deep matching**: `**/package.json` (any depth)
 - **Directory patterns**: `src/**/*.js`
 - **Absolute paths**: `/Users/*/Desktop/*.md`
 
 #### 4. **Content Analysis - JSON**
+
 ```json
 {
   "type": "content-json",
@@ -655,11 +560,13 @@ The new matching system supports multiple criteria types with priority-based sel
   "priority": 90
 }
 ```
+
 - **Property detection**: Must contain specific JSON properties
 - **Nested properties**: `"dependencies.react"`
 - **Array elements**: `"scripts[0]"`
 
 #### 5. **Content Analysis - Regex**
+
 ```json
 {
   "type": "content-regex",
@@ -667,11 +574,13 @@ The new matching system supports multiple criteria types with priority-based sel
   "priority": 70
 }
 ```
+
 - **Shebang detection**: Find Node.js scripts
 - **Content patterns**: API keys, specific formats
 - **Multi-line matching**: Use appropriate regex flags
 
 #### 6. **File Size Filtering**
+
 ```json
 {
   "type": "file-size",
@@ -680,11 +589,13 @@ The new matching system supports multiple criteria types with priority-based sel
   "priority": 60
 }
 ```
+
 - **Size in bytes**: `minSize`, `maxSize`
-- **Large file handling**: Different visualizers for different sizes
+- **Large file handling**: Different runners for different sizes
 - **Memory optimization**: Skip content reading for huge files
 
 #### 7. **Combined Matchers**
+
 ```json
 {
   "type": "combined",
@@ -704,11 +615,13 @@ The new matching system supports multiple criteria types with priority-based sel
   ]
 }
 ```
+
 - **Logical operators**: `"AND"`, `"OR"`
 - **Complex conditions**: Combine any matcher types
 - **Nested logic**: Conditions can contain other combined matchers
 
 #### 8. **Legacy MIME Type Support**
+
 ```json
 {
   "type": "mimetype",
@@ -716,7 +629,8 @@ The new matching system supports multiple criteria types with priority-based sel
   "priority": 50
 }
 ```
-- **Backward compatibility**: Still works with existing visualizers
+
+- **Backward compatibility**: Still works with existing runners
 - **Standard MIME types**: `image/*`, `text/*`, `application/*`
 - **Lower priority**: Enhanced matchers take precedence
 
@@ -731,11 +645,11 @@ The new matching system supports multiple criteria types with priority-based sel
   - 30-49: Broad file size or extension patterns
   - 10-29: Fallback or experimental matchers
 
-## 🛠️ Creating Your First Visualizer
+## 🛠️ Creating Your First Runner
 
-Let's create a **JSON Formatter** visualizer step by step:
+Let's create a **JSON Formatter** runner step by step:
 
-### 1. Create Configuration (`viz.json`)
+### 1. Create Configuration (`package.json`)
 
 ```json
 {
@@ -743,58 +657,59 @@ Let's create a **JSON Formatter** visualizer step by step:
   "description": "Pretty print and validate JSON files with syntax highlighting",
   "version": "1.0.0",
   "author": "Your Name",
-  "icon": "icon.png",
-
-  "matchers": [
-    {
-      "type": "mimetype",
-      "mimetype": "application/json",
-      "priority": 60
-    },
-    {
-      "type": "filename",
-      "pattern": "*.json",
-      "priority": 70
-    },
-    {
-      "type": "content-json",
-      "requiredProperties": [],
-      "priority": 50
-    }
-  ]
+  "viberunner": {
+    "icon": "icon.png",
+    "matchers": [
+      {
+        "type": "mimetype",
+        "mimetype": "application/json",
+        "priority": 60
+      },
+      {
+        "type": "filename",
+        "pattern": "*.json",
+        "priority": 70
+      },
+      {
+        "type": "content-json",
+        "requiredProperties": [],
+        "priority": 50
+      }
+    ]
+  }
 }
 ```
 
 ### 2. Setup Build Configuration (`vite.config.ts`)
 
 ```typescript
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
 
 export default defineConfig({
   plugins: [
     react({
-      jsxRuntime: 'classic' // Important: Use classic JSX runtime
-    })
+      jsxRuntime: "classic", // Important: Use classic JSX runtime
+    }),
   ],
   build: {
     lib: {
-      entry: 'src/App.tsx',
-      name: 'JsonFormatter',
-      fileName: 'bundle',
-      formats: ['iife']
+      entry: "src/App.tsx",
+      name: "JsonFormatter",
+      fileName: "bundle",
+      formats: ["iife"],
     },
     rollupOptions: {
-      external: ['react', 'react-dom'],
+      external: ["react", "react-dom"],
       output: {
         globals: {
-          'react': 'React',
-          'react-dom': 'ReactDOM'
-        }
-      }
-    }
-  }
-});
+          react: "React",
+          "react-dom": "ReactDOM",
+        },
+      },
+    },
+  },
+})
 ```
 
 ### 3. TypeScript Configuration (`tsconfig.json`)
@@ -826,149 +741,158 @@ export default defineConfig({
 ### 4. Create React Component (`src/App.tsx`)
 
 ```tsx
-import React from 'react';
+import React from "react"
 
 interface FileData {
-  path: string;
-  mimetype: string;
-  content: string;
-  analysis?: {
-    filename: string;
-    size: number;
-    isJson: boolean;
-    jsonContent?: any;
-  };
+  path: string
+  mimetype: string
 }
 
 interface JsonFormatterProps {
-  fileData: FileData;
+  fileData: FileData
 }
 
 const JsonFormatter: React.FC<JsonFormatterProps> = ({ fileData }) => {
-  const [jsonData, setJsonData] = React.useState<any>(null);
-  const [error, setError] = React.useState<string | null>(null);
-  const [formatted, setFormatted] = React.useState<string>('');
+  const [jsonData, setJsonData] = React.useState<any>(null)
+  const [error, setError] = React.useState<string | null>(null)
+  const [formatted, setFormatted] = React.useState<string>("")
 
   React.useEffect(() => {
     try {
       // Try to parse the JSON content
-      let content = fileData.content;
+      let content = window.api.fs.readFileSync(filePath)
 
       // Handle base64 encoded content
-      if (fileData.mimetype === 'application/json' && !content.startsWith('{')) {
-        content = atob(content);
+      if (
+        fileData.mimetype === "application/json" &&
+        !content.startsWith("{")
+      ) {
+        content = atob(content)
       }
 
-      const parsed = JSON.parse(content);
-      setJsonData(parsed);
-      setFormatted(JSON.stringify(parsed, null, 2));
-      setError(null);
+      const parsed = JSON.parse(content)
+      setJsonData(parsed)
+      setFormatted(JSON.stringify(parsed, null, 2))
+      setError(null)
     } catch (err) {
-      setError(`Invalid JSON: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      setError(
+        `Invalid JSON: ${err instanceof Error ? err.message : "Unknown error"}`
+      )
     }
-  }, [fileData]);
+  }, [fileData])
 
   const handleSave = async () => {
-    if (!formatted || error) return;
+    if (!formatted || error) return
 
     try {
       // Save the formatted JSON back to the original file
-      const saveResult = await window.api.writeFile(fileData.path, formatted, 'utf8');
-      if (!saveResult.success) {
-        throw new Error(`Failed to save file: ${saveResult.error}`);
-      }
-
-      alert(`JSON saved successfully!`);
+      window.api.fs.writeFileSync(fileData.path, formatted, "utf8")
+      alert(`JSON saved successfully!`)
     } catch (err) {
-      alert(`Error saving file: ${err}`);
+      alert(`Error saving file: ${err}`)
     }
-  };
+  }
 
   if (error) {
     return (
-      <div style={{ padding: '20px', color: '#ef4444' }}>
+      <div style={{ padding: "20px", color: "#ef4444" }}>
         <h3>❌ JSON Parse Error</h3>
         <p>{error}</p>
-        <pre style={{
-          background: '#1e1e1e',
-          padding: '10px',
-          borderRadius: '4px',
-          fontSize: '12px',
-          overflow: 'auto',
-          maxHeight: '200px'
-        }}>
+        <pre
+          style={{
+            background: "#1e1e1e",
+            padding: "10px",
+            borderRadius: "4px",
+            fontSize: "12px",
+            overflow: "auto",
+            maxHeight: "200px",
+          }}
+        >
           {fileData.content.slice(0, 1000)}...
         </pre>
       </div>
-    );
+    )
   }
 
   return (
-    <div style={{ padding: '20px', background: '#0a0a0a', color: '#fff' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px'
-      }}>
+    <div style={{ padding: "20px", background: "#0a0a0a", color: "#fff" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "20px",
+        }}
+      >
         <h3>📄 JSON Formatter</h3>
         <button
           onClick={handleSave}
           style={{
-            background: '#10b981',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '8px 16px',
-            cursor: 'pointer'
+            background: "#10b981",
+            color: "white",
+            border: "none",
+            borderRadius: "8px",
+            padding: "8px 16px",
+            cursor: "pointer",
           }}
         >
           💾 Save Formatted
         </button>
       </div>
 
-      <div style={{
-        background: '#1e1e1e',
-        borderRadius: '8px',
-        padding: '15px',
-        border: '1px solid #333'
-      }}>
-        <pre style={{
-          margin: 0,
-          fontSize: '14px',
-          lineHeight: '1.5',
-          overflow: 'auto',
-          maxHeight: '600px'
-        }}>
+      <div
+        style={{
+          background: "#1e1e1e",
+          borderRadius: "8px",
+          padding: "15px",
+          border: "1px solid #333",
+        }}
+      >
+        <pre
+          style={{
+            margin: 0,
+            fontSize: "14px",
+            lineHeight: "1.5",
+            overflow: "auto",
+            maxHeight: "600px",
+          }}
+        >
           {formatted}
         </pre>
       </div>
 
-      <div style={{
-        marginTop: '15px',
-        fontSize: '12px',
-        color: '#888',
-        display: 'flex',
-        gap: '20px'
-      }}>
-        <span>📁 {fileData.analysis?.filename || 'Unknown'}</span>
-        <span>📊 {fileData.analysis?.size ? `${(fileData.analysis.size / 1024).toFixed(1)} KB` : 'Unknown size'}</span>
+      <div
+        style={{
+          marginTop: "15px",
+          fontSize: "12px",
+          color: "#888",
+          display: "flex",
+          gap: "20px",
+        }}
+      >
+        <span>📁 {fileData.analysis?.filename || "Unknown"}</span>
+        <span>
+          📊{" "}
+          {fileData.analysis?.size
+            ? `${(fileData.analysis.size / 1024).toFixed(1)} KB`
+            : "Unknown size"}
+        </span>
         <span>🔍 {Object.keys(jsonData || {}).length} properties</span>
       </div>
     </div>
-  );
-};
+  )
+}
 
 // Export the component for Viberunner to load
-export default JsonFormatter;
+export default JsonFormatter
 
 // Global registration for IIFE bundle
-if (typeof window !== 'undefined' && (window as any).__LOAD_APP__) {
-  (window as any).__LOAD_APP__(JsonFormatter);
+if (typeof window !== "undefined" && (window as any).__RENDER_RUNNER__) {
+  ;(window as any).__RENDER_RUNNER__(JsonFormatter)
 }
 ```
 
-### 5. Build the Visualizer
+### 5. Build the Runner
 
 ```bash
 npm run build
@@ -978,15 +902,10 @@ This creates `dist/bundle.iife.js` that Viberunner can load.
 
 ## 📋 Configuration Reference
 
-### Complete `viz.json` Schema
+### Complete `package.json` `viberunner` entry Schema
 
 ```json
 {
-  "name": "string (required)",
-  "description": "string (required)",
-  "version": "string (required)",
-  "author": "string (required)",
-
   "matchers": [
     {
       "type": "mimetype | filename | filename-contains | path-pattern | content-json | content-regex | file-size | combined",
@@ -1013,109 +932,61 @@ This creates `dist/bundle.iife.js` that Viberunner can load.
   // Legacy support (optional)
   "mimetypes": ["string"],
 
-  // Standalone visualizers (no file input required)
+  // Standalone runners (no file input required)
   "standalone": "boolean (optional)",
 
   // Custom icon (relative path to icon file in app directory)
   "icon": "string (optional)",
-
-  // Optional metadata
-  "tags": ["string"],
-  "homepage": "string",
-  "repository": "string",
-  "license": "string"
 }
 ```
 
-## 🚀 Standalone Visualizers
+## 🚀 Standalone Runners
 
-Viberunner supports standalone visualizers that don't require file input. These can be utilities, dashboards, or any application that operates independently.
+Viberunner supports standalone runners that don't require file input. These can be utilities, dashboards, or any application that operates independently.
 
 ### Configuration
 
-To create a standalone visualizer, set `"standalone": true` in your `viz.json`:
+To create a standalone runner, set `"standalone": true` in your `package.json` `viberunner` entry:
 
 ```json
 {
-  "name": "Weather Dashboard",
-  "description": "Real-time weather information and forecasts",
-  "version": "1.0.0",
-  "author": "Your Name",
   "standalone": true
 }
 ```
 
 ### Component Interface
 
-Standalone visualizers receive `null` as fileData:
+Standalone runners receive `null` as fileData:
 
 ```typescript
-interface StandaloneVisualizerProps {
-  fileData: null; // Always null for standalone visualizers
+interface StandaloneRunnerProps {
+  fileData: null // Always null for standalone runners
 }
 
-const WeatherDashboard: React.FC<StandaloneVisualizerProps> = ({ fileData }) => {
+const WeatherDashboard: React.FC<StandaloneRunnerProps> = ({ fileData }) => {
   // fileData will be null - this is a standalone utility
-  const [weather, setWeather] = useState(null);
+  const [weather, setWeather] = useState(null)
 
   useEffect(() => {
     // Fetch weather data using Node.js APIs
-    const https = require('https');
+    const https = require("https")
     // ... make API calls, read config files, etc.
-  }, []);
+  }, [])
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={{ padding: "20px" }}>
       <h2>🌤️ Weather Dashboard</h2>
       {/* Your utility UI here */}
     </div>
-  );
-};
-
-export default WeatherDashboard;
-```
-
-### Example Standalone Visualizers
-
-**System Monitor**
-```json
-{
-  "name": "System Monitor",
-  "description": "Real-time CPU, memory, and disk usage",
-  "standalone": true
+  )
 }
+
+export default WeatherDashboard
 ```
 
-**Calculator**
-```json
-{
-  "name": "Scientific Calculator",
-  "description": "Advanced calculator with programming functions",
-  "standalone": true
-}
-```
+### Launching Standalone Runners
 
-**API Tester**
-```json
-{
-  "name": "REST API Tester",
-  "description": "Test and debug REST API endpoints",
-  "standalone": true
-}
-```
-
-**Clipboard Manager**
-```json
-{
-  "name": "Clipboard History",
-  "description": "Manage and search clipboard history",
-  "standalone": true
-}
-```
-
-### Launching Standalone Visualizers
-
-Standalone visualizers appear in the "Utilities" section of the sidebar with **Launch** buttons. They can:
+Standalone runners appear in the "Utilities" section of the sidebar with **Launch** buttons. They can:
 
 - Access full Node.js APIs via `require()`
 - Make HTTP requests to external services
@@ -1124,7 +995,7 @@ Standalone visualizers appear in the "Utilities" section of the sidebar with **L
 - Create persistent data stores
 - Build complex UI applications
 
-This enables Viberunner to serve as a platform for any kind of utility or application, not just file visualizers!
+This enables Viberunner to serve as a platform for any kind of utility or application, not just file runners!
 
 ## ⚛️ Component Development
 
@@ -1134,78 +1005,62 @@ Your React component receives this data structure:
 
 ```typescript
 interface FileData {
-  path: string;           // Full file path
-  mimetype: string;       // MIME type
-  content: string;        // File content (base64 for binary)
-  analysis: {             // Enhanced file analysis
-    filename: string;     // Just the filename
-    size: number;         // File size in bytes
-    isJson: boolean;      // Is valid JSON
-    jsonContent?: any;    // Parsed JSON (if applicable)
-  };
+  path: string // Full file path
+  mimetype: string // MIME type
+  content: string // File content (base64 for binary)
+  analysis: {
+    // Enhanced file analysis
+    filename: string // Just the filename
+    size: number // File size in bytes
+    isJson: boolean // Is valid JSON
+    jsonContent?: any // Parsed JSON (if applicable)
+  }
 }
 
-interface VisualizerProps {
-  fileData: FileData;
+interface RunnerProps {
+  fileData: FileData
 }
 ```
 
 ### Available APIs
 
-Visualizers can access these APIs through the global `window.api`:
-
-```typescript
-// Get file MIME type
-const mimetype = await window.api.getMimetype('/path/to/file');
-
-// Read file content
-const content = await window.api.fs.readFileSync('/path/to/file');
-
-// Find matching visualizers for a file
-const matches = await window.api.findMatchingVisualizers('/path/to/file');
-
-// File Writing & Backup Operations (NEW!)
-// Write content to a file (with automatic backup support)
-const writeResult = await window.api.writeFile('/path/to/file', content, 'utf8'); // or 'base64'
-```
-
 ### Full Node.js Access
 
-Visualizers have complete access to Node.js modules via `require()`:
+Runners have complete access to Node.js modules via `require()`:
 
 ```typescript
 // File system operations
-const fs = require('fs');
-const content = fs.readFileSync('/path/to/file', 'utf8');
-fs.writeFileSync('/path/to/output.txt', 'Hello World');
+const fs = require("fs")
+const content = fs.readFileSync("/path/to/file", "utf8")
+fs.writeFileSync("/path/to/output.txt", "Hello World")
 
 // Path utilities
-const path = require('path');
-const filename = path.basename('/foo/bar/baz.txt'); // 'baz.txt'
-const dir = path.dirname('/foo/bar/baz.txt'); // '/foo/bar'
+const path = require("path")
+const filename = path.basename("/foo/bar/baz.txt") // 'baz.txt'
+const dir = path.dirname("/foo/bar/baz.txt") // '/foo/bar'
 
 // Operating system info
-const os = require('os');
-const homeDir = os.homedir();
-const platform = os.platform();
+const os = require("os")
+const homeDir = os.homedir()
+const platform = os.platform()
 
 // Child processes
-const { spawn, exec } = require('child_process');
-const result = exec('ls -la', (error, stdout, stderr) => {
-  console.log(stdout);
-});
+const { spawn, exec } = require("child_process")
+const result = exec("ls -la", (error, stdout, stderr) => {
+  console.log(stdout)
+})
 
 // Crypto operations
-const crypto = require('crypto');
-const hash = crypto.createHash('sha256').update('data').digest('hex');
+const crypto = require("crypto")
+const hash = crypto.createHash("sha256").update("data").digest("hex")
 
 // HTTP requests
-const https = require('https');
+const https = require("https")
 // ... make API calls
 
 // Any other Node.js module
-const util = require('util');
-const events = require('events');
+const util = require("util")
+const events = require("events")
 // ... etc
 ```
 
@@ -1229,45 +1084,41 @@ Use these CSS variables for consistent theming:
 ### Component Best Practices
 
 ```tsx
-const MyVisualizer: React.FC<VisualizerProps> = ({ fileData }) => {
+const MyRunner: React.FC<RunnerProps> = ({ fileData }) => {
   // 1. Use React hooks for state management
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   // 2. Handle file analysis in useEffect
   useEffect(() => {
     const analyzeFile = async () => {
       try {
-        setLoading(true);
+        setLoading(true)
         // Process fileData
-        const processed = await processFile(fileData);
-        setData(processed);
+        const processed = await processFile(fileData)
+        setData(processed)
       } catch (error) {
-        console.error('Error processing file:', error);
+        console.error("Error processing file:", error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    analyzeFile();
-  }, [fileData]);
+    }
+    analyzeFile()
+  }, [fileData])
 
   // 3. Handle loading states
   if (loading) {
-    return <div className="loading">Processing file...</div>;
+    return <div className="loading">Processing file...</div>
   }
 
   // 4. Handle error states
   if (!data) {
-    return <div className="error">Failed to process file</div>;
+    return <div className="error">Failed to process file</div>
   }
 
   // 5. Return your visualization
-  return (
-    <div className="visualizer-container">
-      {/* Your visualization here */}
-    </div>
-  );
-};
+  return <div className="runner-container">{/* Your visualization here */}</div>
+}
 ```
 
 ## 📊 Advanced Examples
@@ -1278,18 +1129,20 @@ const MyVisualizer: React.FC<VisualizerProps> = ({ fileData }) => {
 {
   "name": "Package Upgrader",
   "description": "Check and upgrade npm dependencies",
-  "matchers": [
-    {
-      "type": "filename",
-      "pattern": "package.json",
-      "priority": 100
-    },
-    {
-      "type": "content-json",
-      "requiredProperties": ["dependencies"],
-      "priority": 80
-    }
-  ]
+  "viberunner": {
+    "matchers": [
+      {
+        "type": "filename",
+        "pattern": "package.json",
+        "priority": 100
+      },
+      {
+        "type": "content-json",
+        "requiredProperties": ["dependencies"],
+        "priority": 80
+      }
+    ]
+  }
 }
 ```
 
@@ -1299,30 +1152,32 @@ const MyVisualizer: React.FC<VisualizerProps> = ({ fileData }) => {
 {
   "name": "Config Analyzer",
   "description": "Analyze configuration files across different formats",
-  "matchers": [
-    {
-      "type": "combined",
-      "operator": "OR",
-      "priority": 85,
-      "conditions": [
-        {
-          "type": "filename",
-          "pattern": "*.config.js",
-          "priority": 90
-        },
-        {
-          "type": "filename",
-          "pattern": "*.config.json",
-          "priority": 90
-        },
-        {
-          "type": "filename",
-          "pattern": ".env*",
-          "priority": 85
-        }
-      ]
-    }
-  ]
+  "viberunner": {
+    "matchers": [
+      {
+        "type": "combined",
+        "operator": "OR",
+        "priority": 85,
+        "conditions": [
+          {
+            "type": "filename",
+            "pattern": "*.config.js",
+            "priority": 90
+          },
+          {
+            "type": "filename",
+            "pattern": "*.config.json",
+            "priority": 90
+          },
+          {
+            "type": "filename",
+            "pattern": ".env*",
+            "priority": 85
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -1332,13 +1187,15 @@ const MyVisualizer: React.FC<VisualizerProps> = ({ fileData }) => {
 {
   "name": "Large File Analyzer",
   "description": "Special handling for files larger than 100MB",
-  "matchers": [
-    {
-      "type": "file-size",
-      "minSize": 104857600,
-      "priority": 70
-    }
-  ]
+  "viberunner": {
+    "matchers": [
+      {
+        "type": "file-size",
+        "minSize": 104857600,
+        "priority": 70
+      }
+    ]
+  }
 }
 ```
 
@@ -1348,78 +1205,84 @@ const MyVisualizer: React.FC<VisualizerProps> = ({ fileData }) => {
 {
   "name": "Node.js Script Runner",
   "description": "Detect and analyze Node.js scripts",
-  "matchers": [
-    {
-      "type": "content-regex",
-      "regex": "^#!/usr/bin/env node",
-      "priority": 95
-    },
-    {
-      "type": "combined",
-      "operator": "AND",
-      "priority": 80,
-      "conditions": [
-        {
-          "type": "filename",
-          "pattern": "*.js",
-          "priority": 50
-        },
-        {
-          "type": "content-regex",
-          "regex": "require\\(|import .* from",
-          "priority": 50
-        }
-      ]
-    }
-  ]
+  "viberunner": {
+    "matchers": [
+      {
+        "type": "content-regex",
+        "regex": "^#!/usr/bin/env node",
+        "priority": 95
+      },
+      {
+        "type": "combined",
+        "operator": "AND",
+        "priority": 80,
+        "conditions": [
+          {
+            "type": "filename",
+            "pattern": "*.js",
+            "priority": 50
+          },
+          {
+            "type": "content-regex",
+            "regex": "require\\(|import .* from",
+            "priority": 50
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
-### Example 5: Kanban Board Visualizer
+### Example 5: Kanban Board Runner
 
 ```json
 {
-  "name": "Kanban Board Visualizer",
+  "name": "Kanban Board Runner",
   "description": "Visualize kanban boards from various file formats",
-  "matchers": [
-    {
-      "type": "filename-contains",
-      "substring": "kanban",
-      "extension": "txt",
-      "priority": 90
-    },
-    {
-      "type": "filename-contains",
-      "substring": "kanban",
-      "extension": "json",
-      "priority": 85
-    },
-    {
-      "type": "filename-contains",
-      "substring": "board",
-      "priority": 75
-    },
-    {
-      "type": "combined",
-      "operator": "AND",
-      "priority": 80,
-      "conditions": [
-        {
-          "type": "filename-contains",
-          "substring": "project",
-          "priority": 50
-        },
-        {
-          "type": "mimetype",
-          "mimetype": "application/json",
-          "priority": 50
-        }
-      ]
-    }
-  ]
+  "viberunner": {
+    "matchers": [
+      {
+        "type": "filename-contains",
+        "substring": "kanban",
+        "extension": "txt",
+        "priority": 90
+      },
+      {
+        "type": "filename-contains",
+        "substring": "kanban",
+        "extension": "json",
+        "priority": 85
+      },
+      {
+        "type": "filename-contains",
+        "substring": "board",
+        "priority": 75
+      },
+      {
+        "type": "combined",
+        "operator": "AND",
+        "priority": 80,
+        "conditions": [
+          {
+            "type": "filename-contains",
+            "substring": "project",
+            "priority": 50
+          },
+          {
+            "type": "mimetype",
+            "mimetype": "application/json",
+            "priority": 50
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
+
 This will match files like:
+
 - `team-kanban.txt` ✅ (substring: "kanban", extension: ".txt", priority: 90)
 - `my-kanban-data.json` ✅ (substring: "kanban", extension: ".json", priority: 85)
 - `project-board.csv` ✅ (substring: "board", priority: 75)
@@ -1441,78 +1304,52 @@ npm run dev
 # 3. Build for production
 npm run build
 
-# 4. Test the built visualizer
-# Copy to your visualizers directory and reload in Viberunner
+# 4. Test the built runner
+# Copy to your runners directory and reload in Viberunner
 ```
 
 ### Required Build Output
 
 Your build process **must** generate:
+
 - `dist/bundle.iife.js` - IIFE format bundle
 - The bundle must be self-contained
 - External deps: `react` and `react-dom` (provided by Viberunner)
 
-### Vite Configuration Template
-
-```typescript
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
-export default defineConfig({
-  plugins: [
-    react({
-      jsxRuntime: 'classic' // Required for compatibility
-    })
-  ],
-  build: {
-    lib: {
-      entry: 'src/App.tsx',
-      name: 'MyVisualizer', // Change this
-      fileName: 'bundle',
-      formats: ['iife']
-    },
-    rollupOptions: {
-      external: ['react', 'react-dom'],
-      output: {
-        globals: {
-          'react': 'React',
-          'react-dom': 'ReactDOM'
-        }
-      }
-    }
-  }
-});
-```
-
 ## ✅ Best Practices
 
 ### 1. Matcher Design
+
 - **Be specific**: Higher priority for more specific matches
 - **Use combinations**: Combine filename + content for precision
 - **Fallback gracefully**: Include broader matchers with lower priority
 - **Test edge cases**: Empty files, binary files, huge files
 
 ### 2. Performance
+
 - **Lazy loading**: Don't process everything upfront
 - **Memory conscious**: Handle large files appropriately
 - **Async operations**: Use async/await for file operations
 - **Error boundaries**: Wrap components in error handling
 
 ### 3. User Experience
+
 - **Loading states**: Show progress for slow operations
 - **Error handling**: Graceful degradation for corrupted files
 - **Consistent styling**: Use the dark theme variables
 - **Responsive design**: Work on different screen sizes
 
 ### 4. File Safety
+
 - **Read-only by default**: Don't modify files without permission
 - **Backup before save**: Consider file backup strategies
 - **Validate input**: Check file integrity before processing
 - **Limit scope**: Only access files explicitly dropped
 
 ### 5. Development
+
 - **TypeScript**: Use strong typing for better development
-- **Modular code**: Break complex visualizers into components
+- **Modular code**: Break complex runners into components
 - **Testing**: Test with various file types and sizes
 - **Documentation**: Comment complex logic
 
@@ -1521,6 +1358,7 @@ export default defineConfig({
 ### Common Issues
 
 #### "Module not found" Errors
+
 ```bash
 # Ensure React is available globally
 npm install react react-dom
@@ -1530,18 +1368,21 @@ external: ['react', 'react-dom']
 ```
 
 #### "Bundle not loading"
+
 - Verify `dist/bundle.iife.js` exists
 - Check console for JavaScript errors
 - Ensure JSX runtime is set to 'classic'
 - Verify global export is working
 
 #### "Matcher not working"
+
 - Check priority values (higher = more specific)
-- Verify JSON syntax in viz.json
+- Verify JSON syntax in package.json
 - Test patterns with simple cases first
 - Use console.log to debug file analysis
 
 #### "Content not accessible"
+
 - File might be binary (check mimetype)
 - File might be too large (>10MB limit)
 - Check file permissions
@@ -1551,14 +1392,14 @@ external: ['react', 'react-dom']
 
 ```tsx
 // Add this to your component for debugging
-const DebugInfo: React.FC<{fileData: FileData}> = ({ fileData }) => (
-  <details style={{ marginTop: '20px', fontSize: '12px' }}>
+const DebugInfo: React.FC<{ fileData: FileData }> = ({ fileData }) => (
+  <details style={{ marginTop: "20px", fontSize: "12px" }}>
     <summary>🐛 Debug Info</summary>
-    <pre style={{ background: '#1e1e1e', padding: '10px' }}>
+    <pre style={{ background: "#1e1e1e", padding: "10px" }}>
       {JSON.stringify(fileData, null, 2)}
     </pre>
   </details>
-);
+)
 ```
 
 ### Getting Help
@@ -1566,86 +1407,11 @@ const DebugInfo: React.FC<{fileData: FileData}> = ({ fileData }) => (
 1. **Check console logs**: Both main process and renderer
 2. **Verify file structure**: Ensure all required files exist
 3. **Test incrementally**: Start simple, add complexity gradually
-4. **Use debug visualizer**: Create a simple debug visualizer first
+4. **Use debug runner**: Create a simple debug runner first
 
-## 🚀 Advanced Topics
+### Runner Cleanup API
 
-### File Modification Workflows
-
-The new file saving APIs enable powerful file modification workflows:
-
-```tsx
-// Example: Smart JSON formatter with validation
-const JsonEditor: React.FC<VisualizerProps> = ({ fileData }) => {
-  const [content, setContent] = useState('');
-  const [isValid, setIsValid] = useState(true);
-
-  const validateAndSave = async () => {
-    try {
-      // Validate JSON before saving
-      JSON.parse(content);
-
-      const saveResult = await window.api.writeFile(fileData.path, content, 'utf8');
-      if (!saveResult.success) throw new Error(saveResult.error);
-
-      alert(`JSON saved and formatted!\nBackup: ${backupResult.backupPath}`);
-    } catch (error) {
-      alert(`Error: ${error}`);
-    }
-  };
-
-  return (
-    <div>
-      <textarea value={content} onChange={(e) => setContent(e.target.value)} />
-      <button onClick={validateAndSave} disabled={!isValid}>
-        💾 Save Formatted JSON
-      </button>
-    </div>
-  );
-};
-```
-
-### Multi-file Visualizers
-
-```tsx
-// Handle multiple related files
-const analyzeProject = async (packageJsonPath: string) => {
-  const dir = path.dirname(packageJsonPath);
-
-  // Read related files
-  const lockFile = path.join(dir, 'package-lock.json');
-  const nodeModules = path.join(dir, 'node_modules');
-};
-```
-
-### External API Integration
-
-```tsx
-// Check npm registry for latest versions
-const checkLatestVersions = async (dependencies: Record<string, string>) => {
-  const results = {};
-
-  for (const [pkg, version] of Object.entries(dependencies)) {
-    try {
-      const response = await fetch(`https://registry.npmjs.org/${pkg}/latest`);
-      const data = await response.json();
-      results[pkg] = {
-        current: version,
-        latest: data.version,
-        needsUpdate: version !== data.version
-      };
-    } catch (error) {
-      console.error(`Error checking ${pkg}:`, error);
-    }
-  }
-
-  return results;
-};
-```
-
-### App Cleanup API
-
-**⚠️ Important:** Apps should register cleanup callbacks to prevent memory leaks and ensure proper resource management when tabs are closed.
+**⚠️ Important:** Runners should register cleanup callbacks to prevent memory leaks and ensure proper resource management when tabs are closed.
 
 #### Available Functions
 
@@ -1657,67 +1423,36 @@ registerCleanup(tabId, cleanupFunction)
 #### Basic Usage
 
 ```javascript
-function MyApp({ tabId }) {
-  const [interval, setInterval] = useState(null);
+function MyRunner({ tabId }) {
+  const [interval, setInterval] = useState(null)
 
   useEffect(() => {
     // Start some process
     const intervalId = setInterval(() => {
-      console.log('Processing...');
-    }, 1000);
-    setInterval(intervalId);
+      console.log("Processing...")
+    }, 1000)
+    setInterval(intervalId)
 
     // Register cleanup callback
     registerCleanup(tabId, () => {
-      console.log('Cleaning up interval');
-      clearInterval(intervalId);
-    });
+      console.log("Cleaning up interval")
+      clearInterval(intervalId)
+    })
 
     // Component cleanup (React unmount)
     return () => {
-      clearInterval(intervalId);
-    };
-  }, [tabId]);
+      clearInterval(intervalId)
+    }
+  }, [tabId])
 
-  return <div>My App Content</div>;
-}
-```
-
-#### Advanced Usage Examples
-
-```javascript
-// Multiple cleanup callbacks
-function AdvancedApp({ tabId }) {
-  useEffect(() => {
-    // WebSocket connection
-    const ws = new WebSocket('ws://localhost:8080');
-
-    // File watchers
-    const watchers = [];
-
-    // Register multiple cleanup callbacks
-    registerCleanup(tabId, () => {
-      console.log('Closing WebSocket connection');
-      ws.close();
-    });
-
-    registerCleanup(tabId, () => {
-      console.log('Stopping file watchers');
-      watchers.forEach(watcher => watcher.close());
-    });
-
-    registerCleanup(tabId, () => {
-      console.log('Clearing any pending operations');
-      // Clear any other resources
-    });
-
-  }, [tabId]);
+  return <div>My Runner Content</div>
 }
 ```
 
 #### When Cleanup is Called
 
 Cleanup callbacks are automatically executed when:
+
 - A tab is closed by the user
 - The application is shutting down
 - A tab is being replaced (rare edge cases)
@@ -1729,31 +1464,7 @@ Cleanup callbacks are automatically executed when:
 3. **Error handling**: Cleanup callbacks are wrapped in try-catch, but handle your own errors when possible
 4. **Immediate cleanup**: Also implement React's `useEffect` cleanup for immediate component unmounting
 
-```javascript
-useEffect(() => {
-  const resource = createResource();
-
-  // Register for tab cleanup
-  registerCleanup(tabId, () => {
-    resource.cleanup();
-  });
-
-  // Also handle React unmount
-  return () => {
-    resource.cleanup();
-  };
-}, [tabId]);
-```
-
 ---
-
-## 🎉 Conclusion
-
-You now have everything needed to create powerful, sophisticated visualizers for Viberunner! The enhanced matching system allows for precise file targeting, while the React-based architecture provides a familiar development experience.
-
-Start with simple visualizers and gradually add complexity. The priority-based matching ensures your visualizers activate exactly when they should, creating a seamless user experience.
-
-Happy visualizing! 🚀
 
 ## 🔧 System Command Execution & External Tool Detection
 
@@ -1769,35 +1480,36 @@ When checking for external tools or executing commands, prefer `spawn` over `exe
 
 ```javascript
 // ❌ Less reliable approach
-const { exec } = require('child_process');
-exec('python3 --version', (error, stdout, stderr) => {
+const { exec } = require("child_process")
+exec("python3 --version", (error, stdout, stderr) => {
   // Can fail due to shell quirks, output buffering, etc.
-});
+})
 
 // ✅ More reliable approach
-const { spawn } = require('child_process');
-const pythonCheck = spawn('python3', ['--version'], { shell: true });
+const { spawn } = require("child_process")
+const pythonCheck = spawn("python3", ["--version"], { shell: true })
 
-let output = '';
-let error = '';
+let output = ""
+let error = ""
 
-pythonCheck.stdout?.on('data', (data) => {
-  output += data.toString();
-});
+pythonCheck.stdout?.on("data", (data) => {
+  output += data.toString()
+})
 
-pythonCheck.stderr?.on('data', (data) => {
-  error += data.toString();
-});
+pythonCheck.stderr?.on("data", (data) => {
+  error += data.toString()
+})
 
-pythonCheck.on('close', (code) => {
-  const isAvailable = code === 0 && (output.includes('Python 3') || error.includes('Python 3'));
-  console.log('Python3 available:', isAvailable);
-});
+pythonCheck.on("close", (code) => {
+  const isAvailable =
+    code === 0 && (output.includes("Python 3") || error.includes("Python 3"))
+  console.log("Python3 available:", isAvailable)
+})
 
-pythonCheck.on('error', (err) => {
-  console.log('Python3 check failed:', err);
+pythonCheck.on("error", (err) => {
+  console.log("Python3 check failed:", err)
   // Handle gracefully
-});
+})
 ```
 
 #### Multi-Stage Tool Detection
@@ -1806,77 +1518,53 @@ For complex tool detection (e.g., checking both the tool and its dependencies), 
 
 ```javascript
 const checkToolAvailability = (childProcess) => {
-  const { spawn } = childProcess;
+  const { spawn } = childProcess
 
   // Stage 1: Check if base tool exists
-  const toolCheck = spawn('python3', ['--version'], { shell: true });
+  const toolCheck = spawn("python3", ["--version"], { shell: true })
 
-  toolCheck.on('close', (code) => {
+  toolCheck.on("close", (code) => {
     if (code === 0) {
-      console.log('Python3 is available, checking dependencies...');
-      checkToolDependencies(childProcess);
+      console.log("Python3 is available, checking dependencies...")
+      checkToolDependencies(childProcess)
     } else {
-      console.log('Python3 not available, using fallback approach');
-      useFallbackApproach();
+      console.log("Python3 not available, using fallback approach")
+      useFallbackApproach()
     }
-  });
+  })
 
-  toolCheck.on('error', (err) => {
-    console.log('Tool check failed:', err);
-    useFallbackApproach();
-  });
-};
+  toolCheck.on("error", (err) => {
+    console.log("Tool check failed:", err)
+    useFallbackApproach()
+  })
+}
 
 const checkToolDependencies = (childProcess) => {
-  const { spawn } = childProcess;
+  const { spawn } = childProcess
 
   // Stage 2: Check if required modules/dependencies exist
-  const depCheck = spawn('python3', ['-c', 'import some_required_module; print("available")'], { shell: true });
+  const depCheck = spawn(
+    "python3",
+    ["-c", 'import some_required_module; print("available")'],
+    { shell: true }
+  )
 
-  let output = '';
+  let output = ""
 
-  depCheck.stdout?.on('data', (data) => {
-    output += data.toString();
-  });
+  depCheck.stdout?.on("data", (data) => {
+    output += data.toString()
+  })
 
-  depCheck.on('close', (code) => {
-    if (code === 0 && output.includes('available')) {
-      console.log('All dependencies available');
-      enableFullFunctionality();
+  depCheck.on("close", (code) => {
+    if (code === 0 && output.includes("available")) {
+      console.log("All dependencies available")
+      enableFullFunctionality()
     } else {
-      console.log('Dependencies missing, using limited functionality');
-      useLimitedFunctionality();
+      console.log("Dependencies missing, using limited functionality")
+      useLimitedFunctionality()
     }
-  });
-};
-```
-
-#### Graceful Fallback Systems
-
-Always implement fallback approaches when external tools aren't available:
-
-```javascript
-const executeWithFallback = () => {
-  // Try preferred approach first
-  checkToolAvailability((isAvailable) => {
-    if (isAvailable) {
-      useAdvancedApproach();
-    } else {
-      // Fall back to alternative methods
-      useAlternativeApproach();
-    }
-  });
-};
-
-const useAdvancedApproach = () => {
-  // Use external tool for full functionality
-  console.log('Using advanced features with external tool');
-};
-
-const useAlternativeApproach = () => {
-  // Use built-in or simpler methods
-  console.log('Using fallback approach with built-in tools');
-};
+  })
+}
 ```
 
 ### Platform-Specific Considerations
@@ -1885,75 +1573,32 @@ Handle platform differences gracefully:
 
 ```javascript
 const getPlatformSpecificCommand = () => {
-  const os = require('os');
-  const platform = os.platform();
+  const os = require("os")
+  const platform = os.platform()
 
   switch (platform) {
-    case 'darwin': // macOS
-      return ['python3', '--version'];
-    case 'win32': // Windows
-      return ['python', '--version']; // Often just 'python' on Windows
-    case 'linux': // Linux
-      return ['python3', '--version'];
+    case "darwin": // macOS
+      return ["python3", "--version"]
+    case "win32": // Windows
+      return ["python", "--version"] // Often just 'python' on Windows
+    case "linux": // Linux
+      return ["python3", "--version"]
     default:
-      throw new Error(`Unsupported platform: ${platform}`);
+      throw new Error(`Unsupported platform: ${platform}`)
   }
-};
+}
 
 const checkCrossPlatform = () => {
   try {
-    const [command, ...args] = getPlatformSpecificCommand();
-    const check = spawn(command, args, { shell: true });
+    const [command, ...args] = getPlatformSpecificCommand()
+    const check = spawn(command, args, { shell: true })
     // ... handle as above
   } catch (error) {
-    console.error('Platform not supported:', error);
+    console.error("Platform not supported:", error)
     // Use most basic fallback
   }
-};
+}
 ```
-
-### Permission Detection Patterns
-
-For apps that need special permissions (like accessibility access), implement robust detection:
-
-```javascript
-const checkPermissions = (childProcess) => {
-  // Primary permission check
-  const primaryCheck = spawn('primary-permission-test-command', [], { shell: true });
-
-  primaryCheck.on('close', (code) => {
-    if (code === 0) {
-      console.log('Permissions granted');
-      enableFullFeatures();
-    } else {
-      console.log('Permissions needed, trying fallback detection...');
-      tryFallbackPermissionCheck(childProcess);
-    }
-  });
-
-  primaryCheck.on('error', () => {
-    tryFallbackPermissionCheck(childProcess);
-  });
-};
-
-const tryFallbackPermissionCheck = (childProcess) => {
-  // Alternative permission detection method
-  const fallbackCheck = spawn('alternative-permission-test', [], { shell: true });
-
-  fallbackCheck.on('close', (code) => {
-    const hasPermissions = code === 0;
-
-    if (hasPermissions) {
-      console.log('Permissions detected via fallback method');
-      enableLimitedFeatures();
-    } else {
-      console.log('No permissions detected, using basic mode');
-      enableBasicMode();
-    }
-  });
-};
-```
-
 ### Error Handling Best Practices
 
 1. **Always handle both `error` and `close` events** for spawned processes
@@ -1963,63 +1608,72 @@ const tryFallbackPermissionCheck = (childProcess) => {
 5. **Handle edge cases** like command not found, permission denied, etc.
 
 ```javascript
-const robustToolCheck = (toolName, args = ['--version']) => {
+const robustToolCheck = (toolName, args = ["--version"]) => {
   return new Promise((resolve) => {
-    const { spawn } = require('child_process');
+    const { spawn } = require("child_process")
 
-    const process = spawn(toolName, args, { shell: true });
-    let output = '';
-    let errorOutput = '';
+    const process = spawn(toolName, args, { shell: true })
+    let output = ""
+    let errorOutput = ""
 
-    process.stdout?.on('data', (data) => {
-      output += data.toString();
-    });
+    process.stdout?.on("data", (data) => {
+      output += data.toString()
+    })
 
-    process.stderr?.on('data', (data) => {
-      errorOutput += data.toString();
-    });
+    process.stderr?.on("data", (data) => {
+      errorOutput += data.toString()
+    })
 
-    process.on('close', (code) => {
+    process.on("close", (code) => {
       resolve({
         available: code === 0,
         output,
         error: errorOutput,
-        exitCode: code
-      });
-    });
+        exitCode: code,
+      })
+    })
 
-    process.on('error', (err) => {
+    process.on("error", (err) => {
       resolve({
         available: false,
-        output: '',
+        output: "",
         error: err.message,
-        exitCode: -1
-      });
-    });
+        exitCode: -1,
+      })
+    })
 
     // Timeout protection
     setTimeout(() => {
-      process.kill();
+      process.kill()
       resolve({
         available: false,
-        output: '',
-        error: 'Command timeout',
-        exitCode: -1
-      });
-    }, 5000); // 5 second timeout
-  });
-};
+        output: "",
+        error: "Command timeout",
+        exitCode: -1,
+      })
+    }, 5000) // 5 second timeout
+  })
+}
 
 // Usage
 const checkTool = async () => {
-  const result = await robustToolCheck('python3');
+  const result = await robustToolCheck("python3")
 
   if (result.available) {
-    console.log('Tool available:', result.output);
+    console.log("Tool available:", result.output)
   } else {
-    console.log('Tool not available:', result.error);
+    console.log("Tool not available:", result.error)
   }
-};
+}
 ```
 
 This approach ensures your Viberunner apps can reliably detect and work with external tools while providing graceful fallbacks when tools aren't available.
+
+
+## 🎉 Conclusion
+
+You now have everything needed to create powerful, sophisticated runners for Viberunner! The enhanced matching system allows for precise file targeting, while the React-based architecture provides a familiar development experience.
+
+Start with simple runners and gradually add complexity. The priority-based matching ensures your runners activate exactly when they should, creating a seamless user experience.
+
+Happy visualizing! 🚀

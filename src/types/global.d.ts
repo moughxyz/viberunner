@@ -63,3 +63,9 @@ interface Window {
   global: NodeJS.Global;
   process: NodeJS.Process;
 }
+
+// Vite raw imports
+declare module '*?raw' {
+  const content: string;
+  export default content;
+}

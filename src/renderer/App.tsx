@@ -191,7 +191,6 @@ const executeCleanup = (tabId: string) => {
 
 // Make cleanup functions available globally for apps
 (window as any).registerCleanup = registerCleanup;
-(window as any).executeCleanup = executeCleanup;
 
 // Constants
 const getAppsDirectory = () => {
@@ -335,7 +334,6 @@ async function loadApp(id: string) {
 interface FileInput {
   path: string;
   mimetype: string;
-  // Remove content and analysis - apps will handle these directly
 }
 
 interface AppConfig {
@@ -761,17 +759,6 @@ const App: React.FC = () => {
     } else {
       props = {
         fileInput: tab.fileInput,
-        fileData: {
-          path: tab.fileInput.path,
-          mimetype: tab.fileInput.mimetype,
-          content: '',
-          analysis: {
-            filename: path.basename(tab.fileInput.path),
-            size: 0,
-            isJson: tab.fileInput.mimetype === 'application/json' || tab.fileInput.path.endsWith('.json'),
-            jsonContent: null
-          }
-        },
         container,
         tabId: tab.id,
         appId: tab.app.id
@@ -925,7 +912,7 @@ const App: React.FC = () => {
       };
 
       // Make the app loader available globally with backward compatibility
-      (window as any).__LOAD_APP__ = appLoader;
+      (window as any).__RENDER_RUNNER__ = appLoader;
 
       script.onload = () => {
         // Clean up after script loads
@@ -933,7 +920,7 @@ const App: React.FC = () => {
           if (script.parentNode) {
             script.parentNode.removeChild(script);
           }
-          delete (window as any).__LOAD_APP__;
+          delete (window as any).__RENDER_RUNNER__;
         }, 1000);
       };
 
