@@ -56,7 +56,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // First handle code blocks (triple backticks) before inline code
     let formatted = content
       // Handle code blocks with language specification
-      .replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+      .replace(/```(\w+)?\n?([\s\S]*?)```/g, (_match, lang, code) => {
         const className = lang ? ` class="language-${lang}"` : ''
         return `<pre${className}><code>${code.trim()}</code></pre>`
       })

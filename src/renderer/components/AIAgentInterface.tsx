@@ -674,13 +674,15 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
             >
               Done
             </button>
-            <button
-              onClick={handleDiscard}
-              disabled={isDiscarding}
-              className="discard-btn"
-            >
-              {isDiscarding ? 'Discarding...' : 'Discard'}
-            </button>
+            {Object.keys(currentFiles).length > 0 && (
+              <button
+                onClick={handleDiscard}
+                disabled={isDiscarding}
+                className="discard-btn"
+              >
+                {isDiscarding ? 'Discarding...' : 'Discard'}
+              </button>
+            )}
             <button onClick={onClose} className="close-btn">
               ✕
             </button>
@@ -708,13 +710,15 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
                 >
                   Done
                 </button>
-                <button
-                  onClick={handleDiscard}
-                  disabled={isDiscarding}
-                  className="discard-btn"
-                >
-                  {isDiscarding ? 'Discarding...' : 'Discard'}
-                </button>
+                {Object.keys(currentFiles).length > 0 && (
+                  <button
+                    onClick={handleDiscard}
+                    disabled={isDiscarding}
+                    className="discard-btn"
+                  >
+                    {isDiscarding ? 'Discarding...' : 'Discard'}
+                  </button>
+                )}
               </div>
             </div>
           )}
