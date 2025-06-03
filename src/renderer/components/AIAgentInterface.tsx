@@ -746,20 +746,18 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
         )}
 
         <div className="flex-1 flex">
-          <div className="flex-1 flex flex-col">
-            <ChatInterface
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              isLoading={isLoading}
-              runnerName={runnerName}
-              onRunnerNameChange={setRunnerName}
-              onSave={handleSaveRunner}
-              onDiscard={handleDiscard}
-              isDiscarding={isDiscarding}
-              hasFiles={Object.keys(currentFiles).length > 0}
-            />
-          </div>
-          <div className="w-[600px] border-l border-white/10">
+          <ChatInterface
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            isLoading={isLoading}
+            runnerName={runnerName}
+            onRunnerNameChange={setRunnerName}
+            onSave={handleSaveRunner}
+            onDiscard={handleDiscard}
+            isDiscarding={isDiscarding}
+            hasFiles={Object.keys(currentFiles).length > 0}
+          />
+          <div className="flex-1 border-l border-[#333333]">
             <Tabs defaultValue="preview" className="h-full">
               <TabsList className="w-full bg-white/5 border-b border-white/10 rounded-none p-0">
                 <TabsTrigger
