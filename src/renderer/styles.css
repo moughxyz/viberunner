@@ -70,14 +70,14 @@ body {
 }
 
 /* App Layout */
-.vf-app {
+.vr-app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 /* Header */
-#vf-header {
+#vr-header {
   border-bottom: 1px solid var(--border);
   background: var(--background);
   position: sticky;
@@ -85,7 +85,7 @@ body {
   z-index: 50;
 }
 
-.vf-header-content {
+.vr-header-content {
   max-width: none;
   margin: 0;
   padding: 0;
@@ -95,7 +95,7 @@ body {
   -webkit-app-region: drag;
 }
 
-.vf-app-title {
+.vr-app-title {
   font-size: var(--font-size-base);
   font-weight: 600;
   color: var(--text-primary);
@@ -108,19 +108,19 @@ body {
   -webkit-app-region: no-drag;
 }
 
-.vf-app-icon {
+.vr-app-icon {
   display: flex;
   align-items: center;
   color: var(--text-primary);
 }
 
-.vf-app-icon svg {
+.vr-app-icon svg {
   width: 16px;
   height: 16px;
   color: inherit;
 }
 
-.vf-app-subtitle {
+.vr-app-subtitle {
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
   font-weight: 400;
@@ -128,7 +128,7 @@ body {
 }
 
 /* Header Tabs - Chrome-like native styling */
-.vf-header-tabs {
+.vr-header-tabs {
   display: flex;
   align-items: stretch;
   margin-left: 80px;
@@ -137,7 +137,7 @@ body {
   overflow: hidden;
 }
 
-.vf-header-tabs .vf-tabs-list {
+.vr-header-tabs .vr-tabs-list {
   display: flex;
   align-items: stretch;
   height: 100%;
@@ -145,7 +145,7 @@ body {
   padding-left: 8px;
 }
 
-.vf-header-tabs .vf-tab {
+.vr-header-tabs .vr-tab {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -170,17 +170,17 @@ body {
     0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-.vf-header-tabs .vf-tab:first-child {
+.vr-header-tabs .vr-tab:first-child {
   margin-left: 0;
 }
 
 /* Remove the complex pseudo-element approach */
-.vf-header-tabs .vf-tab::before,
-.vf-header-tabs .vf-tab::after {
+.vr-header-tabs .vr-tab::before,
+.vr-header-tabs .vr-tab::after {
   display: none;
 }
 
-.vf-header-tabs .vf-tab:hover {
+.vr-header-tabs .vr-tab:hover {
   background: linear-gradient(to bottom, #1a1a1a 0%, #141414 100%);
   z-index: 2;
   box-shadow:
@@ -188,7 +188,7 @@ body {
     0 2px 4px rgba(0, 0, 0, 0.6);
 }
 
-.vf-header-tabs .vf-tab-active {
+.vr-header-tabs .vr-tab-active {
   background: linear-gradient(to bottom, #2a2a2a 0%, #1e1e1e 100%);
   z-index: 10;
   box-shadow:
@@ -200,7 +200,7 @@ body {
   transform: translateY(-2px);
 }
 
-.vf-header-tabs .vf-tab-active::before {
+.vr-header-tabs .vr-tab-active::before {
   content: '';
   position: absolute;
   bottom: 0;
@@ -211,12 +211,12 @@ body {
   z-index: 1;
 }
 
-.vf-header-tabs .vf-tab-active:hover {
+.vr-header-tabs .vr-tab-active:hover {
   background: linear-gradient(to bottom, #2a2a2a 0%, #1e1e1e 100%);
 }
 
 /* Drag and drop states for tabs */
-.vf-header-tabs .vf-tab-dragging {
+.vr-header-tabs .vr-tab-dragging {
   opacity: 0.5;
   transform: rotate(2deg) scale(0.95);
   z-index: 100;
@@ -226,7 +226,7 @@ body {
     0 8px 16px rgba(0, 0, 0, 0.8);
 }
 
-.vf-header-tabs .vf-tab-drop-target {
+.vr-header-tabs .vr-tab-drop-target {
   background: linear-gradient(to bottom, #1a4d66 0%, #145266 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -235,7 +235,7 @@ body {
   transform: scale(1.02);
 }
 
-.vf-header-tabs .vf-tab-drop-target::after {
+.vr-header-tabs .vr-tab-drop-target::after {
   content: '';
   position: absolute;
   left: -4px;
@@ -248,7 +248,7 @@ body {
 }
 
 /* Prevent text selection during drag */
-.vf-header-tabs .vf-tab[draggable="true"] {
+.vr-header-tabs .vr-tab[draggable="true"] {
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -256,24 +256,24 @@ body {
 }
 
 /* Dragging cursor for tabs */
-.vf-header-tabs .vf-tab[draggable="true"]:active {
+.vr-header-tabs .vr-tab[draggable="true"]:active {
   cursor: grabbing;
 }
 
-.vf-header-tabs .vf-tab[draggable="true"] {
+.vr-header-tabs .vr-tab[draggable="true"] {
   cursor: grab;
 }
 
-.vf-header-tabs .vf-tab[draggable="true"]:hover {
+.vr-header-tabs .vr-tab[draggable="true"]:hover {
   cursor: grab;
 }
 
 /* Override cursor for close button */
-.vf-header-tabs .vf-tab-close {
+.vr-header-tabs .vr-tab-close {
   cursor: pointer !important;
 }
 
-.vf-header-tabs .vf-tab-icon {
+.vr-header-tabs .vr-tab-icon {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -282,7 +282,7 @@ body {
   opacity: 0.9;
 }
 
-.vf-header-tabs .vf-tab-content {
+.vr-header-tabs .vr-tab-content {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -290,7 +290,7 @@ body {
   gap: 1px;
 }
 
-.vf-header-tabs .vf-tab-title {
+.vr-header-tabs .vr-tab-title {
   font-size: var(--font-size-xs);
   font-weight: 500;
   color: var(--text-primary);
@@ -300,7 +300,7 @@ body {
   line-height: 1.2;
 }
 
-.vf-header-tabs .vf-tab-subtitle {
+.vr-header-tabs .vr-tab-subtitle {
   font-size: 10px;
   color: var(--text-secondary);
   overflow: hidden;
@@ -310,7 +310,7 @@ body {
   opacity: 0.8;
 }
 
-.vf-header-tabs .vf-tab-close {
+.vr-header-tabs .vr-tab-close {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -328,19 +328,19 @@ body {
   transform: scale(0.8);
 }
 
-.vf-header-tabs .vf-tab:hover .vf-tab-close,
-.vf-header-tabs .vf-tab-active .vf-tab-close {
+.vr-header-tabs .vr-tab:hover .vr-tab-close,
+.vr-header-tabs .vr-tab-active .vr-tab-close {
   opacity: 1;
   transform: scale(1);
 }
 
-.vf-header-tabs .vf-tab-close:hover {
+.vr-header-tabs .vr-tab-close:hover {
   background: var(--danger);
   color: white;
   transform: scale(1.1);
 }
 
-.vf-header-tabs .vf-new-tab-btn {
+.vr-header-tabs .vr-new-tab-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -359,14 +359,14 @@ body {
   z-index: 5;
 }
 
-.vf-header-tabs .vf-new-tab-btn:hover {
+.vr-header-tabs .vr-new-tab-btn:hover {
   background: var(--surface-hover);
   color: var(--text-primary);
   transform: scale(1.1);
 }
 
 /* Main Layout */
-#vf-main-layout {
+#vr-main-layout {
   flex: 1;
   display: flex;
   max-width: none; /* Remove max-width to allow full screen */
@@ -374,10 +374,10 @@ body {
   width: 100%;
   height: calc(100vh - 41px); /* Use height instead of min-height */
   max-height: calc(100vh - 41px); /* Add max-height to prevent overflow */
-  overflow: hidden; /* Prevent vf-main-layout from scrolling */
+  overflow: hidden; /* Prevent vr-main-layout from scrolling */
 }
 
-.vf-content-area {
+.vr-content-area {
   flex: 1;
   width: 100%;
   height: 100%; /* Ensure it fills parent height */
@@ -385,17 +385,17 @@ body {
 }
 
 /* For apps, full width with no padding */
-.vf-content-area:has(.tab-app-container[style*="display: block"]) {
+.vr-content-area:has(.tab-app-container[style*="display: block"]) {
   padding: 0;
 }
 
 /* For new tabs, add padding */
-.vf-content-area:has(.vf-new-tab-unified) {
+.vr-content-area:has(.vr-new-tab-unified) {
   padding: var(--space-8);
 }
 
 /* App selection gets full viewport */
-.vf-content-area:has(.vf-app-selection) {
+.vr-content-area:has(.vr-app-selection) {
   padding: 0;
 }
 
@@ -406,7 +406,7 @@ body {
 }
 
 /* Override container height for app selection to allow natural sizing */
-.vf-content-area:has(.vf-app-selection) .app-viewport-container {
+.vr-content-area:has(.vr-app-selection) .app-viewport-container {
   height: auto;
   max-height: none;
 }
@@ -421,25 +421,25 @@ body {
 }
 
 /* Remove border and radius when apps are active */
-.vf-content-area:has(.tab-app-container[style*="display: block"]) .app-viewport {
+.vr-content-area:has(.tab-app-container[style*="display: block"]) .app-viewport {
   border: none;
   border-radius: 0;
 }
 
 /* Hide app viewport completely when on new tab */
-.vf-content-area:has(.vf-new-tab-unified) .app-viewport {
+.vr-content-area:has(.vr-new-tab-unified) .app-viewport {
   border: none;
   background: transparent;
 }
 
 /* Hide app viewport completely when on app selection */
-.vf-content-area:has(.vf-app-selection) .app-viewport {
+.vr-content-area:has(.vr-app-selection) .app-viewport {
   border: none;
   background: transparent;
 }
 
 /* Unified New Tab Interface */
-.vf-new-tab-unified {
+.vr-new-tab-unified {
   position: absolute;
   top: 0;
   left: 0;
@@ -780,7 +780,7 @@ body {
 }
 
 /* App Selection */
-.vf-app-selection {
+.vr-app-selection {
   max-width: 800px;
   margin: 0 auto;
   padding: var(--space-8);
@@ -1016,7 +1016,7 @@ body {
 
 /* Responsive */
 @media (max-width: 1024px) {
-  #vf-main-layout {
+  #vr-main-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1026,8 +1026,8 @@ body {
 }
 
 @media (max-width: 768px) {
-  .vf-header-content,
-  .vf-content-area {
+  .vr-header-content,
+  .vr-content-area {
     padding: var(--space-4);
   }
 
@@ -1367,11 +1367,11 @@ body {
     padding: var(--space-4);
   }
 
-  .vf-content-area:has(.vf-new-tab-unified) {
+  .vr-content-area:has(.vr-new-tab-unified) {
     padding: var(--space-4);
   }
 
-  #vf-main-layout {
+  #vr-main-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1379,8 +1379,8 @@ body {
     grid-template-columns: 1fr;
   }
 
-  .vf-header-content,
-  .vf-content-area {
+  .vr-header-content,
+  .vr-content-area {
     padding: var(--space-4);
   }
 

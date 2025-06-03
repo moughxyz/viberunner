@@ -1368,19 +1368,19 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="vf-app">
-      <header id="vf-header">
-        <div className="vf-header-content">
+    <div className="vr-app">
+      <header id="vr-header">
+        <div className="vr-header-content">
           {/* Tabs first, right after macOS traffic lights */}
-          <div className="vf-header-tabs">
-            <div className="vf-tabs-list">
+          <div className="vr-header-tabs">
+            <div className="vr-tabs-list">
               {openTabs.map((tab) => (
                 <div
                   key={tab.id}
-                  className={`vf-tab ${
-                    tab.id === activeTabId ? "vf-tab-active" : ""
-                  } ${draggedTabId === tab.id ? "vf-tab-dragging" : ""} ${
-                    dragOverTabId === tab.id ? "vf-tab-drop-target" : ""
+                  className={`vr-tab ${
+                    tab.id === activeTabId ? "vr-tab-active" : ""
+                  } ${draggedTabId === tab.id ? "vr-tab-dragging" : ""} ${
+                    dragOverTabId === tab.id ? "vr-tab-drop-target" : ""
                   }`}
                   onClick={() => handleTabSwitch(tab.id)}
                   draggable={true}
@@ -1390,7 +1390,7 @@ const App: React.FC = () => {
                   onDragLeave={(e) => handleTabDragLeave(e, tab.id)}
                   onDrop={(e) => handleTabDrop(e, tab.id)}
                 >
-                  <div className="vf-tab-icon">
+                  <div className="vr-tab-icon">
                     {tab.type === "newtab" ? (
                       <img
                         src={getViberunnerLogoPath()}
@@ -1423,15 +1423,15 @@ const App: React.FC = () => {
                       />
                     )}
                   </div>
-                  <div className="vf-tab-content">
-                    <span className="vf-tab-title">{tab.title}</span>
+                  <div className="vr-tab-content">
+                    <span className="vr-tab-title">{tab.title}</span>
                     {tab.runner && (
-                      <span className="vf-tab-subtitle">{tab.runner.name}</span>
+                      <span className="vr-tab-subtitle">{tab.runner.name}</span>
                     )}
                   </div>
                   {tab.type !== "newtab" || openTabs.length > 1 ? (
                     <button
-                      className="vf-tab-close"
+                      className="vr-tab-close"
                       onClick={(e) => {
                         e.stopPropagation()
                         closeTab(tab.id)
@@ -1453,7 +1453,7 @@ const App: React.FC = () => {
 
               {/* New Tab Button */}
               <button
-                className="vf-new-tab-btn"
+                className="vr-new-tab-btn"
                 onClick={createNewTab}
                 title="New tab"
               >
@@ -1463,8 +1463,8 @@ const App: React.FC = () => {
           </div>
 
           {/* Viberunner logo on the right */}
-          <h1 className="vf-app-title">
-            <div className="vf-app-icon">
+          <h1 className="vr-app-title">
+            <div className="vr-app-icon">
               <img
                 src={getViberunnerLogoPath()}
                 alt="Viberunner Logo"
@@ -1476,10 +1476,10 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      <div id="vf-main-layout">
-        <main className="vf-content-area">
+      <div id="vr-main-layout">
+        <main className="vr-content-area">
           {showAppSelection && activeTab?.type === "newtab" ? (
-            <div className="vf-app-selection">
+            <div className="vr-app-selection">
               <div className="selection-header">
                 <h2 className="selection-title">Choose an app</h2>
                 <p className="selection-subtitle">
@@ -1550,7 +1550,7 @@ const App: React.FC = () => {
 
             {/* Unified new tab interface when active tab is new tab */}
             {activeTab?.type === "newtab" && !showAppSelection && (
-              <div className="vf-new-tab-unified">
+              <div className="vr-new-tab-unified">
                 <div className="unified-content">
                   {/* Build Prompt Component */}
                   <BuildPrompt onSubmit={handleBuildPromptSubmit} />
