@@ -1,7 +1,6 @@
 import { getNewRunnerPrompt } from '../prompts/newRunner'
 import { Message } from '../components/AIAgentInterface'
-
-const { ipcRenderer } = window.require('electron')
+import Anthropic from '@anthropic-ai/sdk'
 
 export interface ClaudeMessage {
   role: 'user' | 'assistant'
@@ -17,12 +16,15 @@ export interface ClaudeResponse {
 }
 
 export class ClaudeAPIService {
-  private apiKey: string
+  private anthropic: Anthropic
   private model = 'claude-3-5-sonnet-20241022'
   private originalSystemPrompt: string | null = null
 
   constructor(apiKey: string) {
-    this.apiKey = apiKey
+    this.anthropic = new Anthropic({
+      apiKey,
+      dangerouslyAllowBrowser: true
+    })
   }
 
   async sendMessage(userPrompt: string, conversationHistory: Message[]): Promise<ClaudeResponse> {
@@ -63,41 +65,54 @@ export class ClaudeAPIService {
         })
       }
 
-      console.log('Sending request to Claude API via IPC:', {
+      console.log('Sending request to Claude API directly from renderer:', {
         model: this.model,
         messageCount: messages.length,
         hasSystemPrompt: !!this.originalSystemPrompt,
         userPrompt: userPrompt.substring(0, 100) + '...'
       })
 
-      // Use IPC to call the main process to bypass CORS restrictions
-      const result = await ipcRenderer.invoke('claude-api-call', {
-        apiKey: this.apiKey,
-        messages,
-        model: this.model
+      // Use the Anthropic SDK directly in the renderer
+      const response = await this.anthropic.messages.create({
+        model: this.model,
+        max_tokens: 8192,
+        temperature: 0.7,
+        messages: messages.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }))
       })
 
-      if (!result.success) {
-        // Handle specific error cases
-        if (result.error.includes('401')) {
-          throw new Error('Invalid API key. Please check your Claude API key.')
-        } else if (result.error.includes('429')) {
-          throw new Error('Rate limit exceeded. Please try again later.')
-        } else if (result.error.includes('500')) {
-          throw new Error('Claude API server error. Please try again later.')
+      // Extract text content from the response
+      let content = ''
+      if (response.content && response.content.length > 0) {
+        const textContent = response.content.find(block => block.type === 'text')
+        if (textContent && 'text' in textContent) {
+          content = textContent.text
         }
-        throw new Error(result.error)
+      }
+
+      if (!content) {
+        throw new Error('No text content found in Claude API response')
       }
 
       return {
-        content: result.content,
-        usage: result.usage
+        content,
+        usage: response.usage
       }
 
     } catch (error) {
       console.error('Claude API service error:', error)
 
       if (error instanceof Error) {
+        // Handle specific error cases
+        if (error.message.includes('401')) {
+          throw new Error('Invalid API key. Please check your Claude API key.')
+        } else if (error.message.includes('429')) {
+          throw new Error('Rate limit exceeded. Please try again later.')
+        } else if (error.message.includes('500')) {
+          throw new Error('Claude API server error. Please try again later.')
+        }
         throw error
       }
 

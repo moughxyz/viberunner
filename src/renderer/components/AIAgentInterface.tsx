@@ -300,7 +300,6 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
   const [currentFiles, setCurrentFiles] = useState<Record<string, FileChange>>({})
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [runnerName, setRunnerName] = useState<string>('')
-  const [isSaving, setIsSaving] = useState(false)
   const [rightPanelMode, setRightPanelMode] = useState<'preview' | 'files'>('preview')
   const [previewRefreshKey, setPreviewRefreshKey] = useState(0)
   const [isDiscarding, setIsDiscarding] = useState(false)
@@ -597,61 +596,10 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
   }
 
   const handleSaveRunner = async () => {
-    if (!fileManager.current || Object.keys(currentFiles).length === 0) {
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      const generatedName = runnerName || `ai-runner-${Date.now()}`
-      const savedName = await fileManager.current.createRunner(generatedName, currentFiles)
-
-      // Update runner name to the sanitized version
-      setRunnerName(savedName)
-
-      // Show success message
-      const successMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `✅ Runner "${savedName}" has been successfully created and saved!`,
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, successMessage])
-
-      // Automatically try to build the runner
-      if (commandExecutor.current) {
-        try {
-          const buildResult = await commandExecutor.current.executeCommand('npm run build', savedName)
-
-          const buildMessage: Message = {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: buildResult.success
-              ? `🎉 Runner built successfully!`
-              : `⚠️ Runner saved but build failed. You may need to fix some issues:\n\n${buildResult.error}`,
-            timestamp: new Date()
-          }
-
-          setMessages(prev => [...prev, buildMessage])
-
-          // Don't auto-close the interface - let user decide when to close
-
-        } catch (buildError) {
-          console.error('Auto-build failed:', buildError)
-        }
-      }
-
-    } catch (error) {
-      console.error('Error saving runner:', error)
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: `❌ Error saving runner: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date()
-      }
-      setMessages(prev => [...prev, errorMessage])
-    } finally {
-      setIsSaving(false)
+    // Since files are auto-saved when AI generates them,
+    // the "Save" button should just close the interface
+    if (onClose) {
+      onClose()
     }
   }
 
@@ -721,14 +669,14 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
           <div className="ai-agent-actions">
             <button
               onClick={handleSaveRunner}
-              disabled={Object.keys(currentFiles).length === 0 || isSaving || isDiscarding}
+              disabled={Object.keys(currentFiles).length === 0 || isDiscarding}
               className="save-btn"
             >
-              {isSaving ? 'Saving...' : 'Save'}
+              Done
             </button>
             <button
               onClick={handleDiscard}
-              disabled={isSaving || isDiscarding}
+              disabled={isDiscarding}
               className="discard-btn"
             >
               {isDiscarding ? 'Discarding...' : 'Discard'}
@@ -755,14 +703,14 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
               <div className="tab-agent-actions">
                 <button
                   onClick={handleSaveRunner}
-                  disabled={Object.keys(currentFiles).length === 0 || isSaving || isDiscarding}
+                  disabled={Object.keys(currentFiles).length === 0 || isDiscarding}
                   className="save-btn"
                 >
-                  {isSaving ? 'Saving...' : 'Save'}
+                  Done
                 </button>
                 <button
                   onClick={handleDiscard}
-                  disabled={isSaving || isDiscarding}
+                  disabled={isDiscarding}
                   className="discard-btn"
                 >
                   {isDiscarding ? 'Discarding...' : 'Discard'}

@@ -14687,43 +14687,5 @@ function registerIpcHandlers() {
       version: require$$1$4.app.getVersion()
     };
   });
-  require$$1$4.ipcMain.handle("claude-api-call", async (_event, { apiKey, messages, model = "claude-3-5-sonnet-20241022" }) => {
-    var _a;
-    try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 4096,
-          temperature: 0.7,
-          messages
-        })
-      });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Claude API error (${response.status}): ${((_a = errorData.error) == null ? void 0 : _a.message) || response.statusText}`);
-      }
-      const data = await response.json();
-      if (!data.content || !data.content[0] || !data.content[0].text) {
-        throw new Error("Invalid response format from Claude API");
-      }
-      return {
-        success: true,
-        content: data.content[0].text,
-        usage: data.usage
-      };
-    } catch (error2) {
-      console.error("Claude API call failed:", error2);
-      return {
-        success: false,
-        error: error2 instanceof Error ? error2.message : "Unknown error occurred"
-      };
-    }
-  });
   console.log("All IPC handlers registered successfully");
 }

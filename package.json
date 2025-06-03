@@ -25,6 +25,7 @@
     "convert-icon": "node scripts/convert-icon.js assets/source-icon.png"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
     "@electron/remote": "^2.1.2",
     "electron-squirrel-startup": "^1.0.0",
     "electron-updater": "^6.6.2",
