@@ -1,10 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, useRef } from "react"
+import React, { useEffect, useState, useRef, useCallback } from "react"
 import { createRoot } from "react-dom/client"
 import UpdateNotification, {
   UpdateNotificationRef,
 } from "./components/UpdateNotification"
 import BuildPrompt from "./components/BuildPrompt"
+import {
+  getAppPreference,
+  getAppPreferences,
+  updateAppPreference,
+  removeAppPreference,
+  setAppPreferences,
+} from "./preferences"
+import { getRunnersDirectory } from "./util"
 
 // Direct Node.js access with full integration
 const { ipcRenderer } = require("electron")
@@ -23,106 +31,11 @@ const api = {
   readDir: (dirPath: string) => fs.readdirSync(dirPath),
 
   // User Preferences API for runners
-  getAppPreferences: (runnerId: string) => {
-    try {
-      const RUNNERS_DIR = getRunnersDirectory()
-      const runnerPath = path.join(RUNNERS_DIR, runnerId)
-      const packageJsonPath = path.join(runnerPath, "package.json")
-
-      if (!fs.existsSync(packageJsonPath)) {
-        console.warn(`No package.json found for app ${runnerId}`)
-        return {}
-      }
-
-      const packageJsonContent = fs.readFileSync(packageJsonPath, "utf8")
-      const packageJson = JSON.parse(packageJsonContent)
-
-      return packageJson.viberunner.userPreferences || {}
-    } catch (error) {
-      console.error(`Failed to read preferences for app ${runnerId}:`, error)
-      return {}
-    }
-  },
-
-  setAppPreferences: (runnerId: string, preferences: any) => {
-    try {
-      const RUNNERS_DIR = getRunnersDirectory()
-      const runnerPath = path.join(RUNNERS_DIR, runnerId)
-      const packageJsonPath = path.join(runnerPath, "package.json")
-
-      if (!fs.existsSync(packageJsonPath)) {
-        throw new Error(`No package.json found for app ${runnerId}`)
-      }
-
-      // Read current metadata
-      const packageJsonContent = fs.readFileSync(packageJsonPath, "utf8")
-      const packageJson = JSON.parse(packageJsonContent)
-
-      // Update preferences
-      packageJson.viberunner.userPreferences = preferences
-
-      // Write back to file with pretty formatting
-      fs.writeFileSync(
-        packageJsonPath,
-        JSON.stringify(packageJson, null, 2),
-        "utf8"
-      )
-
-      console.log(`Updated preferences for app ${runnerId}`)
-      return true
-    } catch (error) {
-      console.error(`Failed to write preferences for app ${runnerId}:`, error)
-      return false
-    }
-  },
-
-  updateAppPreference: (runnerId: string, key: string, value: any) => {
-    try {
-      const currentPreferences = api.getAppPreferences(runnerId)
-      const updatedPreferences = { ...currentPreferences, [key]: value }
-      return api.setAppPreferences(runnerId, updatedPreferences)
-    } catch (error) {
-      console.error(
-        `Failed to update preference ${key} for app ${runnerId}:`,
-        error
-      )
-      return false
-    }
-  },
-
-  removeAppPreference: (runnerId: string, key: string) => {
-    try {
-      const currentPreferences = api.getAppPreferences(runnerId)
-      const updatedPreferences = { ...currentPreferences }
-      delete updatedPreferences[key]
-      return api.setAppPreferences(runnerId, updatedPreferences)
-    } catch (error) {
-      console.error(
-        `Failed to remove preference ${key} for app ${runnerId}:`,
-        error
-      )
-      return false
-    }
-  },
-
-  getAppPreference: (
-    runnerId: string,
-    key: string,
-    defaultValue: any = null
-  ) => {
-    try {
-      const preferences = api.getAppPreferences(runnerId)
-      return Object.prototype.hasOwnProperty.call(preferences, key)
-        ? preferences[key]
-        : defaultValue
-    } catch (error) {
-      console.error(
-        `Failed to get preference ${key} for app ${runnerId}:`,
-        error
-      )
-      return defaultValue
-    }
-  },
+  getAppPreferences: getAppPreferences,
+  setAppPreferences: setAppPreferences,
+  updateAppPreference: updateAppPreference,
+  removeAppPreference: removeAppPreference,
+  getAppPreference: getAppPreference,
 
   // Helper functions
   path: path,
@@ -135,60 +48,6 @@ const api = {
 
 // Make API available globally for runners
 ;(window as any).api = api
-
-// Enhanced preferences helper for easier app usage
-;(window as any).createPreferencesHelper = (runnerId: string) => {
-  return {
-    get: (key: string, defaultValue: any = null) =>
-      api.getAppPreference(runnerId, key, defaultValue),
-    set: (key: string, value: any) =>
-      api.updateAppPreference(runnerId, key, value),
-    remove: (key: string) => api.removeAppPreference(runnerId, key),
-    getAll: () => api.getAppPreferences(runnerId),
-    setAll: (preferences: Record<string, any>) =>
-      api.setAppPreferences(runnerId, preferences),
-    clear: () => api.setAppPreferences(runnerId, {}),
-
-    // Convenience methods for common data types
-    getString: (key: string, defaultValue: string = "") => {
-      const value = api.getAppPreference(runnerId, key, defaultValue)
-      return typeof value === "string" ? value : defaultValue
-    },
-    getNumber: (key: string, defaultValue: number = 0) => {
-      const value = api.getAppPreference(runnerId, key, defaultValue)
-      return typeof value === "number" ? value : defaultValue
-    },
-    getBoolean: (key: string, defaultValue: boolean = false) => {
-      const value = api.getAppPreference(runnerId, key, defaultValue)
-      return typeof value === "boolean" ? value : defaultValue
-    },
-    getObject: (key: string, defaultValue: any = {}) => {
-      const value = api.getAppPreference(runnerId, key, defaultValue)
-      return typeof value === "object" && value !== null ? value : defaultValue
-    },
-
-    // Array helpers
-    getArray: (key: string, defaultValue: any[] = []) => {
-      const value = api.getAppPreference(runnerId, key, defaultValue)
-      return Array.isArray(value) ? value : defaultValue
-    },
-    pushToArray: (key: string, item: any) => {
-      const currentArray = api.getAppPreference(runnerId, key, [])
-      const newArray = Array.isArray(currentArray)
-        ? [...currentArray, item]
-        : [item]
-      return api.updateAppPreference(runnerId, key, newArray)
-    },
-    removeFromArray: (key: string, item: any) => {
-      const currentArray = api.getAppPreference(runnerId, key, [])
-      if (Array.isArray(currentArray)) {
-        const newArray = currentArray.filter((existing) => existing !== item)
-        return api.updateAppPreference(runnerId, key, newArray)
-      }
-      return false
-    },
-  }
-}
 
 // App cleanup system
 const appCleanupCallbacks = new Map<string, (() => void)[]>()
@@ -221,26 +80,6 @@ const executeCleanup = (tabId: string) => {
 
 // Make cleanup functions available globally for runners
 ;(window as any).registerCleanup = registerCleanup
-
-// Constants
-const getRunnersDirectory = () => {
-  // Use the hardcoded Runners directory
-  try {
-    const { app } = require("@electron/remote")
-    const path = require("path")
-
-    const runnersDir = path.join(app.getPath("userData"), "Runners")
-    console.log("Using hardcoded Runners directory:", runnersDir)
-    return runnersDir
-  } catch (error) {
-    console.warn("Could not access runner.getPath:", error)
-    // Fallback for development or if remote is not available
-    const userDataPath = require("os").homedir()
-    const fallback = path.join(userDataPath, ".viberunner", "Runners")
-    console.log("Using fallback Runners directory:", fallback)
-    return fallback
-  }
-}
 
 // Helper functions for direct file operations
 async function getMimetype(filePath: string): Promise<string> {
@@ -461,45 +300,46 @@ const App: React.FC = () => {
   const [dragOverTabId, setDragOverTabId] = useState<string | null>(null)
 
   // Function to load app icon
-  const loadRunnerIcon = async (
-    runner: RunnerConfig
-  ): Promise<string | null> => {
-    if (!runner.icon) return null
+  const loadRunnerIcon = useCallback(
+    async (runner: RunnerConfig): Promise<string | null> => {
+      if (!runner.icon) return null
 
-    // Check if already cached
-    if (appIcons[runner.id]) {
-      return appIcons[runner.id]
-    }
-
-    try {
-      const RUNNERS_DIR = getRunnersDirectory()
-      const runnerDir = path.join(RUNNERS_DIR, runner.id)
-      const fullIconPath = path.join(runnerDir, runner.icon)
-
-      // Ensure the icon path is within the app directory
-      if (!fullIconPath.startsWith(runnerDir)) {
-        throw new Error("Icon path must be within app directory")
+      // Check if already cached
+      if (appIcons[runner.id]) {
+        return appIcons[runner.id]
       }
 
-      if (!fs.existsSync(fullIconPath)) {
-        throw new Error(`Icon file not found: ${runner.icon}`)
+      try {
+        const RUNNERS_DIR = getRunnersDirectory()
+        const runnerDir = path.join(RUNNERS_DIR, runner.id)
+        const fullIconPath = path.join(runnerDir, runner.icon)
+
+        // Ensure the icon path is within the app directory
+        if (!fullIconPath.startsWith(runnerDir)) {
+          throw new Error("Icon path must be within app directory")
+        }
+
+        if (!fs.existsSync(fullIconPath)) {
+          throw new Error(`Icon file not found: ${runner.icon}`)
+        }
+
+        // Read the icon file as base64
+        const iconBuffer = fs.readFileSync(fullIconPath)
+        const mimeType = mime.lookup(fullIconPath) || "application/octet-stream"
+        const iconData = `data:${mimeType};base64,${iconBuffer.toString(
+          "base64"
+        )}`
+
+        setAppIcons((prev) => ({ ...prev, [runner.id]: iconData }))
+        return iconData
+      } catch (error) {
+        console.error(`Failed to load icon for ${runner.name}:`, error)
       }
 
-      // Read the icon file as base64
-      const iconBuffer = fs.readFileSync(fullIconPath)
-      const mimeType = mime.lookup(fullIconPath) || "application/octet-stream"
-      const iconData = `data:${mimeType};base64,${iconBuffer.toString(
-        "base64"
-      )}`
-
-      setAppIcons((prev) => ({ ...prev, [runner.id]: iconData }))
-      return iconData
-    } catch (error) {
-      console.error(`Failed to load icon for ${runner.name}:`, error)
-    }
-
-    return null
-  }
+      return null
+    },
+    [appIcons]
+  )
 
   // Load startup app preferences
   const loadStartupRunners = async () => {
