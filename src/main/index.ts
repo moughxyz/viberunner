@@ -290,5 +290,49 @@ function registerIpcHandlers() {
     }
   })
 
+  // Claude API handler to bypass CORS restrictions
+  ipcMain.handle("claude-api-call", async (_event, { apiKey, messages, model = 'claude-3-5-sonnet-20241022' }) => {
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 4096,
+          temperature: 0.7,
+          messages
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(`Claude API error (${response.status}): ${errorData.error?.message || response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      if (!data.content || !data.content[0] || !data.content[0].text) {
+        throw new Error('Invalid response format from Claude API')
+      }
+
+      return {
+        success: true,
+        content: data.content[0].text,
+        usage: data.usage
+      }
+
+    } catch (error) {
+      console.error('Claude API call failed:', error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred'
+      }
+    }
+  })
+
   console.log("All IPC handlers registered successfully")
 }

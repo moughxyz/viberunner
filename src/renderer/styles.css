@@ -2002,14 +2002,14 @@ body {
 
 .prompt-input-container {
   display: flex;
-  gap: var(--space-3);
-  align-items: center;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: stretch;
   max-width: 600px;
-  margin: 0 auto;
+  margin: 0 auto var(--space-8) auto;
 }
 
 .prompt-input {
-  flex: 1;
   background: var(--background);
   border: 2px solid var(--border);
   border-radius: var(--radius-md);
@@ -2020,6 +2020,7 @@ body {
   transition: all 0.2s ease;
   outline: none;
   min-height: 56px;
+  width: 100%;
 }
 
 .prompt-input::placeholder {
@@ -2031,9 +2032,14 @@ body {
   box-shadow: 0 0 0 3px var(--accent-light);
 }
 
+.prompt-actions {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
 .prompt-submit-btn {
-  background: var(--accent);
-  color: var(--text-primary);
+  flex: 1;
   border: none;
   border-radius: var(--radius-md);
   padding: var(--space-4) var(--space-6);
@@ -2043,16 +2049,100 @@ body {
   transition: all 0.2s ease;
   white-space: nowrap;
   min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.prompt-submit-btn:hover {
+.prompt-submit-btn.primary {
+  background: var(--accent);
+  color: white;
+}
+
+.prompt-submit-btn.primary:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
   box-shadow: var(--shadow);
 }
 
+.prompt-submit-btn.secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 2px solid var(--border);
+}
+
+.prompt-submit-btn.secondary:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+
 .prompt-submit-btn:active {
   transform: translateY(0);
+}
+
+.build-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.build-option {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.build-option:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.build-option.highlighted {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.build-option.highlighted::before {
+  content: "⭐ Recommended";
+  position: absolute;
+  top: -8px;
+  right: 16px;
+  background: var(--accent);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.option-icon {
+  font-size: 32px;
+  margin-bottom: var(--space-3);
+  display: block;
+}
+
+.option-content h3 {
+  margin: 0 0 var(--space-2) 0;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.option-content p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  font-size: var(--font-size-sm);
 }
 
 @media (max-width: 768px) {
@@ -2069,16 +2159,26 @@ body {
     font-size: var(--font-size-base);
   }
 
-  .prompt-input-container {
+  .prompt-actions {
     flex-direction: column;
-    gap: var(--space-4);
-  }
-
-  .prompt-input {
-    width: 100%;
+    gap: var(--space-3);
   }
 
   .prompt-submit-btn {
     width: 100%;
+  }
+
+  .build-options {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .build-option {
+    padding: var(--space-4);
+  }
+
+  .option-icon {
+    font-size: 24px;
+    margin-bottom: var(--space-2);
   }
 }

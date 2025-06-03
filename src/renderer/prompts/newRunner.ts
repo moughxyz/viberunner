@@ -9,7 +9,7 @@ const getTemplateRunnerContent = () => {
   return templateRunnerContent
 }
 
-export const getNewRunnerPrompt = () => {
+export const getNewRunnerPrompt = (userPrompt: string) => {
   return `
   You are an intelligent assistant that creates "runners" for a cross-platform desktop app called "Viberunner".
 
@@ -91,6 +91,12 @@ export const getNewRunnerPrompt = () => {
     npm run build
    </RunnerCommand>
 
+  Whenever you make changes to dependencies, or the first time you bootstrap the project, be sure to run install BEFORE running npm run build:
+
+  <RunnerCommand>
+    npm run install
+  </RunnerCommand>
+
   Our system will read this tag and execute the commands for you.
 
   Here are the contents of the promised attachments:
@@ -100,5 +106,8 @@ export const getNewRunnerPrompt = () => {
 
   Template runner content:
   ${getTemplateRunnerContent()}
+
+  Here is the user's prompt:
+  ${userPrompt}
   `
 }

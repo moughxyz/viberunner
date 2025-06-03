@@ -50,7 +50,8 @@ export default TemplateRunner
   "viberunner": {
     "name": "Viberunner Template Runner",
     "description": "A simple viberunner template runner",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "standalone": true
   },
   "scripts": {
     "build": "vite build",
