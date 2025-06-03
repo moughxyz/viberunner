@@ -78,10 +78,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
       // Handle italic text
       .replace(/\*(.*?)\*/g, "<em>$1</em>")
-      // Handle line breaks
-      .replace(/\n/g, "<br>")
 
-    return formatted
+    // Split into paragraphs and handle line breaks properly
+    const paragraphs = formatted
+      .split(/\n\s*\n/) // Split on double newlines (paragraph breaks)
+      .map(paragraph => paragraph.trim())
+      .filter(paragraph => paragraph.length > 0)
+      .map(paragraph => paragraph.replace(/\n/g, "<br>")) // Convert single newlines to br within paragraphs
+      .map(paragraph => `<p>${paragraph}</p>`)
+
+    return paragraphs.join('')
   }
 
   const formatTimestamp = (date: Date) => {

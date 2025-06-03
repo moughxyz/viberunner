@@ -1374,7 +1374,7 @@ const App: React.FC = () => {
     const tabId = generateTabId()
     const newTab: OpenTab = {
       id: tabId,
-      title: "AI Agent Builder",
+      title: "Runner Builder",
       type: "ai-agent",
     }
 
@@ -1385,7 +1385,7 @@ const App: React.FC = () => {
       // Transform the current new tab
       const transformedTab: OpenTab = {
         ...currentTab,
-        title: "AI Agent Builder",
+        title: "Runner Builder",
         type: "ai-agent",
       }
 
@@ -1443,10 +1443,12 @@ const App: React.FC = () => {
       try {
         // Create React root and render AI Agent
         const root = createRoot(container)
-        root.render(React.createElement(AIAgentInterface, {
-          onClose: () => closeTab(tab.id),
-          inTab: true
-        }))
+        root.render(
+          React.createElement(AIAgentInterface, {
+            onClose: () => closeTab(tab.id),
+            inTab: true,
+          })
+        )
 
         // Store container reference in tabContainersRef for tab switching
         tabContainersRef.current.set(tab.id, {
@@ -1504,7 +1506,15 @@ const App: React.FC = () => {
                         }}
                       />
                     ) : tab.type === "ai-agent" ? (
-                      <span style={{ fontSize: "16px" }}>🤖</span>
+                      <img
+                        src={getViberunnerLogoPath()}
+                        alt="New Tab"
+                        style={{
+                          width: "16px",
+                          height: "16px",
+                          objectFit: "contain",
+                        }}
+                      />
                     ) : tab.runner ? (
                       <img
                         src={getAppIcon(tab.runner)}
@@ -1657,14 +1667,20 @@ const App: React.FC = () => {
               <div className="vr-new-tab-unified">
                 {/* Full-screen BuildPrompt when no runners are available */}
                 {runners.length === 0 && (
-                  <BuildPrompt onSubmit={handleBuildPromptSubmit} condensed={false} />
+                  <BuildPrompt
+                    onSubmit={handleBuildPromptSubmit}
+                    condensed={false}
+                  />
                 )}
 
                 {/* Condensed BuildPrompt and other content when runners are available */}
                 {runners.length > 0 && (
                   <div className="unified-content">
                     {/* Build Prompt Component */}
-                    <BuildPrompt onSubmit={handleBuildPromptSubmit} condensed={true} />
+                    <BuildPrompt
+                      onSubmit={handleBuildPromptSubmit}
+                      condensed={true}
+                    />
 
                     {/* Drop zone section */}
                     <div className="drop-zone-section">
@@ -1672,13 +1688,11 @@ const App: React.FC = () => {
                         <div className="drop-zone-content">
                           <div className="drop-zone-header">
                             <div className="drop-zone-icon">⬇</div>
-                            <h3 className="drop-zone-title">
-                              Drop files here
-                            </h3>
+                            <h3 className="drop-zone-title">Drop files here</h3>
                           </div>
                           <p className="drop-zone-description">
-                            Drag and drop files to automatically find
-                            compatible runners
+                            Drag and drop files to automatically find compatible
+                            runners
                           </p>
                         </div>
                       </div>
@@ -1698,8 +1712,7 @@ const App: React.FC = () => {
                             {runners
                               .filter((a) => a.standalone)
                               .map((runner) => {
-                                const startupConfig =
-                                  startupRunners[runner.id]
+                                const startupConfig = startupRunners[runner.id]
                                 const isStartupEnabled =
                                   startupConfig?.enabled || false
                                 const tabOrder = startupConfig?.tabOrder || 1
@@ -1758,9 +1771,7 @@ const App: React.FC = () => {
                                                 e.target.checked
                                               )
                                             }
-                                            onClick={(e) =>
-                                              e.stopPropagation()
-                                            }
+                                            onClick={(e) => e.stopPropagation()}
                                             className="toggle-checkbox"
                                           />
                                           <span className="toggle-slider"></span>
@@ -1782,8 +1793,7 @@ const App: React.FC = () => {
                                               onChange={(e) =>
                                                 updateStartupAppTabOrder(
                                                   runner.id,
-                                                  parseInt(e.target.value) ||
-                                                    1
+                                                  parseInt(e.target.value) || 1
                                                 )
                                               }
                                               onClick={(e) =>
