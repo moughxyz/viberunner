@@ -1959,5 +1959,126 @@ body {
 .setting-actions {
   display: flex;
   gap: var(--space-3);
-  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+/* AI Agent Prompt Styles */
+.ai-agent-prompt {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  margin-bottom: var(--space-8);
+  transition: all 0.2s ease;
+}
+
+.ai-agent-prompt:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-sm);
+}
+
+.prompt-header {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.prompt-title {
+  font-size: var(--font-size-3xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3) 0;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.prompt-subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 400;
+}
+
+.prompt-input-container {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.prompt-input {
+  flex: 1;
+  background: var(--background);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--font-size-lg);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  transition: all 0.2s ease;
+  outline: none;
+  min-height: 56px;
+}
+
+.prompt-input::placeholder {
+  color: var(--text-muted);
+}
+
+.prompt-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.prompt-submit-btn {
+  background: var(--accent);
+  color: var(--text-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  min-height: 56px;
+}
+
+.prompt-submit-btn:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.prompt-submit-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .ai-agent-prompt {
+    padding: var(--space-6);
+    margin-bottom: var(--space-6);
+  }
+
+  .prompt-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .prompt-subtitle {
+    font-size: var(--font-size-base);
+  }
+
+  .prompt-input-container {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .prompt-input {
+    width: 100%;
+  }
+
+  .prompt-submit-btn {
+    width: 100%;
+  }
 }

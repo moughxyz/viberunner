@@ -47,9 +47,6 @@ if (require('electron-squirrel-startup')) {
   app.quit();
 }
 
-// Store the selected apps directory
-let selectedAppsDir: string | null = null;
-
 // Enhanced matcher types
 interface FileMatcher {
   type: 'mimetype' | 'filename' | 'filename-contains' | 'path-pattern' | 'content-json' | 'content-regex' | 'file-size' | 'combined';
@@ -277,9 +274,22 @@ function findMatchingApps(apps: AppConfig[], fileAnalysis: FileAnalysis): Array<
   return matches.sort((a, b) => b.priority - a.priority);
 }
 
+// Function to get the hardcoded apps directory
+function getAppsDirectory(): string {
+  const appsDir = path.join(app.getPath('userData'), 'Apps');
+
+  // Ensure the directory exists
+  if (!fs.existsSync(appsDir)) {
+    fs.mkdirSync(appsDir, { recursive: true });
+    console.log('Created Apps directory:', appsDir);
+  }
+
+  return appsDir;
+}
+
 async function loadApps(): Promise<AppConfig[]> {
-  // Use the selected directory directly instead of copying
-  const APPS_DIR = selectedAppsDir || path.join(app.getPath('userData'), 'apps');
+  // Use the hardcoded Apps directory
+  const APPS_DIR = getAppsDirectory();
   console.log('loadApps: Loading from directory:', APPS_DIR);
 
   if (!fs.existsSync(APPS_DIR)) {
@@ -337,202 +347,6 @@ async function loadApps(): Promise<AppConfig[]> {
   } catch (error) {
     console.error('loadApps: Error in loadApps function:', error);
     throw error;
-  }
-}
-
-// Function to show app directory selection dialog
-async function selectAppsDirectory(): Promise<string | null> {
-  // Get the main window to use as parent for the dialog
-  const mainWindow = BrowserWindow.getFocusedWindow() || BrowserWindow.getAllWindows()[0];
-
-  const result = await dialog.showOpenDialog(mainWindow, {
-    title: 'Select Apps Directory',
-    message: 'Choose the folder containing your apps',
-    buttonLabel: 'Select Folder',
-    properties: ['openDirectory'],
-    defaultPath: path.join(require('os').homedir(), 'Desktop')
-  });
-
-  if (result.canceled || result.filePaths.length === 0) {
-    return null;
-  }
-
-  const selectedPath = result.filePaths[0];
-
-  // Validate that this directory contains apps
-  try {
-    const contents = fs.readdirSync(selectedPath);
-    const appFolders = contents.filter(item => {
-      const itemPath = path.join(selectedPath, item);
-      if (!fs.statSync(itemPath).isDirectory()) return false;
-
-      // Check if it has a viz.json file
-      const vizJsonPath = path.join(itemPath, 'viz.json');
-      return fs.existsSync(vizJsonPath);
-    });
-
-    if (appFolders.length === 0) {
-      dialog.showErrorBox('Invalid Directory', 'The selected directory does not contain any valid apps.\n\nApps should be folders containing a viz.json file.');
-      return null;
-    }
-
-    console.log(`Found ${appFolders.length} app(s):`, appFolders);
-    return selectedPath;
-  } catch (error) {
-    console.error('Error validating apps directory:', error);
-    dialog.showErrorBox('Error', 'Could not read the selected directory.');
-    return null;
-  }
-}
-
-// Load and save user preferences
-function getUserDataPath() {
-  return path.join(app.getPath('userData'), 'preferences.json');
-}
-
-interface StartupAppConfig {
-  enabled: boolean;
-  tabOrder: number;
-}
-
-interface UserPreferences {
-  appsDir?: string;
-  startupApps?: Record<string, StartupAppConfig>;
-}
-
-function savePreferences(prefs: UserPreferences) {
-  try {
-    const prefsPath = getUserDataPath();
-    fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2));
-  } catch (error) {
-    console.error('Error saving preferences:', error);
-  }
-}
-
-// Ensure apps are installed in the user data directory
-async function ensureApps(): Promise<boolean> {
-  if (!selectedAppsDir) {
-    console.error('No apps directory selected');
-    return false;
-  }
-
-  const appsDir = path.join(app.getPath('userData'), 'apps');
-
-  console.log('Source apps dir:', selectedAppsDir);
-  console.log('Target apps dir:', appsDir);
-
-  try {
-    // Create apps directory if it doesn't exist
-    if (!fs.existsSync(appsDir)) {
-      fs.mkdirSync(appsDir, { recursive: true });
-      console.log('Created apps directory:', appsDir);
-    }
-
-    // Get all app folders from the selected directory
-    const sourceContents = fs.readdirSync(selectedAppsDir);
-    const appFolders = sourceContents.filter(item => {
-      const itemPath = path.join(selectedAppsDir!, item);
-      if (!fs.statSync(itemPath).isDirectory()) return false;
-
-      // Check if it has a viz.json file
-      const vizJsonPath = path.join(itemPath, 'viz.json');
-      return fs.existsSync(vizJsonPath);
-    });
-
-    console.log(`Found ${appFolders.length} app(s) to copy:`, appFolders);
-
-    // Copy each app
-    for (const app of appFolders) {
-      const sourcePath = path.join(selectedAppsDir, app);
-      const targetPath = path.join(appsDir, app);
-
-      console.log(`Processing ${app}:`);
-      console.log('  Source:', sourcePath);
-      console.log('  Target:', targetPath);
-
-      // Check if viz.json exists in source
-      const sourceVizJson = path.join(sourcePath, 'viz.json');
-      if (!fs.existsSync(sourceVizJson)) {
-        console.warn(`viz.json does not exist in source: ${sourceVizJson}`);
-        continue;
-      }
-
-      // Remove existing app directory if it exists
-      if (fs.existsSync(targetPath)) {
-        try {
-          // First try using fs.rmSync with recursive option
-          fs.rmSync(targetPath, { recursive: true, force: true });
-          console.log(`  Removed existing ${app} directory`);
-        } catch (error) {
-          console.log(`  fs.rmSync failed for ${app}, trying manual removal:`, error);
-          // If that fails, try manual recursive removal
-          const removeDir = (dir: string) => {
-            if (fs.existsSync(dir)) {
-              const files = fs.readdirSync(dir);
-              for (const file of files) {
-                const filePath = path.join(dir, file);
-                try {
-                  if (fs.lstatSync(filePath).isDirectory()) {
-                    removeDir(filePath);
-                  } else {
-                    fs.unlinkSync(filePath);
-                  }
-                } catch (err) {
-                  console.warn(`    Failed to remove ${filePath}:`, err);
-                }
-              }
-              try {
-                fs.rmdirSync(dir);
-              } catch (err) {
-                console.warn(`    Failed to remove directory ${dir}:`, err);
-              }
-            }
-          };
-          removeDir(targetPath);
-          console.log(`  Manual removal completed for ${app}`);
-        }
-      }
-
-      // Create target directory
-      fs.mkdirSync(targetPath, { recursive: true });
-
-      // Copy only essential files
-      const essentialFiles = ['viz.json'];
-      const essentialDirs = ['dist'];
-
-      // Copy essential files
-      for (const file of essentialFiles) {
-        const sourceFile = path.join(sourcePath, file);
-        const targetFile = path.join(targetPath, file);
-        if (fs.existsSync(sourceFile)) {
-          fs.copyFileSync(sourceFile, targetFile);
-          console.log(`  Copied ${file}`);
-        }
-      }
-
-      // Copy essential directories
-      for (const dir of essentialDirs) {
-        const sourceDir = path.join(sourcePath, dir);
-        const targetDir = path.join(targetPath, dir);
-        if (fs.existsSync(sourceDir)) {
-          fs.cpSync(sourceDir, targetDir, { recursive: true });
-          console.log(`  Copied ${dir} directory`);
-        }
-      }
-
-      // Verify the copy worked
-      const targetVizJson = path.join(targetPath, 'viz.json');
-      if (fs.existsSync(targetVizJson)) {
-        console.log(`  viz.json successfully copied for ${app}`);
-      } else {
-        console.error(`  viz.json was not copied properly for ${app}`);
-      }
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Failed to ensure apps:', error);
-    return false;
   }
 }
 
@@ -715,8 +529,6 @@ function registerIpcHandlers() {
   ipcMain.removeAllListeners('get-apps');
   ipcMain.removeAllListeners('load-app');
   ipcMain.removeAllListeners('get-mimetype');
-  ipcMain.removeAllListeners('change-apps-directory');
-  ipcMain.removeAllListeners('reload-apps');
   ipcMain.removeAllListeners('find-matching-apps');
 
   console.log('Registering IPC handlers...');
@@ -740,8 +552,8 @@ function registerIpcHandlers() {
       throw new Error(`App ${id} not found`);
     }
 
-    // Use the selected directory directly
-    const APPS_DIR = selectedAppsDir || path.join(app.getPath('userData'), 'apps');
+    // Use the hardcoded Apps directory
+    const APPS_DIR = getAppsDirectory();
     const appDir = path.join(APPS_DIR, appInstance.id);
     const bundlePath = path.join(appDir, 'dist', 'bundle.iife.js');
 
@@ -783,32 +595,6 @@ function registerIpcHandlers() {
         analysis: fileAnalysis
       };
     }
-  });
-
-  ipcMain.handle('change-apps-directory', async () => {
-    try {
-      console.log('change-apps-directory handler called');
-      const newDir = await selectAppsDirectory();
-      if (newDir) {
-        selectedAppsDir = newDir;
-        savePreferences({ appsDir: newDir });
-        console.log('Changed apps directory to:', newDir);
-        return { success: true, directory: newDir };
-      }
-      return { success: false, directory: null };
-    } catch (error) {
-      console.error('Error in change-apps-directory handler:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('reload-apps', async () => {
-    if (selectedAppsDir) {
-      const success = await ensureApps();
-      const apps = await loadApps();
-      return { success, apps };
-    }
-    return { success: false, apps: [] };
   });
 
   // New enhanced app matching endpoint

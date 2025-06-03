@@ -7,7 +7,6 @@ const { ipcRenderer } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const mime = require('mime-types');
-const { app } = require('@electron/remote') || { app: require('electron').remote?.app };
 
 // Expose React and ReactDOM globally for apps
 (window as any).React = React;
@@ -196,29 +195,22 @@ const executeCleanup = (tabId: string) => {
 
 // Constants
 const getAppsDirectory = () => {
-  // Try to get the saved directory from preferences
+  // Use the hardcoded Apps directory
   try {
     const { app } = require('@electron/remote');
     const path = require('path');
-    const fs = require('fs');
 
-    const prefsPath = path.join(app.getPath('userData'), 'preferences.json');
-    if (fs.existsSync(prefsPath)) {
-      const prefs = JSON.parse(fs.readFileSync(prefsPath, 'utf8'));
-      if (prefs.appsDir && fs.existsSync(prefs.appsDir)) {
-        console.log('Using saved apps directory:', prefs.appsDir);
-        return prefs.appsDir;
-      }
-    }
+    const appsDir = path.join(app.getPath('userData'), 'Apps');
+    console.log('Using hardcoded Apps directory:', appsDir);
+    return appsDir;
   } catch (error) {
-    console.warn('Could not load preferences:', error);
+    console.warn('Could not access app.getPath:', error);
+    // Fallback for development or if remote is not available
+    const userDataPath = require('os').homedir();
+    const fallback = path.join(userDataPath, '.viberunner', 'Apps');
+    console.log('Using fallback Apps directory:', fallback);
+    return fallback;
   }
-
-  // Fallback to default location
-  const userDataPath = app?.getPath('userData') || path.join(require('os').homedir(), '.viberunner');
-  const fallback = path.join(userDataPath, 'apps');
-  console.log('Using fallback apps directory:', fallback);
-  return fallback;
 };
 
 // Helper functions for direct file operations
@@ -407,7 +399,6 @@ const getSupportedFormats = (app: any): string => {
 
 const App: React.FC = () => {
   const [apps, setApps] = useState<AppConfig[]>([]);
-  const [appsDirectory, setAppsDirectory] = useState<string>('');
   const [isLoadingApps, setIsLoadingApps] = useState(false);
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
     { id: 'default-tab', title: 'New Tab', type: 'newtab' }
@@ -419,6 +410,7 @@ const App: React.FC = () => {
   const [appIcons, setAppIcons] = useState<Record<string, string>>({});
   const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
   const [showSettings, setShowSettings] = useState(false);
+  const [buildPrompt, setBuildPrompt] = useState<string>('');
 
   const appRootRef = useRef<HTMLDivElement>(null);
   const hasLaunchedStartupApps = useRef<boolean>(false);
@@ -707,55 +699,24 @@ const App: React.FC = () => {
     styleElement?: HTMLStyleElement;
   }>>(new Map());
 
-  // Load apps directory info
+  // Load and initialize apps on component mount
   useEffect(() => {
     const loadDirectoryInfo = async () => {
       try {
-        const dir = getAppsDirectory();
-        setAppsDirectory(dir || 'Not set');
+        setIsLoadingApps(true);
+        const loadedApps = await loadApps();
+        setApps(loadedApps);
+        console.log('Successfully loaded apps:', loadedApps.length);
       } catch (error) {
-        console.error('Error loading apps directory:', error);
+        console.error('Failed to load apps:', error);
+        setApps([]);
+      } finally {
+        setIsLoadingApps(false);
       }
     };
+
     loadDirectoryInfo();
   }, []);
-
-  const reloadApps = async () => {
-    try {
-      setIsLoadingApps(true);
-      // Reset startup apps launch flag so they can launch again after reload
-      hasLaunchedStartupApps.current = false;
-      const apps = await loadApps();
-      setApps(apps);
-    } catch (error) {
-      console.error('Error loading apps:', error);
-      alert('Failed to load apps. Please check your apps directory.');
-    } finally {
-      setIsLoadingApps(false);
-    }
-  };
-
-  useEffect(() => {
-    reloadApps();
-  }, []);
-
-  const handleChangeAppsDirectory = async () => {
-    try {
-      const result = await ipcRenderer.invoke('change-apps-directory');
-      if (result.success && result.directory) {
-        setAppsDirectory(result.directory);
-        await reloadApps();
-      }
-    } catch (error) {
-      console.error('Error changing apps directory:', error);
-      alert('Failed to change apps directory.');
-    }
-  };
-
-  const handleReloadApps = async () => {
-    await reloadApps();
-    alert('Apps reloaded successfully!');
-  };
 
   const generateTabId = () => `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -1589,89 +1550,68 @@ const App: React.FC = () => {
             {activeTab?.type === 'newtab' && !showAppSelection && (
               <div className="vf-new-tab-unified">
                 <div className="unified-content">
-                  {/* Show only directory setup if no apps directory is properly configured */}
-                  {!appsDirectory || appsDirectory === 'Not set' || apps.length === 0 ? (
-                    <div className="directory-setup-only">
-                      <div className="setup-header">
-                        <div className="setup-icon">📁</div>
-                        <h2 className="setup-title">Choose your apps directory</h2>
-                        <p className="setup-description">
-                          Select the directory where your apps are located to get started.
-                        </p>
-                      </div>
-
-                      <div className="directory-card">
-                        <div className="directory-info">
-                          <h4 className="directory-label">Current Directory</h4>
-                          <div className="directory-path">
-                            {appsDirectory || 'No directory selected'}
-                          </div>
-                        </div>
-                        <div className="directory-actions">
-                          <button
-                            className="btn btn-primary"
-                            onClick={handleChangeAppsDirectory}
-                          >
-                            <span className="btn-icon">📁</span>
-                            Choose Directory
-                          </button>
-                          {appsDirectory && appsDirectory !== 'Not set' && (
-                            <button
-                              className="btn btn-outline"
-                              onClick={handleReloadApps}
-                              disabled={isLoadingApps}
-                            >
-                              <span className="btn-icon">{isLoadingApps ? '⟳' : '🔄'}</span>
-                              Reload
-                            </button>
-                          )}
-                        </div>
-                      </div>
-
-                      {appsDirectory && appsDirectory !== 'Not set' && apps.length === 0 && (
-                        <div className="setup-hint">
-                          <p>No visualization apps found in this directory.</p>
-                          <p>Make sure your directory contains properly configured apps with viz.json files.</p>
-                        </div>
-                      )}
+                  {/* New AI Agent Prompt */}
+                  <div className="ai-agent-prompt">
+                    <div className="prompt-header">
+                      <h2 className="prompt-title">What do you want to build today?</h2>
+                      <p className="prompt-subtitle">Describe your idea and I'll help you create it</p>
                     </div>
-                  ) : (
+                    <div className="prompt-input-container">
+                      <input
+                        type="text"
+                        className="prompt-input"
+                        placeholder="I want to build..."
+                        value={buildPrompt}
+                        onChange={(e) => setBuildPrompt(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            // TODO: Handle build prompt submission
+                            console.log('Build prompt submitted:', buildPrompt);
+                          }
+                        }}
+                      />
+                      <button
+                        className="prompt-submit-btn"
+                        onClick={() => {
+                          // TODO: Handle build prompt submission
+                          console.log('Build prompt submitted:', buildPrompt);
+                        }}
+                      >
+                        Start Building
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Existing apps section - show only if apps are available */}
+                  {apps.length > 0 && (
                     <>
-                      {/* Single column layout */}
-                      {/* Main drop zone section */}
+                      {/* Drop zone section */}
                       <div className="drop-zone-section">
-                        <div className="drop-zone">
+                        <div className="section-card">
                           <div className="drop-zone-content">
-                            <div className="drop-zone-icon">📂</div>
-                            <h3 className="drop-zone-title">Drop files to visualize</h3>
-                            <p className="drop-zone-description">
-                              Supports documents, images, data files, and more
-                            </p>
-                            <div className="drop-zone-formats">
-                              <span className="format-tag">JSON</span>
-                              <span className="format-tag">Images</span>
-                              <span className="format-tag">CSV</span>
-                              <span className="format-tag">Text</span>
+                            <div className="drop-zone-header">
+                              <div className="drop-zone-icon">⬇</div>
+                              <h3 className="drop-zone-title">Drop files here</h3>
                             </div>
+                            <p className="drop-zone-description">
+                              Drag and drop files to automatically find compatible apps
+                            </p>
                           </div>
                         </div>
                       </div>
 
-                      {/* Divider */}
-                      <div className="section-divider"></div>
-
-                      {/* Standalone apps section */}
-                      {apps.filter(f => f.standalone).length > 0 && (
-                        <div className="utilities-section">
+                      {/* Utility apps section */}
+                      {apps.filter(a => a.standalone).length > 0 && (
+                        <div className="utility-section">
                           <div className="section-card">
                             <div className="section-header">
                               <h4 className="section-title">
-                                Standalone Apps
+                                Utility Apps
                               </h4>
-                              <span className="section-count">{apps.filter(f => f.standalone).length}</span>
+                              <span className="section-count">{apps.filter(a => a.standalone).length}</span>
                             </div>
-                            <div className="utilities-grid">
-                              {apps.filter(f => f.standalone).map(app => {
+                            <div className="utility-cards">
+                              {apps.filter(a => a.standalone).map(app => {
                                 const startupConfig = startupApps[app.id];
                                 const isStartupEnabled = startupConfig?.enabled || false;
                                 const tabOrder = startupConfig?.tabOrder || 1;
@@ -1776,33 +1716,7 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Directory Controls - Fixed outside scrollable content */}
-            {activeTab?.type === 'newtab' && !showAppSelection && appsDirectory && appsDirectory !== 'Not set' && apps.length > 0 && (
-              <div className="directory-controls-persistent">
-                <button
-                  className="directory-btn directory-change-btn"
-                  onClick={handleChangeAppsDirectory}
-                  title="Change apps directory"
-                >
-                  <span className="btn-icon">📁</span>
-                  <span className="btn-text">Change Directory</span>
-                </button>
-                <button
-                  className="directory-btn directory-reload-btn"
-                  onClick={handleReloadApps}
-                  disabled={isLoadingApps}
-                  title="Reload apps"
-                >
-                  <span className="btn-icon">{isLoadingApps ? '⟳' : '🔄'}</span>
-                  <span className="btn-text">Reload</span>
-                </button>
-                <div className="directory-path-mini">
-                  {appsDirectory}
-                </div>
-              </div>
-            )}
-
-            {/* Settings Modal */}
+            {/* Settings Modal - Remove directory controls */}
             {showSettings && (
               <div className="settings-modal-overlay" onClick={() => setShowSettings(false)}>
                 <div className="settings-modal" onClick={(e) => e.stopPropagation()}>
@@ -1811,28 +1725,6 @@ const App: React.FC = () => {
                     <button onClick={() => setShowSettings(false)} className="close-btn">✕</button>
                   </div>
                   <div className="settings-content">
-                    <div className="setting-group">
-                      <label>Apps Directory</label>
-                      <div className="directory-path-display">
-                        {appsDirectory}
-                      </div>
-                      <div className="setting-actions">
-                        <button
-                          className="btn btn-primary"
-                          onClick={handleChangeAppsDirectory}
-                        >
-                          Choose Directory
-                        </button>
-                        <button
-                          className="btn btn-outline"
-                          onClick={handleReloadApps}
-                          disabled={isLoadingApps}
-                        >
-                          {isLoadingApps ? 'Reloading...' : 'Reload Apps'}
-                        </button>
-                      </div>
-                    </div>
-
                     <div className="setting-group">
                       <label>Updates</label>
                       <p className="setting-description">Check for the latest version of Viberunner</p>

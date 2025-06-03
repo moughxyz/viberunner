@@ -1,1 +1,30 @@
-"use strict";const e=require("electron");e.contextBridge.exposeInMainWorld("api",{getApps:()=>e.ipcRenderer.invoke("get-apps"),loadApp:p=>e.ipcRenderer.invoke("load-app",p),getMimetype:p=>e.ipcRenderer.invoke("get-mimetype",p),handleFileDrop:p=>e.ipcRenderer.invoke("handle-file-drop",p),changeAppsDirectory:()=>e.ipcRenderer.invoke("change-apps-directory"),reloadApps:()=>e.ipcRenderer.invoke("reload-apps"),findMatchingApps:p=>e.ipcRenderer.invoke("find-matching-apps",p),launchStandaloneApp:p=>e.ipcRenderer.invoke("launch-standalone-app",p),getStartupApps:()=>e.ipcRenderer.invoke("get-startup-apps"),setStartupApp:(p,r)=>e.ipcRenderer.invoke("set-startup-app",p,r),removeStartupApp:p=>e.ipcRenderer.invoke("remove-startup-app",p),onLaunchStartupApp:p=>e.ipcRenderer.on("launch-startup-app",p),removeStartupAppListeners:()=>e.ipcRenderer.removeAllListeners("launch-startup-app"),checkForUpdates:()=>e.ipcRenderer.invoke("check-for-updates"),downloadUpdate:()=>e.ipcRenderer.invoke("download-update"),quitAndInstall:()=>e.ipcRenderer.invoke("quit-and-install"),getAppVersion:()=>e.ipcRenderer.invoke("get-app-version"),invoke:(p,...r)=>e.ipcRenderer.invoke(p,...r)});
+"use strict";
+const electron = require("electron");
+electron.contextBridge.exposeInMainWorld(
+  "api",
+  {
+    getApps: () => electron.ipcRenderer.invoke("get-apps"),
+    loadApp: (id) => electron.ipcRenderer.invoke("load-app", id),
+    getMimetype: (filePath) => electron.ipcRenderer.invoke("get-mimetype", filePath),
+    handleFileDrop: (filePath) => electron.ipcRenderer.invoke("handle-file-drop", filePath),
+    changeAppsDirectory: () => electron.ipcRenderer.invoke("change-apps-directory"),
+    reloadApps: () => electron.ipcRenderer.invoke("reload-apps"),
+    findMatchingApps: (filePath) => electron.ipcRenderer.invoke("find-matching-apps", filePath),
+    // Launch standalone apps
+    launchStandaloneApp: (id) => electron.ipcRenderer.invoke("launch-standalone-app", id),
+    // Startup app management
+    getStartupApps: () => electron.ipcRenderer.invoke("get-startup-apps"),
+    setStartupApp: (appId, config) => electron.ipcRenderer.invoke("set-startup-app", appId, config),
+    removeStartupApp: (appId) => electron.ipcRenderer.invoke("remove-startup-app", appId),
+    // Listen for startup app launch events from main process
+    onLaunchStartupApp: (callback) => electron.ipcRenderer.on("launch-startup-app", callback),
+    removeStartupAppListeners: () => electron.ipcRenderer.removeAllListeners("launch-startup-app"),
+    // Autoupdate methods
+    checkForUpdates: () => electron.ipcRenderer.invoke("check-for-updates"),
+    downloadUpdate: () => electron.ipcRenderer.invoke("download-update"),
+    quitAndInstall: () => electron.ipcRenderer.invoke("quit-and-install"),
+    getAppVersion: () => electron.ipcRenderer.invoke("get-app-version"),
+    // Generic invoke method for future extensions
+    invoke: (channel, ...args) => electron.ipcRenderer.invoke(channel, ...args)
+  }
+);
