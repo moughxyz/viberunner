@@ -4,6 +4,7 @@ import CodeEditor from './CodeEditor'
 import { ClaudeAPIService } from '../services/ClaudeAPIService'
 import { FileManagerService } from '../services/FileManagerService'
 import { CommandExecutorService } from '../services/CommandExecutorService'
+import { getRunnersDirectory } from '../util'
 import '../styles/AIAgentInterface.css'
 
 export interface FileChange {
@@ -26,6 +27,271 @@ interface AIAgentInterfaceProps {
   inTab?: boolean
 }
 
+interface PreviewPanelProps {
+  runnerName: string
+  files: Record<string, FileChange>
+  onRefresh: () => void
+}
+
+const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefresh }) => {
+  const previewContainerRef = useRef<HTMLDivElement>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [hasRunner, setHasRunner] = useState(false)
+  const reactRootRef = useRef<any>(null)
+
+  const loadRunner = async () => {
+    if (!runnerName || Object.keys(files).length === 0) {
+      setHasRunner(false)
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const fs = require('fs')
+      const path = require('path')
+
+      const RUNNERS_DIR = getRunnersDirectory()
+      const runnerPath = path.join(RUNNERS_DIR, runnerName)
+      const bundlePath = path.join(runnerPath, 'dist', 'bundle.iife.js')
+
+      if (!fs.existsSync(bundlePath)) {
+        setError('Runner not built yet. Build the runner to see preview.')
+        setHasRunner(false)
+        setIsLoading(false)
+        return
+      }
+
+      const bundleContent = fs.readFileSync(bundlePath, 'utf-8')
+
+      // Clear the container
+      if (previewContainerRef.current) {
+        previewContainerRef.current.innerHTML = ''
+      }
+
+      // Clean up previous root if it exists
+      if (reactRootRef.current) {
+        try {
+          reactRootRef.current.unmount()
+        } catch (e) {
+          console.warn('Error unmounting previous preview:', e)
+        }
+        reactRootRef.current = null
+      }
+
+      // Load and render the runner similar to how App.tsx does it
+      const script = document.createElement('script')
+      script.type = 'text/javascript'
+
+      const previewId = `preview-${Date.now()}`
+
+      // Add style isolation
+      const runnerStyleInterceptor = `
+        (function() {
+          const originalCreateElement = document.createElement;
+          const runnerId = "${previewId}";
+
+          document.createElement = function(tagName) {
+            const element = originalCreateElement.call(this, tagName);
+
+            if (tagName.toLowerCase() === 'style') {
+              element.setAttribute('data-app-style', runnerId);
+            }
+
+            return element;
+          };
+        })();
+      `
+
+      script.textContent = runnerStyleInterceptor + "\n" + bundleContent
+
+      const runnerLoader = (RunnerComponent: any) => {
+        try {
+          if (!previewContainerRef.current) {
+            throw new Error('Preview container not available')
+          }
+
+          // Create isolation wrapper
+          const isolationWrapper = document.createElement('div')
+          isolationWrapper.style.cssText = `
+            width: 100% !important;
+            height: 100% !important;
+            position: relative !important;
+            overflow: auto !important;
+            display: block !important;
+            contain: layout style !important;
+            isolation: isolate !important;
+          `
+          isolationWrapper.setAttribute('data-app-id', previewId)
+
+          previewContainerRef.current.appendChild(isolationWrapper)
+
+          // Use the global ReactDOM.createRoot that's already exposed for runners
+          const { createRoot } = (window as any).ReactDOM
+          if (!createRoot) {
+            throw new Error('ReactDOM.createRoot not available globally')
+          }
+
+          const root = createRoot(isolationWrapper)
+          reactRootRef.current = root
+
+          const props = {
+            tabId: previewId,
+            runnerId: runnerName,
+          }
+
+          // Use global React instance for component creation
+          const globalReact = (window as any).React
+          if (!globalReact) {
+            throw new Error('Global React not available')
+          }
+
+          root.render(globalReact.createElement(RunnerComponent, props))
+
+          // Set success states only after successful rendering
+          setHasRunner(true)
+          setError(null)
+          setIsLoading(false)
+        } catch (error) {
+          console.error('Error rendering preview:', error)
+          setError(`Preview error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          setHasRunner(false)
+          setIsLoading(false)
+        }
+      }
+
+      // Make the app loader available globally
+      ;(window as any).__RENDER_RUNNER__ = runnerLoader
+
+      script.onload = () => {
+        setTimeout(() => {
+          if (script.parentNode) {
+            script.parentNode.removeChild(script)
+          }
+          delete (window as any).__RENDER_RUNNER__
+        }, 1000)
+      }
+
+      script.onerror = (error) => {
+        console.error('Script loading error:', error)
+        setError('Failed to load runner script')
+        setHasRunner(false)
+        setIsLoading(false)
+      }
+
+      document.head.appendChild(script)
+
+    } catch (error) {
+      console.error('Error loading runner preview:', error)
+      setError(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setHasRunner(false)
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadRunner()
+
+    // Cleanup on unmount
+    return () => {
+      if (reactRootRef.current) {
+        try {
+          reactRootRef.current.unmount()
+        } catch (e) {
+          console.warn('Error unmounting preview on cleanup:', e)
+        }
+      }
+    }
+  }, [runnerName, files])
+
+  // External refresh handler
+  useEffect(() => {
+    // This effect will be triggered when onRefresh prop changes
+    // But we don't want to add onRefresh to dependencies to avoid infinite loops
+  }, [])
+
+  const handleRefresh = () => {
+    loadRunner()
+    onRefresh()
+  }
+
+  if (!runnerName || Object.keys(files).length === 0) {
+    return (
+      <div className="preview-panel">
+        <div className="preview-empty">
+          <div className="empty-state">
+            <div className="empty-icon">👁️</div>
+            <h3>No Runner to Preview</h3>
+            <p>Start building a runner in the chat to see a live preview here.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="preview-panel">
+      <div className="preview-header">
+        <div className="preview-title">
+          <span className="preview-icon">👁️</span>
+          Preview: {runnerName}
+        </div>
+        <button
+          onClick={handleRefresh}
+          className="refresh-btn"
+          disabled={isLoading}
+        >
+          ↻ Refresh
+        </button>
+      </div>
+
+      <div className="preview-content">
+        {isLoading && (
+          <div className="preview-loading">
+            <div className="loading-spinner">⟳</div>
+            <p>Loading preview...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="preview-error">
+            <div className="error-icon">⚠️</div>
+            <p>{error}</p>
+            <button onClick={handleRefresh} className="retry-btn">
+              Try Again
+            </button>
+          </div>
+        )}
+
+        {!isLoading && !error && !hasRunner && (
+          <div className="preview-empty">
+            <div className="empty-state">
+              <div className="empty-icon">🔧</div>
+              <h3>Runner Not Built</h3>
+              <p>Build the runner to see a preview here.</p>
+              <button onClick={handleRefresh} className="refresh-btn">
+                Check Again
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div
+          ref={previewContainerRef}
+          className="preview-runner-container"
+          style={{
+            width: '100%',
+            height: '100%',
+            display: hasRunner ? 'block' : 'none'
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
 const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = false }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -35,6 +301,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
   const [activeFile, setActiveFile] = useState<string | null>(null)
   const [runnerName, setRunnerName] = useState<string>('')
   const [isSaving, setIsSaving] = useState(false)
+  const [rightPanelMode, setRightPanelMode] = useState<'preview' | 'files'>('preview')
+  const [previewRefreshKey, setPreviewRefreshKey] = useState(0)
 
   const claudeService = useRef<ClaudeAPIService | null>(null)
   const fileManager = useRef<FileManagerService | null>(null)
@@ -59,6 +327,10 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
     localStorage.setItem('claude-api-key', key)
     claudeService.current = new ClaudeAPIService(key)
     setShowApiKeyPrompt(false)
+  }
+
+  const refreshPreview = () => {
+    setPreviewRefreshKey(prev => prev + 1)
   }
 
   const handleSendMessage = async (content: string) => {
@@ -157,6 +429,13 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
                   }
 
                   setMessages(prev => [...prev, resultMessage])
+
+                  // If build command was successful, refresh the preview
+                  if (result?.success && command.includes('build')) {
+                    setTimeout(() => {
+                      refreshPreview()
+                    }, 1000) // Small delay to ensure build is complete
+                  }
 
                 } catch (error) {
                   console.error('Error executing command:', error)
@@ -288,6 +567,13 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
           }
 
           setMessages(prev => [...prev, buildMessage])
+
+          // If build was successful, refresh the preview
+          if (buildResult.success) {
+            setTimeout(() => {
+              refreshPreview()
+            }, 1000)
+          }
         } catch (buildError) {
           console.error('Auto-build failed:', buildError)
         }
@@ -413,13 +699,39 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
           />
         </div>
 
-        <div className="editor-column">
-          <CodeEditor
-            files={currentFiles}
-            activeFile={activeFile}
-            onFileSelect={setActiveFile}
-            onFileChange={handleFileChange}
-          />
+        <div className="right-panel">
+          <div className="right-panel-tabs">
+            <button
+              className={`tab-btn ${rightPanelMode === 'preview' ? 'active' : ''}`}
+              onClick={() => setRightPanelMode('preview')}
+            >
+              👁️ Preview
+            </button>
+            <button
+              className={`tab-btn ${rightPanelMode === 'files' ? 'active' : ''}`}
+              onClick={() => setRightPanelMode('files')}
+            >
+              📁 Files
+            </button>
+          </div>
+
+          <div className="right-panel-content">
+            {rightPanelMode === 'preview' ? (
+              <PreviewPanel
+                runnerName={runnerName}
+                files={currentFiles}
+                onRefresh={refreshPreview}
+                key={previewRefreshKey}
+              />
+            ) : (
+              <CodeEditor
+                files={currentFiles}
+                activeFile={activeFile}
+                onFileSelect={setActiveFile}
+                onFileChange={handleFileChange}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

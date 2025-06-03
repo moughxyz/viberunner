@@ -19,6 +19,7 @@ export interface ClaudeResponse {
 export class ClaudeAPIService {
   private apiKey: string
   private model = 'claude-3-5-sonnet-20241022'
+  private originalSystemPrompt: string | null = null
 
   constructor(apiKey: string) {
     this.apiKey = apiKey
@@ -29,15 +30,23 @@ export class ClaudeAPIService {
       // Build conversation messages
       const messages: ClaudeMessage[] = []
 
-      // If this is the first message, include the system prompt
       if (conversationHistory.length === 0) {
-        const systemPrompt = getNewRunnerPrompt(userPrompt)
+        // First message - create and store the system prompt
+        this.originalSystemPrompt = getNewRunnerPrompt(userPrompt)
         messages.push({
           role: 'user',
-          content: systemPrompt
+          content: this.originalSystemPrompt
         })
       } else {
-        // Add conversation history
+        // Follow-up message - include the original system prompt first
+        if (this.originalSystemPrompt) {
+          messages.push({
+            role: 'user',
+            content: this.originalSystemPrompt
+          })
+        }
+
+        // Add ALL conversation history
         conversationHistory.forEach(msg => {
           if (msg.role !== 'assistant' || msg.content) {
             messages.push({
@@ -57,6 +66,7 @@ export class ClaudeAPIService {
       console.log('Sending request to Claude API via IPC:', {
         model: this.model,
         messageCount: messages.length,
+        hasSystemPrompt: !!this.originalSystemPrompt,
         userPrompt: userPrompt.substring(0, 100) + '...'
       })
 

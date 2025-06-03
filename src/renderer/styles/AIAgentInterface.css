@@ -556,73 +556,215 @@
 }
 
 /* Editor Column */
-.editor-column {
-  width: 50%;
+.right-panel {
+  flex: 1;
   display: flex;
   flex-direction: column;
   background: #1a1a1a;
+  border-left: 1px solid #333;
+  min-height: 0;
 }
 
-/* Code Editor */
-.code-editor {
+.right-panel-tabs {
   display: flex;
-  flex-direction: column;
-  height: 100%;
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+  padding: 0;
 }
 
-.editor-header {
+.tab-btn {
+  padding: 12px 20px;
+  background: transparent;
+  color: #cccccc;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #333;
-  background: #1e1e1e;
+  gap: 8px;
 }
 
-.editor-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+.tab-btn:hover {
+  background: #2a2a2a;
   color: #ffffff;
 }
 
-.file-count {
-  font-size: 12px;
-  color: #666;
-  background: #333;
-  padding: 4px 8px;
-  border-radius: 4px;
+.tab-btn.active {
+  color: #ffffff;
+  background: #2a2a2a;
+  border-bottom-color: #007acc;
 }
 
-/* Empty State */
-.editor-empty {
+.right-panel-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Preview Panel */
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1a1a1a;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #1e1e1e;
+  border-bottom: 1px solid #333;
+  min-height: 48px;
+}
+
+.preview-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.preview-icon {
+  font-size: 16px;
+}
+
+.refresh-btn {
+  padding: 6px 12px;
+  background: #007acc;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #0066aa;
+}
+
+.refresh-btn:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.preview-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #0a0a0a;
+}
+
+.preview-runner-container {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+}
+
+.preview-loading,
+.preview-error,
+.preview-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  height: 100%;
   padding: 40px 20px;
-  color: #666;
   text-align: center;
 }
 
-.empty-icon {
+.preview-loading .loading-spinner {
+  font-size: 24px;
+  margin-bottom: 16px;
+  animation: spin 1s linear infinite;
+}
+
+.preview-loading p {
+  color: #cccccc;
+  margin: 0;
+}
+
+.preview-error {
+  color: #ff6b6b;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.preview-error p {
+  margin: 0 0 20px 0;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+.retry-btn {
+  padding: 8px 16px;
+  background: #ff6b6b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.retry-btn:hover {
+  background: #ff5252;
+}
+
+.preview-empty .empty-state {
+  max-width: 300px;
+}
+
+.preview-empty .empty-icon {
   font-size: 48px;
   margin-bottom: 16px;
   opacity: 0.5;
 }
 
-.editor-empty h4 {
-  margin: 0 0 8px 0;
+.preview-empty h3 {
+  margin: 0 0 12px 0;
   font-size: 18px;
-  font-weight: 600;
-  color: #999;
+  color: #ffffff;
 }
 
-.editor-empty p {
-  margin: 0;
-  color: #666;
+.preview-empty p {
+  margin: 0 0 20px 0;
+  color: #cccccc;
   line-height: 1.5;
+}
+
+.preview-empty .refresh-btn {
+  background: #007acc;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+/* Ensure Files mode still works */
+.right-panel-content .code-editor {
+  border: none;
+  background: #1a1a1a;
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* File Tabs */
@@ -839,7 +981,7 @@
   }
 
   .chat-column,
-  .editor-column {
+  .right-panel {
     width: 100%;
     height: 50%;
   }
@@ -880,12 +1022,12 @@
 
 /* Update colors for tab version to match app theme */
 .ai-agent-interface.ai-agent-in-tab .chat-column,
-.ai-agent-interface.ai-agent-in-tab .editor-column {
+.ai-agent-interface.ai-agent-in-tab .right-panel {
   background: var(--background);
 }
 
 .ai-agent-interface.ai-agent-in-tab .chat-header,
-.ai-agent-interface.ai-agent-in-tab .editor-header {
+.ai-agent-interface.ai-agent-in-tab .preview-header {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
