@@ -6,11 +6,11 @@ import UpdateNotification, {
 } from "./components/UpdateNotification"
 import BuildPrompt from "./components/BuildPrompt"
 import {
-  getAppPreference,
-  getAppPreferences,
-  updateAppPreference,
-  removeAppPreference,
-  setAppPreferences,
+  getRunnerPreference,
+  getRunnerPreferences,
+  updateRunnerPreference,
+  removeRunnerPreference,
+  setRunnerPreferences,
 } from "./preferences"
 import { getRunnersDirectory } from "./util"
 
@@ -31,11 +31,11 @@ const api = {
   readDir: (dirPath: string) => fs.readdirSync(dirPath),
 
   // User Preferences API for runners
-  getAppPreferences: getAppPreferences,
-  setAppPreferences: setAppPreferences,
-  updateAppPreference: updateAppPreference,
-  removeAppPreference: removeAppPreference,
-  getAppPreference: getAppPreference,
+  getRunnerPreferences: getRunnerPreferences,
+  setRunnerPreferences: setRunnerPreferences,
+  updateRunnerPreference: updateRunnerPreference,
+  removeRunnerPreference: removeRunnerPreference,
+  getRunnerPreference: getRunnerPreference,
 
   // Helper functions
   path: path,
@@ -50,19 +50,19 @@ const api = {
 ;(window as any).api = api
 
 // App cleanup system
-const appCleanupCallbacks = new Map<string, (() => void)[]>()
+const runnerCleanupCallbacks = new Map<string, (() => void)[]>()
 
 // Global cleanup registration function for runners
 const registerCleanup = (tabId: string, cleanupFn: () => void) => {
-  if (!appCleanupCallbacks.has(tabId)) {
-    appCleanupCallbacks.set(tabId, [])
+  if (!runnerCleanupCallbacks.has(tabId)) {
+    runnerCleanupCallbacks.set(tabId, [])
   }
-  appCleanupCallbacks.get(tabId)!.push(cleanupFn)
+  runnerCleanupCallbacks.get(tabId)!.push(cleanupFn)
 }
 
 // Global cleanup execution function
 const executeCleanup = (tabId: string) => {
-  const callbacks = appCleanupCallbacks.get(tabId)
+  const callbacks = runnerCleanupCallbacks.get(tabId)
   if (callbacks) {
     console.log(
       `Executing ${callbacks.length} cleanup callbacks for tab ${tabId}`
@@ -71,10 +71,10 @@ const executeCleanup = (tabId: string) => {
       try {
         callback()
       } catch (error) {
-        console.error("Error in app cleanup callback:", error)
+        console.error("Error in runner cleanup callback:", error)
       }
     })
-    appCleanupCallbacks.delete(tabId)
+    runnerCleanupCallbacks.delete(tabId)
   }
 }
 
@@ -223,16 +223,16 @@ interface RunnerConfig {
 
 interface OpenTab {
   id: string
-  runner?: RunnerConfig // Optional for new tab - represents the app/visualization
+  runner?: RunnerConfig // Optional for new tab - represents the runner
   fileInput?: FileInput // undefined for standalone runners and new tab
   title: string
   type: "file" | "standalone" | "newtab"
-  runnerData?: any // Store the loaded app data for reloading
+  runnerData?: any // Store the loaded runner data for reloading
   reactRoot?: any // Store the React root for each tab
   domContainer?: HTMLDivElement // Store the DOM container for each tab
 }
 
-// Helper function to get supported formats for a app
+// Helper function to get supported formats for a runner
 const getSupportedFormats = (runner: any): string => {
   if (runner.standalone) {
     return "Standalone utility"
@@ -280,7 +280,7 @@ const App: React.FC = () => {
   const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(
     null
   )
-  const [appIcons, setAppIcons] = useState<Record<string, string>>({})
+  const [runnerIcons, setRunnerIcons] = useState<Record<string, string>>({})
   const [startupRunners, setStartupRunners] = useState<
     Record<string, { enabled: boolean; tabOrder: number }>
   >({})
@@ -299,14 +299,14 @@ const App: React.FC = () => {
   const [draggedTabId, setDraggedTabId] = useState<string | null>(null)
   const [dragOverTabId, setDragOverTabId] = useState<string | null>(null)
 
-  // Function to load app icon
+  // Function to load runner icon
   const loadRunnerIcon = useCallback(
     async (runner: RunnerConfig): Promise<string | null> => {
       if (!runner.icon) return null
 
       // Check if already cached
-      if (appIcons[runner.id]) {
-        return appIcons[runner.id]
+      if (runnerIcons[runner.id]) {
+        return runnerIcons[runner.id]
       }
 
       try {
@@ -314,9 +314,9 @@ const App: React.FC = () => {
         const runnerDir = path.join(RUNNERS_DIR, runner.id)
         const fullIconPath = path.join(runnerDir, runner.icon)
 
-        // Ensure the icon path is within the app directory
+        // Ensure the icon path is within the runner directory
         if (!fullIconPath.startsWith(runnerDir)) {
-          throw new Error("Icon path must be within app directory")
+          throw new Error("Icon path must be within runner directory")
         }
 
         if (!fs.existsSync(fullIconPath)) {
@@ -330,7 +330,7 @@ const App: React.FC = () => {
           "base64"
         )}`
 
-        setAppIcons((prev) => ({ ...prev, [runner.id]: iconData }))
+        setRunnerIcons((prev) => ({ ...prev, [runner.id]: iconData }))
         return iconData
       } catch (error) {
         console.error(`Failed to load icon for ${runner.name}:`, error)
@@ -338,10 +338,10 @@ const App: React.FC = () => {
 
       return null
     },
-    [appIcons]
+    [runnerIcons]
   )
 
-  // Load startup app preferences
+  // Load startup runner preferences
   const loadStartupRunners = async () => {
     try {
       const { app } = require("@electron/remote")
@@ -357,7 +357,7 @@ const App: React.FC = () => {
     }
   }
 
-  // Save startup app preferences
+  // Save startup runner preferences
   const saveStartupRunners = (
     newStartupRunners: Record<string, { enabled: boolean; tabOrder: number }>
   ) => {
@@ -385,7 +385,7 @@ const App: React.FC = () => {
     }
   }
 
-  // Toggle startup app enabled state
+  // Toggle startup runner enabled state
   const toggleStartupApp = async (runnerId: string, enabled: boolean) => {
     try {
       const newStartupRunners = { ...startupRunners }
@@ -410,11 +410,11 @@ const App: React.FC = () => {
 
       saveStartupRunners(newStartupRunners)
     } catch (error) {
-      console.error("Error toggling startup app:", error)
+      console.error("Error toggling startup runner:", error)
     }
   }
 
-  // Update tab order for startup app
+  // Update tab order for startup runner
   const updateStartupAppTabOrder = async (
     runnerId: string,
     tabOrder: number
@@ -430,18 +430,18 @@ const App: React.FC = () => {
 
       saveStartupRunners(newStartupRunners)
     } catch (error) {
-      console.error("Error updating startup app tab order:", error)
+      console.error("Error updating startup runner tab order:", error)
     }
   }
 
   // Load icons for all runners when runners change
   useEffect(() => {
     runners.forEach((runner) => {
-      if (runner.icon && !appIcons[runner.id]) {
+      if (runner.icon && !runnerIcons[runner.id]) {
         loadRunnerIcon(runner)
       }
     })
-  }, [appIcons, loadRunnerIcon, runners])
+  }, [runnerIcons, loadRunnerIcon, runners])
 
   // Load startup runners when component mounts and when runners change
   useEffect(() => {
@@ -523,13 +523,13 @@ const App: React.FC = () => {
             try {
               const runner = runners.find((f) => f.id === runnerId)
               console.log(
-                `Launching startup app: ${runnerId} (tab order: ${config.tabOrder})`
+                `Launching startup runner: ${runnerId} (tab order: ${config.tabOrder})`
               )
 
               if (runner && runner.standalone) {
-                // Launch the app but don't wait for tab switching
+                // Launch the runner but don't wait for tab switching
                 await openAppInNewTab(runner, undefined, true, false)
-                console.log(`Successfully launched startup app: ${runnerId}`)
+                console.log(`Successfully launched startup runner: ${runnerId}`)
               } else {
                 console.warn(`Could not launch ${runnerId}:`, {
                   appFound: !!runner,
@@ -537,7 +537,10 @@ const App: React.FC = () => {
                 })
               }
             } catch (error) {
-              console.error(`Error launching startup app ${runnerId}:`, error)
+              console.error(
+                `Error launching startup runner ${runnerId}:`,
+                error
+              )
             }
           }
         )
@@ -555,7 +558,7 @@ const App: React.FC = () => {
             }
           })
           .catch((error) => {
-            console.error("Error during parallel startup app launch:", error)
+            console.error("Error during parallel startup runner launch:", error)
           })
       }
       hasLaunchedStartupRunners.current = true
@@ -564,8 +567,8 @@ const App: React.FC = () => {
 
   // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
   const getAppIcon = (runner: RunnerConfig): string => {
-    if (appIcons[runner.id]) {
-      return appIcons[runner.id]
+    if (runnerIcons[runner.id]) {
+      return runnerIcons[runner.id]
     }
 
     // Return Viberunner SVG logo as fallback
@@ -636,10 +639,10 @@ const App: React.FC = () => {
   const generateTabId = () =>
     `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-  // Imperative function to create a app container
+  // Imperative function to create a runner container
   const createAppContainer = async (tab: OpenTab): Promise<boolean> => {
     if (!appRootRef.current || !tab.runner || !tab.runnerData) {
-      console.error("Cannot create app container:", {
+      console.error("Cannot create runner container:", {
         hasAppRoot: !!appRootRef.current,
         hasApp: !!tab.runner,
         hasAppData: !!tab.runnerData,
@@ -684,7 +687,7 @@ const App: React.FC = () => {
     }
 
     return new Promise<boolean>((resolve) => {
-      // Create script and load app
+      // Create script and load runner
       const script = document.createElement("script")
       script.type = "text/javascript"
 
@@ -762,7 +765,7 @@ const App: React.FC = () => {
       })
 
       // Also intercept any dynamic style injection
-      const appStyleInterceptor = `
+      const runnerStyleInterceptor = `
         // Intercept style injection for app isolation
         (function() {
           const originalCreateElement = document.createElement;
@@ -812,9 +815,10 @@ const App: React.FC = () => {
         })();
       `
 
-      script.textContent = appStyleInterceptor + "\n" + processedBundleContent
+      script.textContent =
+        runnerStyleInterceptor + "\n" + processedBundleContent
 
-      const appLoader = (AppComponent: any) => {
+      const runnerLoader = (RunnerComponent: any) => {
         try {
           // Create an isolation wrapper div
           const isolationWrapper = document.createElement("div")
@@ -837,7 +841,7 @@ const App: React.FC = () => {
           isolationWrapper.setAttribute("data-app-id", tab.id)
 
           const root = createRoot(isolationWrapper)
-          root.render(React.createElement(AppComponent, props))
+          root.render(React.createElement(RunnerComponent, props))
 
           // Store container reference in tabContainersRef for tab switching
           tabContainersRef.current.set(tab.id, {
@@ -860,7 +864,7 @@ const App: React.FC = () => {
       }
 
       // Make the app loader available globally with backward compatibility
-      ;(window as any).__RENDER_RUNNER__ = appLoader
+      ;(window as any).__RENDER_RUNNER__ = runnerLoader
 
       script.onload = () => {
         // Clean up after script loads
