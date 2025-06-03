@@ -1,14 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react'
-import ChatInterface from './ChatInterface'
-import CodeEditor from './CodeEditor'
-import { ClaudeAPIService } from '../services/ClaudeAPIService'
-import { FileManagerService } from '../services/FileManagerService'
-import { CommandExecutorService } from '../services/CommandExecutorService'
-import { getRunnersDirectory } from '../util'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Card, CardHeader, CardTitle } from '@/components/ui/card'
+import React, { useState, useRef, useEffect } from "react"
+import ChatInterface from "./ChatInterface"
+import CodeEditor from "./CodeEditor"
+import { ClaudeAPIService } from "../services/ClaudeAPIService"
+import { FileManagerService } from "../services/FileManagerService"
+import { CommandExecutorService } from "../services/CommandExecutorService"
+import { getRunnersDirectory } from "../util"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 
 export interface FileChange {
   path: string
@@ -18,7 +18,7 @@ export interface FileChange {
 
 export interface Message {
   id: string
-  role: 'user' | 'assistant'
+  role: "user" | "assistant"
   content: string
   timestamp: Date
   fileChanges?: FileChange[]
@@ -36,7 +36,11 @@ interface PreviewPanelProps {
   onRefresh: () => void
 }
 
-const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefresh }) => {
+const PreviewPanel: React.FC<PreviewPanelProps> = ({
+  runnerName,
+  files,
+  onRefresh,
+}) => {
   const previewContainerRef = useRef<HTMLDivElement>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -53,25 +57,25 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
     setError(null)
 
     try {
-      const fs = require('fs')
-      const path = require('path')
+      const fs = require("fs")
+      const path = require("path")
 
       const RUNNERS_DIR = getRunnersDirectory()
       const runnerPath = path.join(RUNNERS_DIR, runnerName)
-      const bundlePath = path.join(runnerPath, 'dist', 'bundle.iife.js')
+      const bundlePath = path.join(runnerPath, "dist", "bundle.iife.js")
 
       if (!fs.existsSync(bundlePath)) {
-        setError('Waiting for build...')
+        setError("Waiting for build...")
         setHasRunner(false)
         setIsLoading(false)
         return
       }
 
-      const bundleContent = fs.readFileSync(bundlePath, 'utf-8')
+      const bundleContent = fs.readFileSync(bundlePath, "utf-8")
 
       // Clear the container
       if (previewContainerRef.current) {
-        previewContainerRef.current.innerHTML = ''
+        previewContainerRef.current.innerHTML = ""
       }
 
       // Clean up previous root if it exists
@@ -79,14 +83,14 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
         try {
           reactRootRef.current.unmount()
         } catch (e) {
-          console.warn('Error unmounting previous preview:', e)
+          console.warn("Error unmounting previous preview:", e)
         }
         reactRootRef.current = null
       }
 
       // Load and render the runner similar to how App.tsx does it
-      const script = document.createElement('script')
-      script.type = 'text/javascript'
+      const script = document.createElement("script")
+      script.type = "text/javascript"
 
       const previewId = `preview-${Date.now()}`
 
@@ -113,11 +117,11 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
       const runnerLoader = (RunnerComponent: any) => {
         try {
           if (!previewContainerRef.current) {
-            throw new Error('Preview container not available')
+            throw new Error("Preview container not available")
           }
 
           // Create isolation wrapper
-          const isolationWrapper = document.createElement('div')
+          const isolationWrapper = document.createElement("div")
           isolationWrapper.style.cssText = `
             width: 100% !important;
             height: 100% !important;
@@ -127,14 +131,14 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
             contain: layout style !important;
             isolation: isolate !important;
           `
-          isolationWrapper.setAttribute('data-app-id', previewId)
+          isolationWrapper.setAttribute("data-app-id", previewId)
 
           previewContainerRef.current.appendChild(isolationWrapper)
 
           // Use the global ReactDOM.createRoot that's already exposed for runners
           const { createRoot } = (window as any).ReactDOM
           if (!createRoot) {
-            throw new Error('ReactDOM.createRoot not available globally')
+            throw new Error("ReactDOM.createRoot not available globally")
           }
 
           const root = createRoot(isolationWrapper)
@@ -148,7 +152,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
           // Use global React instance for component creation
           const globalReact = (window as any).React
           if (!globalReact) {
-            throw new Error('Global React not available')
+            throw new Error("Global React not available")
           }
 
           root.render(globalReact.createElement(RunnerComponent, props))
@@ -158,8 +162,12 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
           setError(null)
           setIsLoading(false)
         } catch (error) {
-          console.error('Error rendering preview:', error)
-          setError(`Preview error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+          console.error("Error rendering preview:", error)
+          setError(
+            `Preview error: ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`
+          )
           setHasRunner(false)
           setIsLoading(false)
         }
@@ -178,17 +186,18 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
       }
 
       script.onerror = (error) => {
-        console.error('Script loading error:', error)
-        setError('Failed to load runner script')
+        console.error("Script loading error:", error)
+        setError("Failed to load runner script")
         setHasRunner(false)
         setIsLoading(false)
       }
 
       document.head.appendChild(script)
-
     } catch (error) {
-      console.error('Error loading runner preview:', error)
-      setError(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error("Error loading runner preview:", error)
+      setError(
+        `Error: ${error instanceof Error ? error.message : "Unknown error"}`
+      )
       setHasRunner(false)
       setIsLoading(false)
     }
@@ -203,7 +212,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
         try {
           reactRootRef.current.unmount()
         } catch (e) {
-          console.warn('Error unmounting preview on cleanup:', e)
+          console.warn("Error unmounting preview on cleanup:", e)
         }
       }
     }
@@ -222,10 +231,15 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
 
   if (!runnerName || Object.keys(files).length === 0) {
     return (
-      <div id="preview-empty-state" className="h-full bg-transparent p-8 flex items-center justify-center">
+      <div
+        id="preview-empty-state"
+        className="h-full bg-transparent p-8 flex items-center justify-center"
+      >
         <div className="text-center">
           <div className="text-6xl mb-4 opacity-50">👁️</div>
-          <h3 className="text-xl font-light text-white mb-3">No Runner to Preview</h3>
+          <h3 className="text-xl font-light text-white mb-3">
+            No Runner to Preview
+          </h3>
           <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
             Start building a runner in the chat to see a live preview here.
           </p>
@@ -235,8 +249,14 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
   }
 
   return (
-    <div id="preview-panel" className="h-full flex flex-col rounded-2xl shadow-lg overflow-hidden">
-      <div id="preview-header" className="bg-gradient-to-r from-[#18181b]/80 to-[#0a0a0a]/80 border-b border-white/10 px-8 py-4 flex items-center justify-between rounded-t-2xl">
+    <div
+      id="preview-panel"
+      className="h-full flex flex-col rounded-2xl shadow-lg overflow-hidden"
+    >
+      <div
+        id="preview-header"
+        className="bg-gradient-to-r from-[#18181b]/80 to-[#0a0a0a]/80 border-b border-white/10 px-8 py-4 flex items-center justify-between rounded-t-2xl"
+      >
         <div className="flex items-center gap-4">
           <span className="text-2xl">👁️</span>
           <div>
@@ -253,17 +273,28 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
           ↻ Refresh
         </button>
       </div>
-      <div id="preview-content" className="flex-1 bg-[#0a0a0a] relative overflow-hidden rounded-b-2xl">
+      <div
+        id="preview-content"
+        className="flex-1 bg-[#0a0a0a] relative overflow-hidden rounded-b-2xl"
+      >
         {isLoading && (
-          <div id="preview-loading" className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-md rounded-2xl">
+          <div
+            id="preview-loading"
+            className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-md rounded-2xl"
+          >
             <div className="text-center">
               <div className="animate-spin text-4xl mb-4">⟳</div>
-              <p className="text-white text-lg font-medium">Loading preview...</p>
+              <p className="text-white text-lg font-medium">
+                Loading preview...
+              </p>
             </div>
           </div>
         )}
-        {error && error === 'Waiting for build...' ? (
-          <div id="preview-waiting-build" className="absolute inset-0 flex items-center justify-center rounded-2xl">
+        {error && error === "Waiting for build..." ? (
+          <div
+            id="preview-waiting-build"
+            className="absolute inset-0 flex items-center justify-center rounded-2xl"
+          >
             <div className="text-center">
               <div className="animate-spin text-4xl mb-4">⟳</div>
               <p className="text-white mb-4 text-lg font-medium">{error}</p>
@@ -277,7 +308,10 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
             </div>
           </div>
         ) : error ? (
-          <div id="preview-error" className="absolute inset-0 flex items-center justify-center rounded-2xl">
+          <div
+            id="preview-error"
+            className="absolute inset-0 flex items-center justify-center rounded-2xl"
+          >
             <div className="text-center">
               <div className="text-4xl mb-4">⚠️</div>
               <p className="text-red-400 mb-4 text-lg font-medium">{error}</p>
@@ -292,10 +326,15 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
           </div>
         ) : null}
         {!isLoading && !error && !hasRunner && (
-          <div id="preview-not-built" className="absolute inset-0 flex items-center justify-center rounded-2xl">
+          <div
+            id="preview-not-built"
+            className="absolute inset-0 flex items-center justify-center rounded-2xl"
+          >
             <div className="text-center">
               <div className="text-6xl mb-4 opacity-50">🔧</div>
-              <h3 className="text-xl font-light text-white mb-3">Runner Not Built</h3>
+              <h3 className="text-xl font-light text-white mb-3">
+                Runner Not Built
+              </h3>
               <p className="text-gray-400 text-base mb-6 leading-relaxed">
                 Build the runner to see a preview here.
               </p>
@@ -314,7 +353,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
           ref={previewContainerRef}
           className="w-full h-full"
           style={{
-            display: hasRunner ? 'block' : 'none'
+            display: hasRunner ? "block" : "none",
           }}
         />
       </div>
@@ -322,14 +361,19 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
   )
 }
 
-const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = false }) => {
+const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
+  onClose,
+  inTab = false,
+}) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [apiKey, setApiKey] = useState<string>('')
+  const [apiKey, setApiKey] = useState<string>("")
   const [showApiKeyPrompt, setShowApiKeyPrompt] = useState(false)
-  const [currentFiles, setCurrentFiles] = useState<Record<string, FileChange>>({})
+  const [currentFiles, setCurrentFiles] = useState<Record<string, FileChange>>(
+    {}
+  )
   const [activeFile, setActiveFile] = useState<string | null>(null)
-  const [runnerName, setRunnerName] = useState<string>('')
+  const [runnerName, setRunnerName] = useState<string>("")
   const [isDiscarding, setIsDiscarding] = useState(false)
   const [isNewRunner, setIsNewRunner] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -340,7 +384,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
 
   useEffect(() => {
     // Check if API key is already stored
-    const storedKey = localStorage.getItem('claude-api-key')
+    const storedKey = localStorage.getItem("claude-api-key")
     if (storedKey) {
       setApiKey(storedKey)
       claudeService.current = new ClaudeAPIService(storedKey)
@@ -354,7 +398,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
 
   const handleSetApiKey = (key: string) => {
     setApiKey(key)
-    localStorage.setItem('claude-api-key', key)
+    localStorage.setItem("claude-api-key", key)
     claudeService.current = new ClaudeAPIService(key)
     setShowApiKeyPrompt(false)
   }
@@ -381,14 +425,14 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
         // Show success message
         const discardMessage: Message = {
           id: Date.now().toString(),
-          role: 'assistant',
+          role: "assistant",
           content: `🗑️ Runner "${runnerName}" has been discarded and deleted.`,
-          timestamp: new Date()
+          timestamp: new Date(),
         }
-        setMessages(prev => [...prev, discardMessage])
+        setMessages((prev) => [...prev, discardMessage])
 
         // Clear the current state
-        setRunnerName('')
+        setRunnerName("")
         setCurrentFiles({})
         setActiveFile(null)
         setIsNewRunner(true)
@@ -401,14 +445,16 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
         }, 1500)
       }
     } catch (error) {
-      console.error('Error discarding runner:', error)
+      console.error("Error discarding runner:", error)
       const errorMessage: Message = {
         id: Date.now().toString(),
-        role: 'assistant',
-        content: `❌ Error discarding runner: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        timestamp: new Date()
+        role: "assistant",
+        content: `❌ Error discarding runner: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+        timestamp: new Date(),
       }
-      setMessages(prev => [...prev, errorMessage])
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsDiscarding(false)
     }
@@ -422,35 +468,40 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      role: 'user',
+      role: "user",
       content,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
 
-    setMessages(prev => [...prev, userMessage])
+    setMessages((prev) => [...prev, userMessage])
     setIsLoading(true)
 
     try {
-      const response = await claudeService.current.sendMessage(content, messages)
+      const response = await claudeService.current.sendMessage(
+        content,
+        messages
+      )
 
       // Parse the response for file changes and commands
-      const { parsedContent, fileChanges, commands } = parseAssistantResponse(response.content)
+      const { parsedContent, fileChanges, commands } = parseAssistantResponse(
+        response.content
+      )
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: 'assistant',
+        role: "assistant",
         content: parsedContent,
         timestamp: new Date(),
         fileChanges,
-        commands
+        commands,
       }
 
-      setMessages(prev => [...prev, assistantMessage])
+      setMessages((prev) => [...prev, assistantMessage])
 
       // Update current files with any changes
       if (fileChanges && fileChanges.length > 0) {
         const newFiles = { ...currentFiles }
-        fileChanges.forEach(change => {
+        fileChanges.forEach((change) => {
           newFiles[change.path] = change
         })
         setCurrentFiles(newFiles)
@@ -463,16 +514,20 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
         // If we have files but no runner name, try to extract it from package.json
         let currentRunnerName = runnerName
         if (!currentRunnerName) {
-          const packageJsonFile = fileChanges.find(f => f.path === 'package.json')
+          const packageJsonFile = fileChanges.find(
+            (f) => f.path === "package.json"
+          )
           if (packageJsonFile) {
             try {
               const packageJson = JSON.parse(packageJsonFile.content)
               if (packageJson.viberunner?.name) {
-                currentRunnerName = packageJson.viberunner.name.toLowerCase().replace(/\s+/g, '-')
+                currentRunnerName = packageJson.viberunner.name
+                  .toLowerCase()
+                  .replace(/\s+/g, "-")
                 setRunnerName(currentRunnerName)
               }
             } catch (error) {
-              console.warn('Could not parse package.json for runner name')
+              console.warn("Could not parse package.json for runner name")
             }
           }
         }
@@ -484,8 +539,12 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
 
             if (!runnerName) {
               // First time - create a new runner
-              const generatedName = currentRunnerName || `ai-runner-${Date.now()}`
-              savedName = await fileManager.current.createRunner(generatedName, newFiles)
+              const generatedName =
+                currentRunnerName || `ai-runner-${Date.now()}`
+              savedName = await fileManager.current.createRunner(
+                generatedName,
+                newFiles
+              )
 
               // Update runner name to the sanitized version
               setRunnerName(savedName)
@@ -493,78 +552,91 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
               // Keep isNewRunner as true since this is auto-save of a new runner
             } else {
               // Already have a runner - update the existing one
-              savedName = await fileManager.current.updateRunner(runnerName, newFiles)
+              savedName = await fileManager.current.updateRunner(
+                runnerName,
+                newFiles
+              )
               currentRunnerName = runnerName
               // Keep isNewRunner state as-is since we're updating existing
             }
 
-            console.log(`${runnerName ? 'Updated' : 'Created'} runner: ${savedName}`)
+            console.log(
+              `${runnerName ? "Updated" : "Created"} runner: ${savedName}`
+            )
 
             // Execute commands immediately after saving files
             if (commands && commands.length > 0) {
               for (const command of commands) {
                 try {
-                  console.log('Executing command on saved runner:', command)
+                  console.log("Executing command on saved runner:", command)
 
-                  const result = await commandExecutor.current?.executeCommand(command, currentRunnerName)
+                  const result = await commandExecutor.current?.executeCommand(
+                    command,
+                    currentRunnerName
+                  )
 
                   // Add command result to chat
                   const resultMessage: Message = {
                     id: Date.now().toString(),
-                    role: 'assistant',
+                    role: "assistant",
                     content: result?.success
                       ? `✅ Command executed successfully:\n\`\`\`\n${command}\n\`\`\`\n\n${result.output}`
-                      : `❌ Command failed:\n\`\`\`\n${command}\n\`\`\`\n\nError: ${result?.error || 'Unknown error'}`,
-                    timestamp: new Date()
+                      : `❌ Command failed:\n\`\`\`\n${command}\n\`\`\`\n\nError: ${
+                          result?.error || "Unknown error"
+                        }`,
+                    timestamp: new Date(),
                   }
 
-                  setMessages(prev => [...prev, resultMessage])
+                  setMessages((prev) => [...prev, resultMessage])
 
                   // If build command was successful, refresh the preview
-                  if (result?.success && command.includes('build')) {
+                  if (result?.success && command.includes("build")) {
                     setTimeout(() => {
                       refreshPreview()
                     }, 1000) // Small delay to ensure build is complete
                   }
-
                 } catch (error) {
-                  console.error('Error executing command:', error)
+                  console.error("Error executing command:", error)
 
                   const errorMessage: Message = {
                     id: Date.now().toString(),
-                    role: 'assistant',
-                    content: `❌ Command execution failed:\n\`\`\`\n${command}\n\`\`\`\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                    timestamp: new Date()
+                    role: "assistant",
+                    content: `❌ Command execution failed:\n\`\`\`\n${command}\n\`\`\`\n\nError: ${
+                      error instanceof Error ? error.message : "Unknown error"
+                    }`,
+                    timestamp: new Date(),
                   }
 
-                  setMessages(prev => [...prev, errorMessage])
+                  setMessages((prev) => [...prev, errorMessage])
                 }
               }
             }
-
           } catch (error) {
-            console.error('Auto-save failed:', error)
+            console.error("Auto-save failed:", error)
             // Show error message but continue
             const errorMessage: Message = {
               id: Date.now().toString(),
-              role: 'assistant',
-              content: `⚠️ Auto-save failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-              timestamp: new Date()
+              role: "assistant",
+              content: `⚠️ Auto-save failed: ${
+                error instanceof Error ? error.message : "Unknown error"
+              }`,
+              timestamp: new Date(),
             }
-            setMessages(prev => [...prev, errorMessage])
+            setMessages((prev) => [...prev, errorMessage])
           }
         }
       }
-
     } catch (error) {
-      console.error('Error sending message:', error)
+      console.error("Error sending message:", error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: `Error: ${error instanceof Error ? error.message : 'Unknown error occurred'}`,
-        timestamp: new Date()
+        role: "assistant",
+        content: `Error: ${
+          error instanceof Error ? error.message : "Unknown error occurred"
+        }`,
+        timestamp: new Date(),
       }
-      setMessages(prev => [...prev, errorMessage])
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
@@ -576,7 +648,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
     let parsedContent = content
 
     // Extract RunnerArtifact tags
-    const artifactRegex = /<RunnerArtifact name="([^"]+)">([\s\S]*?)<\/RunnerArtifact>/g
+    const artifactRegex =
+      /<RunnerArtifact name="([^"]+)">([\s\S]*?)<\/RunnerArtifact>/g
     let match
     while ((match = artifactRegex.exec(content)) !== null) {
       const filePath = match[1]
@@ -586,7 +659,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
       fileChanges.push({
         path: filePath,
         content: fileContent,
-        language
+        language,
       })
     }
 
@@ -599,24 +672,33 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
 
     // Remove the artifact and command tags from the displayed content
     parsedContent = parsedContent
-      .replace(/<RunnerArtifact name="[^"]+">[\s\S]*?<\/RunnerArtifact>/g, '')
-      .replace(/<RunnerCommand>[\s\S]*?<\/RunnerCommand>/g, '')
+      .replace(/<RunnerArtifact name="[^"]+">[\s\S]*?<\/RunnerArtifact>/g, "")
+      .replace(/<RunnerCommand>[\s\S]*?<\/RunnerCommand>/g, "")
       .trim()
 
     return { parsedContent, fileChanges, commands }
   }
 
   const getLanguageFromPath = (path: string): string => {
-    const ext = path.split('.').pop()?.toLowerCase()
+    const ext = path.split(".").pop()?.toLowerCase()
     switch (ext) {
-      case 'tsx': case 'jsx': return 'typescript'
-      case 'ts': return 'typescript'
-      case 'js': return 'javascript'
-      case 'json': return 'json'
-      case 'css': return 'css'
-      case 'html': return 'html'
-      case 'md': return 'markdown'
-      default: return 'text'
+      case "tsx":
+      case "jsx":
+        return "typescript"
+      case "ts":
+        return "typescript"
+      case "js":
+        return "javascript"
+      case "json":
+        return "json"
+      case "css":
+        return "css"
+      case "html":
+        return "html"
+      case "md":
+        return "markdown"
+      default:
+        return "text"
     }
   }
 
@@ -629,33 +711,40 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
   }
 
   const handleFileChange = (path: string, content: string) => {
-    setCurrentFiles(prev => ({
+    setCurrentFiles((prev) => ({
       ...prev,
       [path]: {
         ...prev[path],
-        content
-      }
+        content,
+      },
     }))
   }
 
   const refreshPreview = () => {
-    setRefreshKey(prev => prev + 1)
+    setRefreshKey((prev) => prev + 1)
   }
 
   if (showApiKeyPrompt) {
     return (
-      <div id="api-key-prompt" className="h-full bg-[#0a0a0a] flex items-center justify-center px-6">
+      <div
+        id="api-key-prompt"
+        className="h-full bg-[#0a0a0a] flex items-center justify-center px-6"
+      >
         <div className="w-full max-w-md">
-          <div id="api-key-form" className="bg-white/5 border border-white/10 p-8">
+          <div
+            id="api-key-form"
+            className="bg-white/5 border border-white/10 p-8"
+          >
             <div className="text-center mb-8">
               <h2 className="text-3xl font-light text-white mb-4 tracking-tight">
-                Claude API Key{' '}
+                Claude API Key{" "}
                 <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent font-medium">
                   Required
                 </span>
               </h2>
               <p className="text-gray-400 text-sm leading-relaxed">
-                To use the AI Agent for creating runners, please provide your Claude API key.
+                To use the AI Agent for creating runners, please provide your
+                Claude API key.
               </p>
             </div>
 
@@ -667,7 +756,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && apiKey.trim()) {
+                  if (e.key === "Enter" && apiKey.trim()) {
                     handleSetApiKey(apiKey.trim())
                   }
                 }}
@@ -695,7 +784,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
 
             <div className="text-center">
               <p className="text-gray-500 text-xs">
-                Get your API key from{' '}
+                Get your API key from{" "}
                 <a
                   id="anthropic-console-link"
                   href="https://console.anthropic.com/"
@@ -714,7 +803,12 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
   }
 
   return (
-    <div id="ai-agent-interface" className={`bg-[#0a0a0a] ${inTab ? 'h-full rounded-none' : 'min-h-screen p-6'}`}>
+    <div
+      id="ai-agent-interface"
+      className={`bg-[#0a0a0a] ${
+        inTab ? "h-full rounded-none" : "min-h-screen p-6"
+      }`}
+    >
       <div id="ai-agent-content" className="h-full flex flex-col rounded-none">
         {!inTab && (
           <Card className="mb-4">
@@ -731,15 +825,26 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
                 />
               </div>
               <div className="flex items-center gap-2">
-                <Button onClick={handleSaveRunner} disabled={Object.keys(currentFiles).length === 0 || isDiscarding}>
+                <Button
+                  onClick={handleSaveRunner}
+                  disabled={
+                    Object.keys(currentFiles).length === 0 || isDiscarding
+                  }
+                >
                   Done
                 </Button>
                 {Object.keys(currentFiles).length > 0 && (
-                  <Button variant="secondary" onClick={handleDiscard} disabled={isDiscarding}>
-                    {isDiscarding ? 'Discarding...' : 'Discard'}
+                  <Button
+                    variant="secondary"
+                    onClick={handleDiscard}
+                    disabled={isDiscarding}
+                  >
+                    {isDiscarding ? "Discarding..." : "Discard"}
                   </Button>
                 )}
-                <Button variant="outline" onClick={onClose}>✕</Button>
+                <Button variant="outline" onClick={onClose}>
+                  ✕
+                </Button>
               </div>
             </CardHeader>
           </Card>
@@ -757,18 +862,18 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
             isDiscarding={isDiscarding}
             hasFiles={Object.keys(currentFiles).length > 0}
           />
-          <div className="flex-1 border-l border-[#333333]">
+          <div id="preview-panel" className="flex-1 m-5 border">
             <Tabs defaultValue="preview" className="h-full">
-              <TabsList className="w-full bg-white/5 border-b border-white/10 rounded-none p-0">
+              <TabsList className="bg-white/5 border-b border-white/10 rounded-none p-0 inline-flex">
                 <TabsTrigger
                   value="preview"
-                  className="flex-1 data-[state=active]:bg-white/10"
+                  className="px-4 data-[state=active]:bg-white/10"
                 >
                   Preview
                 </TabsTrigger>
                 <TabsTrigger
                   value="files"
-                  className="flex-1 data-[state=active]:bg-white/10"
+                  className="px-4 data-[state=active]:bg-white/10"
                 >
                   Files
                 </TabsTrigger>
@@ -790,8 +895,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
                         onClick={() => setActiveFile(path)}
                         className={`w-full text-left px-4 py-2 rounded ${
                           activeFile === path
-                            ? 'bg-white/10 text-white'
-                            : 'text-white/60 hover:bg-white/5'
+                            ? "bg-white/10 text-white"
+                            : "text-white/60 hover:bg-white/5"
                         }`}
                       >
                         {path}

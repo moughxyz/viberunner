@@ -138,7 +138,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </style>
       <div className="flex flex-col h-full bg-[#000000] w-1/4 min-w-[300px]">
         {/* Header */}
-        <div className="border-b border-[#333333] bg-black/40 backdrop-blur-xl">
+        <div className="bg-black/40 backdrop-blur-xl">
           <div className="flex items-center justify-between px-4 h-14">
             <div className="flex-1 max-w-sm">
               <input
@@ -319,7 +319,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-[#333333] bg-black/40 backdrop-blur-xl">
+        <div className="bg-black/40 backdrop-blur-xl">
           <div className="px-4 py-3">
             <form onSubmit={handleSubmit} className="relative">
               <textarea
