@@ -399,16 +399,23 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
         // Auto-save files immediately when AI generates them
         if (fileManager.current) {
           try {
-            const generatedName = currentRunnerName || `ai-runner-${Date.now()}`
-            const savedName = await fileManager.current.createRunner(generatedName, newFiles)
+            let savedName: string
 
-            // Update runner name to the sanitized version
             if (!runnerName) {
+              // First time - create a new runner
+              const generatedName = currentRunnerName || `ai-runner-${Date.now()}`
+              savedName = await fileManager.current.createRunner(generatedName, newFiles)
+
+              // Update runner name to the sanitized version
               setRunnerName(savedName)
               currentRunnerName = savedName
+            } else {
+              // Already have a runner - update the existing one
+              savedName = await fileManager.current.updateRunner(runnerName, newFiles)
+              currentRunnerName = runnerName
             }
 
-            console.log(`Auto-saved runner: ${savedName}`)
+            console.log(`${runnerName ? 'Updated' : 'Created'} runner: ${savedName}`)
 
             // Execute commands immediately after saving files
             if (commands && commands.length > 0) {
@@ -416,7 +423,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = fa
                 try {
                   console.log('Executing command on saved runner:', command)
 
-                  const result = await commandExecutor.current?.executeCommand(command, savedName)
+                  const result = await commandExecutor.current?.executeCommand(command, currentRunnerName)
 
                   // Add command result to chat
                   const resultMessage: Message = {

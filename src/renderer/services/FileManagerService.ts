@@ -68,6 +68,59 @@ export class FileManagerService {
     }
   }
 
+  async updateRunner(runnerName: string, files: Record<string, FileChange>): Promise<string> {
+    try {
+      const runnerPath = path.join(this.runnersDir, runnerName)
+
+      // Check if runner exists
+      if (!fs.existsSync(runnerPath)) {
+        throw new Error(`Runner "${runnerName}" does not exist`)
+      }
+
+      // Create src directory if needed
+      const srcPath = path.join(runnerPath, 'src')
+      if (!fs.existsSync(srcPath)) {
+        fs.mkdirSync(srcPath, { recursive: true })
+      }
+
+      // Write/update all files
+      for (const [filePath, fileData] of Object.entries(files)) {
+        const fullFilePath = path.join(runnerPath, filePath)
+
+        // Ensure directory exists for this file
+        const fileDir = path.dirname(fullFilePath)
+        if (!fs.existsSync(fileDir)) {
+          fs.mkdirSync(fileDir, { recursive: true })
+        }
+
+        // Write file content
+        fs.writeFileSync(fullFilePath, fileData.content, 'utf8')
+        console.log(`Updated file: ${fullFilePath}`)
+      }
+
+      // Ensure we have a package.json with viberunner metadata
+      const packageJsonPath = path.join(runnerPath, 'package.json')
+      if (!fs.existsSync(packageJsonPath)) {
+        // Create default package.json if it doesn't exist
+        const defaultPackageJson = this.createDefaultPackageJson(runnerName)
+        fs.writeFileSync(packageJsonPath, JSON.stringify(defaultPackageJson, null, 2), 'utf8')
+      } else {
+        // Update existing package.json to ensure it has viberunner metadata
+        this.ensureViberunnerMetadata(packageJsonPath, runnerName)
+      }
+
+      // Create other required files if they don't exist
+      await this.ensureRequiredFiles(runnerPath, runnerName)
+
+      console.log(`Successfully updated runner: ${runnerName} at ${runnerPath}`)
+      return runnerName
+
+    } catch (error) {
+      console.error('Error updating runner:', error)
+      throw error
+    }
+  }
+
   private sanitizeRunnerName(name: string): string {
     // Convert to lowercase, replace spaces with hyphens, remove special characters
     return name
