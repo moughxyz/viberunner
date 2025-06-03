@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import UpdateNotification, { UpdateNotificationRef } from './components/UpdateNotification';
+import BuildPrompt from './components/BuildPrompt';
 
 // Direct Node.js access with full integration
 const { ipcRenderer } = require('electron');
@@ -408,7 +409,6 @@ const App: React.FC = () => {
   const [appIcons, setAppIcons] = useState<Record<string, string>>({});
   const [startupApps, setStartupApps] = useState<Record<string, { enabled: boolean; tabOrder: number }>>({});
   const [showSettings, setShowSettings] = useState(false);
-  const [buildPrompt, setBuildPrompt] = useState<string>('');
 
   const appRootRef = useRef<HTMLDivElement>(null);
   const hasLaunchedStartupApps = useRef<boolean>(false);
@@ -1375,6 +1375,12 @@ const App: React.FC = () => {
     setPendingFileInput(null);
   };
 
+  // Handler for build prompt submission
+  const handleBuildPromptSubmit = (prompt: string) => {
+    // TODO: Implement build prompt handling logic
+    console.log('App received build prompt:', prompt);
+  };
+
   return (
     <div className="vf-app">
       <header id="vf-header">
@@ -1537,37 +1543,8 @@ const App: React.FC = () => {
             {activeTab?.type === 'newtab' && !showAppSelection && (
               <div className="vf-new-tab-unified">
                 <div className="unified-content">
-                  {/* New AI Agent Prompt */}
-                  <div className="ai-agent-prompt">
-                    <div className="prompt-header">
-                      <h2 className="prompt-title">What do you want to build today?</h2>
-                      <p className="prompt-subtitle">Describe your idea and I'll help you create it</p>
-                    </div>
-                    <div className="prompt-input-container">
-                      <input
-                        type="text"
-                        className="prompt-input"
-                        placeholder="I want to build..."
-                        value={buildPrompt}
-                        onChange={(e) => setBuildPrompt(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            // TODO: Handle build prompt submission
-                            console.log('Build prompt submitted:', buildPrompt);
-                          }
-                        }}
-                      />
-                      <button
-                        className="prompt-submit-btn"
-                        onClick={() => {
-                          // TODO: Handle build prompt submission
-                          console.log('Build prompt submitted:', buildPrompt);
-                        }}
-                      >
-                        Start Building
-                      </button>
-                    </div>
-                  </div>
+                  {/* Build Prompt Component */}
+                  <BuildPrompt onSubmit={handleBuildPromptSubmit} />
 
                   {/* Existing apps section - show only if apps are available */}
                   {apps.length > 0 && (
