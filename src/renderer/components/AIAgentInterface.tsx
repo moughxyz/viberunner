@@ -850,7 +850,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
           </Card>
         )}
 
-        <div className="flex-1 flex">
+        <div className="flex-1 flex h-0">
           <ChatInterface
             messages={messages}
             onSendMessage={handleSendMessage}

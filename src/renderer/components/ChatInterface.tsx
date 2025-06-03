@@ -172,7 +172,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
 
         {/* Messages Container */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           <div className="px-4 py-6">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16">
@@ -336,7 +336,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <button
                 type="submit"
                 disabled={!inputValue.trim() || isLoading}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 flex items-center justify-center rounded-md bg-[#1D1D1D] text-white/80 hover:bg-[#2D2D2D] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1D1D1D] transition-colors"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-[44px] w-[44px] flex items-center justify-center rounded-md bg-[#1D1D1D] text-white/80 hover:bg-[#2D2D2D] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1D1D1D] transition-colors"
               >
                 {isLoading ? (
                   <svg className="w-4 h-4 animate-spin text-white/60" fill="none" viewBox="0 0 24 24">
