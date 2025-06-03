@@ -322,8 +322,8 @@ const copyDirectory = async (source: string, target: string) => {
     const stat = fs.statSync(sourcePath);
 
     if (stat.isDirectory()) {
-      // Skip node_modules and git directories to save space, but keep dist for bundles
-      if (item === 'node_modules' || item === '.git') {
+      // Skip node_modules and other build directories to save space
+      if (item === 'node_modules' || item === '.git' || item === 'dist') {
         console.log(`copyDirectory: Skipping directory ${item}`);
         continue;
       }

@@ -25493,6 +25493,7 @@ async function selectAppsDirectory() {
     });
     if (appFolders.length === 0) {
       require$$1$2.dialog.showErrorBox("Invalid Directory", "The selected directory does not contain any valid apps.\n\nApps should be folders containing a viz.json file.");
+      return null;
     }
     console.log(`Found ${appFolders.length} app(s):`, appFolders);
     return selectedPath;
