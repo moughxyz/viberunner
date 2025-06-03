@@ -58,7 +58,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
       const bundlePath = path.join(runnerPath, 'dist', 'bundle.iife.js')
 
       if (!fs.existsSync(bundlePath)) {
-        setError('Runner not built yet. Build the runner to see preview.')
+        setError('Waiting for build...')
         setHasRunner(false)
         setIsLoading(false)
         return
@@ -255,7 +255,15 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
           </div>
         )}
 
-        {error && (
+        {error && error === 'Waiting for build...' ? (
+          <div className="preview-loading">
+            <div className="loading-spinner">⟳</div>
+            <p>{error}</p>
+            <button onClick={handleRefresh} className="refresh-btn">
+              Check Again
+            </button>
+          </div>
+        ) : error ? (
           <div className="preview-error">
             <div className="error-icon">⚠️</div>
             <p>{error}</p>
@@ -263,7 +271,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ runnerName, files, onRefres
               Try Again
             </button>
           </div>
-        )}
+        ) : null}
 
         {!isLoading && !error && !hasRunner && (
           <div className="preview-empty">
