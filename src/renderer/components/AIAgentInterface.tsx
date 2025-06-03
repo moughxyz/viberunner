@@ -250,113 +250,88 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
 
   return (
     <div
-      id="preview-panel"
-      className="h-full flex flex-col rounded-2xl shadow-lg overflow-hidden"
+      id="preview-content"
+      className="flex-1 bg-[#0a0a0a] relative overflow-hidden rounded-b-2xl"
     >
-      <div
-        id="preview-header"
-        className="bg-gradient-to-r from-[#18181b]/80 to-[#0a0a0a]/80 border-b border-white/10 px-8 py-4 flex items-center justify-between rounded-t-2xl"
-      >
-        <div className="flex items-center gap-4">
-          <span className="text-2xl">👁️</span>
-          <div>
-            <h3 className="text-white font-semibold text-lg">Preview</h3>
-            <p className="text-gray-400 text-sm">{runnerName}</p>
+      {isLoading && (
+        <div
+          id="preview-loading"
+          className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-md rounded-2xl"
+        >
+          <div className="text-center">
+            <div className="animate-spin text-4xl mb-4">⟳</div>
+            <p className="text-white text-lg font-medium">
+              Loading preview...
+            </p>
           </div>
         </div>
-        <button
-          id="preview-refresh-btn"
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-5 py-2 text-sm font-semibold rounded-lg shadow-md hover:from-purple-600 hover:to-blue-600 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          ↻ Refresh
-        </button>
-      </div>
-      <div
-        id="preview-content"
-        className="flex-1 bg-[#0a0a0a] relative overflow-hidden rounded-b-2xl"
-      >
-        {isLoading && (
-          <div
-            id="preview-loading"
-            className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-md rounded-2xl"
-          >
-            <div className="text-center">
-              <div className="animate-spin text-4xl mb-4">⟳</div>
-              <p className="text-white text-lg font-medium">
-                Loading preview...
-              </p>
-            </div>
-          </div>
-        )}
-        {error && error === "Waiting for build..." ? (
-          <div
-            id="preview-waiting-build"
-            className="absolute inset-0 flex items-center justify-center rounded-2xl"
-          >
-            <div className="text-center">
-              <div className="animate-spin text-4xl mb-4">⟳</div>
-              <p className="text-white mb-4 text-lg font-medium">{error}</p>
-              <button
-                id="preview-check-again-btn-1"
-                onClick={handleRefresh}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
-              >
-                Check Again
-              </button>
-            </div>
-          </div>
-        ) : error ? (
-          <div
-            id="preview-error"
-            className="absolute inset-0 flex items-center justify-center rounded-2xl"
-          >
-            <div className="text-center">
-              <div className="text-4xl mb-4">⚠️</div>
-              <p className="text-red-400 mb-4 text-lg font-medium">{error}</p>
-              <button
-                id="preview-try-again-btn"
-                onClick={handleRefresh}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        ) : null}
-        {!isLoading && !error && !hasRunner && (
-          <div
-            id="preview-not-built"
-            className="absolute inset-0 flex items-center justify-center rounded-2xl"
-          >
-            <div className="text-center">
-              <div className="text-6xl mb-4 opacity-50">🔧</div>
-              <h3 className="text-xl font-light text-white mb-3">
-                Runner Not Built
-              </h3>
-              <p className="text-gray-400 text-base mb-6 leading-relaxed">
-                Build the runner to see a preview here.
-              </p>
-              <button
-                id="preview-check-again-btn-2"
-                onClick={handleRefresh}
-                className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
-              >
-                Check Again
-              </button>
-            </div>
-          </div>
-        )}
+      )}
+      {error && error === "Waiting for build..." ? (
         <div
-          id="preview-container"
-          ref={previewContainerRef}
-          className="w-full h-full"
-          style={{
-            display: hasRunner ? "block" : "none",
-          }}
-        />
-      </div>
+          id="preview-waiting-build"
+          className="absolute inset-0 flex items-center justify-center rounded-2xl"
+        >
+          <div className="text-center">
+            <div className="animate-spin text-4xl mb-4">⟳</div>
+            <p className="text-white mb-4 text-lg font-medium">{error}</p>
+            <button
+              id="preview-check-again-btn-1"
+              onClick={handleRefresh}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+            >
+              Check Again
+            </button>
+          </div>
+        </div>
+      ) : error ? (
+        <div
+          id="preview-error"
+          className="absolute inset-0 flex items-center justify-center rounded-2xl"
+        >
+          <div className="text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <p className="text-red-400 mb-4 text-lg font-medium">{error}</p>
+            <button
+              id="preview-try-again-btn"
+              onClick={handleRefresh}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {!isLoading && !error && !hasRunner && (
+        <div
+          id="preview-not-built"
+          className="absolute inset-0 flex items-center justify-center rounded-2xl"
+        >
+          <div className="text-center">
+            <div className="text-6xl mb-4 opacity-50">🔧</div>
+            <h3 className="text-xl font-light text-white mb-3">
+              Runner Not Built
+            </h3>
+            <p className="text-gray-400 text-base mb-6 leading-relaxed">
+              Build the runner to see a preview here.
+            </p>
+            <button
+              id="preview-check-again-btn-2"
+              onClick={handleRefresh}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 text-sm font-semibold rounded-lg hover:from-purple-600 hover:to-blue-600 transition-all duration-200"
+            >
+              Check Again
+            </button>
+          </div>
+        </div>
+      )}
+      <div
+        id="preview-container"
+        ref={previewContainerRef}
+        className="w-full h-full"
+        style={{
+          display: hasRunner ? "block" : "none",
+        }}
+      />
     </div>
   )
 }
@@ -864,33 +839,60 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
           />
           <div id="preview-panel" className="flex-1 m-5 border rounded-[8px]">
             <Tabs defaultValue="preview" className="h-full">
-              <TabsList className="relative flex w-fit min-w-0 items-center gap-2 overflow-x-auto">
-                <TabsTrigger
-                  value="preview"
-                  className="font-regular group h-7 max-w-56 select-none whitespace-nowrap rounded-md px-2 text-sm font-medium transition-all border border-transparent data-[state=active]:border-gray-400 data-[state=active]:bg-white/5 data-[state=active]:text-white data-[state=inactive]:bg-neutral-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:bg-white/10"
-                  data-testid="tab-file-button"
-                >
-                  <div className="truncate">
-                    <div className="flex items-center gap-2">
-                      <svg className="group-disabled:hidden" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style={{ color: 'currentcolor' }}><path fillRule="evenodd" clipRule="evenodd" d="M1.5 2.5H14.5V12.5C14.5 13.0523 14.0523 13.5 13.5 13.5H2.5C1.94772 13.5 1.5 13.0523 1.5 12.5V2.5ZM0 1H1.5H14.5H16V2.5V12.5C16 13.8807 14.8807 15 13.5 15H2.5C1.11929 15 0 13.8807 0 12.5V2.5V1ZM3.75 5.5C4.16421 5.5 4.5 5.16421 4.5 4.75C4.5 4.33579 4.16421 4 3.75 4C3.33579 4 3 4.33579 3 4.75C3 5.16421 3.33579 5.5 3.75 5.5ZM7 4.75C7 5.16421 6.66421 5.5 6.25 5.5C5.83579 5.5 5.5 5.16421 5.5 4.75C5.5 4.33579 5.83579 4 6.25 4C6.66421 4 7 4.33579 7 4.75ZM8.75 5.5C9.16421 5.5 9.5 5.16421 9.5 4.75C9.5 4.33579 9.16421 4 8.75 4C8.33579 4 8 4.33579 8 4.75C8 5.16421 8.33579 5.5 8.75 5.5Z" fill="currentColor"></path></svg>
-                      <span>Preview</span>
-                    </div>
+              <div
+                id="preview-header"
+                className="bg-neutral-900 border-b border-neutral-800 px-4 py-3 flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div>
+                    <h3 className="text-white font-medium text-sm">Preview</h3>
+                    {runnerName && (
+                      <p className="text-neutral-400 text-xs">{runnerName}</p>
+                    )}
                   </div>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="files"
-                  className="font-regular group h-7 max-w-56 select-none whitespace-nowrap rounded-md px-2 text-sm font-medium transition-all border border-transparent data-[state=active]:border-gray-400 data-[state=active]:bg-white/5 data-[state=active]:text-white data-[state=inactive]:bg-neutral-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:bg-white/10"
-                  data-testid="tab-file-button"
-                >
-                  <div className="truncate">
-                    <div className="flex items-center gap-2">
-                      <svg data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style={{ color: 'currentcolor' }}><path fillRule="evenodd" clipRule="evenodd" d="M7.22763 14.1819L10.2276 2.18193L10.4095 1.45432L8.95432 1.09052L8.77242 1.81812L5.77242 13.8181L5.59051 14.5457L7.04573 14.9095L7.22763 14.1819ZM3.75002 12.0607L3.21969 11.5304L0.39647 8.70713C0.00594559 8.31661 0.00594559 7.68344 0.39647 7.29292L3.21969 4.46969L3.75002 3.93936L4.81068 5.00002L4.28035 5.53035L1.81068 8.00003L4.28035 10.4697L4.81068 11L3.75002 12.0607ZM12.25 12.0607L12.7804 11.5304L15.6036 8.70713C15.9941 8.31661 15.9941 7.68344 15.6036 7.29292L12.7804 4.46969L12.25 3.93936L11.1894 5.00002L11.7197 5.53035L14.1894 8.00003L11.7197 10.4697L11.1894 11L12.25 12.0607Z" fill="currentColor"></path></svg>
-                      <span>Code</span>
-                    </div>
-                  </div>
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="preview" className="h-[calc(100%-49px)]">
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <TabsList className="relative flex w-fit min-w-0 items-center gap-2 overflow-x-auto">
+                    <TabsTrigger
+                      value="preview"
+                      className="font-regular group h-7 max-w-56 select-none whitespace-nowrap rounded-md px-2 text-sm font-medium transition-all border border-transparent data-[state=active]:border-gray-400 data-[state=active]:bg-white/5 data-[state=active]:text-white data-[state=inactive]:bg-neutral-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:bg-white/10"
+                      data-testid="tab-file-button"
+                    >
+                      <div className="truncate">
+                        <div className="flex items-center gap-2">
+                          <svg className="group-disabled:hidden" data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style={{ color: 'currentcolor' }}><path fillRule="evenodd" clipRule="evenodd" d="M1.5 2.5H14.5V12.5C14.5 13.0523 14.0523 13.5 13.5 13.5H2.5C1.94772 13.5 1.5 13.0523 1.5 12.5V2.5ZM0 1H1.5H14.5H16V2.5V12.5C16 13.8807 14.8807 15 13.5 15H2.5C1.11929 15 0 13.8807 0 12.5V2.5V1ZM3.75 5.5C4.16421 5.5 4.5 5.16421 4.5 4.75C4.5 4.33579 4.16421 4 3.75 4C3.33579 4 3 4.33579 3 4.75C3 5.16421 3.33579 5.5 3.75 5.5ZM7 4.75C7 5.16421 6.66421 5.5 6.25 5.5C5.83579 5.5 5.5 5.16421 5.5 4.75C5.5 4.33579 5.83579 4 6.25 4C6.66421 4 7 4.33579 7 4.75ZM8.75 5.5C9.16421 5.5 9.5 5.16421 9.5 4.75C9.5 4.33579 9.16421 4 8.75 4C8.33579 4 8 4.33579 8 4.75C8 5.16421 8.33579 5.5 8.75 5.5Z" fill="currentColor"></path></svg>
+                          <span>Preview</span>
+                        </div>
+                      </div>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="files"
+                      className="font-regular group h-7 max-w-56 select-none whitespace-nowrap rounded-md px-2 text-sm font-medium transition-all border border-transparent data-[state=active]:border-gray-400 data-[state=active]:bg-white/5 data-[state=active]:text-white data-[state=inactive]:bg-neutral-900 data-[state=inactive]:text-gray-500 data-[state=inactive]:hover:bg-white/10"
+                      data-testid="tab-file-button"
+                    >
+                      <div className="truncate">
+                        <div className="flex items-center gap-2">
+                          <svg data-testid="geist-icon" height="16" stroke-linejoin="round" viewBox="0 0 16 16" width="16" style={{ color: 'currentcolor' }}><path fillRule="evenodd" clipRule="evenodd" d="M7.22763 14.1819L10.2276 2.18193L10.4095 1.45432L8.95432 1.09052L8.77242 1.81812L5.77242 13.8181L5.59051 14.5457L7.04573 14.9095L7.22763 14.1819ZM3.75002 12.0607L3.21969 11.5304L0.39647 8.70713C0.00594559 8.31661 0.00594559 7.68344 0.39647 7.29292L3.21969 4.46969L3.75002 3.93936L4.81068 5.00002L4.28035 5.53035L1.81068 8.00003L4.28035 10.4697L4.81068 11L3.75002 12.0607ZM12.25 12.0607L12.7804 11.5304L15.6036 8.70713C15.9941 8.31661 15.9941 7.68344 15.6036 7.29292L12.7804 4.46969L12.25 3.93936L11.1894 5.00002L11.7197 5.53035L14.1894 8.00003L11.7197 10.4697L11.1894 11L12.25 12.0607Z" fill="currentColor"></path></svg>
+                          <span>Code</span>
+                        </div>
+                      </div>
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <button
+                    id="preview-refresh-btn"
+                    onClick={refreshPreview}
+                    disabled={isLoading}
+                    className="h-8 px-3 text-xs font-medium rounded-md transition-colors bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed border border-neutral-700"
+                  >
+                    {isLoading ? "..." : "Refresh"}
+                  </button>
+                </div>
+              </div>
+
+              <TabsContent value="preview" className="h-[calc(100%-57px)]">
                 <PreviewPanel
                   key={refreshKey}
                   runnerName={runnerName}
@@ -898,7 +900,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                   onRefresh={refreshPreview}
                 />
               </TabsContent>
-              <TabsContent value="files" className="h-[calc(100%-49px)]">
+              <TabsContent value="files" className="h-[calc(100%-57px)]">
                 <div className="h-full bg-[#0a0a0a] p-4">
                   <div className="space-y-2">
                     {Object.entries(currentFiles).map(([path]) => (
