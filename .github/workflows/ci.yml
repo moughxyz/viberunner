@@ -117,9 +117,9 @@ jobs:
       env:
         # Pass GitHub secrets as environment variables for macOS code signing
         OSX_SIGN_IDENTITY: ${{ matrix.os == 'macos-latest' && secrets.OSX_SIGN_IDENTITY || '' }}
-        APPLE_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_ID || '' }}
-        APPLE_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.APPLE_PASSWORD || '' }}
-        APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.APPLE_TEAM_ID || '' }}
+        VR_APPLE_ID: ${{ matrix.os == 'macos-latest' && secrets.VR_APPLE_ID || '' }}
+        VR_APPLE_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.VR_APPLE_PASSWORD || '' }}
+        VR_APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.VR_APPLE_TEAM_ID || '' }}
       run: npm run make
 
     - name: Test packaged app exists

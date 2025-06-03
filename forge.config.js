@@ -40,9 +40,9 @@ module.exports = {
     osxNotarize: {
       // Add your Apple ID info when ready for distribution
       tool: 'notarytool',
-      appleId: process.env.APPLE_ID,
-      appleIdPassword: process.env.APPLE_PASSWORD,
-      teamId: process.env.APPLE_TEAM_ID,
+      appleId: process.env.VR_APPLE_ID,
+      appleIdPassword: process.env.VR_APPLE_PASSWORD,
+      teamId: process.env.VR_APPLE_TEAM_ID,
     }
   },
   rebuildConfig: {
