@@ -1,22 +1,25 @@
-import React, { useState } from 'react'
+import React, { useState } from "react"
 
 interface BuildPromptProps {
   onSubmit?: (prompt: string) => void
   condensed?: boolean
 }
 
-const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit, condensed = false }) => {
-  const [buildPrompt, setBuildPrompt] = useState<string>('')
+const BuildPrompt: React.FC<BuildPromptProps> = ({
+  onSubmit,
+  condensed = false,
+}) => {
+  const [buildPrompt, setBuildPrompt] = useState<string>("")
 
   const handleSubmit = () => {
     if (buildPrompt.trim()) {
       onSubmit?.(buildPrompt.trim())
-      setBuildPrompt('')
+      setBuildPrompt("")
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSubmit()
     }
   }
@@ -27,16 +30,16 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit, condensed = false }
     "a weather app",
     "a code snippet manager",
     "a note-taking tool",
-    "a timer application"
+    "a timer application",
   ]
 
   if (condensed) {
     return (
-      <div className="bg-white/3 border border-white/10 rounded-2xl p-8 mb-8">
+      <div className="rounded-2xl p-8">
         {/* Condensed header */}
         <div className="text-center mb-6">
           <h2 className="text-2xl font-light text-white mb-3 tracking-tight">
-            Build something{' '}
+            Build something{" "}
             <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent font-medium">
               new
             </span>
@@ -85,7 +88,7 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit, condensed = false }
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-6xl font-light text-white mb-6 tracking-tight">
-            What would you like to{' '}
+            What would you like to{" "}
             <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent font-medium">
               build
             </span>
