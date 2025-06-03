@@ -849,3 +849,48 @@
     border-bottom: 1px solid #333;
   }
 }
+
+/* AI Agent Interface when inside a tab */
+.ai-agent-interface.ai-agent-in-tab {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+  width: 100%;
+  height: 100%;
+  background: var(--background);
+}
+
+/* Tab-specific header for AI Agent */
+.tab-agent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  gap: 16px;
+}
+
+.tab-agent-header .runner-name-input {
+  flex: 1;
+}
+
+/* Update colors for tab version to match app theme */
+.ai-agent-interface.ai-agent-in-tab .chat-column,
+.ai-agent-interface.ai-agent-in-tab .editor-column {
+  background: var(--background);
+}
+
+.ai-agent-interface.ai-agent-in-tab .chat-header,
+.ai-agent-interface.ai-agent-in-tab .editor-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.ai-agent-interface.ai-agent-in-tab .chat-input-form {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}

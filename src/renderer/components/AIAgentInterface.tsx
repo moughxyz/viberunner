@@ -23,9 +23,10 @@ export interface Message {
 
 interface AIAgentInterfaceProps {
   onClose?: () => void
+  inTab?: boolean
 }
 
-const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose }) => {
+const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose, inTab = false }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [apiKey, setApiKey] = useState<string>('')
@@ -355,35 +356,56 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({ onClose }) => {
   }
 
   return (
-    <div className="ai-agent-interface">
-      <div className="ai-agent-header">
-        <div className="ai-agent-title">
-          <h2>AI Runner Builder</h2>
-          <div className="runner-name-input">
-            <input
-              type="text"
-              placeholder="Runner name (optional)"
-              value={runnerName}
-              onChange={(e) => setRunnerName(e.target.value)}
-            />
+    <div className={`ai-agent-interface ${inTab ? 'ai-agent-in-tab' : ''}`}>
+      {!inTab && (
+        <div className="ai-agent-header">
+          <div className="ai-agent-title">
+            <h2>AI Runner Builder</h2>
+            <div className="runner-name-input">
+              <input
+                type="text"
+                placeholder="Runner name (optional)"
+                value={runnerName}
+                onChange={(e) => setRunnerName(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="ai-agent-actions">
+            <button
+              onClick={handleSaveRunner}
+              disabled={Object.keys(currentFiles).length === 0 || isSaving}
+              className="save-btn"
+            >
+              {isSaving ? 'Saving...' : 'Save & Build Runner'}
+            </button>
+            <button onClick={onClose} className="close-btn">
+              ✕
+            </button>
           </div>
         </div>
-        <div className="ai-agent-actions">
-          <button
-            onClick={handleSaveRunner}
-            disabled={Object.keys(currentFiles).length === 0 || isSaving}
-            className="save-btn"
-          >
-            {isSaving ? 'Saving...' : 'Save & Build Runner'}
-          </button>
-          <button onClick={onClose} className="close-btn">
-            ✕
-          </button>
-        </div>
-      </div>
+      )}
 
       <div className="ai-agent-content">
         <div className="chat-column">
+          {inTab && (
+            <div className="tab-agent-header">
+              <div className="runner-name-input">
+                <input
+                  type="text"
+                  placeholder="Runner name (optional)"
+                  value={runnerName}
+                  onChange={(e) => setRunnerName(e.target.value)}
+                />
+              </div>
+              <button
+                onClick={handleSaveRunner}
+                disabled={Object.keys(currentFiles).length === 0 || isSaving}
+                className="save-btn"
+              >
+                {isSaving ? 'Saving...' : 'Save & Build Runner'}
+              </button>
+            </div>
+          )}
           <ChatInterface
             messages={messages}
             onSendMessage={handleSendMessage}

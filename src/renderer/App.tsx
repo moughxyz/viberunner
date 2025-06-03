@@ -5,6 +5,7 @@ import UpdateNotification, {
   UpdateNotificationRef,
 } from "./components/UpdateNotification"
 import BuildPrompt from "./components/BuildPrompt"
+import AIAgentInterface from "./components/AIAgentInterface"
 import {
   getRunnerPreference,
   getRunnerPreferences,
@@ -226,7 +227,7 @@ interface OpenTab {
   runner?: RunnerConfig // Optional for new tab - represents the runner
   fileInput?: FileInput // undefined for standalone runners and new tab
   title: string
-  type: "file" | "standalone" | "newtab"
+  type: "file" | "standalone" | "newtab" | "ai-agent"
   runnerData?: any // Store the loaded runner data for reloading
   reactRoot?: any // Store the React root for each tab
   domContainer?: HTMLDivElement // Store the DOM container for each tab
@@ -1367,6 +1368,106 @@ const App: React.FC = () => {
     console.log("App received build prompt:", prompt)
   }
 
+  // Function to open AI Agent in a new tab
+  const openAIAgentInNewTab = async () => {
+    const tabId = generateTabId()
+    const newTab: OpenTab = {
+      id: tabId,
+      title: "AI Agent Builder",
+      type: "ai-agent",
+    }
+
+    // Check if we have an active new tab to transform
+    const currentTab = openTabs.find((tab) => tab.id === activeTabId)
+
+    if (currentTab && currentTab.type === "newtab") {
+      // Transform the current new tab
+      const transformedTab: OpenTab = {
+        ...currentTab,
+        title: "AI Agent Builder",
+        type: "ai-agent",
+      }
+
+      setOpenTabs((prev) =>
+        prev.map((tab) => (tab.id === activeTabId ? transformedTab : tab))
+      )
+
+      // Create the AI Agent container
+      const success = await createAIAgentContainer(transformedTab)
+      if (success) {
+        switchToTab(transformedTab.id, transformedTab)
+      }
+    } else {
+      // Create a new tab
+      setOpenTabs((prev) => [...prev, newTab])
+
+      // Create the AI Agent container
+      const success = await createAIAgentContainer(newTab)
+      if (success) {
+        switchToTab(tabId, newTab)
+      }
+    }
+  }
+
+  // Function to create a persistent AI Agent container
+  const createAIAgentContainer = async (tab: OpenTab): Promise<boolean> => {
+    if (!appRootRef.current || tab.type !== "ai-agent") {
+      console.error("Cannot create AI Agent container:", {
+        hasAppRoot: !!appRootRef.current,
+        isAIAgent: tab.type === "ai-agent",
+      })
+      return false
+    }
+
+    console.log("Creating AI Agent container for tab:", tab.id)
+
+    // Create DOM container
+    const container = document.createElement("div")
+    container.className = "tab-ai-agent-container"
+    container.style.position = "absolute"
+    container.style.top = "0"
+    container.style.left = "0"
+    container.style.right = "0"
+    container.style.bottom = "0"
+    container.style.width = "100%"
+    container.style.height = "100%"
+    container.style.display = "none" // Start hidden
+    container.style.visibility = "hidden"
+    container.style.zIndex = "-1"
+    container.style.opacity = "0"
+    container.style.background = "var(--background)"
+    appRootRef.current.appendChild(container)
+
+    return new Promise<boolean>((resolve) => {
+      try {
+        // Create React root and render AI Agent
+        const root = createRoot(container)
+        root.render(React.createElement(AIAgentInterface, {
+          onClose: () => closeTab(tab.id),
+          inTab: true
+        }))
+
+        // Store container reference in tabContainersRef for tab switching
+        tabContainersRef.current.set(tab.id, {
+          domElement: container,
+          reactRoot: root,
+          styleElement: undefined,
+        })
+
+        // Show the container with proper stacking
+        container.style.display = "block"
+        container.style.visibility = "visible"
+        container.style.zIndex = "10"
+        container.style.opacity = "1"
+
+        resolve(true)
+      } catch (error) {
+        console.error("Error creating AI Agent container:", error)
+        resolve(false)
+      }
+    })
+  }
+
   return (
     <div className="vr-app">
       <header id="vr-header">
@@ -1401,6 +1502,8 @@ const App: React.FC = () => {
                           objectFit: "contain",
                         }}
                       />
+                    ) : tab.type === "ai-agent" ? (
+                      <span style={{ fontSize: "16px" }}>🤖</span>
                     ) : tab.runner ? (
                       <img
                         src={getAppIcon(tab.runner)}
@@ -1553,7 +1656,7 @@ const App: React.FC = () => {
               <div className="vr-new-tab-unified">
                 <div className="unified-content">
                   {/* Build Prompt Component */}
-                  <BuildPrompt onSubmit={handleBuildPromptSubmit} />
+                  <BuildPrompt onSubmit={handleBuildPromptSubmit} onOpenAIAgent={openAIAgentInNewTab} />
 
                   {/* Existing runners section - show only if runners are available */}
                   {runners.length > 0 && (

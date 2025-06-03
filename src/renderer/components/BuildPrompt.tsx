@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import AIAgentInterface from './AIAgentInterface';
 
 interface BuildPromptProps {
   onSubmit?: (prompt: string) => void;
+  onOpenAIAgent?: () => void;
 }
 
-const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit }) => {
+const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit, onOpenAIAgent }) => {
   const [buildPrompt, setBuildPrompt] = useState<string>('');
-  const [showAIAgent, setShowAIAgent] = useState(false);
 
   const handleSubmit = () => {
     if (buildPrompt.trim()) {
@@ -24,16 +23,8 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit }) => {
   };
 
   const handleOpenAIAgent = () => {
-    setShowAIAgent(true);
+    onOpenAIAgent?.();
   };
-
-  const handleCloseAIAgent = () => {
-    setShowAIAgent(false);
-  };
-
-  if (showAIAgent) {
-    return <AIAgentInterface onClose={handleCloseAIAgent} />;
-  }
 
   return (
     <div className="ai-agent-prompt">
