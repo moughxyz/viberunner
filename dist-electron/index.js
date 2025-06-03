@@ -25389,7 +25389,9 @@ function evaluateMatcher(matcher, fileAnalysis) {
     }
     case "combined": {
       if (!matcher.conditions) return false;
-      const results = matcher.conditions.map((condition) => evaluateMatcher(condition, fileAnalysis));
+      const results = matcher.conditions.map(
+        (condition) => evaluateMatcher(condition, fileAnalysis)
+      );
       return matcher.operator === "OR" ? results.some(Boolean) : results.every(Boolean);
     }
     default:
@@ -25427,18 +25429,18 @@ function getAppsDirectory() {
   return appsDir;
 }
 async function loadApps() {
-  const APPS_DIR = getAppsDirectory();
-  console.log("loadApps: Loading from directory:", APPS_DIR);
-  if (!fs$j.existsSync(APPS_DIR)) {
-    console.log("loadApps: Directory does not exist:", APPS_DIR);
+  const RUNNERS_DIR = getAppsDirectory();
+  console.log("loadApps: Loading from directory:", RUNNERS_DIR);
+  if (!fs$j.existsSync(RUNNERS_DIR)) {
+    console.log("loadApps: Directory does not exist:", RUNNERS_DIR);
     return [];
   }
   try {
     console.log("loadApps: Reading directory contents");
-    const dirContents = fs$j.readdirSync(APPS_DIR);
+    const dirContents = fs$j.readdirSync(RUNNERS_DIR);
     console.log("loadApps: Directory contents:", dirContents);
     const directories = dirContents.filter((dir) => {
-      const fullPath = require$$1.join(APPS_DIR, dir);
+      const fullPath = require$$1.join(RUNNERS_DIR, dir);
       const isDir = fs$j.statSync(fullPath).isDirectory();
       console.log(`loadApps: ${dir} is directory: ${isDir}`);
       return isDir;
@@ -25446,18 +25448,18 @@ async function loadApps() {
     console.log("loadApps: Found directories:", directories);
     const apps = directories.map((dir) => {
       console.log(`loadApps: Processing directory: ${dir}`);
-      const vizPath = require$$1.join(APPS_DIR, dir);
-      const metadataPath = require$$1.join(vizPath, "viz.json");
-      console.log(`loadApps: Looking for metadata at: ${metadataPath}`);
-      if (!fs$j.existsSync(metadataPath)) {
-        console.log(`loadApps: No viz.json found for ${dir}`);
+      const runnerPath = require$$1.join(RUNNERS_DIR, dir);
+      const packageJsonPath = require$$1.join(runnerPath, "package.json");
+      console.log(`loadApps: Looking for metadata at: ${packageJsonPath}`);
+      if (!fs$j.existsSync(packageJsonPath)) {
+        console.log(`loadApps: No package.json found for ${dir}`);
         return null;
       }
       try {
         console.log(`loadApps: Reading metadata for ${dir}`);
-        const metadataContent = fs$j.readFileSync(metadataPath, "utf-8");
+        const metadataContent = fs$j.readFileSync(packageJsonPath, "utf-8");
         console.log(`loadApps: Metadata content for ${dir}:`, metadataContent);
-        const metadata = JSON.parse(metadataContent);
+        const metadata = JSON.parse(metadataContent).viberunner;
         console.log(`loadApps: Parsed metadata for ${dir}:`, metadata);
         const result = {
           ...metadata,
@@ -25466,7 +25468,10 @@ async function loadApps() {
         console.log(`loadApps: Final app object for ${dir}:`, result);
         return result;
       } catch (parseError) {
-        console.error(`loadApps: Error parsing metadata for ${dir}:`, parseError);
+        console.error(
+          `loadApps: Error parsing metadata for ${dir}:`,
+          parseError
+        );
         return null;
       }
     }).filter(Boolean);
@@ -25515,10 +25520,7 @@ const createMenuBar = () => {
     },
     {
       label: "Window",
-      submenu: [
-        { role: "minimize" },
-        { role: "close" }
-      ]
+      submenu: [{ role: "minimize" }, { role: "close" }]
     },
     {
       label: "Help",
@@ -25532,7 +25534,10 @@ const createMenuBar = () => {
               console.log("Opened data directory:", userDataPath);
             } catch (error2) {
               console.error("Failed to open data directory:", error2);
-              require$$1$3.dialog.showErrorBox("Error", `Failed to open data directory: ${error2}`);
+              require$$1$3.dialog.showErrorBox(
+                "Error",
+                `Failed to open data directory: ${error2}`
+              );
             }
           }
         }
@@ -25588,7 +25593,10 @@ const createWindow = () => {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
   } else {
     const isDev = process.env.NODE_ENV === "development";
-    const rendererPath = isDev ? require$$1.join(__dirname, `../renderer/${process.env.VITE_DEV_NAME}/index.html`) : require$$1.join(__dirname, "../dist/index.html");
+    const rendererPath = isDev ? require$$1.join(
+      __dirname,
+      `../renderer/${process.env.VITE_DEV_NAME}/index.html`
+    ) : require$$1.join(__dirname, "../dist/index.html");
     mainWindow.loadFile(rendererPath);
   }
 };
@@ -25637,8 +25645,8 @@ function registerIpcHandlers() {
     if (!appInstance) {
       throw new Error(`App ${id} not found`);
     }
-    const APPS_DIR = getAppsDirectory();
-    const appDir = require$$1.join(APPS_DIR, appInstance.id);
+    const RUNNERS_DIR = getAppsDirectory();
+    const appDir = require$$1.join(RUNNERS_DIR, appInstance.id);
     const bundlePath = require$$1.join(appDir, "dist", "bundle.iife.js");
     if (!fs$j.existsSync(bundlePath)) {
       throw new Error(`Bundle not found: ${bundlePath}`);

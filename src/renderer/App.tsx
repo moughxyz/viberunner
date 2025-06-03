@@ -25,19 +25,19 @@ const api = {
   // User Preferences API for runners
   getAppPreferences: (runnerId: string) => {
     try {
-      const APPS_DIR = getRunnersDirectory()
-      const appPath = path.join(APPS_DIR, runnerId)
-      const metadataPath = path.join(appPath, "viz.json")
+      const RUNNERS_DIR = getRunnersDirectory()
+      const runnerPath = path.join(RUNNERS_DIR, runnerId)
+      const packageJsonPath = path.join(runnerPath, "package.json")
 
-      if (!fs.existsSync(metadataPath)) {
-        console.warn(`No viz.json found for app ${runnerId}`)
+      if (!fs.existsSync(packageJsonPath)) {
+        console.warn(`No package.json found for app ${runnerId}`)
         return {}
       }
 
-      const metadataContent = fs.readFileSync(metadataPath, "utf8")
-      const metadata = JSON.parse(metadataContent)
+      const packageJsonContent = fs.readFileSync(packageJsonPath, "utf8")
+      const packageJson = JSON.parse(packageJsonContent)
 
-      return metadata.userPreferences || {}
+      return packageJson.viberunner.userPreferences || {}
     } catch (error) {
       console.error(`Failed to read preferences for app ${runnerId}:`, error)
       return {}
@@ -46,23 +46,27 @@ const api = {
 
   setAppPreferences: (runnerId: string, preferences: any) => {
     try {
-      const APPS_DIR = getRunnersDirectory()
-      const appPath = path.join(APPS_DIR, runnerId)
-      const metadataPath = path.join(appPath, "viz.json")
+      const RUNNERS_DIR = getRunnersDirectory()
+      const runnerPath = path.join(RUNNERS_DIR, runnerId)
+      const packageJsonPath = path.join(runnerPath, "package.json")
 
-      if (!fs.existsSync(metadataPath)) {
-        throw new Error(`No viz.json found for app ${runnerId}`)
+      if (!fs.existsSync(packageJsonPath)) {
+        throw new Error(`No package.json found for app ${runnerId}`)
       }
 
       // Read current metadata
-      const metadataContent = fs.readFileSync(metadataPath, "utf8")
-      const metadata = JSON.parse(metadataContent)
+      const packageJsonContent = fs.readFileSync(packageJsonPath, "utf8")
+      const packageJson = JSON.parse(packageJsonContent)
 
       // Update preferences
-      metadata.userPreferences = preferences
+      packageJson.viberunner.userPreferences = preferences
 
       // Write back to file with pretty formatting
-      fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2), "utf8")
+      fs.writeFileSync(
+        packageJsonPath,
+        JSON.stringify(packageJson, null, 2),
+        "utf8"
+      )
 
       console.log(`Updated preferences for app ${runnerId}`)
       return true
@@ -281,21 +285,21 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
 }
 
 async function loadRunners(): Promise<RunnerConfig[]> {
-  const APPS_DIR = getRunnersDirectory()
-  console.log("loadRunners: Looking for runners in:", APPS_DIR)
+  const RUNNERS_DIR = getRunnersDirectory()
+  console.log("loadRunners: Looking for runners in:", RUNNERS_DIR)
 
-  if (!fs.existsSync(APPS_DIR)) {
+  if (!fs.existsSync(RUNNERS_DIR)) {
     console.log("loadRunners: Directory does not exist, creating it")
-    fs.mkdirSync(APPS_DIR, { recursive: true })
+    fs.mkdirSync(RUNNERS_DIR, { recursive: true })
     return []
   }
 
   try {
-    const dirContents = fs.readdirSync(APPS_DIR)
+    const dirContents = fs.readdirSync(RUNNERS_DIR)
     console.log("loadRunners: Directory contents:", dirContents)
 
     const directories = dirContents.filter((dir: string) => {
-      const fullPath = path.join(APPS_DIR, dir)
+      const fullPath = path.join(RUNNERS_DIR, dir)
       const isDir = fs.statSync(fullPath).isDirectory()
       console.log(`loadRunners: ${dir} is directory: ${isDir}`)
       return isDir
@@ -304,18 +308,18 @@ async function loadRunners(): Promise<RunnerConfig[]> {
 
     const runners = directories
       .map((dir: string) => {
-        const appPath = path.join(APPS_DIR, dir)
-        const metadataPath = path.join(appPath, "viz.json")
-        console.log(`loadRunners: Checking for metadata at: ${metadataPath}`)
+        const runnerPath = path.join(RUNNERS_DIR, dir)
+        const packageJsonPath = path.join(runnerPath, "package.json")
+        console.log(`loadRunners: Checking for metadata at: ${packageJsonPath}`)
 
-        if (!fs.existsSync(metadataPath)) {
-          console.log(`loadRunners: No viz.json found for ${dir}`)
+        if (!fs.existsSync(packageJsonPath)) {
+          console.log(`loadRunners: No package.json found for ${dir}`)
           return null
         }
 
         try {
-          const metadataContent = fs.readFileSync(metadataPath, "utf-8")
-          const metadata = JSON.parse(metadataContent)
+          const metadataContent = fs.readFileSync(packageJsonPath, "utf-8")
+          const metadata = JSON.parse(metadataContent).viberunner
           console.log(
             `loadRunners: Successfully loaded metadata for ${dir}:`,
             metadata
@@ -340,9 +344,9 @@ async function loadRunners(): Promise<RunnerConfig[]> {
 }
 
 async function loadApp(id: string) {
-  const APPS_DIR = getRunnersDirectory()
-  const appPath = path.join(APPS_DIR, id)
-  const bundlePath = path.join(appPath, "dist", "bundle.iife.js")
+  const RUNNERS_DIR = getRunnersDirectory()
+  const runnerPath = path.join(RUNNERS_DIR, id)
+  const bundlePath = path.join(runnerPath, "dist", "bundle.iife.js")
 
   if (!fs.existsSync(bundlePath)) {
     throw new Error(`Bundle not found: ${bundlePath}`)
@@ -351,11 +355,11 @@ async function loadApp(id: string) {
   const bundleContent = fs.readFileSync(bundlePath, "utf-8")
 
   // Also load the metadata
-  const metadataPath = path.join(appPath, "viz.json")
+  const metadataPath = path.join(runnerPath, "package.json")
   let config = null
   if (fs.existsSync(metadataPath)) {
     const metadataContent = fs.readFileSync(metadataPath, "utf-8")
-    config = JSON.parse(metadataContent)
+    config = JSON.parse(metadataContent).viberunner
   }
 
   return { bundleContent, config }
