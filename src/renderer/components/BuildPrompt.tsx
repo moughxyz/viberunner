@@ -2,9 +2,10 @@ import React, { useState } from 'react'
 
 interface BuildPromptProps {
   onSubmit?: (prompt: string) => void
+  condensed?: boolean
 }
 
-const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit }) => {
+const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit, condensed = false }) => {
   const [buildPrompt, setBuildPrompt] = useState<string>('')
 
   const handleSubmit = () => {
@@ -29,6 +30,49 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({ onSubmit }) => {
     "a timer application"
   ]
 
+  if (condensed) {
+    return (
+      <div className="bg-white/3 border border-white/10 rounded-2xl p-8 mb-8">
+        {/* Condensed header */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-light text-white mb-3 tracking-tight">
+            Build something{' '}
+            <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent font-medium">
+              new
+            </span>
+          </h2>
+          <p className="text-gray-400 text-sm font-light">
+            Describe your idea and I'll help bring it to life
+          </p>
+        </div>
+
+        {/* Condensed input */}
+        <div className="mb-6">
+          <div className="relative">
+            <textarea
+              value={buildPrompt}
+              onChange={(e) => setBuildPrompt(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="I want to create..."
+              rows={2}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-white placeholder:text-gray-500 resize-none focus:outline-none focus:border-purple-400/50 focus:bg-white/8 transition-all duration-300"
+            />
+
+            {buildPrompt.trim() && (
+              <button
+                onClick={handleSubmit}
+                className="absolute bottom-3 right-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-1.5 rounded-lg text-xs font-medium hover:from-purple-600 hover:to-blue-600 transition-all duration-200 hover:scale-105"
+              >
+                Create →
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Full-screen mode (original design)
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-6">
       {/* Background decoration */}

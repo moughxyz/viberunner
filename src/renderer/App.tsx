@@ -1655,200 +1655,203 @@ const App: React.FC = () => {
             {/* Unified new tab interface when active tab is new tab */}
             {activeTab?.type === "newtab" && !showAppSelection && (
               <div className="vr-new-tab-unified">
-                <div className="unified-content">
-                  {/* Build Prompt Component */}
-                  <BuildPrompt onSubmit={handleBuildPromptSubmit} />
+                {/* Full-screen BuildPrompt when no runners are available */}
+                {runners.length === 0 && (
+                  <BuildPrompt onSubmit={handleBuildPromptSubmit} condensed={false} />
+                )}
 
-                  {/* Existing runners section - show only if runners are available */}
-                  {runners.length > 0 && (
-                    <>
-                      {/* Drop zone section */}
-                      <div className="drop-zone-section">
-                        <div className="section-card">
-                          <div className="drop-zone-content">
-                            <div className="drop-zone-header">
-                              <div className="drop-zone-icon">⬇</div>
-                              <h3 className="drop-zone-title">
-                                Drop files here
-                              </h3>
-                            </div>
-                            <p className="drop-zone-description">
-                              Drag and drop files to automatically find
-                              compatible runners
-                            </p>
+                {/* Condensed BuildPrompt and other content when runners are available */}
+                {runners.length > 0 && (
+                  <div className="unified-content">
+                    {/* Build Prompt Component */}
+                    <BuildPrompt onSubmit={handleBuildPromptSubmit} condensed={true} />
+
+                    {/* Drop zone section */}
+                    <div className="drop-zone-section">
+                      <div className="section-card">
+                        <div className="drop-zone-content">
+                          <div className="drop-zone-header">
+                            <div className="drop-zone-icon">⬇</div>
+                            <h3 className="drop-zone-title">
+                              Drop files here
+                            </h3>
                           </div>
+                          <p className="drop-zone-description">
+                            Drag and drop files to automatically find
+                            compatible runners
+                          </p>
                         </div>
                       </div>
+                    </div>
 
-                      {/* Utility runners section */}
-                      {runners.filter((a) => a.standalone).length > 0 && (
-                        <div className="utility-section">
-                          <div className="section-card">
-                            <div className="section-header">
-                              <h4 className="section-title">Utility Runners</h4>
-                              <span className="section-count">
-                                {runners.filter((a) => a.standalone).length}
-                              </span>
-                            </div>
-                            <div className="utility-cards">
-                              {runners
-                                .filter((a) => a.standalone)
-                                .map((runner) => {
-                                  const startupConfig =
-                                    startupRunners[runner.id]
-                                  const isStartupEnabled =
-                                    startupConfig?.enabled || false
-                                  const tabOrder = startupConfig?.tabOrder || 1
+                    {/* Utility runners section */}
+                    {runners.filter((a) => a.standalone).length > 0 && (
+                      <div className="utility-section">
+                        <div className="section-card">
+                          <div className="section-header">
+                            <h4 className="section-title">Utility Runners</h4>
+                            <span className="section-count">
+                              {runners.filter((a) => a.standalone).length}
+                            </span>
+                          </div>
+                          <div className="utility-cards">
+                            {runners
+                              .filter((a) => a.standalone)
+                              .map((runner) => {
+                                const startupConfig =
+                                  startupRunners[runner.id]
+                                const isStartupEnabled =
+                                  startupConfig?.enabled || false
+                                const tabOrder = startupConfig?.tabOrder || 1
 
-                                  return (
+                                return (
+                                  <div
+                                    key={runner.id}
+                                    className="utility-card-container"
+                                  >
                                     <div
-                                      key={runner.id}
-                                      className="utility-card-container"
+                                      className="utility-card"
+                                      onClick={() =>
+                                        launchStandaloneApp(runner)
+                                      }
                                     >
-                                      <div
-                                        className="utility-card"
-                                        onClick={() =>
-                                          launchStandaloneApp(runner)
-                                        }
-                                      >
-                                        <div className="utility-icon">
-                                          <img
-                                            src={getAppIcon(runner)}
-                                            alt={runner.name}
-                                            style={{
-                                              width: "24px",
-                                              height: "24px",
-                                              objectFit: "contain",
-                                            }}
+                                      <div className="utility-icon">
+                                        <img
+                                          src={getAppIcon(runner)}
+                                          alt={runner.name}
+                                          style={{
+                                            width: "24px",
+                                            height: "24px",
+                                            objectFit: "contain",
+                                          }}
+                                        />
+                                      </div>
+                                      <div className="utility-content">
+                                        <h5 className="utility-title">
+                                          {runner.name}
+                                        </h5>
+                                        <p className="utility-description">
+                                          {runner.description}
+                                        </p>
+                                      </div>
+                                      <div className="utility-action">
+                                        Launch
+                                      </div>
+                                    </div>
+
+                                    {/* Startup controls */}
+                                    <div
+                                      className="startup-controls"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <div className="startup-toggle">
+                                        <label
+                                          className="toggle-label"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <input
+                                            type="checkbox"
+                                            checked={isStartupEnabled}
+                                            onChange={(e) =>
+                                              toggleStartupApp(
+                                                runner.id,
+                                                e.target.checked
+                                              )
+                                            }
+                                            onClick={(e) =>
+                                              e.stopPropagation()
+                                            }
+                                            className="toggle-checkbox"
                                           />
-                                        </div>
-                                        <div className="utility-content">
-                                          <h5 className="utility-title">
-                                            {runner.name}
-                                          </h5>
-                                          <p className="utility-description">
-                                            {runner.description}
-                                          </p>
-                                        </div>
-                                        <div className="utility-action">
-                                          Launch
-                                        </div>
+                                          <span className="toggle-slider"></span>
+                                          <span className="toggle-text">
+                                            Start on launch
+                                          </span>
+                                        </label>
                                       </div>
 
-                                      {/* Startup controls */}
-                                      <div
-                                        className="startup-controls"
-                                        onClick={(e) => e.stopPropagation()}
-                                      >
-                                        <div className="startup-toggle">
-                                          <label
-                                            className="toggle-label"
-                                            onClick={(e) => e.stopPropagation()}
-                                          >
+                                      {isStartupEnabled && (
+                                        <div className="tab-order-control">
+                                          <label className="tab-order-label">
+                                            Tab order:
                                             <input
-                                              type="checkbox"
-                                              checked={isStartupEnabled}
+                                              type="number"
+                                              min="1"
+                                              max="99"
+                                              value={tabOrder}
                                               onChange={(e) =>
-                                                toggleStartupApp(
+                                                updateStartupAppTabOrder(
                                                   runner.id,
-                                                  e.target.checked
+                                                  parseInt(e.target.value) ||
+                                                    1
                                                 )
                                               }
                                               onClick={(e) =>
                                                 e.stopPropagation()
                                               }
-                                              className="toggle-checkbox"
+                                              className="tab-order-input"
                                             />
-                                            <span className="toggle-slider"></span>
-                                            <span className="toggle-text">
-                                              Start on launch
-                                            </span>
                                           </label>
                                         </div>
-
-                                        {isStartupEnabled && (
-                                          <div className="tab-order-control">
-                                            <label className="tab-order-label">
-                                              Tab order:
-                                              <input
-                                                type="number"
-                                                min="1"
-                                                max="99"
-                                                value={tabOrder}
-                                                onChange={(e) =>
-                                                  updateStartupAppTabOrder(
-                                                    runner.id,
-                                                    parseInt(e.target.value) ||
-                                                      1
-                                                  )
-                                                }
-                                                onClick={(e) =>
-                                                  e.stopPropagation()
-                                                }
-                                                className="tab-order-input"
-                                              />
-                                            </label>
-                                          </div>
-                                        )}
-                                      </div>
+                                      )}
                                     </div>
-                                  )
-                                })}
-                            </div>
+                                  </div>
+                                )
+                              })}
                           </div>
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* File-based runners section */}
-                      {runners.filter((f) => !f.standalone).length > 0 && (
-                        <div className="runners-section">
-                          <div className="section-card">
-                            <div className="section-header">
-                              <h4 className="section-title">
-                                Contextual Runners
-                              </h4>
-                              <span className="section-count">
-                                {runners.filter((f) => !f.standalone).length}
-                              </span>
+                    {/* File-based runners section */}
+                    {runners.filter((f) => !f.standalone).length > 0 && (
+                      <div className="runners-section">
+                        <div className="section-card">
+                          <div className="section-header">
+                            <h4 className="section-title">
+                              Contextual Runners
+                            </h4>
+                            <span className="section-count">
+                              {runners.filter((f) => !f.standalone).length}
+                            </span>
+                          </div>
+                          {isLoadingRunners ? (
+                            <div className="loading-state">
+                              <span className="loading-spinner">⟳</span>
+                              Loading runners...
                             </div>
-                            {isLoadingRunners ? (
-                              <div className="loading-state">
-                                <span className="loading-spinner">⟳</span>
-                                Loading runners...
-                              </div>
-                            ) : (
-                              <div className="runners-grid">
-                                {runners
-                                  .filter((f) => !f.standalone)
-                                  .map((runner) => (
-                                    <div
-                                      key={runner.id}
-                                      className="app-info-card"
-                                    >
-                                      <div className="app-info-header">
-                                        <h5 className="app-info-title">
-                                          {runner.name}
-                                        </h5>
-                                        <div className="app-info-status">
-                                          <span className="status-dot"></span>
-                                        </div>
-                                      </div>
-                                      <p className="app-info-description">
-                                        {runner.description}
-                                      </p>
-                                      <div className="app-info-formats">
-                                        {getSupportedFormats(runner)}
+                          ) : (
+                            <div className="runners-grid">
+                              {runners
+                                .filter((f) => !f.standalone)
+                                .map((runner) => (
+                                  <div
+                                    key={runner.id}
+                                    className="app-info-card"
+                                  >
+                                    <div className="app-info-header">
+                                      <h5 className="app-info-title">
+                                        {runner.name}
+                                      </h5>
+                                      <div className="app-info-status">
+                                        <span className="status-dot"></span>
                                       </div>
                                     </div>
-                                  ))}
-                              </div>
-                            )}
-                          </div>
+                                    <p className="app-info-description">
+                                      {runner.description}
+                                    </p>
+                                    <div className="app-info-formats">
+                                      {getSupportedFormats(runner)}
+                                    </div>
+                                  </div>
+                                ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </>
-                  )}
-                </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
