@@ -1414,12 +1414,20 @@ const App: React.FC = () => {
 
                 {runners.length > 0 && (
                   <div className="unified-content">
-                    <BuildPrompt
-                      onSubmit={handleBuildPromptSubmit}
-                      condensed={true}
-                    />
+                    <div className="chat-dropzone-columns">
+                      <div className="chat-column">
+                        <BuildPrompt
+                          onSubmit={handleBuildPromptSubmit}
+                          condensed={true}
+                        />
+                      </div>
 
-                    <DropZone />
+                      <div className="column-divider"></div>
+
+                      <div className="dropzone-column">
+                        <DropZone />
+                      </div>
+                    </div>
 
                     <RunnersGrid
                       runners={runners}

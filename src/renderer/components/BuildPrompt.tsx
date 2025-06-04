@@ -40,13 +40,10 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
         {/* Condensed header */}
         <div className="header-condensed">
           <h2 className="title-condensed">
-            Build something{" "}
-            <span className="title-gradient">
-              new
-            </span>
+            Build something <span className="title-gradient">new</span>
           </h2>
           <p className="subtitle-condensed">
-            Describe your idea and I'll help bring it to life
+            Describe your system utility or productivity tool
           </p>
         </div>
 
@@ -89,14 +86,11 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
         {/* Header */}
         <div className="header-full">
           <h1 className="title-full">
-            What would you like to{" "}
-            <span className="title-gradient">
-              build
-            </span>
+            What would you like to <span className="title-gradient">build</span>
             ?
           </h1>
           <p className="subtitle-full">
-            Describe your idea and I'll help bring it to life
+            Describe your system utility or productivity tool
           </p>
         </div>
 
@@ -113,10 +107,7 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
             />
 
             {buildPrompt.trim() && (
-              <button
-                onClick={handleSubmit}
-                className="submit-button-full"
-              >
+              <button onClick={handleSubmit} className="submit-button-full">
                 Create →
               </button>
             )}
@@ -125,9 +116,7 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
 
         {/* Examples */}
         <div className="examples-container">
-          <p className="examples-title">
-            Or try one of these ideas
-          </p>
+          <p className="examples-title">Or try one of these ideas</p>
           <div className="examples-grid">
             {examples.map((example, index) => (
               <button
@@ -139,13 +128,6 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Bottom hint */}
-        <div className="bottom-hint">
-          <p className="hint-text">
-            Press Enter or click Create to get started
-          </p>
         </div>
       </div>
     </div>
