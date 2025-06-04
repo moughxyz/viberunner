@@ -45,8 +45,6 @@ const api = {
 // Make API available globally for runners
 ;(window as any).api = api
 
-
-
 // Helper functions for direct file operations
 async function getMimetype(filePath: string): Promise<string> {
   try {
@@ -440,10 +438,6 @@ const App: React.FC = () => {
     runnerService.initialize()
   }, [])
 
-
-
-
-
   const openAppInNewTab = async (
     runner: RunnerConfig,
     fileInput?: FileInput,
@@ -466,7 +460,13 @@ const App: React.FC = () => {
   }
 
   const closeTab = (tabId: string) => {
-    tabService.closeTab(tabId, openTabs, activeTabId, setOpenTabs, setActiveTabId)
+    tabService.closeTab(
+      tabId,
+      openTabs,
+      activeTabId,
+      setOpenTabs,
+      setActiveTabId
+    )
   }
 
   // Handle tab switching
@@ -500,6 +500,13 @@ const App: React.FC = () => {
   function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {
     switch (matcher.type) {
       case "mimetype":
+        // Support wildcards in MIME types (e.g., "image/*", "text/*")
+        if (matcher.mimetype.includes("*")) {
+          const pattern = matcher.mimetype
+            .replace(/\*/g, ".*")
+            .replace(/\?/g, ".")
+          return new RegExp(`^${pattern}$`).test(fileAnalysis.mimetype)
+        }
         return matcher.mimetype === fileAnalysis.mimetype
 
       case "filename":
@@ -708,8 +715,6 @@ const App: React.FC = () => {
       setActiveTabId
     )
   }
-
-
 
   return (
     <div className="vr-app">
