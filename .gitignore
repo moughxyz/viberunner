@@ -31,3 +31,5 @@ npm-debug.log*
 **/source-icon.*
 **/icon-source.*
 **/original-icon.*
+
+.DS_Store

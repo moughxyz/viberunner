@@ -187,7 +187,7 @@
 }
 
 .message-wrapper.user {
-  flex-direction: row-reverse;
+  /* Remove flex-direction: row-reverse to keep user messages left-aligned */
 }
 
 .message-avatar {
@@ -213,7 +213,7 @@
 }
 
 .message-content-wrapper.user {
-  text-align: right;
+  /* Remove text-align: right to keep user messages left-aligned */
 }
 
 .message-bubble {
@@ -236,7 +236,7 @@
 }
 
 .message-timestamp.user {
-  text-align: right;
+  /* Remove text-align: right to keep user timestamps left-aligned */
 }
 
 .file-changes-container {
