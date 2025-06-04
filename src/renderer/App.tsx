@@ -6,6 +6,8 @@ import UpdateNotification, {
 import BuildPrompt from "./components/BuildPrompt"
 import AIAgentInterface from "./components/AIAgentInterface"
 import RunnersGrid from "./components/RunnersGrid"
+import AppSelection from "./components/AppSelection"
+import { FileInput, RunnerConfig, OpenTab } from "./types"
 import {
   getRunnerPreference,
   getRunnerPreferences,
@@ -205,33 +207,7 @@ async function loadApp(id: string) {
   return { bundleContent, config }
 }
 
-interface FileInput {
-  path: string
-  mimetype: string
-}
 
-interface RunnerConfig {
-  id: string
-  name: string
-  description: string
-  version: string
-  mimetypes: string[]
-  author: string
-  standalone?: boolean // Optional standalone property
-  icon?: string // Custom icon path
-  userPreferences?: Record<string, any> // User preferences storage
-}
-
-interface OpenTab {
-  id: string
-  runner?: RunnerConfig // Optional for new tab - represents the runner
-  fileInput?: FileInput // undefined for standalone runners and new tab
-  title: string
-  type: "file" | "standalone" | "newtab" | "ai-agent"
-  runnerData?: any // Store the loaded runner data for reloading
-  reactRoot?: any // Store the React root for each tab
-  domContainer?: HTMLDivElement // Store the DOM container for each tab
-}
 
 // Helper function to get supported formats for a runner
 const getSupportedFormats = (runner: any): string => {
@@ -1592,71 +1568,15 @@ const App: React.FC = () => {
 
       <div id="vr-main-layout">
         <main className="vr-content-area">
-          {showAppSelection && activeTab?.type === "newtab" ? (
-            <div className="vr-app-selection">
-              <div className="selection-header">
-                <h2 className="selection-title">Choose an app</h2>
-                <p className="selection-subtitle">
-                  Multiple runners can handle this file type. Choose one to
-                  continue:
-                </p>
-                <div className="file-meta">
-                  <span className="filename">
-                    {path.basename(pendingFileInput?.path || "")}
-                  </span>
-                  <span className="file-type">
-                    {pendingFileInput?.mimetype}
-                  </span>
-                </div>
-              </div>
-
-              <div className="app-grid">
-                {availableRunners.map((runner) => (
-                  <div
-                    key={runner.id}
-                    className="app-card"
-                    onClick={() => selectApp(runner)}
-                  >
-                    <div className="card-header">
-                      <div className="card-icon">
-                        <img
-                          src={getAppIcon(runner)}
-                          alt={runner.name}
-                          style={{
-                            width: "32px",
-                            height: "32px",
-                            objectFit: "contain",
-                          }}
-                        />
-                      </div>
-                      <div className="card-title-section">
-                        <h3 className="card-title">{runner.name}</h3>
-                        <div className="card-badge">
-                          <div className="badge-dot"></div>
-                          Ready
-                        </div>
-                      </div>
-                    </div>
-                    <p className="card-description">{runner.description}</p>
-                    <div className="card-footer">
-                      <div className="supported-formats">
-                        {getSupportedFormats(runner)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="selection-actions">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setShowAppSelection(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : null}
+          <AppSelection
+            isVisible={showAppSelection && activeTab?.type === "newtab"}
+            availableRunners={availableRunners}
+            pendingFileInput={pendingFileInput}
+            onSelectApp={selectApp}
+            onCancel={() => setShowAppSelection(false)}
+            getAppIcon={getAppIcon}
+            getSupportedFormats={getSupportedFormats}
+          />
 
           <div className="app-viewport-container">
             {/* Always render app viewport for tab containers */}
