@@ -6,9 +6,22 @@
 }
 
 .utility-cards {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+/* Responsive breakpoints for utility cards */
+@media (max-width: 1024px) {
+  .utility-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .utility-cards {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Utility card container with startup controls */
@@ -16,6 +29,7 @@
   display: flex;
   flex-direction: column;
   gap: 0; /* Remove gap to connect borders */
+  min-height: 140px;
 }
 
 .utility-card-container .utility-card {
@@ -198,18 +212,34 @@
 }
 
 .runners-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+/* Responsive breakpoints for runners grid */
+@media (max-width: 1024px) {
+  .runners-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .runners-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* App info cards for contextual runners */
 .app-info-card {
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   transition: all 0.15s ease;
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-info-card:hover {
@@ -247,6 +277,7 @@
   font-size: var(--font-size-sm);
   line-height: 1.4;
   margin-bottom: var(--space-2);
+  flex: 1;
 }
 
 .app-info-formats {
