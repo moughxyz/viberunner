@@ -2,8 +2,7 @@ export const templates = [
   {
     name: "Clipboard Manager",
     description: "a clipboard manager that shows recent history",
-    prompt:
-      "a clipboard manager that shows recent history. Use the Node API to access the clipboard history as the web API requires the document to be focused.",
+    prompt: "a clipboard manager that shows recent history",
   },
   {
     name: "Daily Notes",

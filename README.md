@@ -450,21 +450,21 @@ interface RunnerProps {
 
 ### Available APIs
 
-Runners have access to the global `api` object and direct Node.js modules:
+Runners have access to direct Node.js modules:
 
 ```javascript
 // Path utilities
-const dirname = api.path.dirname(filePath)
-const basename = api.path.basename(filePath)
-const extname = api.path.extname(filePath)
+const dirname = path.dirname(filePath)
+const basename = path.basename(filePath)
+const extname = path.extname(filePath)
 
 // MIME type detection
-const mimeType = api.mime.lookup(filePath)
+const mimeType = mime.lookup(filePath)
 
 // Direct Node.js access
-const fs = api.fs
-const path = api.path
-const customModule = api.require("some-module")
+const fs = fs
+const path = path
+const customModule = require("some-module")
 ```
 
 ### Benefits
@@ -479,7 +479,7 @@ const customModule = api.require("some-module")
 
 ```javascript
 // Read image directly when needed, no corruption risk
-const imageBuffer = api.fs.readFileSync(fileInput.path)
+const imageBuffer = fs.readFileSync(fileInput.path)
 const imageData = `data:${fileInput.mimetype};base64,${imageBuffer.toString(
   "base64"
 )}`
@@ -743,6 +743,8 @@ export default defineConfig({
 ```tsx
 import React from "react"
 
+const fs = require('fs')
+
 interface FileData {
   path: string
   mimetype: string
@@ -760,7 +762,7 @@ const JsonFormatter: React.FC<JsonFormatterProps> = ({ fileData }) => {
   React.useEffect(() => {
     try {
       // Try to parse the JSON content
-      let content = window.api.fs.readFileSync(filePath)
+      let content = fs.readFileSync(filePath)
 
       // Handle base64 encoded content
       if (
@@ -786,7 +788,7 @@ const JsonFormatter: React.FC<JsonFormatterProps> = ({ fileData }) => {
 
     try {
       // Save the formatted JSON back to the original file
-      window.api.fs.writeFileSync(fileData.path, formatted, "utf8")
+      fs.writeFileSync(fileData.path, formatted, "utf8")
       alert(`JSON saved successfully!`)
     } catch (err) {
       alert(`Error saving file: ${err}`)

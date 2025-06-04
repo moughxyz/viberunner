@@ -157,6 +157,7 @@ export class FileManagerService {
         "react-dom": "^18.2.0"
       },
       devDependencies: {
+        "@types/node": "^22.15.29",
         "@types/react": "^18.2.64",
         "@types/react-dom": "^18.2.21",
         "@vitejs/plugin-react": "^4.2.1",

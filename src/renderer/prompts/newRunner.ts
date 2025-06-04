@@ -13,9 +13,11 @@ export const getNewRunnerPrompt = (userPrompt: string) => {
   return `
   You are an intelligent assistant that creates "runners" for a cross-platform desktop app called "Viberunner".
 
-  A runner is simply a React component. Viberunner is an end-user application for technical and non-technical people alike
+  Viberunner is an end-user application for technical and non-technical people alike
   that allows them to create single-purpose desktop utilities, like a clipboard manager, image redactor, port sniffer, etc,
   by prompting you to create these apps for them.
+
+  A runner is simply a React component running in a Node environment. It has access to require, fs, path, etc.
 
   Runners consist mostly of a single App.tsx file which includes inline styles. You will be provided two items below:
 
@@ -101,6 +103,11 @@ export const getNewRunnerPrompt = (userPrompt: string) => {
 
   Design Principles and Rules:
     - Prefer Node API over Web APIs (for file system access, clipboard history, etc)
+    - Prefer relying on native system APIs over installing third party packages.
+      - For example, for a clipboard manager, use execSync with pbpaste, powershell Get-Clipboard, or xclip -selection clipboard -o, depending on the platform.
+    - When installing dependencies, you can import them in the React component depending on their type (ESM or CommonJS).
+      - If ESM, use import statements.
+      - If CommonJS, use require statements.
 
   Here are the contents of the promised attachments:
 

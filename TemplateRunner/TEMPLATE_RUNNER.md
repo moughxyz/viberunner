@@ -1,6 +1,18 @@
 <RunnerArtifact name="src/App.tsx">
 import React, { useEffect } from "react"
 
+// Import ESM modules regularly
+import 'foo' from 'foolib'
+
+// Import CommonJS modules
+const bar = require('barlib)
+
+// Access Node regularly
+const fs = require('fs')
+const path = require('path')
+const os = require('os')
+const http = require('http')
+
 declare global {
   interface Window {
     registerCleanup: (tabId: string, cleanupFn: () => void) => void
@@ -62,6 +74,7 @@ export default TemplateRunner
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@types/node": "^22.15.29",
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@vitejs/plugin-react": "^4.2.1",

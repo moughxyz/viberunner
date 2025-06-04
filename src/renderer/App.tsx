@@ -32,24 +32,12 @@ const mime = require("mime-types")
 
 // Simplified API - only direct operations, no IPC
 const api = {
-  exists: (filePath: string) => fs.existsSync(filePath),
-  stat: (filePath: string) => fs.statSync(filePath),
-  readDir: (dirPath: string) => fs.readdirSync(dirPath),
-
   // User Preferences API for runners
   getRunnerPreferences: getRunnerPreferences,
   setRunnerPreferences: setRunnerPreferences,
   updateRunnerPreference: updateRunnerPreference,
   removeRunnerPreference: removeRunnerPreference,
   getRunnerPreference: getRunnerPreference,
-
-  // Helper functions
-  path: path,
-  mime: mime,
-
-  // Exposed modules for advanced usage
-  fs: fs,
-  require: require,
 }
 
 // Make API available globally for runners
