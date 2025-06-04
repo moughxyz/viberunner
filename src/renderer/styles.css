@@ -611,28 +611,6 @@ body {
   gap: var(--space-3);
 }
 
-.utility-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  text-align: left;
-  font-family: inherit;
-  color: inherit;
-}
-
-.utility-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-  transform: none;
-  box-shadow: none;
-}
-
 /* Directory controls - clean inline layout */
 .directory-path {
   font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
@@ -655,62 +633,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-}
-
-.app-info-card {
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  transition: all 0.15s ease;
-}
-
-.app-info-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-}
-
-.app-info-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-2);
-}
-
-.app-info-title {
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.app-info-status {
-  display: flex;
-  align-items: center;
-}
-
-.app-info-description {
-  color: var(--text-secondary);
-  font-size: var(--font-size-sm);
-  line-height: 1.4;
-  margin-bottom: var(--space-2);
-}
-
-.app-info-formats {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-}
-
-/* Loading state */
-.loading-state {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  color: var(--text-secondary);
-  padding: var(--space-4) 0;
-}
-
-.loading-spinner {
-  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -1010,12 +932,7 @@ body {
   align-items: center;
 }
 
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--success);
-}
+
 
 .item-description {
   color: var(--text-secondary);
@@ -1459,54 +1376,7 @@ body {
   }
 }
 
-.utility-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  background: transparent;
-  color: var(--accent);
-  border-radius: var(--radius);
-  font-size: var(--font-size-sm);
-  flex-shrink: 0;
-}
 
-.utility-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.utility-title {
-  font-size: var(--font-size-base);
-  font-weight: 500;
-  color: var(--text-primary);
-  margin: 0 0 var(--space-1) 0;
-}
-
-.utility-description {
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.4;
-}
-
-.utility-action {
-  color: var(--accent);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  padding: var(--space-2) var(--space-3);
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-}
-
-.utility-card:hover .utility-action {
-  background: var(--accent-light);
-  border-color: var(--accent);
-}
 
 /* Directory Setup Only Interface */
 .directory-setup-only {
@@ -1606,114 +1476,7 @@ body {
   margin-top: var(--space-2);
 }
 
-/* Startup controls for utility cards */
-.utility-card-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0; /* Remove gap to connect borders */
-}
 
-.utility-card-container .utility-card {
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom: none;
-}
-
-.startup-controls {
-  padding: var(--space-2) var(--space-3);
-  background: var(--background);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  border-top: none;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-}
-
-.startup-toggle {
-  margin-bottom: var(--space-2);
-}
-
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-}
-
-.toggle-checkbox {
-  display: none;
-}
-
-.toggle-slider {
-  position: relative;
-  width: 36px;
-  height: 20px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.toggle-slider::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  background: var(--text-muted);
-  border-radius: 50%;
-  transition: all 0.2s ease;
-}
-
-.toggle-checkbox:checked + .toggle-slider {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.toggle-checkbox:checked + .toggle-slider::before {
-  transform: translateX(16px);
-  background: white;
-}
-
-.toggle-text {
-  font-weight: 500;
-}
-
-.tab-order-control {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.tab-order-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--font-size-sm);
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.tab-order-input {
-  width: 60px;
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-primary);
-  font-size: var(--font-size-sm);
-  text-align: center;
-}
-
-.tab-order-input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-color: var(--accent);
-}
 
 /* Two-Column Layout */
 .two-column-layout {
@@ -1746,15 +1509,6 @@ body {
 }
 
 /* Add backgrounds back to specific components within columns */
-.two-column-layout .utilities-grid .utility-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-
-.two-column-layout .apps-grid .app-info-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
 
 .two-column-layout .drop-zone {
   background: var(--surface);
