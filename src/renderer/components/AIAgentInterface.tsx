@@ -356,6 +356,9 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     localStorage.setItem("claude-api-key", key)
     claudeService.current = new ClaudeAPIService(key)
     setShowApiKeyPrompt(false)
+
+    // Reset the initial prompt sent flag so it can be sent now that we have the API key
+    initialPromptSentRef.current = false
   }
 
   const handleDiscard = async () => {
@@ -689,13 +692,14 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   // Track if we've already sent the initial prompt
   const initialPromptSentRef = useRef(false)
 
-  // Automatically send initial prompt when component mounts
+  // Automatically send initial prompt when component mounts and API key is available
   useEffect(() => {
-    if (initialPrompt && initialPrompt.trim() && !initialPromptSentRef.current) {
+    if (initialPrompt && initialPrompt.trim() && !initialPromptSentRef.current && claudeService.current && !showApiKeyPrompt) {
+      console.log('Sending initial prompt:', initialPrompt.substring(0, 50) + '...')
       initialPromptSentRef.current = true
       handleSendMessage(initialPrompt)
     }
-  }, [initialPrompt]) // Only depend on initialPrompt, not handleSendMessage
+  }, [initialPrompt, claudeService.current, showApiKeyPrompt]) // Depend on initialPrompt, claudeService availability, and API key prompt state
 
   if (showApiKeyPrompt) {
     return (

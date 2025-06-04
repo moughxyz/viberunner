@@ -136,6 +136,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0.75rem;
   padding: 1rem 1.5rem;
+  padding-right: 100px;
   color: white;
   resize: none;
   transition: all 0.3s ease;
@@ -172,7 +173,7 @@
 
 .submit-button-condensed {
   position: absolute;
-  bottom: 0.75rem;
+  bottom: 1.25rem;
   right: 0.75rem;
   background: linear-gradient(to right, #8b5cf6, #3b82f6);
   color: white;
