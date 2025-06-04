@@ -48,7 +48,7 @@
   min-height: 0;
 }
 
-.loading-container {
+.editor-main .loading-container {
   flex: 1;
   display: flex;
   align-items: center;
@@ -66,8 +66,12 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-text {
@@ -94,7 +98,8 @@
 .editor-toolbar-filename {
   color: #d4d4d4;
   font-size: 0.75rem;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -125,7 +130,8 @@
   background-color: #171717;
   color: white;
   font-size: 0.875rem;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
   line-height: 1.625;
   padding: 1rem;
   border: 0;
@@ -203,7 +209,8 @@
 
 .file-name {
   flex: 1;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

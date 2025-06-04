@@ -427,7 +427,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
               {/* Loading State */}
               {isLoading && (
-                <div className="loading-container">
+                <div className="chat-loading-container">
                   <div className="loading-wrapper">
                     <div className="message-avatar">
                       <div className="avatar">

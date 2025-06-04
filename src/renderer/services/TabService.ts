@@ -463,7 +463,13 @@ export class TabService {
   }
 
   // Create AI Agent container
-  async createAIAgentContainer(tab: OpenTab): Promise<boolean> {
+  async createAIAgentContainer(
+    tab: OpenTab,
+    openTabs: OpenTab[],
+    activeTabId: string,
+    setOpenTabs: (updater: (prev: OpenTab[]) => OpenTab[]) => void,
+    setActiveTabId: (id: string) => void
+  ): Promise<boolean> {
     if (!this.appRootRef.current || tab.type !== "ai-agent") {
       console.error("Cannot create AI Agent container:", {
         hasAppRoot: !!this.appRootRef.current,
@@ -500,11 +506,11 @@ export class TabService {
             onClose: () =>
               this.closeTab(
                 tab.id,
-                [],
-                "",
-                () => {},
-                () => {}
-              ), // Will be overridden by actual implementation
+                openTabs,
+                activeTabId,
+                setOpenTabs,
+                setActiveTabId
+              ),
             inTab: true,
             initialPrompt: tab.prompt,
           })
@@ -677,8 +683,14 @@ export class TabService {
         prev.map((tab) => (tab.id === activeTabId ? transformedTab : tab))
       )
 
-      // Create the AI Agent container
-      const success = await this.createAIAgentContainer(transformedTab)
+      // Create the AI Agent container with proper state management functions
+      const success = await this.createAIAgentContainer(
+        transformedTab,
+        openTabs,
+        activeTabId,
+        setOpenTabs,
+        setActiveTabId
+      )
       if (success) {
         this.switchToTab(
           transformedTab.id,
@@ -691,8 +703,14 @@ export class TabService {
       // Create a new tab
       setOpenTabs((prev) => [...prev, newTab])
 
-      // Create the AI Agent container
-      const success = await this.createAIAgentContainer(newTab)
+      // Create the AI Agent container with proper state management functions
+      const success = await this.createAIAgentContainer(
+        newTab,
+        [...openTabs, newTab],
+        activeTabId,
+        setOpenTabs,
+        setActiveTabId
+      )
       if (success) {
         this.switchToTab(tabId, [...openTabs, newTab], setActiveTabId, newTab)
       }

@@ -343,8 +343,10 @@
   border-radius: 0.25rem;
 }
 
-.loading-container {
-  /* loading group placeholder */
+.chat-loading-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .loading-wrapper {

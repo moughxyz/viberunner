@@ -77,8 +77,20 @@ export const useTabService = (
   )
 
   const createAIAgentContainer = useCallback(
-    (tab: OpenTab) => {
-      return tabService.createAIAgentContainer(tab)
+    (
+      tab: OpenTab,
+      openTabs: OpenTab[],
+      activeTabId: string,
+      setOpenTabs: (updater: (prev: OpenTab[]) => OpenTab[]) => void,
+      setActiveTabId: (id: string) => void
+    ) => {
+      return tabService.createAIAgentContainer(
+        tab,
+        openTabs,
+        activeTabId,
+        setOpenTabs,
+        setActiveTabId
+      )
     },
     [tabService]
   )

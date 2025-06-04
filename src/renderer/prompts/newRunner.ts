@@ -97,13 +97,12 @@ export const getNewRunnerPrompt = (userPrompt: string) => {
     npm run build
    </RunnerCommand>
 
-  Whenever you make changes to dependencies, or the first time you bootstrap the project, be sure to run install BEFORE running npm run build:
-
-  <RunnerCommand>
-    npm run install
-  </RunnerCommand>
-
   Our system will read this tag and execute the commands for you.
+
+  IMPORTANT:
+   - When you first create the project, always run npm install and then npm run build.
+   - On every subsequent change, run npm install if you added or modified a package entry in package.json.
+   - Always run npm run build after making changes to the project, no matter the nature of the change.
 
   Design Principles and Rules:
     - Prefer Node API over Web APIs (for file system access, clipboard history, etc)
