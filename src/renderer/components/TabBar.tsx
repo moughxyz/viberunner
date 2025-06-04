@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { OpenTab, RunnerConfig } from "../types"
 import { getViberunnerLogoPath } from "../util"
+import "./TabBar.css"
 
 interface TabBarProps {
   openTabs: OpenTab[]
