@@ -534,3 +534,22 @@
 .message-content p:last-child {
   margin-bottom: 0;
 }
+
+.model-status {
+  margin-top: 5px;
+  font-size: 11px;
+  color: var(--foreground);
+  opacity: 0.6;
+  text-align: center;
+}
+
+.model-change-button {
+  background: none;
+  border: none;
+  color: var(--foreground);
+  opacity: 0.8;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+}

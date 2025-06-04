@@ -56,7 +56,7 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
       fontSize: '12px',
       color: 'var(--foreground)',
       opacity: 0.6,
-      textAlign: condensed ? 'left' : 'center'
+      textAlign: 'center'
     }}>
       Using {CLAUDE_MODELS[selectedModel]} {' '}
       <button

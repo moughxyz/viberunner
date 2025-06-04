@@ -500,27 +500,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 )}
               </button>
             </form>
-            {/* Model Status under the input */}
-            <div style={{
-              marginTop: '8px',
-              fontSize: '12px',
-              color: 'var(--foreground)',
-              opacity: 0.6,
-              textAlign: 'center'
-            }}>
-                             Using {CLAUDE_MODELS[selectedModel]} {' '}
-               <button
+                        {/* Model Status under the input */}
+            <div className="model-status">
+              Using {CLAUDE_MODELS[selectedModel]} {' '}
+              <button
                 onClick={() => setShowModelPicker(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--foreground)',
-                  opacity: 0.8,
-                  textDecoration: 'underline',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  padding: 0
-                }}
+                className="model-change-button"
               >
                 Change
               </button>

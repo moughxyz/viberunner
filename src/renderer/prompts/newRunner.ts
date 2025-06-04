@@ -115,7 +115,7 @@ export const getNewRunnerPrompt = (userPrompt: string) => {
     - If you need to store user data, use the passed in dataDirectory prop. You can create files and folders in this directory.
 
   Design Guidelines:
-    - Make the UI visually appealing and modern. Style like using shadcn or Vercel.
+    - Make the UI clean, minimal, and modern—with generous whitespace, subtle shadows, and rounded corners. Make the typography sharp and legible, using bold sans-serif fonts for headings and lighter weights for body text. Favor a grayscale palette with occasional accent colors, creating a focused and elegant UI that feels both technical and high-end.
     - Use a dark theme.
     - Create a styles object that contains all the styles for the app, and use it in the React component.
       - For example, const styles = {
