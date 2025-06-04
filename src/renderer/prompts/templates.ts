@@ -1,13 +1,13 @@
 export const templates = [
   {
     name: "Clipboard Manager",
-    description: "A clipboard manager that shows recent history",
+    description: "a clipboard manager that shows recent history",
     prompt:
       "a clipboard manager that shows recent history. Use the Node API to access the clipboard history as the web API requires the document to be focused.",
   },
   {
     name: "Daily Notes",
-    description: "A note for every day, with each note saved to a file.",
+    description: "a note for every day saved to a file",
     prompt: `
       create a new runner called Daily Notes:
 
@@ -27,12 +27,12 @@ export const templates = [
   },
   {
     name: "Network Speed Meter",
-    description: "A network speed monitor that shows the download and upload speed",
+    description: "a network speed monitor with download and upload speed",
     prompt: `
       create a new runner called Network Speed Monitor:
 
       - Uses speedtest-net package to show realtime up/down ping.
       - Also logs IP address, latency, server used.
       `,
-  }
+  },
 ]

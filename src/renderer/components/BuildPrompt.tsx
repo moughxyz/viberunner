@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import "./BuildPrompt.css"
+import { templates } from "../prompts/templates"
 
 interface BuildPromptProps {
   onSubmit?: (prompt: string) => void
@@ -24,15 +25,6 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
       handleSubmit()
     }
   }
-
-  const examples = [
-    "a minimalist todo app",
-    "a music player interface",
-    "a weather app",
-    "a code snippet manager",
-    "a note-taking tool",
-    "a timer application",
-  ]
 
   if (condensed) {
     return (
@@ -118,13 +110,15 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
         <div className="examples-container">
           <p className="examples-title">Or try one of these ideas</p>
           <div className="examples-grid">
-            {examples.map((example, index) => (
+            {templates.map((template, index) => (
               <button
                 key={index}
-                onClick={() => setBuildPrompt(example)}
+                onClick={() => setBuildPrompt(template.prompt)}
                 className="example-button"
               >
-                {example}
+                <div className="example-description">
+                  {template.description}
+                </div>
               </button>
             ))}
           </div>
