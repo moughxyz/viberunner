@@ -4,13 +4,12 @@ import UpdateNotification, {
   UpdateNotificationRef,
 } from "./components/UpdateNotification"
 import BuildPrompt from "./components/BuildPrompt"
-import AIAgentInterface from "./components/AIAgentInterface"
 import RunnersGrid from "./components/RunnersGrid"
 import AppSelection from "./components/AppSelection"
 import SettingsModal from "./components/SettingsModal"
 import TabBar from "./components/TabBar"
 import DropZone from "./components/DropZone"
-import { FileInput, RunnerConfig, OpenTab, RunnerProps } from "./types"
+import { FileInput, RunnerConfig, OpenTab } from "./types"
 import {
   getRunnerPreference,
   getRunnerPreferences,
@@ -20,6 +19,7 @@ import {
 } from "./preferences"
 import { getRunnersDirectory, getViberunnerLogoPath } from "./util"
 import { useRunnerService } from "./hooks/useRunnerService"
+import { useTabService } from "./hooks/useTabService"
 import { runnerService } from "./services/RunnerService"
 
 // Direct Node.js access with full integration
@@ -45,37 +45,7 @@ const api = {
 // Make API available globally for runners
 ;(window as any).api = api
 
-// App cleanup system
-const runnerCleanupCallbacks = new Map<string, (() => void)[]>()
 
-// Global cleanup registration function for runners
-const registerCleanup = (tabId: string, cleanupFn: () => void) => {
-  if (!runnerCleanupCallbacks.has(tabId)) {
-    runnerCleanupCallbacks.set(tabId, [])
-  }
-  runnerCleanupCallbacks.get(tabId)!.push(cleanupFn)
-}
-
-// Global cleanup execution function
-const executeCleanup = (tabId: string) => {
-  const callbacks = runnerCleanupCallbacks.get(tabId)
-  if (callbacks) {
-    console.log(
-      `Executing ${callbacks.length} cleanup callbacks for tab ${tabId}`
-    )
-    callbacks.forEach((callback) => {
-      try {
-        callback()
-      } catch (error) {
-        console.error("Error in runner cleanup callback:", error)
-      }
-    })
-    runnerCleanupCallbacks.delete(tabId)
-  }
-}
-
-// Make cleanup functions available globally for runners
-;(window as any).registerCleanup = registerCleanup
 
 // Helper functions for direct file operations
 async function getMimetype(filePath: string): Promise<string> {
@@ -160,6 +130,8 @@ const getSupportedFormats = (runner: any): string => {
 const App: React.FC = () => {
   // Use RunnerService instead of local state
   const { runners, isLoading: isLoadingRunners, loadApp } = useRunnerService()
+
+  // Tab-related state
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
     { id: "default-tab", title: "New Tab", type: "newtab" },
   ])
@@ -177,6 +149,9 @@ const App: React.FC = () => {
 
   const appRootRef = useRef<HTMLDivElement>(null)
   const hasLaunchedStartupRunners = useRef<boolean>(false)
+
+  // Initialize TabService
+  const tabService = useTabService(appRootRef)
 
   // Ref for update notification component
   const updateNotificationRef = useRef<UpdateNotificationRef>(null)
@@ -439,7 +414,7 @@ const App: React.FC = () => {
 
             // Ensure we stay on the New Tab after all runners are launched
             if (currentNewTabId) {
-              switchToTab(currentNewTabId)
+              tabService.switchToTab(currentNewTabId, openTabs, setActiveTabId)
             }
           })
           .catch((error) => {
@@ -460,367 +435,14 @@ const App: React.FC = () => {
     return getViberunnerLogoPath()
   }
 
-  // Imperative tab management - outside React state
-  const tabContainersRef = useRef<
-    Map<
-      string,
-      {
-        domElement: HTMLDivElement
-        reactRoot: any
-        styleElement?: HTMLStyleElement
-      }
-    >
-  >(new Map())
-
   // Initialize RunnerService on component mount
   useEffect(() => {
     runnerService.initialize()
   }, [])
 
-  const generateTabId = () =>
-    `tab_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
-  // Imperative function to create a runner container
-  const createAppContainer = async (tab: OpenTab): Promise<boolean> => {
-    if (!appRootRef.current || !tab.runner || !tab.runnerData) {
-      console.error("Cannot create runner container:", {
-        hasAppRoot: !!appRootRef.current,
-        hasApp: !!tab.runner,
-        hasAppData: !!tab.runnerData,
-      })
-      return false
-    }
 
-    console.log("Creating app container for tab:", tab.id)
 
-    // Create DOM container
-    const container = document.createElement("div")
-    container.className = "tab-app-container"
-    container.style.position = "absolute"
-    container.style.top = "0"
-    container.style.left = "0"
-    container.style.right = "0"
-    container.style.bottom = "0"
-    container.style.width = "100%"
-    container.style.height = "100%"
-    container.style.display = "none" // Start hidden
-    container.style.visibility = "hidden"
-    container.style.zIndex = "-1"
-    container.style.opacity = "0"
-    container.style.background = "var(--background)"
-    appRootRef.current.appendChild(container)
-
-    // Create data directory for the runner
-    const RUNNERS_DIR = getRunnersDirectory()
-    const runnerDir = path.join(RUNNERS_DIR, tab.runner.id)
-    const dataDirectory = path.join(runnerDir, "UserData")
-
-    // Ensure data directory exists
-    try {
-      if (!fs.existsSync(dataDirectory)) {
-        fs.mkdirSync(dataDirectory, { recursive: true })
-        console.log(`Created data directory: ${dataDirectory}`)
-      }
-    } catch (error) {
-      console.error(
-        `Failed to create data directory for ${tab.runner.id}:`,
-        error
-      )
-    }
-
-    // Prepare props with cleanup support
-    const props: RunnerProps = {
-      dataDirectory: dataDirectory,
-      fileInput: tab.fileInput, // This will be undefined for standalone runners
-    }
-
-    return new Promise<boolean>((resolve) => {
-      // Create script and load runner
-      const script = document.createElement("script")
-      script.type = "text/javascript"
-
-      let processedBundleContent = tab.runnerData.bundleContent
-
-      // Safe CSS scoping - only process strings that are clearly CSS
-      // Use conservative patterns to avoid corrupting JavaScript code
-      const safeCssPatterns = [
-        // Match .css file imports/requires
-        /(['"`])([^'"`]*\.css[^'"`]*)\1/g,
-
-        // Match strings that clearly look like CSS (contain CSS selectors + rules)
-        // Only match if it contains CSS selector patterns AND CSS properties
-        /(['"`])([^'"`]*(?:\.[\w-]+|#[\w-]+|[a-zA-Z][\w-]*)\s*\{[^}]*(?:color|background|margin|padding|font|border|width|height|display|position)[^}]*\}[^'"`]*)\1/g,
-
-        // Match template literals that contain CSS (tagged templates like css`...`)
-        /css\s*`([^`]*(?:\.[\w-]+|#[\w-]+|[a-zA-Z][\w-]*)\s*\{[^}]*\}[^`]*)`/g,
-
-        // Match styled-components or similar CSS-in-JS patterns
-        /styled\.[a-zA-Z]+\s*`([^`]*(?:\.[\w-]+|#[\w-]+|[a-zA-Z][\w-]*)\s*\{[^}]*\}[^`]*)`/g,
-      ]
-
-      safeCssPatterns.forEach((pattern, index) => {
-        processedBundleContent = processedBundleContent.replace(
-          pattern,
-          (match: string, ...args: string[]) => {
-            // Extract CSS content based on pattern type
-            let cssContent: string
-            let quote: string = ""
-
-            if (index <= 1) {
-              // Standard quoted strings
-              quote = args[0]
-              cssContent = args[1]
-            } else {
-              // Template literals (css`` or styled.div``)
-              cssContent = args[0]
-            }
-
-            if (!cssContent) return match
-
-            // Additional safety check - skip if this looks like JavaScript
-            if (
-              cssContent.includes("export") ||
-              cssContent.includes("import") ||
-              cssContent.includes("function") ||
-              cssContent.includes("const ") ||
-              cssContent.includes("let ") ||
-              cssContent.includes("var ") ||
-              cssContent.includes("=>") ||
-              cssContent.includes("return")
-            ) {
-              return match // Don't process JavaScript code
-            }
-
-            // Don't process if already scoped
-            if (
-              cssContent.includes(".tab-app-container") ||
-              cssContent.includes(`[data-app-id="${tab.id}"]`)
-            ) {
-              return match
-            }
-
-            // Auto-scope CSS selectors
-            const scopedCSS = cssContent
-              // Scope universal selector
-              .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
-              // Scope element selectors
-              .replace(
-                /^(\s*)([a-zA-Z][\w-]*)\s*\{/gm,
-                `$1[data-app-id="${tab.id}"] $2 {`
-              )
-              // Scope class selectors
-              .replace(
-                /^(\s*)(\.[\w-]+)\s*\{/gm,
-                `$1[data-app-id="${tab.id}"] $2 {`
-              )
-              // Scope ID selectors
-              .replace(
-                /^(\s*)(#[\w-]+)\s*\{/gm,
-                `$1[data-app-id="${tab.id}"] $2 {`
-              )
-              // Scope complex selectors
-              .replace(
-                /^(\s*)([.#]?[\w-]+(?:\s*[>+~]\s*[.#]?[\w-]+)*)\s*\{/gm,
-                `$1[data-app-id="${tab.id}"] $2 {`
-              )
-              // Handle @media queries
-              .replace(
-                /@media[^{]+\{([^{}]*(?:\{[^}]*\}[^{}]*)*)\}/g,
-                (mediaMatch: string, mediaContent: string) => {
-                  const scopedMediaContent = mediaContent
-                    .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
-                    .replace(
-                      /^(\s*)([a-zA-Z][\w-]*)\s*\{/gm,
-                      `$1[data-app-id="${tab.id}"] $2 {`
-                    )
-                    .replace(
-                      /^(\s*)(\.[\w-]+)\s*\{/gm,
-                      `$1[data-app-id="${tab.id}"] $2 {`
-                    )
-                    .replace(
-                      /^(\s*)(#[\w-]+)\s*\{/gm,
-                      `$1[data-app-id="${tab.id}"] $2 {`
-                    )
-                  return mediaMatch.replace(mediaContent, scopedMediaContent)
-                }
-              )
-
-            // Return with appropriate wrapper
-            if (index <= 1) {
-              return quote ? `${quote}${scopedCSS}${quote}` : scopedCSS
-            } else {
-              // Template literals
-              return match.replace(cssContent, scopedCSS)
-            }
-          }
-        )
-      })
-
-      // Also intercept any dynamic style injection
-      const runnerStyleInterceptor = `
-        // Intercept style injection for app isolation
-        (function() {
-          const originalCreateElement = document.createElement;
-          const runnerId = "${tab.id}";
-
-          document.createElement = function(tagName) {
-            const element = originalCreateElement.call(this, tagName);
-
-            if (tagName.toLowerCase() === 'style') {
-              // Mark style elements created by this app
-              element.setAttribute('data-app-style', runnerId);
-
-              // Override textContent to auto-scope CSS - with safety checks
-              try {
-                const descriptor = Object.getOwnPropertyDescriptor(Element.prototype, 'textContent') ||
-                                 Object.getOwnPropertyDescriptor(Node.prototype, 'textContent') ||
-                                 Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'textContent');
-
-                if (descriptor && descriptor.set) {
-                  const originalTextContentSetter = descriptor.set;
-                  Object.defineProperty(element, 'textContent', {
-                    set: function(value) {
-                      if (value && typeof value === 'string') {
-                        // Auto-scope the CSS
-                        const scopedCSS = value
-                          .replace(/^\\s*\\*\\s*\\{/gm, \`[data-app-id="\${runnerId}"] * {\`)
-                          .replace(/^(\\s*)([a-zA-Z][a-zA-Z0-9]*)\\s*\\{/gm, \`$1[data-app-id="\${runnerId}"] $2 {\`)
-                          .replace(/^(\\s*)(\\.[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${runnerId}"] $2 {\`)
-                          .replace(/^(\\s*)(#[\\w-]+)\\s*\\{/gm, \`$1[data-app-id="\${runnerId}"] $2 {\`);
-                        originalTextContentSetter.call(this, scopedCSS);
-                      } else {
-                        originalTextContentSetter.call(this, value);
-                      }
-                    },
-                    get: descriptor.get,
-                    enumerable: descriptor.enumerable,
-                    configurable: descriptor.configurable
-                  });
-                }
-              } catch (err) {
-                console.warn('Failed to intercept textContent for app CSS scoping:', err);
-              }
-            }
-
-            return element;
-          };
-        })();
-      `
-
-      script.textContent =
-        runnerStyleInterceptor + "\n" + processedBundleContent
-
-      const runnerLoader = (RunnerComponent: any) => {
-        try {
-          // Create an isolation wrapper div
-          const isolationWrapper = document.createElement("div")
-          isolationWrapper.style.cssText = `
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
-            position: relative !important;
-            overflow: auto !important;
-            display: block !important;
-            contain: layout style size !important;
-            isolation: isolate !important;
-            z-index: 1 !important;
-          `
-
-          container.appendChild(isolationWrapper)
-
-          // Render directly into the isolation wrapper
-          isolationWrapper.setAttribute("data-app-id", tab.id)
-
-          // Ensure we're using the same React instance
-          const root = createRoot(isolationWrapper)
-
-          // Debug logging
-          console.log("Rendering runner component:", {
-            componentType: typeof RunnerComponent,
-            componentName: RunnerComponent.name || "Anonymous",
-            props: Object.keys(props),
-            reactVersion: React.version,
-          })
-
-          root.render(React.createElement(RunnerComponent, props))
-
-          // Store container reference in tabContainersRef for tab switching
-          tabContainersRef.current.set(tab.id, {
-            domElement: container,
-            reactRoot: root,
-            styleElement: undefined,
-          })
-
-          // Show the container with proper stacking
-          container.style.display = "block"
-          container.style.visibility = "visible"
-          container.style.zIndex = "10"
-          container.style.opacity = "1"
-
-          resolve(true)
-        } catch (error) {
-          console.error("Error rendering app:", error)
-          resolve(false)
-        }
-      }
-
-      // Make the app loader available globally with backward compatibility
-      ;(window as any).__RENDER_RUNNER__ = runnerLoader
-
-      script.onload = () => {
-        // Clean up after script loads
-        setTimeout(() => {
-          if (script.parentNode) {
-            script.parentNode.removeChild(script)
-          }
-          delete (window as any).__RENDER_RUNNER__
-        }, 1000)
-      }
-
-      script.onerror = (error) => {
-        console.error("Script loading error:", error)
-        resolve(false)
-      }
-
-      document.head.appendChild(script)
-    })
-  }
-
-  // Imperative function to switch tab visibility
-  const switchToTab = (tabId: string, tabData?: OpenTab) => {
-    // Use provided tab data or look up from state
-    const activeTab = tabData || openTabs.find((tab) => tab.id === tabId)
-
-    console.log("Switching to tab:", tabId, "type:", activeTab?.type)
-
-    // Hide all app containers with enhanced visibility control
-    tabContainersRef.current.forEach((container, id) => {
-      console.log("Hiding container for tab:", id)
-      const element = container.domElement
-      element.style.display = "none"
-      element.style.visibility = "hidden"
-      element.style.zIndex = "-1"
-      element.style.opacity = "0"
-    })
-
-    // Show the active tab's container if it's not a new tab
-    if (activeTab && activeTab.type !== "newtab") {
-      const container = tabContainersRef.current.get(tabId)
-      if (container) {
-        console.log("Showing container for tab:", tabId)
-        const element = container.domElement
-        element.style.display = "block"
-        element.style.visibility = "visible"
-        element.style.zIndex = "10"
-        element.style.opacity = "1"
-      } else {
-        console.warn("No container found for tab:", tabId)
-      }
-    }
-
-    setActiveTabId(tabId)
-  }
 
   const openAppInNewTab = async (
     runner: RunnerConfig,
@@ -828,167 +450,34 @@ const App: React.FC = () => {
     forceNewTab: boolean = false,
     switchToTab_: boolean = true
   ) => {
-    const title = fileInput
-      ? fileInput.path.split("/").pop() || "Unknown File"
-      : runner.name
-
-    let appData
-
-    // Load app data
-    try {
-      appData = await loadApp(runner.id)
-    } catch (error) {
-      console.error("Failed to load app data:", error)
-      alert(`Failed to load ${runner.name}: ${error}`)
-      return
-    }
-
-    // Check if we have an active new tab to transform (but not if forceNewTab is true)
-    const currentTab = openTabs.find((tab) => tab.id === activeTabId)
-
-    if (!forceNewTab && currentTab && currentTab.type === "newtab") {
-      // Transform the current new tab
-      const transformedTab: OpenTab = {
-        ...currentTab,
-        runner: runner,
-        fileInput,
-        title,
-        type: fileInput ? "file" : "standalone",
-        runnerData: appData,
-      }
-
-      setOpenTabs((prev) =>
-        prev.map((tab) => (tab.id === activeTabId ? transformedTab : tab))
-      )
-
-      // Create the app container and wait for it to be ready
-      const success = await createAppContainer(transformedTab)
-
-      if (success) {
-        // Only switch to this tab if switchToTab_ is true
-        if (switchToTab_) {
-          switchToTab(transformedTab.id, transformedTab)
-        }
-
-        // Reorder tabs to keep "New Tab" at the end
-        setTimeout(() => {
-          setOpenTabs((prev) => {
-            const newTabTabs = prev.filter((tab) => tab.type === "newtab")
-            const otherTabs = prev.filter((tab) => tab.type !== "newtab")
-            return [...otherTabs, ...newTabTabs]
-          })
-        }, 50) // Small delay to ensure tab is properly added first
-      } else {
-        console.error("Failed to create app container for transformed tab")
-        alert(`Failed to load ${runner.name}`)
-      }
-    } else {
-      // Create a new tab
-      const tabId = generateTabId()
-      const newTab: OpenTab = {
-        id: tabId,
-        runner: runner,
-        fileInput,
-        title,
-        type: fileInput ? "file" : "standalone",
-        runnerData: appData,
-      }
-
-      setOpenTabs((prev) => [...prev, newTab])
-
-      // Create the app container and wait for it to be ready
-      const success = await createAppContainer(newTab)
-
-      if (success) {
-        // Only switch to this tab if switchToTab_ is true
-        if (switchToTab_) {
-          switchToTab(tabId, newTab)
-        }
-
-        // Reorder tabs to keep "New Tab" at the end
-        setTimeout(() => {
-          setOpenTabs((prev) => {
-            const newTabTabs = prev.filter((tab) => tab.type === "newtab")
-            const otherTabs = prev.filter((tab) => tab.type !== "newtab")
-            return [...otherTabs, ...newTabTabs]
-          })
-        }, 50) // Small delay to ensure tab is properly added first
-      } else {
-        console.error("Failed to create app container for new tab")
-        alert(`Failed to load ${runner.name}`)
-      }
-    }
-
-    setShowAppSelection(false)
-    setPendingFileInput(null)
+    await tabService.openAppInNewTab(
+      runner,
+      loadApp,
+      openTabs,
+      activeTabId,
+      setOpenTabs,
+      setActiveTabId,
+      setShowAppSelection,
+      setPendingFileInput,
+      fileInput,
+      forceNewTab,
+      switchToTab_
+    )
   }
 
   const closeTab = (tabId: string) => {
-    console.log("Closing tab:", tabId)
-
-    // Execute cleanup callbacks for this tab
-    executeCleanup(tabId)
-
-    // Cleanup the tab's container
-    const container = tabContainersRef.current.get(tabId)
-    if (container) {
-      console.log("Cleaning up container for tab:", tabId)
-      try {
-        container.reactRoot.unmount()
-
-        // Remove the app-specific style element
-        if (
-          container.styleElement &&
-          document.head.contains(container.styleElement)
-        ) {
-          document.head.removeChild(container.styleElement)
-        }
-
-        if (
-          appRootRef.current &&
-          appRootRef.current.contains(container.domElement)
-        ) {
-          appRootRef.current.removeChild(container.domElement)
-        }
-      } catch (error) {
-        console.warn("Error cleaning up tab container:", error)
-      }
-      tabContainersRef.current.delete(tabId)
-    }
-
-    setOpenTabs((prev) => {
-      const filtered = prev.filter((tab) => tab.id !== tabId)
-
-      // If we closed the active tab, activate another one
-      if (activeTabId === tabId) {
-        const currentIndex = prev.findIndex((tab) => tab.id === tabId)
-        if (filtered.length > 0) {
-          const newActiveIndex = Math.min(currentIndex, filtered.length - 1)
-          const newActiveTab = filtered[newActiveIndex]
-          switchToTab(newActiveTab.id)
-        } else {
-          // If no tabs left, create a new tab
-          const newTab: OpenTab = {
-            id: generateTabId(),
-            title: "New Tab",
-            type: "newtab",
-          }
-          setOpenTabs([newTab])
-          switchToTab(newTab.id)
-          return [newTab]
-        }
-      }
-
-      return filtered
-    })
+    tabService.closeTab(tabId, openTabs, activeTabId, setOpenTabs, setActiveTabId)
   }
 
   // Handle tab switching
   const handleTabSwitch = (tabId: string) => {
-    // Reset app selection state when switching tabs
-    setShowAppSelection(false)
-    setPendingFileInput(null)
-    switchToTab(tabId)
+    tabService.handleTabSwitch(
+      tabId,
+      openTabs,
+      setActiveTabId,
+      setShowAppSelection,
+      setPendingFileInput
+    )
   }
 
   const selectApp = async (runner: RunnerConfig) => {
@@ -1193,17 +682,13 @@ const App: React.FC = () => {
   }, [runners])
 
   const createNewTab = () => {
-    const tabId = generateTabId()
-    const newTab: OpenTab = {
-      id: tabId,
-      title: "New Tab",
-      type: "newtab",
-    }
-
-    setOpenTabs((prev) => [...prev, newTab])
-    switchToTab(tabId)
-    setShowAppSelection(false)
-    setPendingFileInput(null)
+    tabService.createNewTab(
+      openTabs,
+      setOpenTabs,
+      setActiveTabId,
+      setShowAppSelection,
+      setPendingFileInput
+    )
   }
 
   // Handler for build prompt submission
@@ -1215,108 +700,16 @@ const App: React.FC = () => {
 
   // Function to open AI Agent in a new tab
   const openAIAgentInNewTab = async (prompt?: string) => {
-    const tabId = generateTabId()
-    const newTab: OpenTab = {
-      id: tabId,
-      title: "Runner Builder",
-      type: "ai-agent",
-      prompt: prompt,
-    }
-
-    // Check if we have an active new tab to transform
-    const currentTab = openTabs.find((tab) => tab.id === activeTabId)
-
-    if (currentTab && currentTab.type === "newtab") {
-      // Transform the current new tab
-      const transformedTab: OpenTab = {
-        ...currentTab,
-        title: "Runner Builder",
-        type: "ai-agent",
-        prompt: prompt,
-      }
-
-      setOpenTabs((prev) =>
-        prev.map((tab) => (tab.id === activeTabId ? transformedTab : tab))
-      )
-
-      // Create the AI Agent container
-      const success = await createAIAgentContainer(transformedTab)
-      if (success) {
-        switchToTab(transformedTab.id, transformedTab)
-      }
-    } else {
-      // Create a new tab
-      setOpenTabs((prev) => [...prev, newTab])
-
-      // Create the AI Agent container
-      const success = await createAIAgentContainer(newTab)
-      if (success) {
-        switchToTab(tabId, newTab)
-      }
-    }
+    await tabService.openAIAgentInNewTab(
+      prompt,
+      openTabs,
+      activeTabId,
+      setOpenTabs,
+      setActiveTabId
+    )
   }
 
-  // Function to create a persistent AI Agent container
-  const createAIAgentContainer = async (tab: OpenTab): Promise<boolean> => {
-    if (!appRootRef.current || tab.type !== "ai-agent") {
-      console.error("Cannot create AI Agent container:", {
-        hasAppRoot: !!appRootRef.current,
-        isAIAgent: tab.type === "ai-agent",
-      })
-      return false
-    }
 
-    console.log("Creating AI Agent container for tab:", tab.id)
-
-    // Create DOM container
-    const container = document.createElement("div")
-    container.className = "tab-ai-agent-container"
-    container.style.position = "absolute"
-    container.style.top = "0"
-    container.style.left = "0"
-    container.style.right = "0"
-    container.style.bottom = "0"
-    container.style.width = "100%"
-    container.style.height = "100%"
-    container.style.display = "none" // Start hidden
-    container.style.visibility = "hidden"
-    container.style.zIndex = "-1"
-    container.style.opacity = "0"
-    container.style.background = "var(--background)"
-    appRootRef.current.appendChild(container)
-
-    return new Promise<boolean>((resolve) => {
-      try {
-        // Create React root and render AI Agent
-        const root = createRoot(container)
-        root.render(
-          React.createElement(AIAgentInterface, {
-            onClose: () => closeTab(tab.id),
-            inTab: true,
-            initialPrompt: tab.prompt,
-          })
-        )
-
-        // Store container reference in tabContainersRef for tab switching
-        tabContainersRef.current.set(tab.id, {
-          domElement: container,
-          reactRoot: root,
-          styleElement: undefined,
-        })
-
-        // Show the container with proper stacking
-        container.style.display = "block"
-        container.style.visibility = "visible"
-        container.style.zIndex = "10"
-        container.style.opacity = "1"
-
-        resolve(true)
-      } catch (error) {
-        console.error("Error creating AI Agent container:", error)
-        resolve(false)
-      }
-    })
-  }
 
   return (
     <div className="vr-app">
