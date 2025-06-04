@@ -7,6 +7,8 @@ import BuildPrompt from "./components/BuildPrompt"
 import AIAgentInterface from "./components/AIAgentInterface"
 import RunnersGrid from "./components/RunnersGrid"
 import AppSelection from "./components/AppSelection"
+import SettingsModal from "./components/SettingsModal"
+import TabBar from "./components/TabBar"
 import { FileInput, RunnerConfig, OpenTab } from "./types"
 import {
   getRunnerPreference,
@@ -15,7 +17,7 @@ import {
   removeRunnerPreference,
   setRunnerPreferences,
 } from "./preferences"
-import { getRunnersDirectory } from "./util"
+import { getRunnersDirectory, getViberunnerLogoPath } from "./util"
 
 // Direct Node.js access with full integration
 const { ipcRenderer } = require("electron")
@@ -207,8 +209,6 @@ async function loadApp(id: string) {
   return { bundleContent, config }
 }
 
-
-
 // Helper function to get supported formats for a runner
 const getSupportedFormats = (runner: any): string => {
   if (runner.standalone) {
@@ -271,10 +271,6 @@ const App: React.FC = () => {
 
   // Get the currently active tab
   const activeTab = openTabs.find((tab) => tab.id === activeTabId)
-
-  // Tab drag and drop state
-  const [draggedTabId, setDraggedTabId] = useState<string | null>(null)
-  const [dragOverTabId, setDragOverTabId] = useState<string | null>(null)
 
   // Function to load runner icon
   const loadRunnerIcon = useCallback(
@@ -550,36 +546,6 @@ const App: React.FC = () => {
 
     // Return Viberunner SVG logo as fallback
     return getViberunnerLogoPath()
-  }
-
-  // Function to get Viberunner logo as data URL
-  const getViberunnerLogoPath = (): string => {
-    try {
-      // Load SVG file and convert to data URL
-      const svgPath = path.resolve(__dirname, "../assets/viberunner-logo.svg")
-      if (fs.existsSync(svgPath)) {
-        const svgContent = fs.readFileSync(svgPath, "utf8")
-        return `data:image/svg+xml;base64,${btoa(svgContent)}`
-      } else {
-        // Try alternative path
-        const altPath = path.resolve(
-          process.cwd(),
-          "src/assets/viberunner-logo.svg"
-        )
-        if (fs.existsSync(altPath)) {
-          const svgContent = fs.readFileSync(altPath, "utf8")
-          return `data:image/svg+xml;base64,${btoa(svgContent)}`
-        }
-        throw new Error("SVG file not found")
-      }
-    } catch (error) {
-      console.warn("Failed to load Viberunner logo SVG, using fallback:", error)
-      // Fallback to inline SVG if file loading fails
-      const svg = `<svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="white" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>`
-      return `data:image/svg+xml;base64,${btoa(svg)}`
-    }
   }
 
   // Imperative tab management - outside React state
@@ -1066,63 +1032,6 @@ const App: React.FC = () => {
     switchToTab(tabId)
   }
 
-  // Tab drag and drop handlers
-  const handleTabDragStart = (e: React.DragEvent, tabId: string) => {
-    e.dataTransfer.effectAllowed = "move"
-    e.dataTransfer.setData("text/plain", tabId)
-    setDraggedTabId(tabId)
-  }
-
-  const handleTabDragEnd = () => {
-    setDraggedTabId(null)
-    setDragOverTabId(null)
-  }
-
-  const handleTabDragOver = (e: React.DragEvent, tabId: string) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = "move"
-
-    if (draggedTabId && draggedTabId !== tabId) {
-      setDragOverTabId(tabId)
-    }
-  }
-
-  const handleTabDragLeave = (e: React.DragEvent, _tabId: string) => {
-    // Only clear if we're actually leaving this tab (not entering a child element)
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setDragOverTabId(null)
-    }
-  }
-
-  const handleTabDrop = (e: React.DragEvent, dropTargetTabId: string) => {
-    e.preventDefault()
-
-    const draggedId = e.dataTransfer.getData("text/plain")
-    if (!draggedId || draggedId === dropTargetTabId) {
-      return
-    }
-
-    // Reorder tabs
-    setOpenTabs((prev) => {
-      const newTabs = [...prev]
-      const draggedIndex = newTabs.findIndex((tab) => tab.id === draggedId)
-      const targetIndex = newTabs.findIndex((tab) => tab.id === dropTargetTabId)
-
-      if (draggedIndex === -1 || targetIndex === -1) {
-        return prev
-      }
-
-      // Remove dragged tab and insert at target position
-      const [draggedTab] = newTabs.splice(draggedIndex, 1)
-      newTabs.splice(targetIndex, 0, draggedTab)
-
-      return newTabs
-    })
-
-    setDraggedTabId(null)
-    setDragOverTabId(null)
-  }
-
   const selectApp = async (runner: RunnerConfig) => {
     if (pendingFileInput) {
       await openAppInNewTab(runner, pendingFileInput)
@@ -1452,105 +1361,15 @@ const App: React.FC = () => {
       <header id="vr-header">
         <div className="vr-header-content">
           {/* Tabs first, right after macOS traffic lights */}
-          <div className="vr-header-tabs">
-            <div className="vr-tabs-list">
-              {openTabs.map((tab) => (
-                <div
-                  key={tab.id}
-                  className={`vr-tab ${
-                    tab.id === activeTabId ? "vr-tab-active" : ""
-                  } ${draggedTabId === tab.id ? "vr-tab-dragging" : ""} ${
-                    dragOverTabId === tab.id ? "vr-tab-drop-target" : ""
-                  }`}
-                  onClick={() => handleTabSwitch(tab.id)}
-                  draggable={true}
-                  onDragStart={(e) => handleTabDragStart(e, tab.id)}
-                  onDragEnd={handleTabDragEnd}
-                  onDragOver={(e) => handleTabDragOver(e, tab.id)}
-                  onDragLeave={(e) => handleTabDragLeave(e, tab.id)}
-                  onDrop={(e) => handleTabDrop(e, tab.id)}
-                >
-                  <div className="vr-tab-icon">
-                    {tab.type === "newtab" ? (
-                      <img
-                        src={getViberunnerLogoPath()}
-                        alt="New Tab"
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          objectFit: "contain",
-                        }}
-                      />
-                    ) : tab.type === "ai-agent" ? (
-                      <img
-                        src={getViberunnerLogoPath()}
-                        alt="New Tab"
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          objectFit: "contain",
-                        }}
-                      />
-                    ) : tab.runner ? (
-                      <img
-                        src={getAppIcon(tab.runner)}
-                        alt={tab.runner.name}
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          objectFit: "contain",
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={getViberunnerLogoPath()}
-                        alt="Default"
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          objectFit: "contain",
-                        }}
-                      />
-                    )}
-                  </div>
-                  <div className="vr-tab-content">
-                    <span className="vr-tab-title">{tab.title}</span>
-                    {tab.runner && (
-                      <span className="vr-tab-subtitle">{tab.runner.name}</span>
-                    )}
-                  </div>
-                  {tab.type !== "newtab" || openTabs.length > 1 ? (
-                    <button
-                      className="vr-tab-close"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        closeTab(tab.id)
-                      }}
-                      onMouseDown={(e) => {
-                        e.stopPropagation()
-                      }}
-                      onDragStart={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                      }}
-                      title="Close tab"
-                    >
-                      ✕
-                    </button>
-                  ) : null}
-                </div>
-              ))}
-
-              {/* New Tab Button */}
-              <button
-                className="vr-new-tab-btn"
-                onClick={createNewTab}
-                title="New tab"
-              >
-                +
-              </button>
-            </div>
-          </div>
+          <TabBar
+            openTabs={openTabs}
+            activeTabId={activeTabId}
+            onTabsChange={setOpenTabs}
+            onActiveTabChange={handleTabSwitch}
+            onCloseTab={closeTab}
+            onCreateNewTab={createNewTab}
+            runnerIcons={runnerIcons}
+          />
 
           {/* Viberunner logo on the right */}
           <h1 className="vr-app-title">
@@ -1634,46 +1453,12 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Settings Modal - Remove directory controls */}
-            {showSettings && (
-              <div
-                className="settings-modal-overlay"
-                onClick={() => setShowSettings(false)}
-              >
-                <div
-                  className="settings-modal"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="settings-header">
-                    <h3>Settings</h3>
-                    <button
-                      onClick={() => setShowSettings(false)}
-                      className="close-btn"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="settings-content">
-                    <div className="setting-group">
-                      <label>Updates</label>
-                      <p className="setting-description">
-                        Check for the latest version of Viberunner
-                      </p>
-                      <div className="setting-actions">
-                        <button
-                          className="btn btn-outline"
-                          onClick={() =>
-                            updateNotificationRef.current?.checkForUpdates()
-                          }
-                        >
-                          Check for Updates
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Settings Modal */}
+            <SettingsModal
+              isVisible={showSettings}
+              onClose={() => setShowSettings(false)}
+              updateNotificationRef={updateNotificationRef}
+            />
 
             {/* Settings Icon */}
             {activeTab?.type === "newtab" && !showAppSelection && (
