@@ -192,21 +192,10 @@ body {
   padding: var(--space-8);
 }
 
-/* App selection gets full viewport */
-.vr-content-area:has(.vr-app-selection) {
-  padding: 0;
-}
-
 /* App viewport gets full space when apps are active */
 .app-viewport-container {
   height: calc(100vh - 41px);
   max-height: calc(100vh - 41px);
-}
-
-/* Override container height for app selection to allow natural sizing */
-.vr-content-area:has(.vr-app-selection) .app-viewport-container {
-  height: auto;
-  max-height: none;
 }
 
 .app-viewport {
@@ -229,11 +218,7 @@ body {
   background: transparent;
 }
 
-/* Hide app viewport completely when on app selection */
-.vr-content-area:has(.vr-app-selection) .app-viewport {
-  border: none;
-  background: transparent;
-}
+
 
 /* Unified New Tab Interface */
 .vr-new-tab-unified {
@@ -502,157 +487,7 @@ body {
   font-size: var(--font-size-sm);
 }
 
-/* App Selection */
-.vr-app-selection {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: var(--space-8);
-  position: relative;
-  z-index: 20;
-  background: var(--background);
-  display: flex;
-  flex-direction: column;
-}
 
-.selection-header {
-  margin-bottom: var(--space-8);
-}
-
-.selection-title {
-  font-size: var(--font-size-2xl);
-  font-weight: 600;
-  margin-bottom: var(--space-3);
-  color: var(--text-primary);
-}
-
-.selection-subtitle {
-  color: var(--text-secondary);
-  margin-bottom: var(--space-4);
-}
-
-.filename {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.file-meta {
-  display: flex;
-  gap: var(--space-3);
-}
-
-.file-type {
-  padding: var(--space-1) var(--space-3);
-  background: var(--accent-light);
-  color: var(--accent);
-  font-size: var(--font-size-xs);
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-}
-
-.app-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-6);
-  margin-bottom: var(--space-8);
-}
-
-.app-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
-  text-align: left;
-  transition: all 0.15s ease;
-  position: relative;
-}
-
-.app-card:hover {
-  background: var(--surface-hover);
-  border-color: var(--border-hover);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-  cursor: pointer;
-}
-
-.app-card:active {
-  transform: translateY(0);
-  box-shadow: var(--shadow);
-  background: var(--accent-light);
-  border-color: var(--accent);
-}
-
-.card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-}
-
-.card-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.card-title-section {
-  flex: 1;
-  min-width: 0;
-  margin-left: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.card-title {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.card-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  background: var(--success-light);
-  color: var(--success);
-  font-size: var(--font-size-xs);
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-  width: fit-content;
-  align-self: flex-start;
-}
-
-.badge-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--success);
-}
-
-.card-description {
-  color: var(--text-secondary);
-  margin-bottom: var(--space-4);
-  line-height: 1.5;
-}
-
-.card-footer {
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--border);
-}
-
-.supported-formats {
-  font-size: var(--font-size-xs);
-  color: var(--text-muted);
-}
-
-.selection-actions {
-  display: flex;
-  justify-content: center;
-  padding-top: var(--space-4);
-}
 
 /* Sidebar */
 .sidebar-section {
@@ -737,20 +572,12 @@ body {
   #vr-main-layout {
     grid-template-columns: 1fr;
   }
-
-  .app-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 768px) {
   .vr-header-content,
   .vr-content-area {
     padding: var(--space-4);
-  }
-
-  .app-grid {
-    grid-template-columns: 1fr;
   }
 
   .section-actions {
@@ -1125,10 +952,6 @@ body {
   }
 
   #vr-main-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .app-grid {
     grid-template-columns: 1fr;
   }
 

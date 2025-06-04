@@ -1,5 +1,6 @@
 import React from "react"
 import { FileInput, RunnerConfig } from "../types"
+import "./AppSelection.css"
 
 const path = require("path")
 
