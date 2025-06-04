@@ -50,3 +50,86 @@ export const getViberunnerLogoPath = (): string => {
     return `data:image/svg+xml;base64,${btoa(svg)}`
   }
 }
+
+// Common runner loader interface
+export interface RunnerLoaderOptions {
+  container: HTMLElement
+  appId: string
+  props: any
+  useGlobalReact?: boolean
+  onSuccess?: (root: any) => void
+  onError?: (error: Error) => void
+}
+
+// Common runner loader implementation
+export const createRunnerLoader = (options: RunnerLoaderOptions) => {
+  return (RunnerComponent: any) => {
+    try {
+      const { container, appId, props, useGlobalReact = false, onSuccess } = options
+
+      // Create an isolation wrapper div
+      const isolationWrapper = document.createElement("div")
+      isolationWrapper.style.cssText = `
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        position: relative !important;
+        overflow: auto !important;
+        display: block !important;
+        contain: layout style size !important;
+        isolation: isolate !important;
+        z-index: 1 !important;
+      `
+
+      container.appendChild(isolationWrapper)
+
+      // Render directly into the isolation wrapper
+      isolationWrapper.setAttribute("data-app-id", appId)
+
+      // Choose React and createRoot based on useGlobalReact flag
+      let React: any
+      let createRoot: any
+
+      if (useGlobalReact) {
+        React = (window as any).React
+        createRoot = (window as any).ReactDOM?.createRoot
+
+        if (!React) {
+          throw new Error("Global React not available")
+        }
+        if (!createRoot) {
+          throw new Error("ReactDOM.createRoot not available globally")
+        }
+      } else {
+        // Use imported React and createRoot
+        React = require("react")
+        createRoot = require("react-dom/client").createRoot
+      }
+
+      const root = createRoot(isolationWrapper)
+
+      // Debug logging
+      console.log("Rendering runner component:", {
+        componentType: typeof RunnerComponent,
+        componentName: RunnerComponent.name || "Anonymous",
+        props: Object.keys(props),
+        reactVersion: React.version,
+        useGlobalReact
+      })
+
+      root.render(React.createElement(RunnerComponent, props))
+
+      // Call success callback with the root
+      if (onSuccess) {
+        onSuccess(root)
+      }
+
+    } catch (error) {
+      console.error("Error rendering runner:", error)
+      if (options.onError) {
+        options.onError(error instanceof Error ? error : new Error(String(error)))
+      }
+    }
+  }
+}

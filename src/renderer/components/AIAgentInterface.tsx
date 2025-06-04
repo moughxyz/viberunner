@@ -5,7 +5,7 @@ import { ClaudeAPIService } from "../services/ClaudeAPIService"
 import { FileManagerService } from "../services/FileManagerService"
 import { CommandExecutorService } from "../services/CommandExecutorService"
 import { useRunnerRefresh } from "../hooks/useRunnerService"
-import { getRunnersDirectory } from "../util"
+import { getRunnersDirectory, createRunnerLoader } from "../util"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -117,64 +117,35 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
 
       script.textContent = runnerStyleInterceptor + "\n" + bundleContent
 
-      const runnerLoader = (RunnerComponent: any) => {
-        try {
-          if (!previewContainerRef.current) {
-            throw new Error("Preview container not available")
+      const runnerLoader = previewContainerRef.current
+        ? createRunnerLoader({
+            container: previewContainerRef.current,
+            appId: previewId,
+            props: {
+              tabId: previewId,
+              runnerId: runnerName,
+            },
+            useGlobalReact: true,
+            onSuccess: (root) => {
+              reactRootRef.current = root
+              setHasRunner(true)
+              setError(null)
+              setIsLoading(false)
+            },
+            onError: (error) => {
+              console.error("Error rendering preview:", error)
+              setError(
+                `Preview error: ${error.message}`
+              )
+              setHasRunner(false)
+              setIsLoading(false)
+            }
+          })
+        : () => {
+            setError("Preview container not available")
+            setHasRunner(false)
+            setIsLoading(false)
           }
-
-          // Create isolation wrapper
-          const isolationWrapper = document.createElement("div")
-          isolationWrapper.style.cssText = `
-            width: 100% !important;
-            height: 100% !important;
-            position: relative !important;
-            overflow: auto !important;
-            display: block !important;
-            contain: layout style !important;
-            isolation: isolate !important;
-          `
-          isolationWrapper.setAttribute("data-app-id", previewId)
-
-          previewContainerRef.current.appendChild(isolationWrapper)
-
-          // Use the global ReactDOM.createRoot that's already exposed for runners
-          const { createRoot } = (window as any).ReactDOM
-          if (!createRoot) {
-            throw new Error("ReactDOM.createRoot not available globally")
-          }
-
-          const root = createRoot(isolationWrapper)
-          reactRootRef.current = root
-
-          const props = {
-            tabId: previewId,
-            runnerId: runnerName,
-          }
-
-          // Use global React instance for component creation
-          const globalReact = (window as any).React
-          if (!globalReact) {
-            throw new Error("Global React not available")
-          }
-
-          root.render(globalReact.createElement(RunnerComponent, props))
-
-          // Set success states only after successful rendering
-          setHasRunner(true)
-          setError(null)
-          setIsLoading(false)
-        } catch (error) {
-          console.error("Error rendering preview:", error)
-          setError(
-            `Preview error: ${
-              error instanceof Error ? error.message : "Unknown error"
-            }`
-          )
-          setHasRunner(false)
-          setIsLoading(false)
-        }
-      }
 
       // Make the app loader available globally
       ;(window as any).__RENDER_RUNNER__ = runnerLoader

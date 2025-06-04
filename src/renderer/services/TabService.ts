@@ -1,7 +1,7 @@
 import React from "react"
 import { createRoot } from "react-dom/client"
 import { OpenTab, RunnerConfig, FileInput, RunnerProps } from "../types"
-import { getRunnersDirectory } from "../util"
+import { getRunnersDirectory, createRunnerLoader } from "../util"
 import AIAgentInterface from "../components/AIAgentInterface"
 
 const fs = require("fs")
@@ -413,41 +413,12 @@ export class TabService {
       script.textContent =
         runnerStyleInterceptor + "\n" + processedBundleContent
 
-      const runnerLoader = (RunnerComponent: any) => {
-        try {
-          // Create an isolation wrapper div
-          const isolationWrapper = document.createElement("div")
-          isolationWrapper.style.cssText = `
-            width: 100% !important;
-            height: 100% !important;
-            max-width: 100% !important;
-            max-height: 100% !important;
-            position: relative !important;
-            overflow: auto !important;
-            display: block !important;
-            contain: layout style size !important;
-            isolation: isolate !important;
-            z-index: 1 !important;
-          `
-
-          container.appendChild(isolationWrapper)
-
-          // Render directly into the isolation wrapper
-          isolationWrapper.setAttribute("data-app-id", tab.id)
-
-          // Ensure we're using the same React instance
-          const root = createRoot(isolationWrapper)
-
-          // Debug logging
-          console.log("Rendering runner component:", {
-            componentType: typeof RunnerComponent,
-            componentName: RunnerComponent.name || "Anonymous",
-            props: Object.keys(props),
-            reactVersion: React.version,
-          })
-
-          root.render(React.createElement(RunnerComponent, props))
-
+      const runnerLoader = createRunnerLoader({
+        container: container,
+        appId: tab.id,
+        props: props,
+        useGlobalReact: true,
+        onSuccess: (root) => {
           // Store container reference in tabContainers for tab switching
           this.tabContainers.set(tab.id, {
             domElement: container,
@@ -462,11 +433,12 @@ export class TabService {
           container.style.opacity = "1"
 
           resolve(true)
-        } catch (error) {
+        },
+        onError: (error) => {
           console.error("Error rendering app:", error)
           resolve(false)
         }
-      }
+      })
 
       // Make the app loader available globally with backward compatibility
       ;(window as any).__RENDER_RUNNER__ = runnerLoader
