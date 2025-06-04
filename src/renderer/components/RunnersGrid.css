@@ -206,6 +206,30 @@
   border-color: var(--accent);
 }
 
+/* Unified runners section */
+.unified-runners-section {
+  margin-bottom: var(--space-8);
+}
+
+.unified-runners-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+/* Responsive breakpoints for unified runners grid */
+@media (max-width: 1024px) {
+  .unified-runners-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .unified-runners-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* File-based runners section */
 .runners-section {
   margin-bottom: var(--space-8);
