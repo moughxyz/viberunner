@@ -77,7 +77,7 @@ export const createRunnerLoader = (options: RunnerLoaderOptions) => {
         position: relative !important;
         overflow: auto !important;
         display: block !important;
-        contain: layout style size !important;
+        contain: layout style !important;
         isolation: isolate !important;
         z-index: 1 !important;
       `
@@ -95,11 +95,11 @@ export const createRunnerLoader = (options: RunnerLoaderOptions) => {
         React = (window as any).React
         createRoot = (window as any).ReactDOM?.createRoot
 
-        if (!React) {
-          throw new Error("Global React not available")
-        }
-        if (!createRoot) {
-          throw new Error("ReactDOM.createRoot not available globally")
+        // Fallback to imported React if global not available
+        if (!React || !createRoot) {
+          console.warn("Global React/ReactDOM not available, falling back to imported versions")
+          React = require("react")
+          createRoot = require("react-dom/client").createRoot
         }
       } else {
         // Use imported React and createRoot
@@ -115,14 +115,25 @@ export const createRunnerLoader = (options: RunnerLoaderOptions) => {
         componentName: RunnerComponent.name || "Anonymous",
         props: Object.keys(props),
         reactVersion: React.version,
-        useGlobalReact
+        useGlobalReact,
+        hasContainer: !!container,
+        containerInDom: document.contains(container)
       })
 
-      root.render(React.createElement(RunnerComponent, props))
+      try {
+        const element = React.createElement(RunnerComponent, props)
+        console.log("Created React element:", element)
 
-      // Call success callback with the root
-      if (onSuccess) {
-        onSuccess(root)
+        root.render(element)
+        console.log("Successfully rendered runner component")
+
+        // Call success callback with the root
+        if (onSuccess) {
+          onSuccess(root)
+        }
+      } catch (renderError) {
+        console.error("Error during React render:", renderError)
+        throw renderError
       }
 
     } catch (error) {
