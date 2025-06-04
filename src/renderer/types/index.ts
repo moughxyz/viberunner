@@ -24,4 +24,5 @@ export interface OpenTab {
   runnerData?: any // Store the loaded runner data for reloading
   reactRoot?: any // Store the React root for each tab
   domContainer?: HTMLDivElement // Store the DOM container for each tab
+  prompt?: string // Optional prompt for AI agent tabs
 }

@@ -113,7 +113,10 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
             {templates.map((template, index) => (
               <button
                 key={index}
-                onClick={() => setBuildPrompt(template.prompt)}
+                onClick={() => {
+                  setBuildPrompt(template.prompt)
+                  onSubmit?.(template.prompt)
+                }}
                 className="example-button"
               >
                 <div className="example-description">
