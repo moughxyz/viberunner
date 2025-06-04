@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState, useRef, useCallback } from "react"
 import { createRoot } from "react-dom/client"
 import UpdateNotification, {
