@@ -514,14 +514,12 @@ const App: React.FC = () => {
     let props
     if (!tab.fileInput) {
       props = {
-        container,
         tabId: tab.id,
         runnerId: tab.runner.id,
       }
     } else {
       props = {
         fileInput: tab.fileInput,
-        container,
         tabId: tab.id,
         runnerId: tab.runner.id,
       }
@@ -534,19 +532,57 @@ const App: React.FC = () => {
 
       let processedBundleContent = tab.runnerData.bundleContent
 
-      // CSS scoping patterns for auto-scoping
-      const cssPatterns = [
+      // Safe CSS scoping - only process strings that are clearly CSS
+      // Use conservative patterns to avoid corrupting JavaScript code
+      const safeCssPatterns = [
+        // Match .css file imports/requires
         /(['"`])([^'"`]*\.css[^'"`]*)\1/g,
-        /(['"`])([^'"`]*{[^}]*}[^'"`]*)\1/g,
+
+        // Match strings that clearly look like CSS (contain CSS selectors + rules)
+        // Only match if it contains CSS selector patterns AND CSS properties
+        /(['"`])([^'"`]*(?:\.[\w-]+|#[\w-]+|[a-zA-Z][\w-]*)\s*\{[^}]*(?:color|background|margin|padding|font|border|width|height|display|position)[^}]*\}[^'"`]*)\1/g,
+
+        // Match template literals that contain CSS (tagged templates like css`...`)
+        /css\s*`([^`]*(?:\.[\w-]+|#[\w-]+|[a-zA-Z][\w-]*)\s*\{[^}]*\}[^`]*)`/g,
+
+        // Match styled-components or similar CSS-in-JS patterns
+        /styled\.[a-zA-Z]+\s*`([^`]*(?:\.[\w-]+|#[\w-]+|[a-zA-Z][\w-]*)\s*\{[^}]*\}[^`]*)`/g,
       ]
 
-      cssPatterns.forEach((pattern) => {
+      safeCssPatterns.forEach((pattern, index) => {
         processedBundleContent = processedBundleContent.replace(
           pattern,
-          (match: string, quote: string, cssContent: string) => {
+          (match: string, ...args: string[]) => {
+            // Extract CSS content based on pattern type
+            let cssContent: string
+            let quote: string = ''
+
+            if (index <= 1) {
+              // Standard quoted strings
+              quote = args[0]
+              cssContent = args[1]
+            } else {
+              // Template literals (css`` or styled.div``)
+              cssContent = args[0]
+            }
+
             if (!cssContent) return match
 
-            // Don't process if already scoped to .tab-app-container
+            // Additional safety check - skip if this looks like JavaScript
+            if (
+              cssContent.includes('export') ||
+              cssContent.includes('import') ||
+              cssContent.includes('function') ||
+              cssContent.includes('const ') ||
+              cssContent.includes('let ') ||
+              cssContent.includes('var ') ||
+              cssContent.includes('=>') ||
+              cssContent.includes('return')
+            ) {
+              return match // Don't process JavaScript code
+            }
+
+            // Don't process if already scoped
             if (
               cssContent.includes(".tab-app-container") ||
               cssContent.includes(`[data-app-id="${tab.id}"]`)
@@ -560,7 +596,7 @@ const App: React.FC = () => {
               .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
               // Scope element selectors
               .replace(
-                /^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm,
+                /^(\s*)([a-zA-Z][\w-]*)\s*\{/gm,
                 `$1[data-app-id="${tab.id}"] $2 {`
               )
               // Scope class selectors
@@ -573,19 +609,19 @@ const App: React.FC = () => {
                 /^(\s*)(#[\w-]+)\s*\{/gm,
                 `$1[data-app-id="${tab.id}"] $2 {`
               )
-              // Scope descendant selectors
+              // Scope complex selectors
               .replace(
-                /^(\s*)([.#]?[\w-]+(?:\s+[.#]?[\w-]+)*)\s*\{/gm,
+                /^(\s*)([.#]?[\w-]+(?:\s*[>+~]\s*[.#]?[\w-]+)*)\s*\{/gm,
                 `$1[data-app-id="${tab.id}"] $2 {`
               )
-              // Handle @media queries by scoping the content inside
+              // Handle @media queries
               .replace(
                 /@media[^{]+\{([^{}]*(?:\{[^}]*\}[^{}]*)*)\}/g,
                 (mediaMatch: string, mediaContent: string) => {
                   const scopedMediaContent = mediaContent
                     .replace(/^\s*\*\s*\{/gm, `[data-app-id="${tab.id}"] * {`)
                     .replace(
-                      /^(\s*)([a-zA-Z][a-zA-Z0-9]*)\s*\{/gm,
+                      /^(\s*)([a-zA-Z][\w-]*)\s*\{/gm,
                       `$1[data-app-id="${tab.id}"] $2 {`
                     )
                     .replace(
@@ -600,7 +636,13 @@ const App: React.FC = () => {
                 }
               )
 
-            return quote ? `${quote}${scopedCSS}${quote}` : scopedCSS
+            // Return with appropriate wrapper
+            if (index <= 1) {
+              return quote ? `${quote}${scopedCSS}${quote}` : scopedCSS
+            } else {
+              // Template literals
+              return match.replace(cssContent, scopedCSS)
+            }
           }
         )
       })
@@ -681,7 +723,17 @@ const App: React.FC = () => {
           // Render directly into the isolation wrapper
           isolationWrapper.setAttribute("data-app-id", tab.id)
 
+          // Ensure we're using the same React instance
           const root = createRoot(isolationWrapper)
+
+          // Debug logging
+          console.log("Rendering runner component:", {
+            componentType: typeof RunnerComponent,
+            componentName: RunnerComponent.name || 'Anonymous',
+            props: Object.keys(props),
+            reactVersion: React.version
+          })
+
           root.render(React.createElement(RunnerComponent, props))
 
           // Store container reference in tabContainersRef for tab switching

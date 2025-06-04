@@ -108,6 +108,19 @@ export const getNewRunnerPrompt = (userPrompt: string) => {
     - When installing dependencies, you can import them in the React component depending on their type (ESM or CommonJS).
       - If ESM, use import statements.
       - If CommonJS, use require statements.
+    - If you need to store user data, use the passed in dataDirectory prop. You can create files and folders in this directory.
+
+  Design Guidelines:
+    - Make the UI visually appealing and modern. Style like using shadcn or Vercel.
+    - Use a dark theme.
+    - Create a styles object that contains all the styles for the app, and use it in the React component.
+      - For example, const styles = {
+        container: {
+          padding: "20px",
+          background: "#0a0a0a",
+          color: "#ffffff",
+        },
+      }
 
   Here are the contents of the promised attachments:
 

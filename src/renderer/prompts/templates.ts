@@ -17,7 +17,7 @@ export const templates = [
       textarea displaying the contents of the daily note
       ]
 
-      - Each daily note is .txt file saved by default in the app's cwd in the "notes" folder (create it if it doesn't exit)
+      - Each daily note is .txt file (create it if it doesn't exit)
       - User can change this directory and the preference is saved via the parent app's (viberunner) prefs API
       - Changing the directroy does not transfer any of the existing txt files. user must be instructed to manually copy paste old files into new directory
       - User should be able to "Show notes directory" to reveal in finder
