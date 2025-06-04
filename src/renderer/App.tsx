@@ -9,6 +9,7 @@ import RunnersGrid from "./components/RunnersGrid"
 import AppSelection from "./components/AppSelection"
 import SettingsModal from "./components/SettingsModal"
 import TabBar from "./components/TabBar"
+import DropZone from "./components/DropZone"
 import { FileInput, RunnerConfig, OpenTab } from "./types"
 import {
   getRunnerPreference,
@@ -1404,7 +1405,6 @@ const App: React.FC = () => {
             {/* Unified new tab interface when active tab is new tab */}
             {activeTab?.type === "newtab" && !showAppSelection && (
               <div className="vr-new-tab-unified">
-                {/* Full-screen BuildPrompt when no runners are available */}
                 {runners.length === 0 && (
                   <BuildPrompt
                     onSubmit={handleBuildPromptSubmit}
@@ -1412,32 +1412,15 @@ const App: React.FC = () => {
                   />
                 )}
 
-                {/* Condensed BuildPrompt and other content when runners are available */}
                 {runners.length > 0 && (
                   <div className="unified-content">
-                    {/* Build Prompt Component */}
                     <BuildPrompt
                       onSubmit={handleBuildPromptSubmit}
                       condensed={true}
                     />
 
-                    {/* Drop zone section */}
-                    <div className="drop-zone-section">
-                      <div className="section-card">
-                        <div className="drop-zone-content">
-                          <div className="drop-zone-header">
-                            <div className="drop-zone-icon">⬇</div>
-                            <h3 className="drop-zone-title">Drop files here</h3>
-                          </div>
-                          <p className="drop-zone-description">
-                            Drag and drop files to automatically find compatible
-                            runners
-                          </p>
-                        </div>
-                      </div>
-                    </div>
+                    <DropZone />
 
-                    {/* Runners Grid Component */}
                     <RunnersGrid
                       runners={runners}
                       isLoadingRunners={isLoadingRunners}
@@ -1453,7 +1436,6 @@ const App: React.FC = () => {
               </div>
             )}
 
-            {/* Settings Modal */}
             <SettingsModal
               isVisible={showSettings}
               onClose={() => setShowSettings(false)}
