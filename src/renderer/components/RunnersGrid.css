@@ -29,7 +29,7 @@
   display: flex;
   flex-direction: column;
   gap: 0; /* Remove gap to connect borders */
-  min-height: 140px;
+  height: 100%;
 }
 
 .utility-card-container .utility-card {
@@ -51,6 +51,7 @@
   text-align: left;
   font-family: inherit;
   color: inherit;
+  flex: 1;
 }
 
 .utility-card:hover {
@@ -76,6 +77,8 @@
 .utility-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .utility-title {
@@ -90,6 +93,7 @@
   color: var(--text-secondary);
   margin: 0;
   line-height: 1.4;
+  flex: 1;
 }
 
 .utility-action {
@@ -265,7 +269,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
   transition: all 0.15s ease;
-  min-height: 140px;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
