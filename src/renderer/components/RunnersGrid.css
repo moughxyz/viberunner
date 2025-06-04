@@ -93,11 +93,11 @@
 }
 
 .utility-action {
-  color: var(--accent);
+  color: white;
   font-size: var(--font-size-sm);
   font-weight: 600;
   padding: var(--space-2) var(--space-3);
-  background: var(--accent-light);
+  background: var(--accent);
   border: 1px solid var(--accent);
   border-radius: var(--radius);
   flex-shrink: 0;
@@ -108,6 +108,9 @@
   background: var(--accent);
   color: white;
   border-color: var(--accent);
+  filter: brightness(0.85);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Startup controls for utility cards */
