@@ -15,16 +15,43 @@ export interface ClaudeResponse {
   }
 }
 
+// Available Claude models
+export const CLAUDE_MODELS = {
+  'claude-3-5-sonnet-20241022': 'Claude 3.5 Sonnet',
+  'claude-sonnet-4-20250514': 'Claude 4 Sonnet',
+  'claude-opus-4-20250514': 'Claude 4 Opus'
+} as const
+
+export type ClaudeModelId = keyof typeof CLAUDE_MODELS
+
 export class ClaudeAPIService {
   private anthropic: Anthropic
-  private model = 'claude-3-5-sonnet-20241022'
+  private model: ClaudeModelId
   private originalSystemPrompt: string | null = null
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, model: ClaudeModelId = 'claude-3-5-sonnet-20241022') {
     this.anthropic = new Anthropic({
       apiKey,
       dangerouslyAllowBrowser: true
     })
+    this.model = model
+  }
+
+  // Get current model
+  getCurrentModel(): ClaudeModelId {
+    return this.model
+  }
+
+  // Set model
+  setModel(model: ClaudeModelId): void {
+    this.model = model
+    // Reset system prompt when changing models to ensure consistency
+    this.originalSystemPrompt = null
+  }
+
+  // Get available models
+  static getAvailableModels(): typeof CLAUDE_MODELS {
+    return CLAUDE_MODELS
   }
 
   async sendMessage(userPrompt: string, conversationHistory: Message[]): Promise<ClaudeResponse> {

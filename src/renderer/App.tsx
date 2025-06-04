@@ -306,6 +306,8 @@ const App: React.FC = () => {
     loadStartupRunners()
   }, [runners])
 
+
+
   // Keyboard shortcuts for tab/window management
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -704,6 +706,8 @@ const App: React.FC = () => {
     console.log("App received build prompt:", prompt)
     await openAIAgentInNewTab(prompt)
   }
+
+
 
   // Function to open AI Agent in a new tab
   const openAIAgentInNewTab = async (prompt?: string) => {

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
 import ChatInterface from "./ChatInterface"
 import CodeEditor from "./CodeEditor"
-import { ClaudeAPIService } from "../services/ClaudeAPIService"
+import { ClaudeAPIService, CLAUDE_MODELS, ClaudeModelId } from "../services/ClaudeAPIService"
 import { FileManagerService } from "../services/FileManagerService"
 import { CommandExecutorService } from "../services/CommandExecutorService"
 import { useRunnerRefresh } from "../hooks/useRunnerService"
@@ -300,6 +300,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   const [isNewRunner, setIsNewRunner] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
   const [activeTab, setActiveTab] = useState("preview")
+  const [selectedModel, setSelectedModel] = useState<ClaudeModelId>('claude-3-5-sonnet-20241022')
 
   const claudeService = useRef<ClaudeAPIService | null>(null)
   const fileManager = useRef<FileManagerService | null>(null)
@@ -308,12 +309,20 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   // Hook to refresh runners in the main UI
   const { refresh: refreshRunners } = useRunnerRefresh()
 
-  useEffect(() => {
+    useEffect(() => {
     // Check if API key is already stored
     const storedKey = localStorage.getItem("claude-api-key")
+    const storedModel = localStorage.getItem("claude-model") as ClaudeModelId
+
+    let modelToUse = selectedModel
+    if (storedModel && Object.keys(CLAUDE_MODELS).includes(storedModel)) {
+      setSelectedModel(storedModel)
+      modelToUse = storedModel
+    }
+
     if (storedKey) {
       setApiKey(storedKey)
-      claudeService.current = new ClaudeAPIService(storedKey)
+      claudeService.current = new ClaudeAPIService(storedKey, modelToUse)
     } else {
       setShowApiKeyPrompt(true)
     }
@@ -325,11 +334,22 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   const handleSetApiKey = (key: string) => {
     setApiKey(key)
     localStorage.setItem("claude-api-key", key)
-    claudeService.current = new ClaudeAPIService(key)
+    localStorage.setItem("claude-model", selectedModel)
+    claudeService.current = new ClaudeAPIService(key, selectedModel)
     setShowApiKeyPrompt(false)
 
     // Reset the initial prompt sent flag so it can be sent now that we have the API key
     initialPromptSentRef.current = false
+  }
+
+  const handleModelChange = (model: ClaudeModelId) => {
+    setSelectedModel(model)
+    localStorage.setItem("claude-model", model)
+
+    // If we already have a service, update its model
+    if (claudeService.current) {
+      claudeService.current.setModel(model)
+    }
   }
 
   const handleDiscard = async () => {
@@ -702,6 +722,37 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                 }}
                 className="api-key-input"
               />
+              <div className="model-selector-container" style={{ marginTop: '16px' }}>
+                <label htmlFor="model-selector" className="model-selector-label" style={{
+                  display: 'block',
+                  marginBottom: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: 'var(--foreground)'
+                }}>
+                  Model:
+                </label>
+                <select
+                  id="model-selector"
+                  value={selectedModel}
+                  onChange={(e) => handleModelChange(e.target.value as ClaudeModelId)}
+                  className="api-key-input"
+                  style={{
+                    appearance: 'none',
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 12px center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '16px',
+                    paddingRight: '40px'
+                  }}
+                >
+                  {Object.entries(CLAUDE_MODELS).map(([modelId, displayName]) => (
+                    <option key={modelId} value={modelId}>
+                      {displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="api-key-buttons">
@@ -755,7 +806,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                 <CardTitle className="header-title">
                   AI Runner Builder
                 </CardTitle>
-                <Input
+                                <Input
                   id="runner-name-input"
                   type="text"
                   placeholder="Runner name (optional)"
@@ -807,6 +858,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
             onDiscard={handleDiscard}
             isDiscarding={isDiscarding}
             hasFiles={Object.keys(currentFiles).length > 0}
+            selectedModel={selectedModel}
+            onModelChange={handleModelChange}
           />
           <div id="preview-panel" className="preview-panel">
             <Tabs
