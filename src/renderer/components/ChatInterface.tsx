@@ -305,7 +305,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     {/* Avatar */}
                     <div className="message-avatar">
                       <div className="avatar">
-                        {message.role === "user" ? "U" : "AI"}
+                        {message.role === "user" ? "U" : (
+                          <img
+                            src="../../assets/viberunner-logo.svg"
+                            alt="Viberunner"
+                            width="16"
+                            height="16"
+                            style={{ filter: 'brightness(0) invert(1)' }}
+                          />
+                        )}
                       </div>
                     </div>
 
@@ -423,7 +431,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <div className="loading-wrapper">
                     <div className="message-avatar">
                       <div className="avatar">
-                        AI
+                        <img
+                          src="../../assets/viberunner-logo.svg"
+                          alt="Viberunner"
+                          width="16"
+                          height="16"
+                          style={{ filter: 'brightness(0) invert(1)' }}
+                        />
                       </div>
                     </div>
                     <div className="loading-content">
