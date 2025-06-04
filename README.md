@@ -424,29 +424,18 @@ Runners have direct access to Node.js APIs instead of receiving pre-processed fi
 
 ### Runner Props
 
-#### File-based Runners
+Your React component receives RunnerProps for component props:
 
-```typescript
-interface RunnerProps {
-  fileInput: {
-    path: string // Full file path
-    mimetype: string // Detected MIME type
-  }
-  container: HTMLElement // Mount point
-  tabId: string // Unique tab identifier for cleanup
-  runnerId: string // Runner identifier for preferences access
+````typescript
+export interface FileInput {
+  path: string
+  mimetype: string
 }
-```
 
-#### Standalone Runners
-
-```typescript
-interface RunnerProps {
-  container: HTMLElement // Mount point
-  tabId: string // Unique tab identifier for cleanup
-  runnerId: string // Runner identifier for preferences access
+export interface RunnerProps {
+  dataDirectory: string
+  fileInput?: FileInput
 }
-```
 
 ### Available APIs
 
@@ -465,7 +454,7 @@ const mimeType = mime.lookup(filePath)
 const fs = fs
 const path = path
 const customModule = require("some-module")
-```
+````
 
 ### Benefits
 
@@ -743,7 +732,7 @@ export default defineConfig({
 ```tsx
 import React from "react"
 
-const fs = require('fs')
+const fs = require("fs")
 
 interface FileData {
   path: string
@@ -958,14 +947,8 @@ To create a standalone runner, set `"standalone": true` in your `package.json` `
 
 ### Component Interface
 
-Standalone runners receive `null` as fileData:
-
 ```typescript
-interface StandaloneRunnerProps {
-  fileData: null // Always null for standalone runners
-}
-
-const WeatherDashboard: React.FC<StandaloneRunnerProps> = ({ fileData }) => {
+const WeatherDashboard: React.FC<RunnerProps> = ({ fileData }) => {
   // fileData will be null - this is a standalone utility
   const [weather, setWeather] = useState(null)
 
@@ -1000,29 +983,6 @@ Standalone runners appear in the "Utilities" section of the sidebar with **Launc
 This enables Viberunner to serve as a platform for any kind of utility or application, not just file runners!
 
 ## ⚛️ Component Development
-
-### File Data Interface
-
-Your React component receives this data structure:
-
-```typescript
-interface FileData {
-  path: string // Full file path
-  mimetype: string // MIME type
-  content: string // File content (base64 for binary)
-  analysis: {
-    // Enhanced file analysis
-    filename: string // Just the filename
-    size: number // File size in bytes
-    isJson: boolean // Is valid JSON
-    jsonContent?: any // Parsed JSON (if applicable)
-  }
-}
-
-interface RunnerProps {
-  fileData: FileData
-}
-```
 
 ### Available APIs
 
@@ -1601,6 +1561,7 @@ const checkCrossPlatform = () => {
   }
 }
 ```
+
 ### Error Handling Best Practices
 
 1. **Always handle both `error` and `close` events** for spawned processes
@@ -1670,7 +1631,6 @@ const checkTool = async () => {
 ```
 
 This approach ensures your Viberunner apps can reliably detect and work with external tools while providing graceful fallbacks when tools aren't available.
-
 
 ## 🎉 Conclusion
 

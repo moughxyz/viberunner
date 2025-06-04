@@ -20,13 +20,17 @@ declare global {
   }
 }
 
-interface TemplateRunnerProps {
-  tabId: string // Provided by Viberunner
+interface RunnerProps {
+  dataDirectory: string
+  fileInput?: {
+    path: string
+    mimetype: string
+  }
 }
 
-const TemplateRunner: React.FC<TemplateRunnerProps> = ({
+const TemplateRunner: React.FC<RunnerProps> = ({
   tabId,
-}: TemplateRunnerProps) => {
+}: RunnerProps) => {
   useEffect(() => {
     window.registerCleanup(tabId, () => {
       // Cleanup timers, listeners, etc.

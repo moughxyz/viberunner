@@ -10,7 +10,7 @@ import AppSelection from "./components/AppSelection"
 import SettingsModal from "./components/SettingsModal"
 import TabBar from "./components/TabBar"
 import DropZone from "./components/DropZone"
-import { FileInput, RunnerConfig, OpenTab } from "./types"
+import { FileInput, RunnerConfig, OpenTab, RunnerProps } from "./types"
 import {
   getRunnerPreference,
   getRunnerPreferences,
@@ -510,19 +510,28 @@ const App: React.FC = () => {
     container.style.background = "var(--background)"
     appRootRef.current.appendChild(container)
 
+    // Create data directory for the runner
+    const RUNNERS_DIR = getRunnersDirectory()
+    const runnerDir = path.join(RUNNERS_DIR, tab.runner.id)
+    const dataDirectory = path.join(runnerDir, "UserData")
+
+    // Ensure data directory exists
+    try {
+      if (!fs.existsSync(dataDirectory)) {
+        fs.mkdirSync(dataDirectory, { recursive: true })
+        console.log(`Created data directory: ${dataDirectory}`)
+      }
+    } catch (error) {
+      console.error(
+        `Failed to create data directory for ${tab.runner.id}:`,
+        error
+      )
+    }
+
     // Prepare props with cleanup support
-    let props
-    if (!tab.fileInput) {
-      props = {
-        tabId: tab.id,
-        runnerId: tab.runner.id,
-      }
-    } else {
-      props = {
-        fileInput: tab.fileInput,
-        tabId: tab.id,
-        runnerId: tab.runner.id,
-      }
+    const props: RunnerProps = {
+      dataDirectory: dataDirectory,
+      fileInput: tab.fileInput, // This will be undefined for standalone runners
     }
 
     return new Promise<boolean>((resolve) => {
@@ -555,7 +564,7 @@ const App: React.FC = () => {
           (match: string, ...args: string[]) => {
             // Extract CSS content based on pattern type
             let cssContent: string
-            let quote: string = ''
+            let quote: string = ""
 
             if (index <= 1) {
               // Standard quoted strings
@@ -570,14 +579,14 @@ const App: React.FC = () => {
 
             // Additional safety check - skip if this looks like JavaScript
             if (
-              cssContent.includes('export') ||
-              cssContent.includes('import') ||
-              cssContent.includes('function') ||
-              cssContent.includes('const ') ||
-              cssContent.includes('let ') ||
-              cssContent.includes('var ') ||
-              cssContent.includes('=>') ||
-              cssContent.includes('return')
+              cssContent.includes("export") ||
+              cssContent.includes("import") ||
+              cssContent.includes("function") ||
+              cssContent.includes("const ") ||
+              cssContent.includes("let ") ||
+              cssContent.includes("var ") ||
+              cssContent.includes("=>") ||
+              cssContent.includes("return")
             ) {
               return match // Don't process JavaScript code
             }
@@ -729,9 +738,9 @@ const App: React.FC = () => {
           // Debug logging
           console.log("Rendering runner component:", {
             componentType: typeof RunnerComponent,
-            componentName: RunnerComponent.name || 'Anonymous',
+            componentName: RunnerComponent.name || "Anonymous",
             props: Object.keys(props),
-            reactVersion: React.version
+            reactVersion: React.version,
           })
 
           root.render(React.createElement(RunnerComponent, props))

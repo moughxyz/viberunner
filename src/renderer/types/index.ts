@@ -15,6 +15,11 @@ export interface RunnerConfig {
   userPreferences?: Record<string, any> // User preferences storage
 }
 
+export interface RunnerProps {
+  dataDirectory: string
+  fileInput?: FileInput // Optional file input for file-based runners
+}
+
 export interface OpenTab {
   id: string
   runner?: RunnerConfig // Optional for new tab - represents the runner

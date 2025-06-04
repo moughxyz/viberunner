@@ -46,7 +46,11 @@ export const getNewRunnerPrompt = (userPrompt: string) => {
     }
 
     interface ClipboardManagerRunnerProps {
-      tabId: string // Provided by Viberunner
+      dataDirectory: string
+      fileInput?: {
+        path: string
+        mimetype: string
+      }
     }
 
     const ClipboardManagerRunner: React.FC<ClipboardManagerRunnerProps> = ({
