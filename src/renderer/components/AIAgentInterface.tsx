@@ -4,6 +4,7 @@ import CodeEditor from "./CodeEditor"
 import { ClaudeAPIService } from "../services/ClaudeAPIService"
 import { FileManagerService } from "../services/FileManagerService"
 import { CommandExecutorService } from "../services/CommandExecutorService"
+import { useRunnerRefresh } from "../hooks/useRunnerService"
 import { getRunnersDirectory } from "../util"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -333,6 +334,9 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   const fileManager = useRef<FileManagerService | null>(null)
   const commandExecutor = useRef<CommandExecutorService | null>(null)
 
+  // Hook to refresh runners in the main UI
+  const { refresh: refreshRunners } = useRunnerRefresh()
+
   useEffect(() => {
     // Check if API key is already stored
     const storedKey = localStorage.getItem("claude-api-key")
@@ -515,6 +519,9 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
               `${runnerName ? "Updated" : "Created"} runner: ${savedName}`
             )
 
+            // Refresh the main UI runners list
+            await refreshRunners()
+
             // Execute commands immediately after saving files
             if (commands && commands.length > 0) {
               for (const command of commands) {
@@ -656,6 +663,10 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   const handleSaveRunner = async () => {
     // Since files are auto-saved when AI generates them,
     // the "Save" button should just close the interface
+
+    // Refresh the main UI runners list one final time before closing
+    await refreshRunners()
+
     if (onClose) {
       onClose()
     }

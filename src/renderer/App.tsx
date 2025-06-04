@@ -19,6 +19,8 @@ import {
   setRunnerPreferences,
 } from "./preferences"
 import { getRunnersDirectory, getViberunnerLogoPath } from "./util"
+import { useRunnerService } from "./hooks/useRunnerService"
+import { runnerService } from "./services/RunnerService"
 
 // Direct Node.js access with full integration
 const { ipcRenderer } = require("electron")
@@ -117,86 +119,7 @@ async function analyzeFile(filePath: string): Promise<FileAnalysis> {
   }
 }
 
-async function loadRunners(): Promise<RunnerConfig[]> {
-  const RUNNERS_DIR = getRunnersDirectory()
-  console.log("loadRunners: Looking for runners in:", RUNNERS_DIR)
-
-  if (!fs.existsSync(RUNNERS_DIR)) {
-    console.log("loadRunners: Directory does not exist, creating it")
-    fs.mkdirSync(RUNNERS_DIR, { recursive: true })
-    return []
-  }
-
-  try {
-    const dirContents = fs.readdirSync(RUNNERS_DIR)
-    console.log("loadRunners: Directory contents:", dirContents)
-
-    const directories = dirContents.filter((dir: string) => {
-      const fullPath = path.join(RUNNERS_DIR, dir)
-      const isDir = fs.statSync(fullPath).isDirectory()
-      console.log(`loadRunners: ${dir} is directory: ${isDir}`)
-      return isDir
-    })
-    console.log("loadRunners: Found directories:", directories)
-
-    const runners = directories
-      .map((dir: string) => {
-        const runnerPath = path.join(RUNNERS_DIR, dir)
-        const packageJsonPath = path.join(runnerPath, "package.json")
-        console.log(`loadRunners: Checking for metadata at: ${packageJsonPath}`)
-
-        if (!fs.existsSync(packageJsonPath)) {
-          console.log(`loadRunners: No package.json found for ${dir}`)
-          return null
-        }
-
-        try {
-          const metadataContent = fs.readFileSync(packageJsonPath, "utf-8")
-          const metadata = JSON.parse(metadataContent).viberunner
-          console.log(
-            `loadRunners: Successfully loaded metadata for ${dir}:`,
-            metadata
-          )
-          return {
-            ...metadata,
-            id: dir,
-          }
-        } catch (parseError) {
-          console.error(`Error parsing metadata for ${dir}:`, parseError)
-          return null
-        }
-      })
-      .filter(Boolean) as RunnerConfig[]
-
-    console.log("loadRunners: Final runners array:", runners)
-    return runners
-  } catch (error) {
-    console.error("Error in loadRunners function:", error)
-    throw error
-  }
-}
-
-async function loadApp(id: string) {
-  const RUNNERS_DIR = getRunnersDirectory()
-  const runnerPath = path.join(RUNNERS_DIR, id)
-  const bundlePath = path.join(runnerPath, "dist", "bundle.iife.js")
-
-  if (!fs.existsSync(bundlePath)) {
-    throw new Error(`Bundle not found: ${bundlePath}`)
-  }
-
-  const bundleContent = fs.readFileSync(bundlePath, "utf-8")
-
-  // Also load the metadata
-  const metadataPath = path.join(runnerPath, "package.json")
-  let config = null
-  if (fs.existsSync(metadataPath)) {
-    const metadataContent = fs.readFileSync(metadataPath, "utf-8")
-    config = JSON.parse(metadataContent).viberunner
-  }
-
-  return { bundleContent, config }
-}
+// Runner loading is now handled by RunnerService
 
 // Helper function to get supported formats for a runner
 const getSupportedFormats = (runner: any): string => {
@@ -235,8 +158,8 @@ const getSupportedFormats = (runner: any): string => {
 }
 
 const App: React.FC = () => {
-  const [runners, setRunners] = useState<RunnerConfig[]>([])
-  const [isLoadingRunners, setIsLoadingRunners] = useState(false)
+  // Use RunnerService instead of local state
+  const { runners, isLoading: isLoadingRunners, loadApp } = useRunnerService()
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
     { id: "default-tab", title: "New Tab", type: "newtab" },
   ])
@@ -549,23 +472,9 @@ const App: React.FC = () => {
     >
   >(new Map())
 
-  // Load and initialize runners on component mount
+  // Initialize RunnerService on component mount
   useEffect(() => {
-    const loadDirectoryInfo = async () => {
-      try {
-        setIsLoadingRunners(true)
-        const loadedRunners = await loadRunners()
-        setRunners(loadedRunners)
-        console.log("Successfully loaded runners:", loadedRunners.length)
-      } catch (error) {
-        console.error("Failed to load runners:", error)
-        setRunners([])
-      } finally {
-        setIsLoadingRunners(false)
-      }
-    }
-
-    loadDirectoryInfo()
+    runnerService.initialize()
   }, [])
 
   const generateTabId = () =>
@@ -1109,7 +1018,7 @@ const App: React.FC = () => {
   async function findMatchingRunners(
     filePath: string
   ): Promise<Array<{ runner: RunnerConfig; priority: number }>> {
-    const runners = await loadRunners()
+    const runners = runnerService.getRunners()
     const fileAnalysis = await analyzeFile(filePath)
     const matches: Array<{ runner: RunnerConfig; priority: number }> = []
 
