@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect, useCallback } from "react"
 import ChatInterface from "./ChatInterface"
 import CodeEditor from "./CodeEditor"
 import { ClaudeAPIService } from "../services/ClaudeAPIService"
@@ -29,6 +29,7 @@ export interface Message {
 interface AIAgentInterfaceProps {
   onClose?: () => void
   inTab?: boolean
+  initialPrompt?: string
 }
 
 interface PreviewPanelProps {
@@ -312,6 +313,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({
 const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   onClose,
   inTab = false,
+  initialPrompt,
 }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -409,7 +411,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     }
   }
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = useCallback(async (content: string) => {
     if (!claudeService.current) {
       setShowApiKeyPrompt(true)
       return
@@ -589,7 +591,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [messages]) // Dependencies for useCallback
 
   const parseAssistantResponse = (content: string) => {
     const fileChanges: FileChange[] = []
@@ -672,6 +674,17 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   const refreshPreview = () => {
     setRefreshKey((prev) => prev + 1)
   }
+
+  // Track if we've already sent the initial prompt
+  const initialPromptSentRef = useRef(false)
+
+  // Automatically send initial prompt when component mounts
+  useEffect(() => {
+    if (initialPrompt && initialPrompt.trim() && !initialPromptSentRef.current) {
+      initialPromptSentRef.current = true
+      handleSendMessage(initialPrompt)
+    }
+  }, [initialPrompt]) // Only depend on initialPrompt, not handleSendMessage
 
   if (showApiKeyPrompt) {
     return (

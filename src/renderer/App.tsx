@@ -1252,16 +1252,17 @@ const App: React.FC = () => {
   const handleBuildPromptSubmit = async (prompt: string) => {
     // Open AI Agent with the build prompt
     console.log("App received build prompt:", prompt)
-    await openAIAgentInNewTab()
+    await openAIAgentInNewTab(prompt)
   }
 
   // Function to open AI Agent in a new tab
-  const openAIAgentInNewTab = async () => {
+  const openAIAgentInNewTab = async (prompt?: string) => {
     const tabId = generateTabId()
     const newTab: OpenTab = {
       id: tabId,
       title: "Runner Builder",
       type: "ai-agent",
+      prompt: prompt,
     }
 
     // Check if we have an active new tab to transform
@@ -1273,6 +1274,7 @@ const App: React.FC = () => {
         ...currentTab,
         title: "Runner Builder",
         type: "ai-agent",
+        prompt: prompt,
       }
 
       setOpenTabs((prev) =>
@@ -1333,6 +1335,7 @@ const App: React.FC = () => {
           React.createElement(AIAgentInterface, {
             onClose: () => closeTab(tab.id),
             inTab: true,
+            initialPrompt: tab.prompt,
           })
         )
 
