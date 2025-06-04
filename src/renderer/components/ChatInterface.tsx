@@ -69,7 +69,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // First handle code blocks (triple backticks) before inline code
     let formatted = content
       // Handle code blocks with language specification
-      .replace(/```(\w+)?\n?([\s\S]*?)```/g, (_match, lang, code) => {
+      .replace(/```(\w+)?\n?([\s\S]*?)```/g, (_match, _lang, code) => {
         return `<pre class="code-block"><code>${code.trim()}</code></pre>`
       })
       // Handle inline code (single backticks)
@@ -145,7 +145,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </h3>
               <p className="empty-state-description">
                 Describe the productivity app or system utility you want to
-                build and I'll help you create a runner for it.
+                build.
               </p>
               <div className="empty-state-prompts">
                 {[
