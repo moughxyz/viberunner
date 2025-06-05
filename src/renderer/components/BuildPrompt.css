@@ -275,7 +275,13 @@
   cursor: pointer;
   font-size: 12px;
   padding: 4px 8px;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
+}
+
+.create-cursor-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 80%, white 20%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .create-cursor-button:disabled {
