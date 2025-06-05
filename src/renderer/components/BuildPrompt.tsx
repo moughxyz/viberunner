@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import "./BuildPrompt.css"
 import { templates } from "../prompts/templates"
 import { CLAUDE_MODELS, ClaudeModelId } from "../services/ClaudeAPIService"
+import { FileManagerService } from "../services/FileManagerService"
 
 interface BuildPromptProps {
   onSubmit?: (prompt: string) => void
@@ -17,8 +18,11 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
   condensed = false,
 }) => {
   const [buildPrompt, setBuildPrompt] = useState<string>("")
-  const [selectedModel, setSelectedModel] = useState<ClaudeModelId>('claude-3-5-sonnet-20241022')
+  const [selectedModel, setSelectedModel] = useState<ClaudeModelId>(
+    "claude-3-5-sonnet-20241022"
+  )
   const [showModelPicker, setShowModelPicker] = useState(false)
+  const [isCreatingRunner, setIsCreatingRunner] = useState(false)
 
   // Initialize model from localStorage or props
   useEffect(() => {
@@ -50,29 +54,69 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
     setShowModelPicker(false)
   }
 
+  const handleCreateWithCursor = async () => {
+    try {
+      setIsCreatingRunner(true)
+
+      const fileManager = new FileManagerService()
+      const runnerName = await fileManager.createRunnerForCursor()
+
+      alert(`Created runner "${runnerName}" and opened with Cursor!`)
+    } catch (error) {
+      console.error("Error creating runner with Cursor:", error)
+      alert(
+        `Error creating runner: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      )
+    } finally {
+      setIsCreatingRunner(false)
+    }
+  }
+
   const ModelStatus = () => (
-    <div style={{
-      marginTop: '8px',
-      fontSize: '12px',
-      color: 'var(--foreground)',
-      opacity: 0.6,
-      textAlign: 'center'
-    }}>
-      Using {CLAUDE_MODELS[selectedModel]} {' '}
+    <div
+      style={{
+        marginTop: "8px",
+        fontSize: "12px",
+        color: "var(--foreground)",
+        opacity: 0.6,
+        textAlign: "center",
+      }}
+    >
+      Using {CLAUDE_MODELS[selectedModel]}{" "}
       <button
         onClick={() => setShowModelPicker(true)}
         style={{
-          background: 'none',
-          border: 'none',
-          color: 'var(--foreground)',
+          background: "none",
+          border: "none",
+          color: "var(--foreground)",
           opacity: 0.8,
-          textDecoration: 'underline',
-          cursor: 'pointer',
-          fontSize: '12px',
-          padding: 0
+          textDecoration: "underline",
+          cursor: "pointer",
+          fontSize: "12px",
+          padding: 0,
+          marginRight: "12px",
         }}
       >
         Change
+      </button>
+      <button
+        onClick={handleCreateWithCursor}
+        disabled={isCreatingRunner}
+        style={{
+          background: "var(--accent)",
+          border: "none",
+          color: "var(--accent-foreground)",
+          borderRadius: "4px",
+          cursor: isCreatingRunner ? "not-allowed" : "pointer",
+          fontSize: "12px",
+          padding: "4px 8px",
+          opacity: isCreatingRunner ? 0.6 : 1,
+          transition: "opacity 0.2s ease",
+        }}
+      >
+        {isCreatingRunner ? "Creating..." : "Create with Cursor"}
       </button>
     </div>
   )
@@ -81,78 +125,94 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
     if (!showModelPicker) return null
 
     return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000
-      }}>
-        <div style={{
-          backgroundColor: 'var(--background)',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          padding: '24px',
-          minWidth: '320px',
-          maxWidth: '400px'
-        }}>
-          <h3 style={{
-            margin: '0 0 16px 0',
-            fontSize: '16px',
-            fontWeight: '600',
-            color: 'var(--foreground)'
-          }}>
+      <div
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: "var(--background)",
+            border: "1px solid var(--border)",
+            borderRadius: "8px",
+            padding: "24px",
+            minWidth: "320px",
+            maxWidth: "400px",
+          }}
+        >
+          <h3
+            style={{
+              margin: "0 0 16px 0",
+              fontSize: "16px",
+              fontWeight: "600",
+              color: "var(--foreground)",
+            }}
+          >
             Choose AI Model
           </h3>
 
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: "20px" }}>
             {Object.entries(CLAUDE_MODELS).map(([modelId, displayName]) => (
               <button
                 key={modelId}
                 onClick={() => handleModelChange(modelId as ClaudeModelId)}
                 style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '12px 16px',
-                  marginBottom: '8px',
-                  backgroundColor: selectedModel === modelId ? 'var(--accent)' : 'transparent',
-                  color: selectedModel === modelId ? 'var(--accent-foreground)' : 'var(--foreground)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  transition: 'all 0.2s ease'
+                  display: "block",
+                  width: "100%",
+                  padding: "12px 16px",
+                  marginBottom: "8px",
+                  backgroundColor:
+                    selectedModel === modelId ? "var(--accent)" : "transparent",
+                  color:
+                    selectedModel === modelId
+                      ? "var(--accent-foreground)"
+                      : "var(--foreground)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  textAlign: "left",
+                  transition: "all 0.2s ease",
                 }}
                 onMouseEnter={(e) => {
                   if (selectedModel !== modelId) {
-                    e.currentTarget.style.backgroundColor = 'var(--muted)'
+                    e.currentTarget.style.backgroundColor = "var(--muted)"
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (selectedModel !== modelId) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.backgroundColor = "transparent"
                   }
                 }}
               >
-                <div style={{ fontWeight: '500' }}>{displayName}</div>
-                {modelId === 'claude-opus-4-20250514' && (
-                  <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '2px' }}>
+                <div style={{ fontWeight: "500" }}>{displayName}</div>
+                {modelId === "claude-opus-4-20250514" && (
+                  <div
+                    style={{ fontSize: "12px", opacity: 0.7, marginTop: "2px" }}
+                  >
                     Most capable, best for complex tasks
                   </div>
                 )}
-                {modelId === 'claude-sonnet-4-20250514' && (
-                  <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '2px' }}>
+                {modelId === "claude-sonnet-4-20250514" && (
+                  <div
+                    style={{ fontSize: "12px", opacity: 0.7, marginTop: "2px" }}
+                  >
                     High-performance with superior reasoning
                   </div>
                 )}
-                {modelId === 'claude-3-5-sonnet-20241022' && (
-                  <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '2px' }}>
+                {modelId === "claude-3-5-sonnet-20241022" && (
+                  <div
+                    style={{ fontSize: "12px", opacity: 0.7, marginTop: "2px" }}
+                  >
                     Fast and efficient
                   </div>
                 )}
@@ -163,14 +223,14 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
           <button
             onClick={() => setShowModelPicker(false)}
             style={{
-              width: '100%',
-              padding: '8px 16px',
-              backgroundColor: 'transparent',
-              color: 'var(--foreground)',
-              border: '1px solid var(--border)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
+              width: "100%",
+              padding: "8px 16px",
+              backgroundColor: "transparent",
+              color: "var(--foreground)",
+              border: "1px solid var(--border)",
+              borderRadius: "6px",
+              cursor: "pointer",
+              fontSize: "14px",
             }}
           >
             Cancel
@@ -237,8 +297,8 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
           {/* Header */}
           <div className="header-full">
             <h1 className="title-full">
-              What would you like to <span className="title-gradient">build</span>
-              ?
+              What would you like to{" "}
+              <span className="title-gradient">build</span>?
             </h1>
             <p className="subtitle-full">
               Describe your system utility or productivity tool
