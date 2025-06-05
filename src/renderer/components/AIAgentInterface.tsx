@@ -280,7 +280,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     try {
       const response = await claudeService.current.sendMessage(
         content,
-        messages
+        messages,
+        currentFiles
       )
 
       // Parse the response for file changes and commands

@@ -156,12 +156,15 @@ export class FileManagerService {
           const relativePath = basePath ? path.join(basePath, entry) : entry
           const stat = fs.statSync(entryPath)
 
-          if (stat.isDirectory()) {
+                    if (stat.isDirectory()) {
             // Skip node_modules, .git, dist, and other build directories
             if (!['node_modules', '.git', 'dist', 'build', '.vscode', '.idea'].includes(entry)) {
               readDirectory(entryPath, relativePath)
             }
           } else if (stat.isFile()) {
+            // Files to exclude from loading
+            const excludeFiles = ['VIBERUNNER.md']
+
             // Only include common source files
             const ext = path.extname(entry).toLowerCase()
             const shouldInclude = [
@@ -170,9 +173,9 @@ export class FileManagerService {
               '.html', '.htm', '.md', '.txt',
               '.yml', '.yaml', '.xml'
             ].includes(ext) ||
-            ['package.json', 'tsconfig.json', 'vite.config.ts', 'README.md', 'VIBERUNNER.md'].includes(entry)
+            ['package.json', 'tsconfig.json', 'vite.config.ts', 'README.md'].includes(entry)
 
-            if (shouldInclude) {
+            if (shouldInclude && !excludeFiles.includes(entry)) {
               try {
                 const content = fs.readFileSync(entryPath, 'utf8')
                 const language = this.getLanguageFromExtension(relativePath)

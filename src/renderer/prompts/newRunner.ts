@@ -1,5 +1,6 @@
 import readmeContent from "../../../README.md?raw"
 import templateRunnerContent from "../../../TemplateRunner/TEMPLATE_RUNNER.md?raw"
+import { FileChange } from "../components/AIAgentInterface"
 
 const getReadmeContent = () => {
   return readmeContent
@@ -9,7 +10,16 @@ const getTemplateRunnerContent = () => {
   return templateRunnerContent
 }
 
-export const getNewRunnerPrompt = (userPrompt: string) => {
+export const getNewRunnerPrompt = (userPrompt: string, currentFiles?: Record<string, FileChange>) => {
+  // If we have current files, we're editing an existing runner - include them in the prompt
+  const filesContext = currentFiles && Object.keys(currentFiles).length > 0
+    ? `\n\nYou are currently editing an existing runner. Here are the current files:\n\n${
+        Object.entries(currentFiles)
+          .map(([path, file]) => `${path}:\n\`\`\`${file.language}\n${file.content}\n\`\`\``)
+          .join('\n\n')
+      }\n\nThe user wants to make changes to this existing runner.`
+    : ''
+
   return `
   You are an intelligent assistant that creates "runners" for a cross-platform desktop app called "Viberunner".
 
@@ -133,6 +143,8 @@ export const getNewRunnerPrompt = (userPrompt: string) => {
 
   Template runner content:
   ${getTemplateRunnerContent()}
+
+  ${filesContext}
 
   Here is the user's prompt:
   ${userPrompt}

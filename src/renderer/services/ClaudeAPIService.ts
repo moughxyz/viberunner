@@ -1,5 +1,5 @@
 import { getNewRunnerPrompt } from '../prompts/newRunner'
-import { Message } from '../components/AIAgentInterface'
+import { Message, FileChange } from '../components/AIAgentInterface'
 import Anthropic from '@anthropic-ai/sdk'
 
 export interface ClaudeMessage {
@@ -54,14 +54,14 @@ export class ClaudeAPIService {
     return CLAUDE_MODELS
   }
 
-  async sendMessage(userPrompt: string, conversationHistory: Message[]): Promise<ClaudeResponse> {
+  async sendMessage(userPrompt: string, conversationHistory: Message[], currentFiles?: Record<string, FileChange>): Promise<ClaudeResponse> {
     try {
       // Build conversation messages
       const messages: ClaudeMessage[] = []
 
       if (conversationHistory.length === 0) {
         // First message - create and store the system prompt
-        this.originalSystemPrompt = getNewRunnerPrompt(userPrompt)
+        this.originalSystemPrompt = getNewRunnerPrompt(userPrompt, currentFiles)
         messages.push({
           role: 'user',
           content: this.originalSystemPrompt
@@ -70,7 +70,7 @@ export class ClaudeAPIService {
         // Follow-up message - include the original system prompt first
         if (!this.originalSystemPrompt) {
           // If we don't have a system prompt yet (e.g., when editing existing runner), create one
-          this.originalSystemPrompt = getNewRunnerPrompt(userPrompt)
+          this.originalSystemPrompt = getNewRunnerPrompt(userPrompt, currentFiles)
         }
 
         if (this.originalSystemPrompt) {
