@@ -46,47 +46,7 @@ const api = {
 // Make API available globally for runners
 ;(window as any).api = api
 
-// Helper functions for direct file operations
-async function getMimetype(filePath: string): Promise<string> {
-  try {
-    const stats = fs.statSync(filePath)
-    if (stats.isDirectory()) {
-      return "inode/directory"
-    }
-  } catch (error) {
-    // File doesn't exist or can't be accessed
-  }
-
-  const mimetype = mime.lookup(filePath)
-  return mimetype || "application/octet-stream"
-}
-
-interface FileAnalysis {
-  path: string
-  filename: string
-  mimetype: string
-  content: string
-  size: number
-  isJson?: boolean
-  jsonContent?: any
-}
-
-async function analyzeFile(filePath: string): Promise<FileAnalysis> {
-  const stats = fs.statSync(filePath)
-  const filename = path.basename(filePath)
-  const mimetype = await getMimetype(filePath)
-
-  // Simplified analysis - just basic metadata for matching
-  return {
-    path: filePath,
-    filename,
-    mimetype,
-    content: "", // Don't read content here anymore
-    size: stats.size,
-    isJson: mimetype === "application/json" || filename.endsWith(".json"),
-    jsonContent: null, // Don't parse JSON here anymore
-  }
-}
+// Helper functions for direct file operations moved to RunnerService
 
 // Runner loading is now handled by RunnerService
 
@@ -525,116 +485,7 @@ const App: React.FC = () => {
     }
   }
 
-  // Enhanced file matching functions
-  function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {
-    switch (matcher.type) {
-      case "mimetype":
-        // Support wildcards in MIME types (e.g., "image/*", "text/*")
-        if (matcher.mimetype.includes("*")) {
-          const pattern = matcher.mimetype
-            .replace(/\*/g, ".*")
-            .replace(/\?/g, ".")
-          return new RegExp(`^${pattern}$`).test(fileAnalysis.mimetype)
-        }
-        return matcher.mimetype === fileAnalysis.mimetype
-
-      case "filename":
-        if (matcher.pattern) {
-          // Support exact match or glob pattern
-          if (matcher.pattern.includes("*") || matcher.pattern.includes("?")) {
-            // Simple glob pattern matching
-            const regexPattern = matcher.pattern
-              .replace(/\*/g, ".*")
-              .replace(/\?/g, ".")
-            return new RegExp(`^${regexPattern}$`).test(fileAnalysis.filename)
-          } else {
-            // Exact match
-            return matcher.pattern === fileAnalysis.filename
-          }
-        }
-        return false
-
-      case "filename-contains":
-        if (matcher.substring) {
-          // Case-insensitive substring matching
-          const hasSubstring = fileAnalysis.filename
-            .toLowerCase()
-            .includes(matcher.substring.toLowerCase())
-
-          // If extension is specified, also check that
-          if (matcher.extension) {
-            const fileExtension = path
-              .extname(fileAnalysis.filename)
-              .toLowerCase()
-            const targetExtension = matcher.extension.startsWith(".")
-              ? matcher.extension.toLowerCase()
-              : `.${matcher.extension.toLowerCase()}`
-            return hasSubstring && fileExtension === targetExtension
-          }
-
-          return hasSubstring
-        }
-        return false
-
-      case "content-json":
-        if (!fileAnalysis.isJson || !fileAnalysis.jsonContent) return false
-        if (matcher.requiredProperties) {
-          return matcher.requiredProperties.every(
-            (prop: string) =>
-              fileAnalysis.jsonContent &&
-              fileAnalysis.jsonContent[prop] !== undefined
-          )
-        }
-        return true
-
-      case "file-size": {
-        const size = fileAnalysis.size
-        if (matcher.minSize !== undefined && size < matcher.minSize)
-          return false
-        if (matcher.maxSize !== undefined && size > matcher.maxSize)
-          return false
-        return true
-      }
-
-      default:
-        return false
-    }
-  }
-
-  async function findMatchingRunners(
-    filePath: string
-  ): Promise<Array<{ runner: RunnerConfig; priority: number }>> {
-    const runners = runnerService.getRunners()
-    const fileAnalysis = await analyzeFile(filePath)
-    const matches: Array<{ runner: RunnerConfig; priority: number }> = []
-
-    for (const runner of runners) {
-      let bestPriority = -1
-
-      // Check enhanced matchers first
-      if ((runner as any).matchers) {
-        for (const matcher of (runner as any).matchers) {
-          if (evaluateMatcher(matcher, fileAnalysis)) {
-            bestPriority = Math.max(bestPriority, matcher.priority)
-          }
-        }
-      }
-
-      // Fallback to legacy mimetype matching
-      if (bestPriority === -1 && runner.mimetypes) {
-        if (runner.mimetypes.includes(fileAnalysis.mimetype)) {
-          bestPriority = 50 // Default priority for legacy matchers
-        }
-      }
-
-      if (bestPriority > -1) {
-        matches.push({ runner: runner, priority: bestPriority })
-      }
-    }
-
-    // Sort by priority (highest first)
-    return matches.sort((a, b) => b.priority - a.priority)
-  }
+  // Enhanced file matching functions moved to RunnerService
 
   useEffect(() => {
     // Handle file drops
@@ -643,28 +494,29 @@ const App: React.FC = () => {
         console.log("=== FILE DROP STARTED ===")
         console.log("handleFileDrop: Processing file:", filePath)
 
-        // Simplified file analysis for matching only
-        const fileAnalysis = await analyzeFile(filePath)
-        console.log("handleFileDrop: File analysis:", fileAnalysis)
+        // Get file mimetype for the file input
+        const stats = fs.statSync(filePath)
+        const filename = path.basename(filePath)
+        const mimetype = stats.isDirectory()
+          ? "inode/directory"
+          : mime.lookup(filePath) || "application/octet-stream"
 
         // Create simplified file input - just path and mimetype
         const fileInput: FileInput = {
           path: filePath,
-          mimetype: fileAnalysis.mimetype,
+          mimetype: mimetype,
         }
         console.log("handleFileDrop: File input prepared:", fileInput)
 
-        // Find matching runners directly
-        const matches = await findMatchingRunners(filePath)
+        // Find matching runners using RunnerService
+        const matches = await runnerService.findMatchingRunners(filePath)
         console.log("handleFileDrop: Found matches:", matches)
 
         if (matches.length === 0) {
           console.log("handleFileDrop: No matches found")
           alert(
-            `No app found for this file.\n\nFile: ${
-              fileAnalysis.filename
-            }\nType: ${fileAnalysis.mimetype}\nSize: ${(
-              fileAnalysis.size / 1024
+            `No app found for this file.\n\nFile: ${filename}\nType: ${mimetype}\nSize: ${(
+              stats.size / 1024
             ).toFixed(1)} KB`
           )
         } else if (matches.length === 1) {
@@ -681,7 +533,7 @@ const App: React.FC = () => {
           setPendingFileInput(fileInput)
           setAvailableRunners(
             matches.map((m: any) => ({
-              ...m.app,
+              ...m.runner,
               matchPriority: m.priority,
             }))
           )

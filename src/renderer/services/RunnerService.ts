@@ -3,6 +3,127 @@ import { getRunnersDirectory } from "../util"
 
 const fs = require("fs")
 const path = require("path")
+const mime = require("mime-types")
+
+// Helper function for MIME type detection
+async function getMimetype(filePath: string): Promise<string> {
+  try {
+    const stats = fs.statSync(filePath)
+    if (stats.isDirectory()) {
+      return "inode/directory"
+    }
+  } catch (error) {
+    // File doesn't exist or can't be accessed
+  }
+
+  const mimetype = mime.lookup(filePath)
+  return mimetype || "application/octet-stream"
+}
+
+// File analysis interface
+interface FileAnalysis {
+  path: string
+  filename: string
+  mimetype: string
+  content: string
+  size: number
+  isJson?: boolean
+  jsonContent?: any
+}
+
+// Helper function for file analysis
+async function analyzeFile(filePath: string): Promise<FileAnalysis> {
+  const stats = fs.statSync(filePath)
+  const filename = path.basename(filePath)
+  const mimetype = await getMimetype(filePath)
+
+  // Simplified analysis - just basic metadata for matching
+  return {
+    path: filePath,
+    filename,
+    mimetype,
+    content: "", // Don't read content here anymore
+    size: stats.size,
+    isJson: mimetype === "application/json" || filename.endsWith(".json"),
+    jsonContent: null, // Don't parse JSON here anymore
+  }
+}
+
+// Helper function for matcher evaluation
+function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {
+  switch (matcher.type) {
+    case "mimetype":
+      // Support wildcards in MIME types (e.g., "image/*", "text/*")
+      if (matcher.mimetype.includes("*")) {
+        const pattern = matcher.mimetype
+          .replace(/\*/g, ".*")
+          .replace(/\?/g, ".")
+        return new RegExp(`^${pattern}$`).test(fileAnalysis.mimetype)
+      }
+      return matcher.mimetype === fileAnalysis.mimetype
+
+    case "filename":
+      if (matcher.pattern) {
+        // Support exact match or glob pattern
+        if (matcher.pattern.includes("*") || matcher.pattern.includes("?")) {
+          // Simple glob pattern matching
+          const regexPattern = matcher.pattern
+            .replace(/\*/g, ".*")
+            .replace(/\?/g, ".")
+          return new RegExp(`^${regexPattern}$`).test(fileAnalysis.filename)
+        } else {
+          // Exact match
+          return matcher.pattern === fileAnalysis.filename
+        }
+      }
+      return false
+
+    case "filename-contains":
+      if (matcher.substring) {
+        // Case-insensitive substring matching
+        const hasSubstring = fileAnalysis.filename
+          .toLowerCase()
+          .includes(matcher.substring.toLowerCase())
+
+        // If extension is specified, also check that
+        if (matcher.extension) {
+          const fileExtension = path
+            .extname(fileAnalysis.filename)
+            .toLowerCase()
+          const targetExtension = matcher.extension.startsWith(".")
+            ? matcher.extension.toLowerCase()
+            : `.${matcher.extension.toLowerCase()}`
+          return hasSubstring && fileExtension === targetExtension
+        }
+
+        return hasSubstring
+      }
+      return false
+
+    case "content-json":
+      if (!fileAnalysis.isJson || !fileAnalysis.jsonContent) return false
+      if (matcher.requiredProperties) {
+        return matcher.requiredProperties.every(
+          (prop: string) =>
+            fileAnalysis.jsonContent &&
+            fileAnalysis.jsonContent[prop] !== undefined
+        )
+      }
+      return true
+
+    case "file-size": {
+      const size = fileAnalysis.size
+      if (matcher.minSize !== undefined && size < matcher.minSize)
+        return false
+      if (matcher.maxSize !== undefined && size > matcher.maxSize)
+        return false
+      return true
+    }
+
+    default:
+      return false
+  }
+}
 
 export interface RunnerServiceState {
   runners: RunnerConfig[]
@@ -218,6 +339,42 @@ export class RunnerService {
   // Get contextual runners (non-standalone)
   public getContextualRunners(): RunnerConfig[] {
     return this.state.runners.filter(runner => !runner.standalone)
+  }
+
+  // Find matching runners for a file
+  public async findMatchingRunners(
+    filePath: string
+  ): Promise<Array<{ runner: RunnerConfig; priority: number }>> {
+    const runners = this.state.runners
+    const fileAnalysis = await analyzeFile(filePath)
+    const matches: Array<{ runner: RunnerConfig; priority: number }> = []
+
+    for (const runner of runners) {
+      let bestPriority = -1
+
+      // Check enhanced matchers first
+      if ((runner as any).matchers) {
+        for (const matcher of (runner as any).matchers) {
+          if (evaluateMatcher(matcher, fileAnalysis)) {
+            bestPriority = Math.max(bestPriority, matcher.priority)
+          }
+        }
+      }
+
+      // Fallback to legacy mimetype matching
+      if (bestPriority === -1 && runner.mimetypes) {
+        if (runner.mimetypes.includes(fileAnalysis.mimetype)) {
+          bestPriority = 50 // Default priority for legacy matchers
+        }
+      }
+
+      if (bestPriority > -1) {
+        matches.push({ runner: runner, priority: bestPriority })
+      }
+    }
+
+    // Sort by priority (highest first)
+    return matches.sort((a, b) => b.priority - a.priority)
   }
 }
 
