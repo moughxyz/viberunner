@@ -65,15 +65,6 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .loading-text {
   color: #a3a3a3;
   font-size: 0.875rem;

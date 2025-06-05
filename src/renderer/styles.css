@@ -8,25 +8,25 @@
 
 :root {
   /* Colors - Linear inspired palette */
-  --background: #0a0a0a;
-  --surface: #161616;
-  --surface-hover: #1a1a1a;
-  --border: #333333;
-  --border-hover: #3a3a3a;
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1a1;
-  --text-muted: #6b6b6b;
-  --accent: #5e5ce6;
   --accent-foreground: #ffffff;
-  --button: #1a1a1a;
-  --button-foreground: #ffffff;
   --accent-hover: #6b69ff;
   --accent-light: rgba(94, 92, 230, 0.996);
-  --success: #30d158;
-  --success-light: rgba(48, 209, 88, 0.1);
-  --warning: #ff9f0a;
-  --danger: #ff453a;
+  --accent: #5e5ce6;
+  --background: #0a0a0a;
+  --border-hover: #3a3a3a;
+  --border: #333333;
+  --button-foreground: #ffffff;
+  --button: #1a1a1a;
   --danger-light: rgba(255, 69, 58, 0.1);
+  --danger: #ff453a;
+  --success-light: rgba(48, 209, 88, 0.1);
+  --success: #30d158;
+  --surface-hover: #1a1a1a;
+  --surface: #161616;
+  --text-muted: #6b6b6b;
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1a1;
+  --warning: #ff9f0a;
 
   /* Typography */
   --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -351,13 +351,6 @@ body {
 }
 
 /* Clean section headers without boxes */
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-4);
-}
-
 .section-header-button {
   background: none;
   border: none;
@@ -370,28 +363,9 @@ body {
   margin-bottom: var(--space-4);
 }
 
-.section-title {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 .section-icon {
   font-size: var(--font-size-base);
   color: var(--accent);
-}
-
-.section-count {
-  background: var(--accent-light);
-  color: var(--accent);
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
 }
 
 .section-meta {
@@ -403,20 +377,6 @@ body {
 .section-toggle {
   color: var(--text-secondary);
   font-size: var(--font-size-sm);
-}
-
-/* Remove section card backgrounds */
-.section-card {
-  background: none;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  transition: none;
-}
-
-.section-card:hover {
-  background: none;
-  border-color: transparent;
 }
 
 /* Utilities - clean list without boxes */

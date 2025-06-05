@@ -415,8 +415,6 @@
   gap: var(--space-2);
 }
 
-
-
 .status-dot {
   width: 6px;
   height: 6px;
@@ -452,15 +450,6 @@
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 /* Section common components used by RunnersGrid */
 .section-card {
   background: none;
@@ -478,7 +467,7 @@
 .section-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-bottom: var(--space-4);
 }
 
@@ -494,8 +483,9 @@
 
 .section-count {
   background: var(--accent-light);
-  color: var(--accent);
+  color: var(--accent-foreground);
   padding: var(--space-1) var(--space-2);
+  margin-left: var(--space-2);
   border-radius: var(--radius);
   font-size: var(--font-size-xs);
   font-weight: 600;
