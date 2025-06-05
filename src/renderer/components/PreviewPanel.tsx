@@ -1,7 +1,13 @@
 import React, { useRef, useState, useEffect } from "react"
 import { getRunnersDirectory, createRunnerLoader } from "../util"
 import { PreviewPanelProps } from "./AIAgentInterface"
+import { FileInput } from "../types"
 import "./PreviewPanel.css"
+
+// Direct Node.js access
+const fs = require("fs")
+const path = require("path")
+const mime = require("mime-types")
 
 export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   runnerName,
@@ -12,6 +18,8 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasRunner, setHasRunner] = useState(false)
+  const [fileInput, setFileInput] = useState<FileInput | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
   const reactRootRef = useRef<any>(null)
 
   const loadRunner = async () => {
@@ -24,9 +32,6 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
     setError(null)
 
     try {
-      const fs = require("fs")
-      const path = require("path")
-
       const RUNNERS_DIR = getRunnersDirectory()
       const runnerPath = path.join(RUNNERS_DIR, runnerName)
       const bundlePath = path.join(runnerPath, "dist", "bundle.iife.js")
@@ -88,6 +93,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
             props: {
               tabId: previewId,
               runnerId: runnerName,
+              fileInput: fileInput,
             },
             useGlobalReact: true,
             onSuccess: (root) => {
@@ -137,6 +143,72 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
     }
   }
 
+  // Handle file drop
+  const handleFileDrop = async (filePath: string) => {
+    try {
+      console.log("PreviewPanel: File dropped:", filePath)
+
+      // Get file stats and create FileInput
+      const stats = fs.statSync(filePath)
+      const mimetype = stats.isDirectory()
+        ? "inode/directory"
+        : mime.lookup(filePath) || "application/octet-stream"
+
+      const newFileInput: FileInput = {
+        path: filePath,
+        mimetype: mimetype,
+      }
+
+      console.log("PreviewPanel: File input created:", newFileInput)
+      setFileInput(newFileInput)
+    } catch (error) {
+      console.error("Error handling file drop in preview:", error)
+      setError(`Error handling file: ${error}`)
+    }
+  }
+
+  // Drag and drop event handlers
+  useEffect(() => {
+    const previewContainer = previewContainerRef.current
+    if (!previewContainer) return
+
+    const handleDragOver = (event: DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      setIsDragOver(true)
+    }
+
+    const handleDragLeave = (event: DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      // Only set drag over to false if we're leaving the container entirely
+      if (!previewContainer.contains(event.relatedTarget as Node)) {
+        setIsDragOver(false)
+      }
+    }
+
+    const handleDrop = (event: DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      setIsDragOver(false)
+
+      const filePath = event.dataTransfer?.files[0]?.path
+      if (filePath) {
+        handleFileDrop(filePath)
+      }
+    }
+
+    previewContainer.addEventListener("dragover", handleDragOver)
+    previewContainer.addEventListener("dragleave", handleDragLeave)
+    previewContainer.addEventListener("drop", handleDrop)
+
+    return () => {
+      previewContainer.removeEventListener("dragover", handleDragOver)
+      previewContainer.removeEventListener("dragleave", handleDragLeave)
+      previewContainer.removeEventListener("drop", handleDrop)
+    }
+  }, [hasRunner])
+
   useEffect(() => {
     loadRunner()
 
@@ -150,7 +222,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
         }
       }
     }
-  }, [runnerName, files])
+  }, [runnerName, files, fileInput])
 
   // External refresh handler
   useEffect(() => {
@@ -178,6 +250,23 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
 
   return (
     <div id="preview-content" className="preview-content">
+      {fileInput && (
+        <div className="preview-file-info">
+          <div className="file-info-content">
+            <span className="file-info-label">File Input:</span>
+            <span className="file-info-path">
+              {path.basename(fileInput.path)}
+            </span>
+            <button
+              className="file-info-clear"
+              onClick={() => setFileInput(null)}
+              title="Clear file input"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
       {isLoading && (
         <div id="preview-loading" className="preview-loading">
           <div className="loading-content">
@@ -236,7 +325,9 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
       <div
         id="preview-container"
         ref={previewContainerRef}
-        className={`preview-container ${hasRunner ? "visible" : "hidden"}`}
+        className={`preview-container ${hasRunner ? "visible" : "hidden"} ${
+          isDragOver ? "drag-over" : ""
+        }`}
       />
     </div>
   )

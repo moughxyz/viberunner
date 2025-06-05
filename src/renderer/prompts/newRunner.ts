@@ -10,15 +10,24 @@ const getTemplateRunnerContent = () => {
   return templateRunnerContent
 }
 
-export const getNewRunnerPrompt = (userPrompt: string, currentFiles?: Record<string, FileChange>) => {
+export const getNewRunnerPrompt = (
+  userPrompt: string,
+  currentFiles?: Record<string, FileChange>
+) => {
   // If we have current files, we're editing an existing runner - include them in the prompt
-  const filesContext = currentFiles && Object.keys(currentFiles).length > 0
-    ? `\n\nYou are currently editing an existing runner. Here are the current files:\n\n${
-        Object.entries(currentFiles)
-          .map(([path, file]) => `${path}:\n\`\`\`${file.language}\n${file.content}\n\`\`\``)
-          .join('\n\n')
-      }\n\nThe user wants to make changes to this existing runner.`
-    : ''
+  const filesContext =
+    currentFiles && Object.keys(currentFiles).length > 0
+      ? `\n\nYou are currently editing an existing runner. Here are the current files:\n\n${Object.entries(
+          currentFiles
+        )
+          .map(
+            ([path, file]) =>
+              `${path}:\n\`\`\`${file.language}\n${file.content}\n\`\`\``
+          )
+          .join(
+            "\n\n"
+          )}\n\nThe user wants to make changes to this existing runner.`
+      : ""
 
   return `
   You are an intelligent assistant that creates "runners" for a cross-platform desktop app called "Viberunner".
@@ -125,7 +134,11 @@ export const getNewRunnerPrompt = (userPrompt: string, currentFiles?: Record<str
     - If you need to store user data, use the passed in dataDirectory prop. You can create files and folders in this directory.
 
   Design Guidelines:
-    - Make the UI clean, minimal, and modern—with generous whitespace, subtle shadows, and rounded corners. Make the typography sharp and legible, using bold sans-serif fonts for headings and lighter weights for body text. Favor a grayscale palette with occasional accent colors, creating a focused and elegant UI that feels both technical and high-end.
+    - Make the UI clean, minimal, and modern—with generous whitespace, subtle shadows, and rounded corners.
+    - Make the typography sharp and legible, using bold sans-serif fonts for headings and lighter weights for body text.
+    - Favor a grayscale palette with occasional accent colors, creating a focused and elegant UI that feels both technical and high-end.
+    - Make the UI in the style of a modern desktop app, like Linear, Cursor, or Vercel.
+    - Avoid emojis in headers and buttons.
     - Use a dark theme.
     - Create a styles object that contains all the styles for the app, and use it in the React component.
       - For example, const styles = {

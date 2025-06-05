@@ -138,6 +138,62 @@
   border-bottom-right-radius: 1rem;
 }
 
+/* File input info display */
+.preview-file-info {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 100;
+  background-color: rgba(34, 34, 34, 0.95);
+  border: 1px solid #404040;
+  border-radius: 0.5rem;
+  backdrop-filter: blur(8px);
+}
+
+.file-info-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.file-info-label {
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.file-info-path {
+  color: white;
+  font-weight: 600;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-info-clear {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 1rem;
+  height: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+
+.file-info-clear:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
 .preview-empty-state {
   height: 100%;
   background: transparent;
@@ -266,4 +322,37 @@
 
 .preview-container.visible {
   display: block;
+}
+
+/* Drag and drop styles */
+.preview-container.drag-over {
+  position: relative;
+}
+
+.preview-container.drag-over::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(139, 92, 246, 0.1);
+  border: 2px dashed #8b5cf6;
+  border-radius: 0.5rem;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.preview-container.drag-over::after {
+  content: 'Drop file to provide as input to runner';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(139, 92, 246, 0.9);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  z-index: 1001;
+  pointer-events: none;
+  backdrop-filter: blur(8px);
 }

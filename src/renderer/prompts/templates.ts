@@ -34,4 +34,17 @@ export const templates = [
       - Also logs IP address, latency, server used.
       `,
   },
+  {
+    name: "Image Redactor",
+    description: "a tool to redact sensitive information from images",
+    prompt: `
+      create a new contextual runner called Image Redactor:
+
+      1. Allows the user to draw rectangles to redact sensitive information from images
+      2. Rectangle opacity should be 100%
+      3. Allow the rectangle to blur whats underneath, or be a solid black rectangle
+      4. The user can save the redacted image as a copy (save with one click in the same directory as the input)
+
+      `,
+  },
 ]
