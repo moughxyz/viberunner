@@ -15,6 +15,17 @@ export interface ClaudeResponse {
   }
 }
 
+// Streaming response interface
+export interface ClaudeStreamChunk {
+  type: 'text' | 'usage' | 'error' | 'done'
+  text?: string
+  usage?: {
+    input_tokens: number
+    output_tokens: number
+  }
+  error?: string
+}
+
 // Available Claude models
 export const CLAUDE_MODELS = {
   'claude-3-5-sonnet-20241022': 'Claude 3.5 Sonnet',
@@ -152,6 +163,146 @@ export class ClaudeAPIService {
 
       if (error instanceof Error) {
         // Handle specific error cases
+        if (error.message.includes('401')) {
+          throw new Error('Invalid API key. Please check your Claude API key.')
+        } else if (error.message.includes('429')) {
+          throw new Error('Rate limit exceeded. Please try again later.')
+        } else if (error.message.includes('500')) {
+          throw new Error('Claude API server error. Please try again later.')
+        }
+        throw error
+      }
+
+      throw new Error('Unknown error occurred while calling Claude API')
+    }
+  }
+
+  // New streaming method
+  async sendMessageStream(
+    userPrompt: string,
+    conversationHistory: Message[],
+    currentFiles?: Record<string, FileChange>,
+    onChunk?: (chunk: ClaudeStreamChunk) => void
+  ): Promise<ClaudeResponse> {
+    try {
+      // Build conversation messages (same logic as sendMessage)
+      const messages: ClaudeMessage[] = []
+
+      if (conversationHistory.length === 0) {
+        this.originalSystemPrompt = getNewRunnerPrompt(userPrompt, currentFiles)
+        messages.push({
+          role: 'user',
+          content: this.originalSystemPrompt
+        })
+      } else {
+        if (!this.originalSystemPrompt) {
+          this.originalSystemPrompt = getNewRunnerPrompt(userPrompt, currentFiles)
+        }
+
+        if (this.originalSystemPrompt) {
+          messages.push({
+            role: 'user',
+            content: this.originalSystemPrompt
+          })
+        }
+
+        conversationHistory.forEach(msg => {
+          if (msg.role !== 'assistant' || msg.content) {
+            messages.push({
+              role: msg.role,
+              content: msg.content
+            })
+          }
+        })
+
+        messages.push({
+          role: 'user',
+          content: userPrompt
+        })
+      }
+
+      console.log('Sending streaming request to Claude API:', {
+        model: this.model,
+        messageCount: messages.length,
+        hasSystemPrompt: !!this.originalSystemPrompt,
+        userPrompt: userPrompt.substring(0, 100) + '...'
+      })
+
+      // Create streaming request
+      const stream = await this.anthropic.messages.create({
+        model: this.model,
+        max_tokens: 8192,
+        temperature: 0.7,
+        messages: messages.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        })),
+        stream: true
+      })
+
+      let fullContent = ''
+      let usage: { input_tokens: number; output_tokens: number } | undefined
+
+      // Process stream events
+      for await (const event of stream) {
+        if (event.type === 'content_block_delta') {
+          if (event.delta.type === 'text_delta') {
+            const text = event.delta.text
+            fullContent += text
+
+            // Call the chunk callback if provided
+            if (onChunk) {
+              onChunk({
+                type: 'text',
+                text: text
+              })
+            }
+          }
+                } else if (event.type === 'message_delta') {
+          if (event.usage && event.usage.input_tokens !== null && event.usage.output_tokens !== null) {
+            usage = {
+              input_tokens: event.usage.input_tokens,
+              output_tokens: event.usage.output_tokens
+            }
+
+            if (onChunk) {
+              onChunk({
+                type: 'usage',
+                usage: usage
+              })
+            }
+          }
+        } else if (event.type === 'message_stop') {
+          if (onChunk) {
+            onChunk({
+              type: 'done'
+            })
+          }
+        }
+      }
+
+      if (!fullContent) {
+        throw new Error('No text content received from Claude API stream')
+      }
+
+      return {
+        content: fullContent,
+        usage
+      }
+
+    } catch (error) {
+      console.error('Claude API streaming service error:', error)
+
+      // Call error callback if provided
+      if (onChunk) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred while streaming'
+        onChunk({
+          type: 'error',
+          error: errorMessage
+        })
+      }
+
+      if (error instanceof Error) {
         if (error.message.includes('401')) {
           throw new Error('Invalid API key. Please check your Claude API key.')
         } else if (error.message.includes('429')) {
