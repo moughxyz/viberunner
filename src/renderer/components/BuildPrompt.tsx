@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import "./BuildPrompt.css"
 import { templates } from "../prompts/templates"
-import { CLAUDE_MODELS, ClaudeModelId } from "../services/ClaudeAPIService"
+import { CLAUDE_MODELS, ClaudeModelId, saveSelectedModel, getLastSelectedModel } from "../services/ClaudeAPIService"
 import { FileManagerService } from "../services/FileManagerService"
 import ModelPicker from "./ModelPicker"
 import UiButton from "./UiButton"
@@ -21,19 +21,18 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
 }) => {
   const [buildPrompt, setBuildPrompt] = useState<string>("")
   const [selectedModel, setSelectedModel] = useState<ClaudeModelId>(
-    "claude-3-5-sonnet-20241022"
+    getLastSelectedModel()
   )
   const [showModelPicker, setShowModelPicker] = useState(false)
   const [isCreatingRunner, setIsCreatingRunner] = useState(false)
   const [showTemplates, setShowTemplates] = useState(false)
 
-  // Initialize model from localStorage or props
+  // Initialize model from last selected or props
   useEffect(() => {
-    const storedModel = localStorage.getItem("claude-model") as ClaudeModelId
-    if (storedModel && Object.keys(CLAUDE_MODELS).includes(storedModel)) {
-      setSelectedModel(storedModel)
-    } else if (propSelectedModel) {
+    if (propSelectedModel) {
       setSelectedModel(propSelectedModel)
+    } else {
+      setSelectedModel(getLastSelectedModel())
     }
   }, [propSelectedModel])
 
@@ -52,7 +51,7 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
 
   const handleModelChange = (model: ClaudeModelId) => {
     setSelectedModel(model)
-    localStorage.setItem("claude-model", model)
+    saveSelectedModel(model)
     onModelChange?.(model)
   }
 

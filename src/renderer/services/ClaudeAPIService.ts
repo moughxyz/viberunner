@@ -24,17 +24,31 @@ export const CLAUDE_MODELS = {
 
 export type ClaudeModelId = keyof typeof CLAUDE_MODELS
 
+// Default model to use (Claude 4)
+export const DEFAULT_MODEL: ClaudeModelId = 'claude-sonnet-4-20250514'
+
+// Get the last selected model from localStorage, or use default
+export const getLastSelectedModel = (): ClaudeModelId => {
+  const stored = localStorage.getItem('last-selected-model') as ClaudeModelId
+  return stored && Object.keys(CLAUDE_MODELS).includes(stored) ? stored : DEFAULT_MODEL
+}
+
+// Save the selected model to localStorage
+export const saveSelectedModel = (model: ClaudeModelId): void => {
+  localStorage.setItem('last-selected-model', model)
+}
+
 export class ClaudeAPIService {
   private anthropic: Anthropic
   private model: ClaudeModelId
   private originalSystemPrompt: string | null = null
 
-  constructor(apiKey: string, model: ClaudeModelId = 'claude-3-5-sonnet-20241022') {
+  constructor(apiKey: string, model?: ClaudeModelId) {
     this.anthropic = new Anthropic({
       apiKey,
       dangerouslyAllowBrowser: true
     })
-    this.model = model
+    this.model = model || getLastSelectedModel()
   }
 
   // Get current model

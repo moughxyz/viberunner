@@ -5,8 +5,9 @@ import APIKeyPrompt from "./APIKeyPrompt"
 import Icon from "./Icon"
 import {
   ClaudeAPIService,
-  CLAUDE_MODELS,
   ClaudeModelId,
+  getLastSelectedModel,
+  saveSelectedModel,
 } from "../services/ClaudeAPIService"
 import { FileManagerService } from "../services/FileManagerService"
 import { CommandExecutorService } from "../services/CommandExecutorService"
@@ -65,7 +66,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   const [refreshKey, setRefreshKey] = useState(0)
   const [activeTab, setActiveTab] = useState("preview")
   const [selectedModel, setSelectedModel] = useState<ClaudeModelId>(
-    "claude-3-5-sonnet-20241022"
+    getLastSelectedModel()
   )
 
   const claudeService = useRef<ClaudeAPIService | null>(null)
@@ -78,16 +79,13 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   useEffect(() => {
     // Check if API key is already stored
     const storedKey = localStorage.getItem("claude-api-key")
-    const storedModel = localStorage.getItem("claude-model") as ClaudeModelId
+    const lastSelectedModel = getLastSelectedModel()
 
-    let modelToUse = selectedModel
-    if (storedModel && Object.keys(CLAUDE_MODELS).includes(storedModel)) {
-      setSelectedModel(storedModel)
-      modelToUse = storedModel
-    }
+    // Update the selected model to the last selected one
+    setSelectedModel(lastSelectedModel)
 
     if (storedKey) {
-      claudeService.current = new ClaudeAPIService(storedKey, modelToUse)
+      claudeService.current = new ClaudeAPIService(storedKey, lastSelectedModel)
     } else {
       setShowApiKeyPrompt(true)
     }
@@ -148,11 +146,9 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     loadExistingRunner()
   }, [existingRunnerName])
 
-  const handleSetApiKey = (key: string, model: ClaudeModelId) => {
-    setSelectedModel(model)
+  const handleSetApiKey = (key: string) => {
     localStorage.setItem("claude-api-key", key)
-    localStorage.setItem("claude-model", model)
-    claudeService.current = new ClaudeAPIService(key, model)
+    claudeService.current = new ClaudeAPIService(key, selectedModel)
     setShowApiKeyPrompt(false)
 
     // Reset the initial prompt sent flag so it can be sent now that we have the API key
@@ -161,7 +157,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
 
   const handleModelChange = (model: ClaudeModelId) => {
     setSelectedModel(model)
-    localStorage.setItem("claude-model", model)
+    saveSelectedModel(model)
 
     // If we already have a service, update its model
     if (claudeService.current) {

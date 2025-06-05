@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from "react"
 import { Message } from "./AIAgentInterface"
-import { CLAUDE_MODELS, ClaudeModelId } from "../services/ClaudeAPIService"
+import {
+  CLAUDE_MODELS,
+  ClaudeModelId,
+  getLastSelectedModel,
+} from "../services/ClaudeAPIService"
 import "./ChatInterface.css"
 import ModelPicker from "./ModelPicker"
 
@@ -33,19 +37,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState("")
   const [selectedModel, setSelectedModel] = useState<ClaudeModelId>(
-    "claude-3-5-sonnet-20241022"
+    getLastSelectedModel()
   )
   const [showModelPicker, setShowModelPicker] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Initialize model from localStorage or props
+  // Initialize model from last selected or props
   useEffect(() => {
-    const storedModel = localStorage.getItem("claude-model") as ClaudeModelId
-    if (storedModel && Object.keys(CLAUDE_MODELS).includes(storedModel)) {
-      setSelectedModel(storedModel)
-    } else if (propSelectedModel) {
+    if (propSelectedModel) {
       setSelectedModel(propSelectedModel)
+    } else {
+      setSelectedModel(getLastSelectedModel())
     }
   }, [propSelectedModel])
 
@@ -58,7 +61,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
-      const container = messagesEndRef.current.closest('.messages-container')
+      const container = messagesEndRef.current.closest(".messages-container")
       if (container) {
         container.scrollTop = container.scrollHeight
       }
@@ -95,7 +98,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleModelChange = (model: ClaudeModelId) => {
     setSelectedModel(model)
-    localStorage.setItem("claude-model", model)
     onModelChange?.(model)
   }
 
