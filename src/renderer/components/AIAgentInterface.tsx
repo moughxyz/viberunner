@@ -33,6 +33,7 @@ interface AIAgentInterfaceProps {
   onClose?: () => void
   inTab?: boolean
   initialPrompt?: string
+  existingRunnerName?: string
 }
 
 export interface PreviewPanelProps {
@@ -45,6 +46,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   onClose,
   inTab = false,
   initialPrompt,
+  existingRunnerName,
 }) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -53,9 +55,9 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     {}
   )
   const [activeFile, setActiveFile] = useState<string | null>(null)
-  const [runnerName, setRunnerName] = useState<string>("")
+  const [runnerName, setRunnerName] = useState<string>(existingRunnerName || "")
   const [isDiscarding, setIsDiscarding] = useState(false)
-  const [isNewRunner, setIsNewRunner] = useState(true)
+  const [isNewRunner, setIsNewRunner] = useState(!existingRunnerName)
   const [refreshKey, setRefreshKey] = useState(0)
   const [activeTab, setActiveTab] = useState("preview")
   const [selectedModel, setSelectedModel] = useState<ClaudeModelId>('claude-3-5-sonnet-20241022')
@@ -88,6 +90,50 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     commandExecutor.current = new CommandExecutorService()
   }, [])
 
+  // Load existing runner files if provided
+  useEffect(() => {
+    const loadExistingRunner = async () => {
+      if (existingRunnerName && fileManager.current) {
+        try {
+          console.log('Loading existing runner:', existingRunnerName)
+          const existingFiles = await fileManager.current.loadRunnerFiles(existingRunnerName)
+          setCurrentFiles(existingFiles)
+
+          // Set the first file as active if we have files
+          const fileKeys = Object.keys(existingFiles)
+          if (fileKeys.length > 0) {
+            // Prefer App.tsx or similar main files
+            const mainFile = fileKeys.find(f =>
+              f.includes('App.tsx') || f.includes('App.jsx') || f.includes('index.tsx') || f.includes('index.jsx')
+            ) || fileKeys[0]
+            setActiveFile(mainFile)
+          }
+
+          // Add a message indicating we're editing an existing runner
+          const welcomeMessage: Message = {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: `✏️ Editing runner "${existingRunnerName}". I've loaded ${fileKeys.length} files. How can I help you improve this runner?`,
+            timestamp: new Date(),
+          }
+          setMessages([welcomeMessage])
+
+        } catch (error) {
+          console.error('Error loading existing runner:', error)
+          const errorMessage: Message = {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: `❌ Error loading runner "${existingRunnerName}": ${error instanceof Error ? error.message : "Unknown error"}`,
+            timestamp: new Date(),
+          }
+          setMessages([errorMessage])
+        }
+      }
+    }
+
+    loadExistingRunner()
+  }, [existingRunnerName])
+
   const handleSetApiKey = (key: string, model: ClaudeModelId) => {
     setSelectedModel(model)
     localStorage.setItem("claude-api-key", key)
@@ -110,59 +156,108 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   }
 
   const handleDiscard = async () => {
-    if (!runnerName || !isNewRunner) {
+    if (!runnerName) {
       return
     }
 
-    // Show confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to discard "${runnerName}"?\n\nThis will permanently delete the runner and all its files. This action cannot be undone.`
-    )
+    if (isNewRunner) {
+      // For new runners, show confirmation dialog to delete
+      const confirmed = window.confirm(
+        `Are you sure you want to discard "${runnerName}"?\n\nThis will permanently delete the runner and all its files. This action cannot be undone.`
+      )
 
-    if (!confirmed) {
-      return
-    }
+      if (!confirmed) {
+        return
+      }
 
-    setIsDiscarding(true)
-    try {
-      if (fileManager.current) {
-        await fileManager.current.deleteRunner(runnerName)
+      setIsDiscarding(true)
+      try {
+        if (fileManager.current) {
+          await fileManager.current.deleteRunner(runnerName)
 
-        // Show success message
-        const discardMessage: Message = {
+          // Show success message
+          const discardMessage: Message = {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: `🗑️ Runner "${runnerName}" has been discarded and deleted.`,
+            timestamp: new Date(),
+          }
+          setMessages((prev) => [...prev, discardMessage])
+
+          // Clear the current state
+          setRunnerName("")
+          setCurrentFiles({})
+          setActiveFile(null)
+          setIsNewRunner(true)
+
+          // Close the AI Agent after a short delay
+          setTimeout(() => {
+            if (onClose) {
+              onClose()
+            }
+          }, 1500)
+        }
+      } catch (error) {
+        console.error("Error discarding runner:", error)
+        const errorMessage: Message = {
           id: Date.now().toString(),
           role: "assistant",
-          content: `🗑️ Runner "${runnerName}" has been discarded and deleted.`,
+          content: `❌ Error discarding runner: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
           timestamp: new Date(),
         }
-        setMessages((prev) => [...prev, discardMessage])
+        setMessages((prev) => [...prev, errorMessage])
+      } finally {
+        setIsDiscarding(false)
+      }
+    } else {
+      // For existing runners, revert changes
+      const confirmed = window.confirm(
+        `Are you sure you want to revert all changes to "${runnerName}"?\n\nThis will restore the runner to its original state and discard any modifications made in this session.`
+      )
 
-        // Clear the current state
-        setRunnerName("")
-        setCurrentFiles({})
-        setActiveFile(null)
-        setIsNewRunner(true)
+      if (!confirmed) {
+        return
+      }
 
-        // Close the AI Agent after a short delay
-        setTimeout(() => {
-          if (onClose) {
-            onClose()
+      setIsDiscarding(true)
+      try {
+        if (fileManager.current && existingRunnerName) {
+          // Reload the original files
+          const originalFiles = await fileManager.current.loadRunnerFiles(existingRunnerName)
+          setCurrentFiles(originalFiles)
+
+          // Show success message
+          const revertMessage: Message = {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: `↩️ Changes to runner "${runnerName}" have been reverted to the original state.`,
+            timestamp: new Date(),
           }
-        }, 1500)
+          setMessages((prev) => [...prev, revertMessage])
+
+          // Close the AI Agent after a short delay
+          setTimeout(() => {
+            if (onClose) {
+              onClose()
+            }
+          }, 1500)
+        }
+      } catch (error) {
+        console.error("Error reverting runner changes:", error)
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: `❌ Error reverting changes: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, errorMessage])
+      } finally {
+        setIsDiscarding(false)
       }
-    } catch (error) {
-      console.error("Error discarding runner:", error)
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: `❌ Error discarding runner: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
-    } finally {
-      setIsDiscarding(false)
     }
   }
 
@@ -243,8 +338,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
           try {
             let savedName: string
 
-            if (!runnerName) {
-              // First time - create a new runner
+            if (isNewRunner && !runnerName) {
+              // First time creating a new runner
               const generatedName =
                 currentRunnerName || `ai-runner-${Date.now()}`
               savedName = await fileManager.current.createRunner(
@@ -257,12 +352,12 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
               currentRunnerName = savedName
               // Keep isNewRunner as true since this is auto-save of a new runner
             } else {
-              // Already have a runner - update the existing one
+              // Already have a runner name - update the existing one
               savedName = await fileManager.current.updateRunner(
-                runnerName,
+                currentRunnerName || runnerName,
                 newFiles
               )
-              currentRunnerName = runnerName
+              currentRunnerName = currentRunnerName || runnerName
               // Keep isNewRunner state as-is since we're updating existing
             }
 
@@ -349,7 +444,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     } finally {
       setIsLoading(false)
     }
-  }, [messages]) // Dependencies for useCallback
+  }, [messages, currentFiles, activeFile, runnerName, isNewRunner, refreshRunners]) // Dependencies for useCallback
 
   const parseAssistantResponse = (content: string) => {
     const fileChanges: FileChange[] = []
@@ -443,11 +538,15 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   // Automatically send initial prompt when component mounts and API key is available
   useEffect(() => {
     if (initialPrompt && initialPrompt.trim() && !initialPromptSentRef.current && claudeService.current && !showApiKeyPrompt) {
-      console.log('Sending initial prompt:', initialPrompt.substring(0, 50) + '...')
-      initialPromptSentRef.current = true
-      handleSendMessage(initialPrompt)
+      // Wait for existing runner to load first if applicable
+      const shouldWait = existingRunnerName && Object.keys(currentFiles).length === 0
+      if (!shouldWait) {
+        console.log('Sending initial prompt:', initialPrompt.substring(0, 50) + '...')
+        initialPromptSentRef.current = true
+        handleSendMessage(initialPrompt)
+      }
     }
-  }, [initialPrompt, claudeService.current, showApiKeyPrompt]) // Depend on initialPrompt, claudeService availability, and API key prompt state
+  }, [initialPrompt, claudeService.current, showApiKeyPrompt, currentFiles, existingRunnerName]) // Include currentFiles and existingRunnerName in dependencies
 
   if (showApiKeyPrompt) {
     return (
@@ -469,15 +568,16 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
             <CardHeader className="header-card-content">
               <div className="header-left">
                 <CardTitle className="header-title">
-                  AI Runner Builder
+                  {isNewRunner ? "AI Runner Builder" : `Editing Runner: ${runnerName}`}
                 </CardTitle>
                                 <Input
                   id="runner-name-input"
                   type="text"
-                  placeholder="Runner name (optional)"
+                  placeholder={isNewRunner ? "Runner name (optional)" : "Runner name"}
                   value={runnerName}
                   onChange={(e) => setRunnerName(e.target.value)}
                   className="runner-name-input"
+                  disabled={!isNewRunner}
                 />
               </div>
               <div className="header-buttons">
@@ -488,7 +588,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                   }
                   className="header-btn header-btn-primary"
                 >
-                  Done
+                  {isNewRunner ? "Done" : "Save Changes"}
                 </Button>
                 {Object.keys(currentFiles).length > 0 && (
                   <Button
@@ -497,7 +597,10 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                     disabled={isDiscarding}
                     className="header-btn header-btn-secondary"
                   >
-                    {isDiscarding ? "Discarding..." : "Discard"}
+                    {isDiscarding
+                      ? (isNewRunner ? "Discarding..." : "Reverting...")
+                      : (isNewRunner ? "Discard" : "Revert Changes")
+                    }
                   </Button>
                 )}
                 <Button

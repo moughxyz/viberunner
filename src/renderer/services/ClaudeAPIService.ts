@@ -68,6 +68,11 @@ export class ClaudeAPIService {
         })
       } else {
         // Follow-up message - include the original system prompt first
+        if (!this.originalSystemPrompt) {
+          // If we don't have a system prompt yet (e.g., when editing existing runner), create one
+          this.originalSystemPrompt = getNewRunnerPrompt(userPrompt)
+        }
+
         if (this.originalSystemPrompt) {
           messages.push({
             role: 'user',

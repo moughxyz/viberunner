@@ -31,4 +31,5 @@ export interface OpenTab {
   reactRoot?: any // Store the React root for each tab
   domContainer?: HTMLDivElement // Store the DOM container for each tab
   prompt?: string // Optional prompt for AI agent tabs
+  existingRunnerName?: string // Optional name of existing runner to edit
 }

@@ -151,6 +151,23 @@ const App: React.FC = () => {
   // Initialize TabService
   const tabService = useTabService(appRootRef)
 
+  // Handle editing an existing runner
+  const handleEditRunner = useCallback(async (runnerName: string) => {
+    try {
+      await tabService.openAIAgentForExistingRunner(
+        runnerName,
+        undefined, // No initial prompt for editing
+        openTabs,
+        activeTabId,
+        setOpenTabs,
+        setActiveTabId
+      )
+    } catch (error) {
+      console.error('Error opening AI Agent for existing runner:', error)
+      alert(`Failed to open editor for runner "${runnerName}": ${error}`)
+    }
+  }, [tabService, openTabs, activeTabId])
+
   // Ref for update notification component
   const updateNotificationRef = useRef<UpdateNotificationRef>(null)
 
@@ -801,6 +818,7 @@ const App: React.FC = () => {
                       launchStandaloneApp={launchStandaloneApp}
                       toggleStartupApp={toggleStartupApp}
                       updateStartupAppTabOrder={updateStartupAppTabOrder}
+                      onEditRunner={handleEditRunner}
                     />
                   </div>
                 )}

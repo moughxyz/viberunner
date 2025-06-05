@@ -514,6 +514,7 @@ export class TabService {
               ),
             inTab: true,
             initialPrompt: tab.prompt,
+            existingRunnerName: tab.existingRunnerName,
           })
         )
 
@@ -650,6 +651,75 @@ export class TabService {
 
     setShowAppSelection(false)
     setPendingFileInput(null)
+  }
+
+  // Open AI Agent for editing existing runner
+  async openAIAgentForExistingRunner(
+    existingRunnerName: string,
+    prompt: string | undefined,
+    openTabs: OpenTab[],
+    activeTabId: string,
+    setOpenTabs: (updater: (prev: OpenTab[]) => OpenTab[]) => void,
+    setActiveTabId: (id: string) => void
+  ): Promise<void> {
+    const tabId = this.generateTabId()
+    const newTab: OpenTab = {
+      id: tabId,
+      title: `Editing: ${existingRunnerName}`,
+      type: "ai-agent",
+      prompt: prompt,
+      existingRunnerName: existingRunnerName,
+    }
+
+    // Check if we have an active new tab to transform
+    const currentTab = openTabs.find((tab) => tab.id === activeTabId)
+
+    if (currentTab && currentTab.type === "newtab") {
+      // Transform the current new tab
+      const transformedTab: OpenTab = {
+        ...currentTab,
+        title: `Editing: ${existingRunnerName}`,
+        type: "ai-agent",
+        prompt: prompt,
+        existingRunnerName: existingRunnerName,
+      }
+
+      setOpenTabs((prev) =>
+        prev.map((tab) => (tab.id === activeTabId ? transformedTab : tab))
+      )
+
+      // Create the AI Agent container with proper state management functions
+      const success = await this.createAIAgentContainer(
+        transformedTab,
+        openTabs,
+        activeTabId,
+        setOpenTabs,
+        setActiveTabId
+      )
+      if (success) {
+        this.switchToTab(
+          transformedTab.id,
+          openTabs,
+          setActiveTabId,
+          transformedTab
+        )
+      }
+    } else {
+      // Create a new tab
+      setOpenTabs((prev) => [...prev, newTab])
+
+      // Create the AI Agent container with proper state management functions
+      const success = await this.createAIAgentContainer(
+        newTab,
+        [...openTabs, newTab],
+        activeTabId,
+        setOpenTabs,
+        setActiveTabId
+      )
+      if (success) {
+        this.switchToTab(tabId, [...openTabs, newTab], setActiveTabId, newTab)
+      }
+    }
   }
 
   // Open AI Agent in new tab

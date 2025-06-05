@@ -136,6 +136,104 @@ export class FileManagerService {
     }
   }
 
+  async loadRunnerFiles(runnerName: string): Promise<Record<string, FileChange>> {
+    try {
+      const runnerPath = path.join(this.runnersDir, runnerName)
+
+      // Check if runner exists
+      if (!fs.existsSync(runnerPath)) {
+        throw new Error(`Runner "${runnerName}" does not exist`)
+      }
+
+      const files: Record<string, FileChange> = {}
+
+      // Function to recursively read files
+      const readDirectory = (dirPath: string, basePath: string = '') => {
+        const entries = fs.readdirSync(dirPath)
+
+        for (const entry of entries) {
+          const entryPath = path.join(dirPath, entry)
+          const relativePath = basePath ? path.join(basePath, entry) : entry
+          const stat = fs.statSync(entryPath)
+
+          if (stat.isDirectory()) {
+            // Skip node_modules, .git, dist, and other build directories
+            if (!['node_modules', '.git', 'dist', 'build', '.vscode', '.idea'].includes(entry)) {
+              readDirectory(entryPath, relativePath)
+            }
+          } else if (stat.isFile()) {
+            // Only include common source files
+            const ext = path.extname(entry).toLowerCase()
+            const shouldInclude = [
+              '.ts', '.tsx', '.js', '.jsx',
+              '.json', '.css', '.scss', '.sass', '.less',
+              '.html', '.htm', '.md', '.txt',
+              '.yml', '.yaml', '.xml'
+            ].includes(ext) ||
+            ['package.json', 'tsconfig.json', 'vite.config.ts', 'README.md', 'VIBERUNNER.md'].includes(entry)
+
+            if (shouldInclude) {
+              try {
+                const content = fs.readFileSync(entryPath, 'utf8')
+                const language = this.getLanguageFromExtension(relativePath)
+
+                files[relativePath] = {
+                  path: relativePath,
+                  content,
+                  language
+                }
+              } catch (readError) {
+                console.warn(`Failed to read file ${relativePath}:`, readError)
+              }
+            }
+          }
+        }
+      }
+
+            readDirectory(runnerPath)
+
+      console.log(`Successfully loaded ${Object.keys(files).length} files from runner: ${runnerName}`)
+      return files
+    } catch (error) {
+      console.error("Error loading runner files:", error)
+      throw error
+    }
+  }
+
+  private getLanguageFromExtension(filePath: string): string {
+    const ext = path.extname(filePath).toLowerCase()
+    switch (ext) {
+      case '.tsx':
+      case '.jsx':
+        return 'typescript'
+      case '.ts':
+        return 'typescript'
+      case '.js':
+        return 'javascript'
+      case '.json':
+        return 'json'
+      case '.css':
+        return 'css'
+      case '.scss':
+      case '.sass':
+        return 'scss'
+      case '.less':
+        return 'less'
+      case '.html':
+      case '.htm':
+        return 'html'
+      case '.md':
+        return 'markdown'
+      case '.yml':
+      case '.yaml':
+        return 'yaml'
+      case '.xml':
+        return 'xml'
+      default:
+        return 'text'
+    }
+  }
+
   private sanitizeRunnerName(name: string): string {
     // Convert to lowercase, replace spaces with hyphens, remove special characters
     return (

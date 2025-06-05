@@ -25,6 +25,7 @@ interface RunnersGridProps {
     runnerId: string,
     tabOrder: number
   ) => Promise<void>
+  onEditRunner?: (runnerName: string) => void
 }
 
 const RunnersGrid: React.FC<RunnersGridProps> = ({
@@ -36,6 +37,7 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
   launchStandaloneApp,
   toggleStartupApp,
   updateStartupAppTabOrder,
+  onEditRunner,
 }) => {
   const utilityRunners = runners.filter((a) => a.standalone)
   const contextualRunners = runners.filter((f) => !f.standalone)
@@ -93,7 +95,21 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                           {runner.description}
                         </p>
                       </div>
-                      <div className="utility-action">Launch</div>
+                      <div className="utility-actions">
+                        {onEditRunner && (
+                          <button
+                            className="utility-edit-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onEditRunner(runner.id)
+                            }}
+                            title="Edit runner"
+                          >
+                            ✏️
+                          </button>
+                        )}
+                        <div className="utility-action">Launch</div>
+                      </div>
                     </div>
 
                     {/* Startup controls */}
@@ -152,6 +168,18 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                       <h5 className="app-info-title">{runner.name}</h5>
                       <div className="app-info-status">
                         <span className="status-dot"></span>
+                        {onEditRunner && (
+                          <button
+                            className="app-info-edit-btn"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onEditRunner(runner.id)
+                            }}
+                            title="Edit runner"
+                          >
+                            ✏️
+                          </button>
+                        )}
                       </div>
                     </div>
                     <p className="app-info-description">{runner.description}</p>

@@ -145,6 +145,27 @@ export const useTabService = (
     [tabService]
   )
 
+  const openAIAgentForExistingRunner = useCallback(
+    (
+      existingRunnerName: string,
+      prompt: string | undefined,
+      openTabs: OpenTab[],
+      activeTabId: string,
+      setOpenTabs: (updater: (prev: OpenTab[]) => OpenTab[]) => void,
+      setActiveTabId: (id: string) => void
+    ) => {
+      return tabService.openAIAgentForExistingRunner(
+        existingRunnerName,
+        prompt,
+        openTabs,
+        activeTabId,
+        setOpenTabs,
+        setActiveTabId
+      )
+    },
+    [tabService]
+  )
+
   // Handle tab switching with app selection reset
   const handleTabSwitch = useCallback(
     (
@@ -171,6 +192,7 @@ export const useTabService = (
     createAIAgentContainer,
     openAppInNewTab,
     openAIAgentInNewTab,
+    openAIAgentForExistingRunner,
     handleTabSwitch,
   }
 }
