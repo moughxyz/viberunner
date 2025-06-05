@@ -1,11 +1,10 @@
 import React from "react"
 import { createRoot } from "react-dom/client"
 import { OpenTab, RunnerConfig, FileInput, RunnerProps } from "../types"
-import { getRunnersDirectory, createRunnerLoader } from "../util"
+import { createRunnerLoader, getRunnerUserDataDirectory } from "../util"
 import AIAgentInterface from "../components/AIAgentInterface"
 
 const fs = require("fs")
-const path = require("path")
 
 // Tab cleanup system
 const runnerCleanupCallbacks = new Map<string, (() => void)[]>()
@@ -214,9 +213,7 @@ export class TabService {
     this.appRootRef.current.appendChild(container)
 
     // Create data directory for the runner
-    const RUNNERS_DIR = getRunnersDirectory()
-    const runnerDir = path.join(RUNNERS_DIR, tab.runner.id)
-    const dataDirectory = path.join(runnerDir, "UserData")
+    const dataDirectory = getRunnerUserDataDirectory(tab.runner.id)
 
     // Ensure data directory exists
     try {

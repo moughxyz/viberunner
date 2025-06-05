@@ -1,3 +1,5 @@
+import { RunnerProps } from "./types"
+
 const path = require("path")
 const fs = require("fs")
 
@@ -19,6 +21,14 @@ export const getRunnersDirectory = () => {
     console.log("Using fallback Runners directory:", fallback)
     return fallback
   }
+}
+
+export const getRunnerUserDataDirectory = (runnerId: string) => {
+  // Create data directory for the runner
+  const RUNNERS_DIR = getRunnersDirectory()
+  const runnerDir = path.join(RUNNERS_DIR, runnerId)
+  const dataDirectory = path.join(runnerDir, "UserData")
+  return dataDirectory
 }
 
 // Function to get Viberunner logo as data URL
@@ -55,7 +65,7 @@ export const getViberunnerLogoPath = (): string => {
 export interface RunnerLoaderOptions {
   container: HTMLElement
   appId: string
-  props: any
+  props: RunnerProps
   useGlobalReact?: boolean
   onSuccess?: (root: any) => void
   onError?: (error: Error) => void

@@ -1,5 +1,9 @@
 import React, { useRef, useState, useEffect } from "react"
-import { getRunnersDirectory, createRunnerLoader } from "../util"
+import {
+  getRunnersDirectory,
+  createRunnerLoader,
+  getRunnerUserDataDirectory,
+} from "../util"
 import { PreviewPanelProps } from "./AIAgentInterface"
 import { FileInput } from "../types"
 import "./PreviewPanel.css"
@@ -18,7 +22,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [hasRunner, setHasRunner] = useState(false)
-  const [fileInput, setFileInput] = useState<FileInput | null>(null)
+  const [fileInput, setFileInput] = useState<FileInput | undefined>(undefined)
   const [isDragOver, setIsDragOver] = useState(false)
   const reactRootRef = useRef<any>(null)
 
@@ -92,7 +96,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
             appId: previewId,
             props: {
               tabId: previewId,
-              runnerId: runnerName,
+              dataDirectory: getRunnerUserDataDirectory(runnerName),
               fileInput: fileInput,
             },
             useGlobalReact: true,
@@ -259,7 +263,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
             </span>
             <button
               className="file-info-clear"
-              onClick={() => setFileInput(null)}
+              onClick={() => setFileInput(undefined)}
               title="Clear file input"
             >
               ×
