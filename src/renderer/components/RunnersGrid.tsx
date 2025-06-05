@@ -1,6 +1,8 @@
 import React from "react"
 import "./RunnersGrid.css"
 import UiButton from "./UiButton"
+import ConfirmDialog from "./ConfirmDialog"
+import { runnerService } from "../services/RunnerService"
 
 interface RunnerConfig {
   id: string
@@ -28,7 +30,6 @@ interface RunnersGridProps {
   ) => Promise<void>
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
-  onDeleteRunner?: (runnerName: string) => void
 }
 
 interface OptionsMenuProps {
@@ -39,7 +40,6 @@ interface OptionsMenuProps {
   onDelete: (runnerId: string) => void
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
-  onDeleteRunner?: (runnerName: string) => void
   className?: string
 }
 
@@ -51,10 +51,9 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
   onDelete,
   onEditRunner,
   onEditRunnerWithCursor,
-  onDeleteRunner,
   className = "options-menu"
 }) => {
-  if (!onEditRunner && !onEditRunnerWithCursor && !onDeleteRunner) {
+  if (!onEditRunner && !onEditRunnerWithCursor) {
     return null
   }
 
@@ -119,9 +118,9 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
   updateStartupAppTabOrder,
   onEditRunner,
   onEditRunnerWithCursor,
-  onDeleteRunner,
 }) => {
   const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState<string | null>(null)
 
   const utilityRunners = runners.filter((a) => a.standalone)
   const contextualRunners = runners.filter((f) => !f.standalone)
@@ -140,9 +139,22 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
 
   const handleDeleteRunner = (runnerId: string) => {
     setActiveDropdown(null)
-    if (onDeleteRunner) {
-      onDeleteRunner(runnerId)
+    setIsDeleting(runnerId)
+  }
+
+  const confirmDeleteRunner = async (runnerId: string) => {
+    try {
+      await runnerService.deleteRunner(runnerId)
+      setIsDeleting(null)
+    } catch (error) {
+      console.error('Failed to delete runner:', error)
+      alert(`Failed to delete runner: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setIsDeleting(null)
     }
+  }
+
+  const cancelDeleteRunner = () => {
+    setIsDeleting(null)
   }
 
   const handleToggleDropdown = (runnerId: string) => {
@@ -267,7 +279,6 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                           onDelete={handleDeleteRunner}
                           onEditRunner={onEditRunner}
                           onEditRunnerWithCursor={onEditRunnerWithCursor}
-                          onDeleteRunner={onDeleteRunner}
                           className="footer-options-menu"
                         />
                       </div>
@@ -305,7 +316,6 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                           onDelete={handleDeleteRunner}
                           onEditRunner={onEditRunner}
                           onEditRunnerWithCursor={onEditRunnerWithCursor}
-                          onDeleteRunner={onDeleteRunner}
                           className="footer-options-menu"
                         />
                       </div>
@@ -317,6 +327,18 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={!!isDeleting}
+        title="Delete Runner"
+        message={`Are you sure you want to delete "${runners.find(r => r.id === isDeleting)?.name || isDeleting}"?`}
+        warningMessage="This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={() => isDeleting && confirmDeleteRunner(isDeleting)}
+        onCancel={cancelDeleteRunner}
+      />
     </div>
   )
 }

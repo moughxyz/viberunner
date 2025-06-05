@@ -189,12 +189,12 @@
 }
 
 .options-menu-item.delete-item {
-  color: var(--error);
+  color: var(--danger);
 }
 
 .options-menu-item.delete-item:hover {
-  background: var(--error-surface);
-  color: var(--error);
+  background: var(--danger-light);
+  color: var(--danger);
 }
 
 .utility-action {

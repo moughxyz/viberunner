@@ -312,6 +312,49 @@ export class RunnerService {
     }
   }
 
+  // Delete a runner
+  public async deleteRunner(runnerId: string): Promise<void> {
+    try {
+      const RUNNERS_DIR = getRunnersDirectory()
+      const runnerPath = path.join(RUNNERS_DIR, runnerId)
+
+      // Check if runner exists
+      if (!fs.existsSync(runnerPath)) {
+        throw new Error(`Runner with ID '${runnerId}' not found`)
+      }
+
+      // Remove the entire runner directory
+      fs.rmSync(runnerPath, { recursive: true, force: true })
+
+      // Remove from startup runners if it exists
+      const newStartupRunners = { ...this.state.startupRunners }
+      if (newStartupRunners[runnerId]) {
+        delete newStartupRunners[runnerId]
+        await this.saveStartupRunners(newStartupRunners)
+      }
+
+      // Remove from runner icons cache
+      const newRunnerIcons = { ...this.state.runnerIcons }
+      if (newRunnerIcons[runnerId]) {
+        delete newRunnerIcons[runnerId]
+      }
+
+      // Remove from runners array
+      const newRunners = this.state.runners.filter(runner => runner.id !== runnerId)
+
+      // Update state
+      this.setState({
+        runners: newRunners,
+        runnerIcons: newRunnerIcons
+      })
+
+      console.log(`RunnerService: Successfully deleted runner '${runnerId}'`)
+    } catch (error) {
+      console.error(`RunnerService: Error deleting runner '${runnerId}':`, error)
+      throw error
+    }
+  }
+
   // Load runners from filesystem
   private async loadRunners(): Promise<RunnerConfig[]> {
     const RUNNERS_DIR = getRunnersDirectory()
