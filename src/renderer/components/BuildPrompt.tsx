@@ -25,6 +25,7 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
   )
   const [showModelPicker, setShowModelPicker] = useState(false)
   const [isCreatingRunner, setIsCreatingRunner] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
 
   // Initialize model from localStorage or props
   useEffect(() => {
@@ -75,6 +76,29 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
     }
   }
 
+  // Reusable Templates component
+  const TemplatesSection = () => (
+    <div className="examples-container">
+      <p className="examples-title">Or try one of these ideas</p>
+      <div className="examples-grid">
+        {templates.map((template, index) => (
+          <button
+            key={index}
+            onClick={() => {
+              setBuildPrompt(template.prompt)
+              onSubmit?.(template.prompt)
+            }}
+            className="example-button"
+          >
+            <div className="example-description">
+              {template.description}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+
   const ModelStatus = () => (
     <div className="model-status">
       Using {CLAUDE_MODELS[selectedModel]}{" "}
@@ -87,12 +111,20 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
       <UiButton
         onClick={handleCreateWithCursor}
         disabled={isCreatingRunner}
+        className="ml-3"
       >
         {isCreatingRunner ? "Creating..." : "Create with Cursor"}
       </UiButton>
+      {condensed && (
+        <UiButton
+          onClick={() => setShowTemplates(!showTemplates)}
+          className="ml-2"
+        >
+          {showTemplates ? "Hide Templates" : "Show Templates"}
+        </UiButton>
+      )}
     </div>
   )
-
 
 
   if (condensed) {
@@ -132,6 +164,9 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
             </div>
             <ModelStatus />
           </div>
+
+          {/* Templates section (conditionally rendered) */}
+          {showTemplates && <TemplatesSection />}
         </div>
         <ModelPicker
           isVisible={showModelPicker}
@@ -187,25 +222,7 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
           </div>
 
           {/* Examples */}
-          <div className="examples-container">
-            <p className="examples-title">Or try one of these ideas</p>
-            <div className="examples-grid">
-              {templates.map((template, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setBuildPrompt(template.prompt)
-                    onSubmit?.(template.prompt)
-                  }}
-                  className="example-button"
-                >
-                  <div className="example-description">
-                    {template.description}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+          <TemplatesSection />
         </div>
       </div>
       <ModelPicker
