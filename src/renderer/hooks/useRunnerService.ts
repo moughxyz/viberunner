@@ -41,12 +41,18 @@ export function useRunnerService() {
     return runnerService.getContextualRunners()
   }, [state.runners])
 
+  // Memoized icon functions
+  const getAppIcon = useCallback((runner: RunnerConfig) => {
+    return runnerService.getAppIcon(runner)
+  }, [state.runnerIcons])
+
   return {
     // State
     runners: state.runners,
     isLoading: state.isLoading,
     error: state.error,
     startupRunners: state.startupRunners,
+    runnerIcons: state.runnerIcons,
 
     // Actions
     refresh,
@@ -57,6 +63,9 @@ export function useRunnerService() {
     findRunners,
     getStandaloneRunners,
     getContextualRunners,
+
+    // Icons
+    getAppIcon,
   }
 }
 

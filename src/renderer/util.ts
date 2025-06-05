@@ -65,7 +65,13 @@ export interface RunnerLoaderOptions {
 export const createRunnerLoader = (options: RunnerLoaderOptions) => {
   return (RunnerComponent: any) => {
     try {
-      const { container, appId, props, useGlobalReact = false, onSuccess } = options
+      const {
+        container,
+        appId,
+        props,
+        useGlobalReact = false,
+        onSuccess,
+      } = options
 
       // Create an isolation wrapper div
       const isolationWrapper = document.createElement("div")
@@ -97,7 +103,9 @@ export const createRunnerLoader = (options: RunnerLoaderOptions) => {
 
         // Fallback to imported React if global not available
         if (!React || !createRoot) {
-          console.warn("Global React/ReactDOM not available, falling back to imported versions")
+          console.warn(
+            "Global React/ReactDOM not available, falling back to imported versions"
+          )
           React = require("react")
           createRoot = require("react-dom/client").createRoot
         }
@@ -117,7 +125,7 @@ export const createRunnerLoader = (options: RunnerLoaderOptions) => {
         reactVersion: React.version,
         useGlobalReact,
         hasContainer: !!container,
-        containerInDom: document.contains(container)
+        containerInDom: document.contains(container),
       })
 
       try {
@@ -135,11 +143,12 @@ export const createRunnerLoader = (options: RunnerLoaderOptions) => {
         console.error("Error during React render:", renderError)
         throw renderError
       }
-
     } catch (error) {
       console.error("Error rendering runner:", error)
       if (options.onError) {
-        options.onError(error instanceof Error ? error : new Error(String(error)))
+        options.onError(
+          error instanceof Error ? error : new Error(String(error))
+        )
       }
     }
   }

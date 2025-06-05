@@ -13,6 +13,13 @@ export interface RunnerConfig {
   standalone?: boolean // Optional standalone property
   icon?: string // Custom icon path
   userPreferences?: Record<string, any> // User preferences storage
+  matchers?: Array<{
+    type: string
+    mimetype?: string
+    pattern?: string
+    substring?: string
+    extension?: string
+  }>
 }
 
 export interface RunnerProps {

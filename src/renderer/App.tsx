@@ -17,7 +17,7 @@ import {
   removeRunnerPreference,
   setRunnerPreferences,
 } from "./preferences"
-import { getRunnersDirectory, getViberunnerLogoPath } from "./util"
+import { getViberunnerLogoPath } from "./util"
 import { useRunnerService } from "./hooks/useRunnerService"
 import { useTabService } from "./hooks/useTabService"
 import { runnerService } from "./services/RunnerService"
@@ -51,11 +51,16 @@ const api = {
 
 // Runner loading is now handled by RunnerService
 
-
-
 const App: React.FC = () => {
   // Use RunnerService instead of local state
-  const { runners, isLoading: isLoadingRunners, startupRunners, loadApp } = useRunnerService()
+  const {
+    runners,
+    isLoading: isLoadingRunners,
+    startupRunners,
+    loadApp,
+    getAppIcon,
+    runnerIcons,
+  } = useRunnerService()
 
   // Tab-related state
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
@@ -67,7 +72,6 @@ const App: React.FC = () => {
   const [pendingFileInput, setPendingFileInput] = useState<FileInput | null>(
     null
   )
-  const [runnerIcons, setRunnerIcons] = useState<Record<string, string>>({})
   const [showSettings, setShowSettings] = useState(false)
 
   const appRootRef = useRef<HTMLDivElement>(null)
@@ -77,21 +81,24 @@ const App: React.FC = () => {
   const tabService = useTabService(appRootRef)
 
   // Handle editing an existing runner
-  const handleEditRunner = useCallback(async (runnerName: string) => {
-    try {
-      await tabService.openAIAgentForExistingRunner(
-        runnerName,
-        undefined, // No initial prompt for editing
-        openTabs,
-        activeTabId,
-        setOpenTabs,
-        setActiveTabId
-      )
-    } catch (error) {
-      console.error('Error opening AI Agent for existing runner:', error)
-      alert(`Failed to open editor for runner "${runnerName}": ${error}`)
-    }
-  }, [tabService, openTabs, activeTabId])
+  const handleEditRunner = useCallback(
+    async (runnerName: string) => {
+      try {
+        await tabService.openAIAgentForExistingRunner(
+          runnerName,
+          undefined, // No initial prompt for editing
+          openTabs,
+          activeTabId,
+          setOpenTabs,
+          setActiveTabId
+        )
+      } catch (error) {
+        console.error("Error opening AI Agent for existing runner:", error)
+        alert(`Failed to open editor for runner "${runnerName}": ${error}`)
+      }
+    },
+    [tabService, openTabs, activeTabId]
+  )
 
   // Handle editing an existing runner with Cursor
   const handleEditRunnerWithCursor = useCallback(async (runnerName: string) => {
@@ -99,7 +106,7 @@ const App: React.FC = () => {
       const fileManagerService = new FileManagerService()
       await fileManagerService.editRunnerWithCursor(runnerName)
     } catch (error) {
-      console.error('Error opening runner with Cursor:', error)
+      console.error("Error opening runner with Cursor:", error)
       alert(`Failed to open runner "${runnerName}" with Cursor: ${error}`)
     }
   }, [])
@@ -109,48 +116,6 @@ const App: React.FC = () => {
 
   // Get the currently active tab
   const activeTab = openTabs.find((tab) => tab.id === activeTabId)
-
-  // Function to load runner icon
-  const loadRunnerIcon = useCallback(
-    async (runner: RunnerConfig): Promise<string | null> => {
-      if (!runner.icon) return null
-
-      // Check if already cached
-      if (runnerIcons[runner.id]) {
-        return runnerIcons[runner.id]
-      }
-
-      try {
-        const RUNNERS_DIR = getRunnersDirectory()
-        const runnerDir = path.join(RUNNERS_DIR, runner.id)
-        const fullIconPath = path.join(runnerDir, runner.icon)
-
-        // Ensure the icon path is within the runner directory
-        if (!fullIconPath.startsWith(runnerDir)) {
-          throw new Error("Icon path must be within runner directory")
-        }
-
-        if (!fs.existsSync(fullIconPath)) {
-          throw new Error(`Icon file not found: ${runner.icon}`)
-        }
-
-        // Read the icon file as base64
-        const iconBuffer = fs.readFileSync(fullIconPath)
-        const mimeType = mime.lookup(fullIconPath) || "application/octet-stream"
-        const iconData = `data:${mimeType};base64,${iconBuffer.toString(
-          "base64"
-        )}`
-
-        setRunnerIcons((prev) => ({ ...prev, [runner.id]: iconData }))
-        return iconData
-      } catch (error) {
-        console.error(`Failed to load icon for ${runner.name}:`, error)
-      }
-
-      return null
-    },
-    [runnerIcons]
-  )
 
   // Toggle startup runner enabled state
   const toggleStartupApp = async (runnerId: string, enabled: boolean) => {
@@ -172,56 +137,6 @@ const App: React.FC = () => {
       console.error("Error updating startup runner tab order:", error)
     }
   }
-
-  // Load icons for all runners when runners change
-  useEffect(() => {
-    runners.forEach((runner) => {
-      if (runner.icon && !runnerIcons[runner.id]) {
-        loadRunnerIcon(runner)
-      }
-    })
-  }, [runnerIcons, loadRunnerIcon, runners])
-
-  // Startup runners are now loaded automatically by RunnerService
-
-  // Keyboard shortcuts for tab/window management
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Check for Cmd+T (macOS) or Ctrl+T (Windows/Linux) - Create new tab
-      if ((event.metaKey || event.ctrlKey) && event.key === "t") {
-        event.preventDefault()
-        createNewTab()
-        return
-      }
-
-      // Check for Cmd+W (macOS) or Ctrl+W (Windows/Linux)
-      if ((event.metaKey || event.ctrlKey) && event.key === "w") {
-        event.preventDefault()
-
-        // If multiple tabs or active tab is not a new tab, close the active tab
-        if (openTabs.length > 1 || (activeTab && activeTab.type !== "newtab")) {
-          if (activeTabId) {
-            closeTab(activeTabId)
-          }
-        } else {
-          // Only a new tab remains or no tabs, close the window
-          try {
-            ipcRenderer.invoke("close-window")
-          } catch (error) {
-            console.error("Failed to close window:", error)
-            // Fallback: try to close via window object
-            window.close()
-          }
-        }
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown)
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown)
-    }
-  }, [openTabs, activeTabId, activeTab])
 
   // Auto-launch startup runners when runners are loaded
   useEffect(() => {
@@ -301,15 +216,44 @@ const App: React.FC = () => {
     }
   }, [runners, startupRunners])
 
-  // Function to get icon for display (returns Viberunner logo fallback if no custom icon)
-  const getAppIcon = (runner: RunnerConfig): string => {
-    if (runnerIcons[runner.id]) {
-      return runnerIcons[runner.id]
+  // Keyboard shortcuts for tab/window management
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Check for Cmd+T (macOS) or Ctrl+T (Windows/Linux) - Create new tab
+      if ((event.metaKey || event.ctrlKey) && event.key === "t") {
+        event.preventDefault()
+        createNewTab()
+        return
+      }
+
+      // Check for Cmd+W (macOS) or Ctrl+W (Windows/Linux)
+      if ((event.metaKey || event.ctrlKey) && event.key === "w") {
+        event.preventDefault()
+
+        // If multiple tabs or active tab is not a new tab, close the active tab
+        if (openTabs.length > 1 || (activeTab && activeTab.type !== "newtab")) {
+          if (activeTabId) {
+            closeTab(activeTabId)
+          }
+        } else {
+          // Only a new tab remains or no tabs, close the window
+          try {
+            ipcRenderer.invoke("close-window")
+          } catch (error) {
+            console.error("Failed to close window:", error)
+            // Fallback: try to close via window object
+            window.close()
+          }
+        }
+      }
     }
 
-    // Return Viberunner SVG logo as fallback
-    return getViberunnerLogoPath()
-  }
+    window.addEventListener("keydown", handleKeyDown)
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown)
+    }
+  }, [openTabs, activeTabId, activeTab])
 
   // Initialize RunnerService on component mount
   useEffect(() => {

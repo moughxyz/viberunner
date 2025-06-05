@@ -1,5 +1,5 @@
 import { RunnerConfig } from "../types"
-import { getRunnersDirectory } from "../util"
+import { getRunnersDirectory, getViberunnerLogoPath } from "../util"
 
 const fs = require("fs")
 const path = require("path")
@@ -130,6 +130,7 @@ export interface RunnerServiceState {
   isLoading: boolean
   error: string | null
   startupRunners: Record<string, { enabled: boolean; tabOrder: number }>
+  runnerIcons: Record<string, string>
 }
 
 type RunnerServiceListener = (state: RunnerServiceState) => void
@@ -141,6 +142,7 @@ export class RunnerService {
     isLoading: false,
     error: null,
     startupRunners: {},
+    runnerIcons: {},
   }
   private listeners = new Set<RunnerServiceListener>()
 
@@ -370,6 +372,79 @@ export class RunnerService {
     }
   }
 
+  // Get runner icons
+  public getRunnerIcons(): Record<string, string> {
+    return { ...this.state.runnerIcons }
+  }
+
+  // Load runner icon
+  private async loadRunnerIcon(runner: RunnerConfig): Promise<string | null> {
+    if (!runner.icon) return null
+
+    // Check if already cached
+    if (this.state.runnerIcons[runner.id]) {
+      return this.state.runnerIcons[runner.id]
+    }
+
+    try {
+      const RUNNERS_DIR = getRunnersDirectory()
+      const runnerDir = path.join(RUNNERS_DIR, runner.id)
+      const fullIconPath = path.join(runnerDir, runner.icon)
+
+      // Ensure the icon path is within the runner directory
+      if (!fullIconPath.startsWith(runnerDir)) {
+        throw new Error("Icon path must be within runner directory")
+      }
+
+      if (!fs.existsSync(fullIconPath)) {
+        throw new Error(`Icon file not found: ${runner.icon}`)
+      }
+
+      // Read the icon file as base64
+      const iconBuffer = fs.readFileSync(fullIconPath)
+      const mimeType = mime.lookup(fullIconPath) || "application/octet-stream"
+      const iconData = `data:${mimeType};base64,${iconBuffer.toString("base64")}`
+
+      // Update state with new icon
+      this.setState({
+        runnerIcons: {
+          ...this.state.runnerIcons,
+          [runner.id]: iconData,
+        },
+      })
+
+      return iconData
+    } catch (error) {
+      console.error(`Failed to load icon for ${runner.name}:`, error)
+    }
+
+    return null
+  }
+
+  // Load all runner icons
+  private async loadAllRunnerIcons(): Promise<void> {
+    const runners = this.state.runners
+    const iconPromises = runners
+      .filter(runner => runner.icon && !this.state.runnerIcons[runner.id])
+      .map(runner => this.loadRunnerIcon(runner))
+
+    try {
+      await Promise.all(iconPromises)
+    } catch (error) {
+      console.error("Error loading runner icons:", error)
+    }
+  }
+
+  // Get icon for display (returns Viberunner logo fallback if no custom icon)
+  public getAppIcon(runner: RunnerConfig): string {
+    if (this.state.runnerIcons[runner.id]) {
+      return this.state.runnerIcons[runner.id]
+    }
+
+    // Return Viberunner SVG logo as fallback
+    return getViberunnerLogoPath()
+  }
+
   // Public method to refresh/reload runners
   public async refresh(): Promise<void> {
     if (this.state.isLoading) {
@@ -388,6 +463,9 @@ export class RunnerService {
         error: null
       })
       console.log(`RunnerService: Successfully refreshed ${runners.length} runners`)
+
+      // Load icons for all runners after loading runners
+      await this.loadAllRunnerIcons()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error"
       console.error("RunnerService: Failed to refresh runners:", error)
