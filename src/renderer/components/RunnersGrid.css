@@ -127,7 +127,8 @@
 /* Options menu styles */
 .utility-options-menu,
 .app-info-options-menu,
-.options-menu {
+.options-menu,
+.footer-options-menu {
   position: relative;
   display: inline-block;
 }
@@ -183,8 +184,8 @@
 }
 
 .options-menu-item:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
+  background: var(--accent-light);
+  color: var(--surface);
 }
 
 .options-menu-item.delete-item {

@@ -4,6 +4,7 @@ import { templates } from "../prompts/templates"
 import { CLAUDE_MODELS, ClaudeModelId } from "../services/ClaudeAPIService"
 import { FileManagerService } from "../services/FileManagerService"
 import ModelPicker from "./ModelPicker"
+import UiButton from "./UiButton"
 
 interface BuildPromptProps {
   onSubmit?: (prompt: string) => void
@@ -83,13 +84,12 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
       >
         Change
       </button>
-      <button
+      <UiButton
         onClick={handleCreateWithCursor}
         disabled={isCreatingRunner}
-        className="create-cursor-button"
       >
         {isCreatingRunner ? "Creating..." : "Create with Cursor"}
-      </button>
+      </UiButton>
     </div>
   )
 

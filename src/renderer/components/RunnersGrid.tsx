@@ -1,5 +1,6 @@
 import React from "react"
 import "./RunnersGrid.css"
+import UiButton from "./UiButton"
 
 interface RunnerConfig {
   id: string
@@ -59,16 +60,15 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
 
   return (
     <div className={className}>
-      <button
+      <UiButton
         className={`${className}-btn`}
-        onClick={(e) => {
+        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
           e.stopPropagation()
           onToggle(runnerId)
         }}
-        title="Options"
       >
         ⋯
-      </button>
+      </UiButton>
       {isActive && (
         <div className="options-menu-dropdown">
           {onEditRunner && (
@@ -214,10 +214,7 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                     </div>
 
                     {/* Card footer with startup controls and options */}
-                    <div
-                      className="card-footer"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="card-footer">
                       <div className="footer-left">
                         <div className="startup-toggle">
                           <label
