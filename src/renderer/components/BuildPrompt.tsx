@@ -75,46 +75,18 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
   }
 
   const ModelStatus = () => (
-    <div
-      style={{
-        marginTop: "8px",
-        fontSize: "12px",
-        color: "var(--foreground)",
-        opacity: 0.6,
-        textAlign: "center",
-      }}
-    >
+    <div className="model-status">
       Using {CLAUDE_MODELS[selectedModel]}{" "}
       <button
         onClick={() => setShowModelPicker(true)}
-        style={{
-          background: "none",
-          border: "none",
-          color: "var(--foreground)",
-          opacity: 0.8,
-          textDecoration: "underline",
-          cursor: "pointer",
-          fontSize: "12px",
-          padding: 0,
-          marginRight: "12px",
-        }}
+        className="model-change-button"
       >
         Change
       </button>
       <button
         onClick={handleCreateWithCursor}
         disabled={isCreatingRunner}
-        style={{
-          background: "var(--accent)",
-          border: "none",
-          color: "var(--accent-foreground)",
-          borderRadius: "4px",
-          cursor: isCreatingRunner ? "not-allowed" : "pointer",
-          fontSize: "12px",
-          padding: "4px 8px",
-          opacity: isCreatingRunner ? 0.6 : 1,
-          transition: "opacity 0.2s ease",
-        }}
+        className="create-cursor-button"
       >
         {isCreatingRunner ? "Creating..." : "Create with Cursor"}
       </button>
@@ -125,94 +97,34 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
     if (!showModelPicker) return null
 
     return (
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000,
-        }}
-      >
-        <div
-          style={{
-            backgroundColor: "var(--background)",
-            border: "1px solid var(--border)",
-            borderRadius: "8px",
-            padding: "24px",
-            minWidth: "320px",
-            maxWidth: "400px",
-          }}
-        >
-          <h3
-            style={{
-              margin: "0 0 16px 0",
-              fontSize: "16px",
-              fontWeight: "600",
-              color: "var(--foreground)",
-            }}
-          >
+      <div className="model-picker-overlay">
+        <div className="model-picker-modal">
+          <h3 className="model-picker-title">
             Choose AI Model
           </h3>
 
-          <div style={{ marginBottom: "20px" }}>
+          <div className="model-picker-options">
             {Object.entries(CLAUDE_MODELS).map(([modelId, displayName]) => (
               <button
                 key={modelId}
                 onClick={() => handleModelChange(modelId as ClaudeModelId)}
-                style={{
-                  display: "block",
-                  width: "100%",
-                  padding: "12px 16px",
-                  marginBottom: "8px",
-                  backgroundColor:
-                    selectedModel === modelId ? "var(--accent)" : "transparent",
-                  color:
-                    selectedModel === modelId
-                      ? "var(--accent-foreground)"
-                      : "var(--foreground)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  textAlign: "left",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedModel !== modelId) {
-                    e.currentTarget.style.backgroundColor = "var(--muted)"
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedModel !== modelId) {
-                    e.currentTarget.style.backgroundColor = "transparent"
-                  }
-                }}
+                className={`model-option-button ${
+                  selectedModel === modelId ? "selected" : ""
+                }`}
               >
-                <div style={{ fontWeight: "500" }}>{displayName}</div>
+                <div className="model-option-name">{displayName}</div>
                 {modelId === "claude-opus-4-20250514" && (
-                  <div
-                    style={{ fontSize: "12px", opacity: 0.7, marginTop: "2px" }}
-                  >
+                  <div className="model-option-description">
                     Most capable, best for complex tasks
                   </div>
                 )}
                 {modelId === "claude-sonnet-4-20250514" && (
-                  <div
-                    style={{ fontSize: "12px", opacity: 0.7, marginTop: "2px" }}
-                  >
+                  <div className="model-option-description">
                     High-performance with superior reasoning
                   </div>
                 )}
                 {modelId === "claude-3-5-sonnet-20241022" && (
-                  <div
-                    style={{ fontSize: "12px", opacity: 0.7, marginTop: "2px" }}
-                  >
+                  <div className="model-option-description">
                     Fast and efficient
                   </div>
                 )}
@@ -222,16 +134,7 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
 
           <button
             onClick={() => setShowModelPicker(false)}
-            style={{
-              width: "100%",
-              padding: "8px 16px",
-              backgroundColor: "transparent",
-              color: "var(--foreground)",
-              border: "1px solid var(--border)",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
+            className="model-picker-cancel"
           >
             Cancel
           </button>

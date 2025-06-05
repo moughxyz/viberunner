@@ -245,3 +245,119 @@
   color: #4b5563;
   font-size: 0.75rem;
 }
+
+/* Model Status Styles */
+.model-status {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--foreground);
+  opacity: 0.6;
+  text-align: center;
+}
+
+.model-change-button {
+  background: none;
+  border: none;
+  color: var(--foreground);
+  opacity: 0.8;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+  margin-right: 12px;
+}
+
+.create-cursor-button {
+  background: var(--accent);
+  border: none;
+  color: var(--accent-foreground);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 8px;
+  transition: opacity 0.2s ease;
+}
+
+.create-cursor-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Model Picker Styles */
+.model-picker-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.model-picker-modal {
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  min-width: 320px;
+  max-width: 400px;
+}
+
+.model-picker-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.model-picker-options {
+  margin-bottom: 20px;
+}
+
+.model-option-button {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.model-option-button.selected {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.model-option-button:not(.selected):hover {
+  background-color: var(--muted);
+}
+
+.model-option-name {
+  font-weight: 500;
+}
+
+.model-option-description {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.model-picker-cancel {
+  width: 100%;
+  padding: 8px 16px;
+  background-color: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
