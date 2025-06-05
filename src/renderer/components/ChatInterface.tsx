@@ -32,7 +32,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onModelChange,
 }) => {
   const [inputValue, setInputValue] = useState("")
-  const [selectedModel, setSelectedModel] = useState<ClaudeModelId>('claude-3-5-sonnet-20241022')
+  const [selectedModel, setSelectedModel] = useState<ClaudeModelId>(
+    "claude-3-5-sonnet-20241022"
+  )
   const [showModelPicker, setShowModelPicker] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
@@ -48,11 +50,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }, [propSelectedModel])
 
   useEffect(() => {
-    scrollToBottom()
+    // Use requestAnimationFrame to ensure layout is complete before scrolling
+    requestAnimationFrame(() => {
+      scrollToBottom()
+    })
   }, [messages])
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+    if (messagesEndRef.current) {
+      const container = messagesEndRef.current.closest('.messages-container')
+      if (container) {
+        container.scrollTop = container.scrollHeight
+      }
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -89,8 +99,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     onModelChange?.(model)
   }
 
-
-
   const formatMessage = (content: string) => {
     // First handle code blocks (triple backticks) before inline code
     let formatted = content
@@ -108,12 +116,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // Split into paragraphs and handle line breaks properly
     const paragraphs = formatted
       .split(/\n\s*\n/) // Split on double newlines (paragraph breaks)
-      .map(paragraph => paragraph.trim())
-      .filter(paragraph => paragraph.length > 0)
-      .map(paragraph => paragraph.replace(/\n/g, "<br>")) // Convert single newlines to br within paragraphs
-      .map(paragraph => `<p>${paragraph}</p>`)
+      .map((paragraph) => paragraph.trim())
+      .filter((paragraph) => paragraph.length > 0)
+      .map((paragraph) => paragraph.replace(/\n/g, "<br>")) // Convert single newlines to br within paragraphs
+      .map((paragraph) => `<p>${paragraph}</p>`)
 
-    return paragraphs.join('')
+    return paragraphs.join("")
   }
 
   const formatTimestamp = (date: Date) => {
@@ -163,8 +171,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {messages.length === 0 && (
               <div className="empty-state">
                 <div className="empty-state-icon">
-                  <svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="currentColor" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 100 100"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95"
+                      stroke="currentColor"
+                      stroke-width="8"
+                      fill="none"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
                   </svg>
                 </div>
                 <h3 className="empty-state-title">
@@ -204,13 +224,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     {/* Avatar */}
                     <div className="message-avatar">
                       <div className="avatar">
-                        {message.role === "user" ? "U" : (
+                        {message.role === "user" ? (
+                          "U"
+                        ) : (
                           <img
                             src="../../assets/viberunner-logo.svg"
                             alt="Viberunner"
                             width="16"
                             height="16"
-                            style={{ filter: 'brightness(0) invert(1)' }}
+                            style={{ filter: "brightness(0) invert(1)" }}
                           />
                         )}
                       </div>
@@ -263,10 +285,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               </div>
                               <div className="file-changes-list">
                                 {message.fileChanges.map((file, index) => (
-                                  <div
-                                    key={index}
-                                    className="file-change-item"
-                                  >
+                                  <div key={index} className="file-change-item">
                                     <svg
                                       fill="currentColor"
                                       viewBox="0 0 20 20"
@@ -308,10 +327,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             </div>
                             <div className="commands-list">
                               {message.commands.map((command, index) => (
-                                <code
-                                  key={index}
-                                  className="command-item"
-                                >
+                                <code key={index} className="command-item">
                                   {command}
                                 </code>
                               ))}
@@ -335,7 +351,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           alt="Viberunner"
                           width="16"
                           height="16"
-                          style={{ filter: 'brightness(0) invert(1)' }}
+                          style={{ filter: "brightness(0) invert(1)" }}
                         />
                       </div>
                     </div>
@@ -378,11 +394,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 className="submit-button"
               >
                 {isLoading ? (
-                  <svg
-                    className="spinner"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="spinner" fill="none" viewBox="0 0 24 24">
                     <circle
                       className="opacity-25"
                       cx="12"
@@ -413,9 +425,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 )}
               </button>
             </form>
-                        {/* Model Status under the input */}
+            {/* Model Status under the input */}
             <div className="model-status">
-              Using {CLAUDE_MODELS[selectedModel]} {' '}
+              Using {CLAUDE_MODELS[selectedModel]}{" "}
               <button
                 onClick={() => setShowModelPicker(true)}
                 className="model-change-button"

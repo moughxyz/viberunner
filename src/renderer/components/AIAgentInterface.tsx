@@ -3,7 +3,11 @@ import ChatInterface from "./ChatInterface"
 import CodeEditor from "./CodeEditor"
 import APIKeyPrompt from "./APIKeyPrompt"
 import Icon from "./Icon"
-import { ClaudeAPIService, CLAUDE_MODELS, ClaudeModelId } from "../services/ClaudeAPIService"
+import {
+  ClaudeAPIService,
+  CLAUDE_MODELS,
+  ClaudeModelId,
+} from "../services/ClaudeAPIService"
 import { FileManagerService } from "../services/FileManagerService"
 import { CommandExecutorService } from "../services/CommandExecutorService"
 import { useRunnerRefresh } from "../hooks/useRunnerService"
@@ -60,7 +64,9 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   const [isNewRunner, setIsNewRunner] = useState(!existingRunnerName)
   const [refreshKey, setRefreshKey] = useState(0)
   const [activeTab, setActiveTab] = useState("preview")
-  const [selectedModel, setSelectedModel] = useState<ClaudeModelId>('claude-3-5-sonnet-20241022')
+  const [selectedModel, setSelectedModel] = useState<ClaudeModelId>(
+    "claude-3-5-sonnet-20241022"
+  )
 
   const claudeService = useRef<ClaudeAPIService | null>(null)
   const fileManager = useRef<FileManagerService | null>(null)
@@ -69,7 +75,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   // Hook to refresh runners in the main UI
   const { refresh: refreshRunners } = useRunnerRefresh()
 
-    useEffect(() => {
+  useEffect(() => {
     // Check if API key is already stored
     const storedKey = localStorage.getItem("claude-api-key")
     const storedModel = localStorage.getItem("claude-model") as ClaudeModelId
@@ -95,17 +101,24 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     const loadExistingRunner = async () => {
       if (existingRunnerName && fileManager.current) {
         try {
-          console.log('Loading existing runner:', existingRunnerName)
-          const existingFiles = await fileManager.current.loadRunnerFiles(existingRunnerName)
+          console.log("Loading existing runner:", existingRunnerName)
+          const existingFiles = await fileManager.current.loadRunnerFiles(
+            existingRunnerName
+          )
           setCurrentFiles(existingFiles)
 
           // Set the first file as active if we have files
           const fileKeys = Object.keys(existingFiles)
           if (fileKeys.length > 0) {
             // Prefer App.tsx or similar main files
-            const mainFile = fileKeys.find(f =>
-              f.includes('App.tsx') || f.includes('App.jsx') || f.includes('index.tsx') || f.includes('index.jsx')
-            ) || fileKeys[0]
+            const mainFile =
+              fileKeys.find(
+                (f) =>
+                  f.includes("App.tsx") ||
+                  f.includes("App.jsx") ||
+                  f.includes("index.tsx") ||
+                  f.includes("index.jsx")
+              ) || fileKeys[0]
             setActiveFile(mainFile)
           }
 
@@ -117,13 +130,14 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
             timestamp: new Date(),
           }
           setMessages([welcomeMessage])
-
         } catch (error) {
-          console.error('Error loading existing runner:', error)
+          console.error("Error loading existing runner:", error)
           const errorMessage: Message = {
             id: Date.now().toString(),
             role: "assistant",
-            content: `❌ Error loading runner "${existingRunnerName}": ${error instanceof Error ? error.message : "Unknown error"}`,
+            content: `❌ Error loading runner "${existingRunnerName}": ${
+              error instanceof Error ? error.message : "Unknown error"
+            }`,
             timestamp: new Date(),
           }
           setMessages([errorMessage])
@@ -225,7 +239,9 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
       try {
         if (fileManager.current && existingRunnerName) {
           // Reload the original files
-          const originalFiles = await fileManager.current.loadRunnerFiles(existingRunnerName)
+          const originalFiles = await fileManager.current.loadRunnerFiles(
+            existingRunnerName
+          )
           setCurrentFiles(originalFiles)
 
           // Show success message
@@ -261,191 +277,202 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     }
   }
 
-  const handleSendMessage = useCallback(async (content: string) => {
-    if (!claudeService.current) {
-      setShowApiKeyPrompt(true)
-      return
-    }
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content,
-      timestamp: new Date(),
-    }
-
-    setMessages((prev) => [...prev, userMessage])
-    setIsLoading(true)
-
-    try {
-      const response = await claudeService.current.sendMessage(
-        content,
-        messages,
-        currentFiles
-      )
-
-      // Parse the response for file changes and commands
-      const { parsedContent, fileChanges, commands } = parseAssistantResponse(
-        response.content
-      )
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: parsedContent,
-        timestamp: new Date(),
-        fileChanges,
-        commands,
+  const handleSendMessage = useCallback(
+    async (content: string) => {
+      if (!claudeService.current) {
+        setShowApiKeyPrompt(true)
+        return
       }
 
-      setMessages((prev) => [...prev, assistantMessage])
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: "user",
+        content,
+        timestamp: new Date(),
+      }
 
-      // Update current files with any changes
-      if (fileChanges && fileChanges.length > 0) {
-        const newFiles = { ...currentFiles }
-        fileChanges.forEach((change) => {
-          newFiles[change.path] = change
-        })
-        setCurrentFiles(newFiles)
+      setMessages((prev) => [...prev, userMessage])
+      setIsLoading(true)
 
-        // Set the first file as active if none is selected
-        if (!activeFile && fileChanges.length > 0) {
-          setActiveFile(fileChanges[0].path)
+      try {
+        const response = await claudeService.current.sendMessage(
+          content,
+          messages,
+          currentFiles
+        )
+
+        // Parse the response for file changes and commands
+        const { parsedContent, fileChanges, commands } = parseAssistantResponse(
+          response.content
+        )
+
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: parsedContent,
+          timestamp: new Date(),
+          fileChanges,
+          commands,
         }
 
-        // If we have files but no runner name, try to extract it from package.json
-        let currentRunnerName = runnerName
-        if (!currentRunnerName) {
-          const packageJsonFile = fileChanges.find(
-            (f) => f.path === "package.json"
-          )
-          if (packageJsonFile) {
-            try {
-              const packageJson = JSON.parse(packageJsonFile.content)
-              if (packageJson.viberunner?.name) {
-                currentRunnerName = packageJson.viberunner.name
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")
-                setRunnerName(currentRunnerName)
+        setMessages((prev) => [...prev, assistantMessage])
+
+        // Update current files with any changes
+        if (fileChanges && fileChanges.length > 0) {
+          const newFiles = { ...currentFiles }
+          fileChanges.forEach((change) => {
+            newFiles[change.path] = change
+          })
+          setCurrentFiles(newFiles)
+
+          // Set the first file as active if none is selected
+          if (!activeFile && fileChanges.length > 0) {
+            setActiveFile(fileChanges[0].path)
+          }
+
+          // If we have files but no runner name, try to extract it from package.json
+          let currentRunnerName = runnerName
+          if (!currentRunnerName) {
+            const packageJsonFile = fileChanges.find(
+              (f) => f.path === "package.json"
+            )
+            if (packageJsonFile) {
+              try {
+                const packageJson = JSON.parse(packageJsonFile.content)
+                if (packageJson.viberunner?.name) {
+                  currentRunnerName = packageJson.viberunner.name
+                    .toLowerCase()
+                    .replace(/\s+/g, "-")
+                  setRunnerName(currentRunnerName)
+                }
+              } catch (error) {
+                console.warn("Could not parse package.json for runner name")
               }
-            } catch (error) {
-              console.warn("Could not parse package.json for runner name")
             }
           }
-        }
 
-        // Auto-save files immediately when AI generates them
-        if (fileManager.current) {
-          try {
-            let savedName: string
+          // Auto-save files immediately when AI generates them
+          if (fileManager.current) {
+            try {
+              let savedName: string
 
-            if (isNewRunner && !runnerName) {
-              // First time creating a new runner
-              const generatedName =
-                currentRunnerName || `ai-runner-${Date.now()}`
-              savedName = await fileManager.current.createRunner(
-                generatedName,
-                newFiles
+              if (isNewRunner && !runnerName) {
+                // First time creating a new runner
+                const generatedName =
+                  currentRunnerName || `ai-runner-${Date.now()}`
+                savedName = await fileManager.current.createRunner(
+                  generatedName,
+                  newFiles
+                )
+
+                // Update runner name to the sanitized version
+                setRunnerName(savedName)
+                currentRunnerName = savedName
+                // Keep isNewRunner as true since this is auto-save of a new runner
+              } else {
+                // Already have a runner name - update the existing one
+                savedName = await fileManager.current.updateRunner(
+                  currentRunnerName || runnerName,
+                  newFiles
+                )
+                currentRunnerName = currentRunnerName || runnerName
+                // Keep isNewRunner state as-is since we're updating existing
+              }
+
+              console.log(
+                `${runnerName ? "Updated" : "Created"} runner: ${savedName}`
               )
 
-              // Update runner name to the sanitized version
-              setRunnerName(savedName)
-              currentRunnerName = savedName
-              // Keep isNewRunner as true since this is auto-save of a new runner
-            } else {
-              // Already have a runner name - update the existing one
-              savedName = await fileManager.current.updateRunner(
-                currentRunnerName || runnerName,
-                newFiles
-              )
-              currentRunnerName = currentRunnerName || runnerName
-              // Keep isNewRunner state as-is since we're updating existing
-            }
+              // Refresh the main UI runners list
+              await refreshRunners()
 
-            console.log(
-              `${runnerName ? "Updated" : "Created"} runner: ${savedName}`
-            )
+              // Execute commands immediately after saving files
+              if (commands && commands.length > 0) {
+                for (const command of commands) {
+                  try {
+                    console.log("Executing command on saved runner:", command)
 
-            // Refresh the main UI runners list
-            await refreshRunners()
+                    const result =
+                      await commandExecutor.current?.executeCommand(
+                        command,
+                        currentRunnerName
+                      )
 
-            // Execute commands immediately after saving files
-            if (commands && commands.length > 0) {
-              for (const command of commands) {
-                try {
-                  console.log("Executing command on saved runner:", command)
+                    // Add command result to chat
+                    const resultMessage: Message = {
+                      id: Date.now().toString(),
+                      role: "assistant",
+                      content: result?.success
+                        ? `✅ Command executed successfully:\n\`\`\`\n${command}\n\`\`\`\n\n${result.output}`
+                        : `❌ Command failed:\n\`\`\`\n${command}\n\`\`\`\n\nError: ${
+                            result?.error || "Unknown error"
+                          }`,
+                      timestamp: new Date(),
+                    }
 
-                  const result = await commandExecutor.current?.executeCommand(
-                    command,
-                    currentRunnerName
-                  )
+                    setMessages((prev) => [...prev, resultMessage])
 
-                  // Add command result to chat
-                  const resultMessage: Message = {
-                    id: Date.now().toString(),
-                    role: "assistant",
-                    content: result?.success
-                      ? `✅ Command executed successfully:\n\`\`\`\n${command}\n\`\`\`\n\n${result.output}`
-                      : `❌ Command failed:\n\`\`\`\n${command}\n\`\`\`\n\nError: ${
-                          result?.error || "Unknown error"
-                        }`,
-                    timestamp: new Date(),
+                    // If build command was successful, refresh the preview
+                    if (result?.success && command.includes("build")) {
+                      setTimeout(() => {
+                        refreshPreview()
+                      }, 1000) // Small delay to ensure build is complete
+                    }
+                  } catch (error) {
+                    console.error("Error executing command:", error)
+
+                    const errorMessage: Message = {
+                      id: Date.now().toString(),
+                      role: "assistant",
+                      content: `❌ Command execution failed:\n\`\`\`\n${command}\n\`\`\`\n\nError: ${
+                        error instanceof Error ? error.message : "Unknown error"
+                      }`,
+                      timestamp: new Date(),
+                    }
+
+                    setMessages((prev) => [...prev, errorMessage])
                   }
-
-                  setMessages((prev) => [...prev, resultMessage])
-
-                  // If build command was successful, refresh the preview
-                  if (result?.success && command.includes("build")) {
-                    setTimeout(() => {
-                      refreshPreview()
-                    }, 1000) // Small delay to ensure build is complete
-                  }
-                } catch (error) {
-                  console.error("Error executing command:", error)
-
-                  const errorMessage: Message = {
-                    id: Date.now().toString(),
-                    role: "assistant",
-                    content: `❌ Command execution failed:\n\`\`\`\n${command}\n\`\`\`\n\nError: ${
-                      error instanceof Error ? error.message : "Unknown error"
-                    }`,
-                    timestamp: new Date(),
-                  }
-
-                  setMessages((prev) => [...prev, errorMessage])
                 }
               }
+            } catch (error) {
+              console.error("Auto-save failed:", error)
+              // Show error message but continue
+              const errorMessage: Message = {
+                id: Date.now().toString(),
+                role: "assistant",
+                content: `⚠️ Auto-save failed: ${
+                  error instanceof Error ? error.message : "Unknown error"
+                }`,
+                timestamp: new Date(),
+              }
+              setMessages((prev) => [...prev, errorMessage])
             }
-          } catch (error) {
-            console.error("Auto-save failed:", error)
-            // Show error message but continue
-            const errorMessage: Message = {
-              id: Date.now().toString(),
-              role: "assistant",
-              content: `⚠️ Auto-save failed: ${
-                error instanceof Error ? error.message : "Unknown error"
-              }`,
-              timestamp: new Date(),
-            }
-            setMessages((prev) => [...prev, errorMessage])
           }
         }
+      } catch (error) {
+        console.error("Error sending message:", error)
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "assistant",
+          content: `Error: ${
+            error instanceof Error ? error.message : "Unknown error occurred"
+          }`,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, errorMessage])
+      } finally {
+        setIsLoading(false)
       }
-    } catch (error) {
-      console.error("Error sending message:", error)
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: `Error: ${
-          error instanceof Error ? error.message : "Unknown error occurred"
-        }`,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, errorMessage])
-    } finally {
-      setIsLoading(false)
-    }
-  }, [messages, currentFiles, activeFile, runnerName, isNewRunner, refreshRunners]) // Dependencies for useCallback
+    },
+    [
+      messages,
+      currentFiles,
+      activeFile,
+      runnerName,
+      isNewRunner,
+      refreshRunners,
+    ]
+  ) // Dependencies for useCallback
 
   const parseAssistantResponse = (content: string) => {
     const fileChanges: FileChange[] = []
@@ -538,24 +565,35 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
 
   // Automatically send initial prompt when component mounts and API key is available
   useEffect(() => {
-    if (initialPrompt && initialPrompt.trim() && !initialPromptSentRef.current && claudeService.current && !showApiKeyPrompt) {
+    if (
+      initialPrompt &&
+      initialPrompt.trim() &&
+      !initialPromptSentRef.current &&
+      claudeService.current &&
+      !showApiKeyPrompt
+    ) {
       // Wait for existing runner to load first if applicable
-      const shouldWait = existingRunnerName && Object.keys(currentFiles).length === 0
+      const shouldWait =
+        existingRunnerName && Object.keys(currentFiles).length === 0
       if (!shouldWait) {
-        console.log('Sending initial prompt:', initialPrompt.substring(0, 50) + '...')
+        console.log(
+          "Sending initial prompt:",
+          initialPrompt.substring(0, 50) + "..."
+        )
         initialPromptSentRef.current = true
         handleSendMessage(initialPrompt)
       }
     }
-  }, [initialPrompt, claudeService.current, showApiKeyPrompt, currentFiles, existingRunnerName]) // Include currentFiles and existingRunnerName in dependencies
+  }, [
+    initialPrompt,
+    claudeService.current,
+    showApiKeyPrompt,
+    currentFiles,
+    existingRunnerName,
+  ]) // Include currentFiles and existingRunnerName in dependencies
 
   if (showApiKeyPrompt) {
-    return (
-      <APIKeyPrompt
-        onSetApiKey={handleSetApiKey}
-        onClose={onClose}
-      />
-    )
+    return <APIKeyPrompt onSetApiKey={handleSetApiKey} onClose={onClose} />
   }
 
   return (
@@ -569,12 +607,16 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
             <CardHeader className="header-card-content">
               <div className="header-left">
                 <CardTitle className="header-title">
-                  {isNewRunner ? "AI Runner Builder" : `Editing Runner: ${runnerName}`}
+                  {isNewRunner
+                    ? "AI Runner Builder"
+                    : `Editing Runner: ${runnerName}`}
                 </CardTitle>
-                                <Input
+                <Input
                   id="runner-name-input"
                   type="text"
-                  placeholder={isNewRunner ? "Runner name (optional)" : "Runner name"}
+                  placeholder={
+                    isNewRunner ? "Runner name (optional)" : "Runner name"
+                  }
                   value={runnerName}
                   onChange={(e) => setRunnerName(e.target.value)}
                   className="runner-name-input"
@@ -599,9 +641,12 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                     className="header-btn header-btn-secondary"
                   >
                     {isDiscarding
-                      ? (isNewRunner ? "Discarding..." : "Reverting...")
-                      : (isNewRunner ? "Discard" : "Revert Changes")
-                    }
+                      ? isNewRunner
+                        ? "Discarding..."
+                        : "Reverting..."
+                      : isNewRunner
+                      ? "Discard"
+                      : "Revert Changes"}
                   </Button>
                 )}
                 <Button
