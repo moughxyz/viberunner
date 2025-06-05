@@ -26,6 +26,7 @@ interface RunnersGridProps {
     tabOrder: number
   ) => Promise<void>
   onEditRunner?: (runnerName: string) => void
+  onEditRunnerWithCursor?: (runnerName: string) => void
 }
 
 const RunnersGrid: React.FC<RunnersGridProps> = ({
@@ -38,12 +39,33 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
   toggleStartupApp,
   updateStartupAppTabOrder,
   onEditRunner,
+  onEditRunnerWithCursor,
 }) => {
+  const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null)
+
   const utilityRunners = runners.filter((a) => a.standalone)
   const contextualRunners = runners.filter((f) => !f.standalone)
 
   // Combine all runners with utility runners first
   const allRunners = [...utilityRunners, ...contextualRunners]
+
+  const handleEditDropdown = (runnerId: string, editType: 'agent' | 'cursor') => {
+    setActiveDropdown(null)
+    if (editType === 'agent' && onEditRunner) {
+      onEditRunner(runnerId)
+    } else if (editType === 'cursor' && onEditRunnerWithCursor) {
+      onEditRunnerWithCursor(runnerId)
+    }
+  }
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveDropdown(null)
+    }
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
+  }, [])
 
   if (allRunners.length === 0) {
     return null
@@ -96,17 +118,45 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                         </p>
                       </div>
                       <div className="utility-actions">
-                        {onEditRunner && (
-                          <button
-                            className="utility-edit-btn"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onEditRunner(runner.id)
-                            }}
-                            title="Edit runner"
-                          >
-                            ✏️
-                          </button>
+                        {(onEditRunner || onEditRunnerWithCursor) && (
+                          <div className="utility-edit-dropdown">
+                            <button
+                              className="utility-edit-btn"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setActiveDropdown(activeDropdown === runner.id ? null : runner.id)
+                              }}
+                              title="Edit runner"
+                            >
+                              ✏️
+                            </button>
+                            {activeDropdown === runner.id && (
+                              <div className="edit-dropdown-menu">
+                                {onEditRunner && (
+                                  <button
+                                    className="edit-dropdown-item"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleEditDropdown(runner.id, 'agent')
+                                    }}
+                                  >
+                                    Edit with Agent
+                                  </button>
+                                )}
+                                {onEditRunnerWithCursor && (
+                                  <button
+                                    className="edit-dropdown-item"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleEditDropdown(runner.id, 'cursor')
+                                    }}
+                                  >
+                                    Edit with Cursor
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         )}
                         <div className="utility-action">Launch</div>
                       </div>
@@ -168,17 +218,45 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                       <h5 className="app-info-title">{runner.name}</h5>
                       <div className="app-info-status">
                         <span className="status-dot"></span>
-                        {onEditRunner && (
-                          <button
-                            className="app-info-edit-btn"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              onEditRunner(runner.id)
-                            }}
-                            title="Edit runner"
-                          >
-                            ✏️
-                          </button>
+                        {(onEditRunner || onEditRunnerWithCursor) && (
+                          <div className="app-info-edit-dropdown">
+                            <button
+                              className="app-info-edit-btn"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setActiveDropdown(activeDropdown === runner.id ? null : runner.id)
+                              }}
+                              title="Edit runner"
+                            >
+                              ✏️
+                            </button>
+                            {activeDropdown === runner.id && (
+                              <div className="edit-dropdown-menu">
+                                {onEditRunner && (
+                                  <button
+                                    className="edit-dropdown-item"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleEditDropdown(runner.id, 'agent')
+                                    }}
+                                  >
+                                    Edit with Agent
+                                  </button>
+                                )}
+                                {onEditRunnerWithCursor && (
+                                  <button
+                                    className="edit-dropdown-item"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleEditDropdown(runner.id, 'cursor')
+                                    }}
+                                  >
+                                    Edit with Cursor
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>

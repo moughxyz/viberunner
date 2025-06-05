@@ -596,4 +596,104 @@ export default MyRunner
       throw error
     }
   }
+
+  // Edit an existing runner with Cursor
+  async editRunnerWithCursor(runnerName: string): Promise<void> {
+    try {
+      const { spawn } = require("child_process")
+      const runnerPath = path.join(this.runnersDir, runnerName)
+
+      // Check if runner exists
+      if (!fs.existsSync(runnerPath)) {
+        throw new Error(`Runner "${runnerName}" does not exist`)
+      }
+
+      console.log(`Preparing to edit runner: ${runnerName}`)
+
+      // Create VIBERUNNER.md with README content if it doesn't exist
+      const viberunnerMdPath = path.join(runnerPath, "VIBERUNNER.md")
+      if (!fs.existsSync(viberunnerMdPath)) {
+        fs.writeFileSync(viberunnerMdPath, readmeContent, "utf8")
+        console.log("Created VIBERUNNER.md with README content")
+      }
+
+      // Check if node_modules exists, if not run npm install
+      const nodeModulesPath = path.join(runnerPath, "node_modules")
+      if (!fs.existsSync(nodeModulesPath)) {
+        console.log("Running npm install...")
+        const npmProcess = spawn("npm", ["install"], {
+          cwd: runnerPath,
+          stdio: "inherit",
+        })
+
+        npmProcess.on("close", (code: number | null) => {
+          if (code === 0) {
+            console.log("npm install completed successfully")
+
+            // Run npm run build in background after install completes
+            console.log("Running npm run build...")
+            const buildProcess = spawn("npm", ["run", "build"], {
+              cwd: runnerPath,
+              stdio: "inherit",
+            })
+
+            buildProcess.on("close", (buildCode: number | null) => {
+              if (buildCode === 0) {
+                console.log("npm run build completed successfully")
+              } else {
+                console.error(`npm run build failed with code ${buildCode}`)
+              }
+            })
+
+            buildProcess.on("error", (buildError: Error) => {
+              console.error("npm run build error:", buildError)
+            })
+          } else {
+            console.error(`npm install failed with code ${code}`)
+          }
+        })
+
+        npmProcess.on("error", (error: Error) => {
+          console.error("npm install error:", error)
+        })
+      } else {
+        // Node modules exist, just run build
+        console.log("Running npm run build...")
+        const buildProcess = spawn("npm", ["run", "build"], {
+          cwd: runnerPath,
+          stdio: "inherit",
+        })
+
+        buildProcess.on("close", (buildCode: number | null) => {
+          if (buildCode === 0) {
+            console.log("npm run build completed successfully")
+          } else {
+            console.error(`npm run build failed with code ${buildCode}`)
+          }
+        })
+
+        buildProcess.on("error", (buildError: Error) => {
+          console.error("npm run build error:", buildError)
+        })
+      }
+
+      // Open directory with Cursor
+      const cursorProcess = spawn("cursor", [runnerPath], {
+        detached: true,
+        stdio: "ignore",
+      })
+
+      cursorProcess.unref()
+
+      console.log(`Opened ${runnerPath} with Cursor for editing`)
+
+      // Refresh the runner service to ensure UI is up to date
+      await runnerService.refresh()
+      console.log("Refreshed runner service after opening runner for editing")
+
+    } catch (error) {
+      console.error("Error editing runner with Cursor:", error)
+      throw error
+    }
+  }
 }

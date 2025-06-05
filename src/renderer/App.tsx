@@ -21,6 +21,7 @@ import { getRunnersDirectory, getViberunnerLogoPath } from "./util"
 import { useRunnerService } from "./hooks/useRunnerService"
 import { useTabService } from "./hooks/useTabService"
 import { runnerService } from "./services/RunnerService"
+import { FileManagerService } from "./services/FileManagerService"
 
 // Direct Node.js access with full integration
 const { ipcRenderer } = require("electron")
@@ -167,6 +168,17 @@ const App: React.FC = () => {
       alert(`Failed to open editor for runner "${runnerName}": ${error}`)
     }
   }, [tabService, openTabs, activeTabId])
+
+  // Handle editing an existing runner with Cursor
+  const handleEditRunnerWithCursor = useCallback(async (runnerName: string) => {
+    try {
+      const fileManagerService = new FileManagerService()
+      await fileManagerService.editRunnerWithCursor(runnerName)
+    } catch (error) {
+      console.error('Error opening runner with Cursor:', error)
+      alert(`Failed to open runner "${runnerName}" with Cursor: ${error}`)
+    }
+  }, [])
 
   // Ref for update notification component
   const updateNotificationRef = useRef<UpdateNotificationRef>(null)
@@ -322,8 +334,6 @@ const App: React.FC = () => {
   useEffect(() => {
     loadStartupRunners()
   }, [runners])
-
-
 
   // Keyboard shortcuts for tab/window management
   useEffect(() => {
@@ -724,8 +734,6 @@ const App: React.FC = () => {
     await openAIAgentInNewTab(prompt)
   }
 
-
-
   // Function to open AI Agent in a new tab
   const openAIAgentInNewTab = async (prompt?: string) => {
     await tabService.openAIAgentInNewTab(
@@ -819,6 +827,7 @@ const App: React.FC = () => {
                       toggleStartupApp={toggleStartupApp}
                       updateStartupAppTabOrder={updateStartupAppTabOrder}
                       onEditRunner={handleEditRunner}
+                      onEditRunnerWithCursor={handleEditRunnerWithCursor}
                     />
                   </div>
                 )}
