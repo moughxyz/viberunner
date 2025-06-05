@@ -27,28 +27,33 @@ interface RunnersGridProps {
   ) => Promise<void>
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
+  onDeleteRunner?: (runnerName: string) => void
 }
 
-interface EditDropdownProps {
+interface OptionsMenuProps {
   runnerId: string
   isActive: boolean
   onToggle: (runnerId: string) => void
   onEdit: (runnerId: string, editType: 'agent' | 'cursor') => void
+  onDelete: (runnerId: string) => void
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
+  onDeleteRunner?: (runnerName: string) => void
   className?: string
 }
 
-const EditDropdown: React.FC<EditDropdownProps> = ({
+const OptionsMenu: React.FC<OptionsMenuProps> = ({
   runnerId,
   isActive,
   onToggle,
   onEdit,
+  onDelete,
   onEditRunner,
   onEditRunnerWithCursor,
-  className = "edit-dropdown"
+  onDeleteRunner,
+  className = "options-menu"
 }) => {
-  if (!onEditRunner && !onEditRunnerWithCursor) {
+  if (!onEditRunner && !onEditRunnerWithCursor && !onDeleteRunner) {
     return null
   }
 
@@ -60,15 +65,15 @@ const EditDropdown: React.FC<EditDropdownProps> = ({
           e.stopPropagation()
           onToggle(runnerId)
         }}
-        title="Edit runner"
+        title="Options"
       >
-        ✏️
+        ⋯
       </button>
       {isActive && (
-        <div className="edit-dropdown-menu">
+        <div className="options-menu-dropdown">
           {onEditRunner && (
             <button
-              className="edit-dropdown-item"
+              className="options-menu-item"
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit(runnerId, 'agent')
@@ -79,7 +84,7 @@ const EditDropdown: React.FC<EditDropdownProps> = ({
           )}
           {onEditRunnerWithCursor && (
             <button
-              className="edit-dropdown-item"
+              className="options-menu-item"
               onClick={(e) => {
                 e.stopPropagation()
                 onEdit(runnerId, 'cursor')
@@ -88,6 +93,15 @@ const EditDropdown: React.FC<EditDropdownProps> = ({
               Edit with Cursor
             </button>
           )}
+          <button
+            className="options-menu-item delete-item"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete(runnerId)
+            }}
+          >
+            Delete
+          </button>
         </div>
       )}
     </div>
@@ -105,6 +119,7 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
   updateStartupAppTabOrder,
   onEditRunner,
   onEditRunnerWithCursor,
+  onDeleteRunner,
 }) => {
   const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null)
 
@@ -120,6 +135,13 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
       onEditRunner(runnerId)
     } else if (editType === 'cursor' && onEditRunnerWithCursor) {
       onEditRunnerWithCursor(runnerId)
+    }
+  }
+
+  const handleDeleteRunner = (runnerId: string) => {
+    setActiveDropdown(null)
+    if (onDeleteRunner) {
+      onDeleteRunner(runnerId)
     }
   }
 
@@ -187,89 +209,109 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                         </p>
                       </div>
                       <div className="utility-actions">
-                        <EditDropdown
-                          runnerId={runner.id}
-                          isActive={activeDropdown === runner.id}
-                          onToggle={handleToggleDropdown}
-                          onEdit={handleEditDropdown}
-                          onEditRunner={onEditRunner}
-                          onEditRunnerWithCursor={onEditRunnerWithCursor}
-                          className="utility-edit-dropdown"
-                        />
                         <div className="utility-action">Launch</div>
                       </div>
                     </div>
 
-                    {/* Startup controls */}
+                    {/* Card footer with startup controls and options */}
                     <div
-                      className="startup-controls"
+                      className="card-footer"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className="startup-toggle">
-                        <label
-                          className="toggle-label"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isStartupEnabled}
-                            onChange={(e) =>
-                              toggleStartupApp(runner.id, e.target.checked)
-                            }
+                      <div className="footer-left">
+                        <div className="startup-toggle">
+                          <label
+                            className="toggle-label"
                             onClick={(e) => e.stopPropagation()}
-                            className="toggle-checkbox"
-                          />
-                          <span className="toggle-slider"></span>
-                          <span className="toggle-text">Start on launch</span>
-                        </label>
-                      </div>
-
-                      {isStartupEnabled && (
-                        <div className="tab-order-control">
-                          <label className="tab-order-label">
-                            Tab order:
+                          >
                             <input
-                              type="number"
-                              min="1"
-                              max="99"
-                              value={tabOrder}
+                              type="checkbox"
+                              checked={isStartupEnabled}
                               onChange={(e) =>
-                                updateStartupAppTabOrder(
-                                  runner.id,
-                                  parseInt(e.target.value) || 1
-                                )
+                                toggleStartupApp(runner.id, e.target.checked)
                               }
                               onClick={(e) => e.stopPropagation()}
-                              className="tab-order-input"
+                              className="toggle-checkbox"
                             />
+                            <span className="toggle-slider"></span>
+                            <span className="toggle-text">Start on launch</span>
                           </label>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              } else {
-                // Render contextual runner with only status dot
-                return (
-                  <div key={runner.id} className="app-info-card">
-                    <div className="app-info-header">
-                      <h5 className="app-info-title">{runner.name}</h5>
-                      <div className="app-info-status">
-                        <span className="status-dot"></span>
-                        <EditDropdown
+
+                        {isStartupEnabled && (
+                          <div className="tab-order-control">
+                            <label className="tab-order-label">
+                              Tab order:
+                              <input
+                                type="number"
+                                min="1"
+                                max="99"
+                                value={tabOrder}
+                                onChange={(e) =>
+                                  updateStartupAppTabOrder(
+                                    runner.id,
+                                    parseInt(e.target.value) || 1
+                                  )
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                                className="tab-order-input"
+                              />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="footer-right">
+                        <OptionsMenu
                           runnerId={runner.id}
                           isActive={activeDropdown === runner.id}
                           onToggle={handleToggleDropdown}
                           onEdit={handleEditDropdown}
+                          onDelete={handleDeleteRunner}
                           onEditRunner={onEditRunner}
                           onEditRunnerWithCursor={onEditRunnerWithCursor}
-                          className="app-info-edit-dropdown"
+                          onDeleteRunner={onDeleteRunner}
+                          className="footer-options-menu"
                         />
                       </div>
                     </div>
-                    <p className="app-info-description">{runner.description}</p>
-                    <div className="app-info-formats">
-                      {getSupportedFormats(runner)}
+                  </div>
+                )
+              } else {
+                // Render contextual runner with footer structure
+                return (
+                  <div key={runner.id} className="contextual-card-container">
+                    <div className="app-info-card">
+                      <div className="app-info-header">
+                        <h5 className="app-info-title">{runner.name}</h5>
+                        <div className="app-info-status">
+                          <span className="status-dot"></span>
+                        </div>
+                      </div>
+                      <p className="app-info-description">{runner.description}</p>
+                    </div>
+
+                    {/* Card footer with formats and options */}
+                    <div className="card-footer">
+                      <div className="footer-left">
+                        <div className="app-info-formats">
+                          {getSupportedFormats(runner)}
+                        </div>
+                      </div>
+
+                      <div className="footer-right">
+                        <OptionsMenu
+                          runnerId={runner.id}
+                          isActive={activeDropdown === runner.id}
+                          onToggle={handleToggleDropdown}
+                          onEdit={handleEditDropdown}
+                          onDelete={handleDeleteRunner}
+                          onEditRunner={onEditRunner}
+                          onEditRunnerWithCursor={onEditRunnerWithCursor}
+                          onDeleteRunner={onDeleteRunner}
+                          className="footer-options-menu"
+                        />
+                      </div>
                     </div>
                   </div>
                 )
