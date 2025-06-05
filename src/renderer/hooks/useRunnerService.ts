@@ -46,6 +46,7 @@ export function useRunnerService() {
     runners: state.runners,
     isLoading: state.isLoading,
     error: state.error,
+    startupRunners: state.startupRunners,
 
     // Actions
     refresh,

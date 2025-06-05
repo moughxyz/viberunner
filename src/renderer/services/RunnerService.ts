@@ -129,6 +129,7 @@ export interface RunnerServiceState {
   runners: RunnerConfig[]
   isLoading: boolean
   error: string | null
+  startupRunners: Record<string, { enabled: boolean; tabOrder: number }>
 }
 
 type RunnerServiceListener = (state: RunnerServiceState) => void
@@ -139,6 +140,7 @@ export class RunnerService {
     runners: [],
     isLoading: false,
     error: null,
+    startupRunners: {},
   }
   private listeners = new Set<RunnerServiceListener>()
 
@@ -202,6 +204,110 @@ export class RunnerService {
   // Get current error
   public getError(): string | null {
     return this.state.error
+  }
+
+  // Get startup runners
+  public getStartupRunners(): Record<string, { enabled: boolean; tabOrder: number }> {
+    return { ...this.state.startupRunners }
+  }
+
+  // Load startup runner preferences
+  private async loadStartupRunners(): Promise<Record<string, { enabled: boolean; tabOrder: number }>> {
+    try {
+      const { app } = require("@electron/remote")
+      const prefsPath = path.join(app.getPath("userData"), "preferences.json")
+
+      if (fs.existsSync(prefsPath)) {
+        const prefsContent = fs.readFileSync(prefsPath, "utf8")
+        const prefs = JSON.parse(prefsContent)
+        return prefs.startupRunners || {}
+      }
+
+      return {}
+    } catch (error) {
+      console.error("Error loading startup runners:", error)
+      return {}
+    }
+  }
+
+  // Save startup runner preferences
+  private async saveStartupRunners(
+    startupRunners: Record<string, { enabled: boolean; tabOrder: number }>
+  ): Promise<void> {
+    try {
+      const { app } = require("@electron/remote")
+      const prefsPath = path.join(app.getPath("userData"), "preferences.json")
+
+      // Load existing preferences
+      let prefs = {}
+      if (fs.existsSync(prefsPath)) {
+        const prefsContent = fs.readFileSync(prefsPath, "utf8")
+        prefs = JSON.parse(prefsContent)
+      }
+
+      // Update startup runners
+      (prefs as any).startupRunners = startupRunners
+
+      // Save back to file
+      fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2), "utf8")
+
+      // Update state
+      this.setState({ startupRunners })
+    } catch (error) {
+      console.error("Error saving startup runners:", error)
+      throw error
+    }
+  }
+
+  // Toggle startup runner enabled state
+  public async toggleStartupRunner(runnerId: string, enabled: boolean): Promise<void> {
+    try {
+      const newStartupRunners = { ...this.state.startupRunners }
+
+      if (enabled) {
+        // If enabling, set a default tab order if not already set
+        const currentConfig = this.state.startupRunners[runnerId] || {
+          enabled: false,
+          tabOrder: 1,
+        }
+        if (!currentConfig.tabOrder) {
+          const maxTabOrder = Math.max(
+            0,
+            ...Object.values(this.state.startupRunners).map((runner) => runner.tabOrder)
+          )
+          currentConfig.tabOrder = maxTabOrder + 1
+        }
+        newStartupRunners[runnerId] = { ...currentConfig, enabled: true }
+      } else {
+        delete newStartupRunners[runnerId]
+      }
+
+      await this.saveStartupRunners(newStartupRunners)
+    } catch (error) {
+      console.error("Error toggling startup runner:", error)
+      throw error
+    }
+  }
+
+  // Update tab order for startup runner
+  public async updateStartupRunnerTabOrder(
+    runnerId: string,
+    tabOrder: number
+  ): Promise<void> {
+    try {
+      const currentConfig = this.state.startupRunners[runnerId]
+      if (!currentConfig || !currentConfig.enabled) return
+
+      const newStartupRunners = {
+        ...this.state.startupRunners,
+        [runnerId]: { ...currentConfig, tabOrder },
+      }
+
+      await this.saveStartupRunners(newStartupRunners)
+    } catch (error) {
+      console.error("Error updating startup runner tab order:", error)
+      throw error
+    }
   }
 
   // Load runners from filesystem
@@ -296,6 +402,10 @@ export class RunnerService {
   public async initialize(): Promise<void> {
     console.log("RunnerService: Initializing...")
     await this.refresh()
+
+    // Load startup runner preferences
+    const startupRunners = await this.loadStartupRunners()
+    this.setState({ startupRunners })
   }
 
   // Load a specific app bundle and config

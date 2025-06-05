@@ -22,6 +22,7 @@ import { useRunnerService } from "./hooks/useRunnerService"
 import { useTabService } from "./hooks/useTabService"
 import { runnerService } from "./services/RunnerService"
 import { FileManagerService } from "./services/FileManagerService"
+import { getSupportedFormats } from "../lib/utils"
 
 // Direct Node.js access with full integration
 const { ipcRenderer } = require("electron")
@@ -50,45 +51,11 @@ const api = {
 
 // Runner loading is now handled by RunnerService
 
-// Helper function to get supported formats for a runner
-const getSupportedFormats = (runner: any): string => {
-  if (runner.standalone) {
-    return "Standalone utility"
-  }
 
-  if (runner.mimetypes && runner.mimetypes.length > 0) {
-    return runner.mimetypes.join(", ")
-  }
-
-  if (runner.matchers && runner.matchers.length > 0) {
-    const formats = new Set<string>()
-
-    runner.matchers.forEach((matcher: any) => {
-      if (matcher.type === "mimetype" && matcher.mimetype) {
-        formats.add(matcher.mimetype)
-      } else if (matcher.type === "filename" && matcher.pattern) {
-        formats.add(`*.${matcher.pattern.split(".").pop() || "file"}`)
-      } else if (matcher.type === "filename-contains" && matcher.substring) {
-        const ext = matcher.extension ? `.${matcher.extension}` : ""
-        formats.add(`*${matcher.substring}*${ext}`)
-      } else if (matcher.type === "content-json") {
-        formats.add("JSON")
-      } else if (matcher.type === "file-size") {
-        formats.add("Size-based")
-      } else {
-        formats.add(matcher.type)
-      }
-    })
-
-    return Array.from(formats).join(", ") || "Enhanced matching"
-  }
-
-  return "All files"
-}
 
 const App: React.FC = () => {
   // Use RunnerService instead of local state
-  const { runners, isLoading: isLoadingRunners, loadApp } = useRunnerService()
+  const { runners, isLoading: isLoadingRunners, startupRunners, loadApp } = useRunnerService()
 
   // Tab-related state
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
@@ -101,9 +68,6 @@ const App: React.FC = () => {
     null
   )
   const [runnerIcons, setRunnerIcons] = useState<Record<string, string>>({})
-  const [startupRunners, setStartupRunners] = useState<
-    Record<string, { enabled: boolean; tabOrder: number }>
-  >({})
   const [showSettings, setShowSettings] = useState(false)
 
   const appRootRef = useRef<HTMLDivElement>(null)
@@ -188,74 +152,10 @@ const App: React.FC = () => {
     [runnerIcons]
   )
 
-  // Load startup runner preferences
-  const loadStartupRunners = async () => {
-    try {
-      const { app } = require("@electron/remote")
-      const prefsPath = path.join(app.getPath("userData"), "preferences.json")
-
-      if (fs.existsSync(prefsPath)) {
-        const prefsContent = fs.readFileSync(prefsPath, "utf8")
-        const prefs = JSON.parse(prefsContent)
-        setStartupRunners(prefs.startupRunners || {})
-      }
-    } catch (error) {
-      console.error("Error loading startup runners:", error)
-    }
-  }
-
-  // Save startup runner preferences
-  const saveStartupRunners = (
-    newStartupRunners: Record<string, { enabled: boolean; tabOrder: number }>
-  ) => {
-    try {
-      const { app } = require("@electron/remote")
-      const prefsPath = path.join(app.getPath("userData"), "preferences.json")
-
-      // Load existing preferences
-      let prefs = {}
-      if (fs.existsSync(prefsPath)) {
-        const prefsContent = fs.readFileSync(prefsPath, "utf8")
-        prefs = JSON.parse(prefsContent)
-      }
-
-      // Update startup runners
-      // eslint-disable-next-line no-extra-semi
-      ;(prefs as any).startupRunners = newStartupRunners
-
-      // Save back to file
-      fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2), "utf8")
-
-      setStartupRunners(newStartupRunners)
-    } catch (error) {
-      console.error("Error saving startup runners:", error)
-    }
-  }
-
   // Toggle startup runner enabled state
   const toggleStartupApp = async (runnerId: string, enabled: boolean) => {
     try {
-      const newStartupRunners = { ...startupRunners }
-
-      if (enabled) {
-        // If enabling, set a default tab order if not already set
-        const currentConfig = startupRunners[runnerId] || {
-          enabled: false,
-          tabOrder: 1,
-        }
-        if (!currentConfig.tabOrder) {
-          const maxTabOrder = Math.max(
-            0,
-            ...Object.values(startupRunners).map((runner) => runner.tabOrder)
-          )
-          currentConfig.tabOrder = maxTabOrder + 1
-        }
-        newStartupRunners[runnerId] = { ...currentConfig, enabled: true }
-      } else {
-        delete newStartupRunners[runnerId]
-      }
-
-      saveStartupRunners(newStartupRunners)
+      await runnerService.toggleStartupRunner(runnerId, enabled)
     } catch (error) {
       console.error("Error toggling startup runner:", error)
     }
@@ -267,15 +167,7 @@ const App: React.FC = () => {
     tabOrder: number
   ) => {
     try {
-      const currentConfig = startupRunners[runnerId]
-      if (!currentConfig || !currentConfig.enabled) return
-
-      const newStartupRunners = {
-        ...startupRunners,
-        [runnerId]: { ...currentConfig, tabOrder },
-      }
-
-      saveStartupRunners(newStartupRunners)
+      await runnerService.updateStartupRunnerTabOrder(runnerId, tabOrder)
     } catch (error) {
       console.error("Error updating startup runner tab order:", error)
     }
@@ -290,10 +182,7 @@ const App: React.FC = () => {
     })
   }, [runnerIcons, loadRunnerIcon, runners])
 
-  // Load startup runners when component mounts and when runners change
-  useEffect(() => {
-    loadStartupRunners()
-  }, [runners])
+  // Startup runners are now loaded automatically by RunnerService
 
   // Keyboard shortcuts for tab/window management
   useEffect(() => {
