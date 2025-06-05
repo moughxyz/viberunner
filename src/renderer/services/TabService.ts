@@ -120,7 +120,7 @@ export class TabService {
   // Close tab
   closeTab(
     tabId: string,
-    openTabs: OpenTab[],
+    _openTabs: OpenTab[],
     activeTabId: string,
     setOpenTabs: (updater: (prev: OpenTab[]) => OpenTab[]) => void,
     setActiveTabId: (id: string) => void
@@ -235,6 +235,7 @@ export class TabService {
     const props: RunnerProps = {
       dataDirectory: dataDirectory,
       fileInput: tab.fileInput, // This will be undefined for standalone runners
+      tabId: tab.id,
     }
 
     return new Promise<boolean>((resolve) => {
@@ -437,7 +438,7 @@ export class TabService {
         onError: (error) => {
           console.error("Error rendering app:", error)
           resolve(false)
-        }
+        },
       })
 
       // Make the app loader available globally with backward compatibility

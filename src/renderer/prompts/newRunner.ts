@@ -51,6 +51,7 @@ export const getNewRunnerPrompt = (userPrompt: string) => {
         path: string
         mimetype: string
       }
+      tabId: string
     }
 
     const ClipboardManagerRunner: React.FC<ClipboardManagerRunnerProps> = ({

@@ -380,6 +380,13 @@ export default defineConfig({
       // Create empty App.tsx content
       const emptyAppContent = `${getCursorPrompt()}
 
+declare global {
+  interface Window {
+    registerCleanup: (tabId: string, cleanupFn: () => void) => void
+    __RENDER_RUNNER__: (app: React.ComponentType<any>) => void
+  }
+}
+
 import React from 'react'
 
 interface RunnerProps {
@@ -429,6 +436,44 @@ export default MyRunner
       const viberunnerMdPath = path.join(runnerPath, "VIBERUNNER.md")
       fs.writeFileSync(viberunnerMdPath, readmeContent, "utf8")
       console.log("Created VIBERUNNER.md with README content")
+
+      // Run npm install in the runner directory
+      console.log("Running npm install...")
+      const npmProcess = spawn("npm", ["install"], {
+        cwd: runnerPath,
+        stdio: "inherit",
+      })
+
+      npmProcess.on("close", (code: number | null) => {
+        if (code === 0) {
+          console.log("npm install completed successfully")
+
+          // Run npm run build in background after install completes
+          console.log("Running npm run build...")
+          const buildProcess = spawn("npm", ["run", "build"], {
+            cwd: runnerPath,
+            stdio: "inherit",
+          })
+
+          buildProcess.on("close", (buildCode: number | null) => {
+            if (buildCode === 0) {
+              console.log("npm run build completed successfully")
+            } else {
+              console.error(`npm run build failed with code ${buildCode}`)
+            }
+          })
+
+          buildProcess.on("error", (buildError: Error) => {
+            console.error("npm run build error:", buildError)
+          })
+        } else {
+          console.error(`npm install failed with code ${code}`)
+        }
+      })
+
+      npmProcess.on("error", (error: Error) => {
+        console.error("npm install error:", error)
+      })
 
       // Open directory with Cursor
       const cursorProcess = spawn("cursor", [runnerPath], {

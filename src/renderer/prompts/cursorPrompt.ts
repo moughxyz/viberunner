@@ -23,10 +23,12 @@ export const getCursorPrompt = () => {
  *  fileInput?: {
  *      path: string
  *      mimetype: string
- *    }
- *  }
+ *   }
+ *  tabId: string
+ * }
  *
  * See VIBERUNNER.md for more details.
- */
-  `
+ *
+ * IMPORTANT: Always run \`npm run build\` after making changes to the project in order for the change to reflect in Viberunner.
+ */`
 }

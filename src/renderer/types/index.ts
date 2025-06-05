@@ -18,6 +18,7 @@ export interface RunnerConfig {
 export interface RunnerProps {
   dataDirectory: string
   fileInput?: FileInput // Optional file input for file-based runners
+  tabId: string // Provided by Viberunner. Used to register cleanup functions.
 }
 
 export interface OpenTab {
