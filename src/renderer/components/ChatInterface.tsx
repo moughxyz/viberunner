@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react"
 import { Message } from "./AIAgentInterface"
 import { CLAUDE_MODELS, ClaudeModelId } from "../services/ClaudeAPIService"
 import "./ChatInterface.css"
+import ModelPicker from "./ModelPicker"
 
 interface ChatInterfaceProps {
   messages: Message[]
@@ -86,111 +87,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setSelectedModel(model)
     localStorage.setItem("claude-model", model)
     onModelChange?.(model)
-    setShowModelPicker(false)
   }
 
-  const ModelPicker = () => {
-    if (!showModelPicker) return null
 
-    return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000
-      }}>
-        <div style={{
-          backgroundColor: 'var(--background)',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          padding: '24px',
-          minWidth: '320px',
-          maxWidth: '400px'
-        }}>
-          <h3 style={{
-            margin: '0 0 16px 0',
-            fontSize: '16px',
-            fontWeight: '600',
-            color: 'var(--foreground)'
-          }}>
-            Choose AI Model
-          </h3>
-
-          <div style={{ marginBottom: '20px' }}>
-            {Object.entries(CLAUDE_MODELS).map(([modelId, displayName]) => (
-              <button
-                key={modelId}
-                onClick={() => handleModelChange(modelId as ClaudeModelId)}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  padding: '12px 16px',
-                  marginBottom: '8px',
-                  backgroundColor: selectedModel === modelId ? 'var(--accent)' : 'transparent',
-                  color: selectedModel === modelId ? 'var(--accent-foreground)' : 'var(--foreground)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px',
-                  textAlign: 'left',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedModel !== modelId) {
-                    e.currentTarget.style.backgroundColor = 'var(--muted)'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedModel !== modelId) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }
-                }}
-              >
-                <div style={{ fontWeight: '500' }}>{displayName}</div>
-                {modelId === 'claude-opus-4-20250514' && (
-                  <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '2px' }}>
-                    Most capable, best for complex tasks
-                  </div>
-                )}
-                {modelId === 'claude-sonnet-4-20250514' && (
-                  <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '2px' }}>
-                    High-performance with superior reasoning
-                  </div>
-                )}
-                {modelId === 'claude-3-5-sonnet-20241022' && (
-                  <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '2px' }}>
-                    Fast and efficient
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setShowModelPicker(false)}
-            style={{
-              width: '100%',
-              padding: '8px 16px',
-              backgroundColor: 'transparent',
-              color: 'var(--foreground)',
-              border: '1px solid var(--border)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '14px'
-            }}
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   const formatMessage = (content: string) => {
     // First handle code blocks (triple backticks) before inline code
@@ -527,7 +426,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
         </div>
       </div>
-      <ModelPicker />
+      <ModelPicker
+        isVisible={showModelPicker}
+        selectedModel={selectedModel}
+        onModelChange={handleModelChange}
+        onClose={() => setShowModelPicker(false)}
+      />
     </>
   )
 }

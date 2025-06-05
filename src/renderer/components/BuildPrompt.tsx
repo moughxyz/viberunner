@@ -3,6 +3,7 @@ import "./BuildPrompt.css"
 import { templates } from "../prompts/templates"
 import { CLAUDE_MODELS, ClaudeModelId } from "../services/ClaudeAPIService"
 import { FileManagerService } from "../services/FileManagerService"
+import ModelPicker from "./ModelPicker"
 
 interface BuildPromptProps {
   onSubmit?: (prompt: string) => void
@@ -51,7 +52,6 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
     setSelectedModel(model)
     localStorage.setItem("claude-model", model)
     onModelChange?.(model)
-    setShowModelPicker(false)
   }
 
   const handleCreateWithCursor = async () => {
@@ -93,55 +93,7 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
     </div>
   )
 
-  const ModelPicker = () => {
-    if (!showModelPicker) return null
 
-    return (
-      <div className="model-picker-overlay">
-        <div className="model-picker-modal">
-          <h3 className="model-picker-title">
-            Choose AI Model
-          </h3>
-
-          <div className="model-picker-options">
-            {Object.entries(CLAUDE_MODELS).map(([modelId, displayName]) => (
-              <button
-                key={modelId}
-                onClick={() => handleModelChange(modelId as ClaudeModelId)}
-                className={`model-option-button ${
-                  selectedModel === modelId ? "selected" : ""
-                }`}
-              >
-                <div className="model-option-name">{displayName}</div>
-                {modelId === "claude-opus-4-20250514" && (
-                  <div className="model-option-description">
-                    Most capable, best for complex tasks
-                  </div>
-                )}
-                {modelId === "claude-sonnet-4-20250514" && (
-                  <div className="model-option-description">
-                    High-performance with superior reasoning
-                  </div>
-                )}
-                {modelId === "claude-3-5-sonnet-20241022" && (
-                  <div className="model-option-description">
-                    Fast and efficient
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => setShowModelPicker(false)}
-            className="model-picker-cancel"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   if (condensed) {
     return (
@@ -181,7 +133,12 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
             <ModelStatus />
           </div>
         </div>
-        <ModelPicker />
+        <ModelPicker
+          isVisible={showModelPicker}
+          selectedModel={selectedModel}
+          onModelChange={handleModelChange}
+          onClose={() => setShowModelPicker(false)}
+        />
       </>
     )
   }
@@ -251,7 +208,12 @@ const BuildPrompt: React.FC<BuildPromptProps> = ({
           </div>
         </div>
       </div>
-      <ModelPicker />
+      <ModelPicker
+        isVisible={showModelPicker}
+        selectedModel={selectedModel}
+        onModelChange={handleModelChange}
+        onClose={() => setShowModelPicker(false)}
+      />
     </>
   )
 }
