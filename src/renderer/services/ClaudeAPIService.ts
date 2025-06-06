@@ -49,6 +49,16 @@ export const saveSelectedModel = (model: ClaudeModelId): void => {
   localStorage.setItem('last-selected-model', model)
 }
 
+// Get the appropriate max_tokens for each model
+const getMaxTokensForModel = (model: ClaudeModelId): number => {
+  // Claude 4 models can handle up to 32,000 tokens
+  if (model === 'claude-sonnet-4-20250514' || model === 'claude-opus-4-20250514') {
+    return 32000
+  }
+  // Claude 3.5 and other models use 8,192 tokens
+  return 8192
+}
+
 export class ClaudeAPIService {
   private anthropic: Anthropic
   private model: ClaudeModelId
@@ -132,7 +142,7 @@ export class ClaudeAPIService {
       // Use the Anthropic SDK directly in the renderer
       const response = await this.anthropic.messages.create({
         model: this.model,
-        max_tokens: 8192,
+        max_tokens: getMaxTokensForModel(this.model),
         temperature: 0.7,
         messages: messages.map(msg => ({
           role: msg.role,
@@ -231,7 +241,7 @@ export class ClaudeAPIService {
       // Create streaming request
       const stream = await this.anthropic.messages.create({
         model: this.model,
-        max_tokens: 8192,
+        max_tokens: getMaxTokensForModel(this.model),
         temperature: 0.7,
         messages: messages.map(msg => ({
           role: msg.role,
