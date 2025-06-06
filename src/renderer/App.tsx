@@ -472,10 +472,11 @@ const App: React.FC = () => {
     )
   }
 
-  // Single app mode - render only the app viewport
+  // Single app mode - render only the app viewport with draggable area
   if (singleAppMode) {
     return (
       <div className="vr-app vr-single-app-mode">
+        <div className="vr-single-app-drag-area" />
         <div ref={appRootRef} className="app-viewport" />
       </div>
     )

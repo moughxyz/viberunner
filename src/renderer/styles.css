@@ -251,6 +251,56 @@ body {
   background: transparent;
 }
 
+/* Single App Mode - Fill entire window */
+.vr-single-app-mode {
+  height: 100vh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  -webkit-app-region: drag;
+}
+
+/* Draggable area for single app mode */
+.vr-single-app-drag-area {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 24px;
+  -webkit-app-region: drag;
+  z-index: 1000;
+  background: transparent;
+  pointer-events: auto;
+}
+
+  .vr-single-app-mode .app-viewport {
+    height: 100vh;
+    width: 100vw;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: var(--background);
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+  }
+
+/* Make only specific interactive elements non-draggable in single app mode */
+.vr-single-app-mode button,
+.vr-single-app-mode input,
+.vr-single-app-mode textarea,
+.vr-single-app-mode select,
+.vr-single-app-mode a,
+.vr-single-app-mode [role="button"],
+.vr-single-app-mode [onclick],
+.vr-single-app-mode .clickable {
+  -webkit-app-region: no-drag;
+}
+
 /* Unified New Tab Interface */
 .vr-new-tab-unified {
   position: absolute;
