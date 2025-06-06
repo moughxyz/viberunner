@@ -66,6 +66,7 @@ const api = {
 const App: React.FC = () => {
   // Read runnerId from URL parameters
   const [runnerId, setRunnerId] = useState<string | null>(null)
+  const [singleAppMode, setSingleAppMode] = useState<boolean>(false)
 
   // Use RunnerService instead of local state
   const {
@@ -101,16 +102,26 @@ const App: React.FC = () => {
     if (runnerIdParam) {
       console.log('Received runnerId from URL:', runnerIdParam)
       setRunnerId(runnerIdParam)
+      setSingleAppMode(true)
     }
   }, [])
 
-  // Log runnerId when it changes (for debugging/future use)
+  // Handle single app mode - launch the specific runner
   useEffect(() => {
-    if (runnerId) {
-      console.log('App initialized with runnerId:', runnerId)
-      // TODO: Add logic to handle specific runner initialization
+    if (runnerId && singleAppMode && runners.length > 0) {
+      console.log('Single app mode: launching runner', runnerId)
+
+      // Find the runner by ID
+      const runner = runners.find(r => r.id === runnerId)
+      if (runner) {
+        console.log('Found runner for single app mode:', runner.name)
+        // Launch the runner in single app mode
+        openAppInNewTab(runner, undefined, true, true)
+      } else {
+        console.error('Runner not found for ID:', runnerId)
+      }
     }
-  }, [runnerId])
+  }, [runnerId, singleAppMode, runners])
 
   // Handle editing an existing runner
   const handleEditRunner = useCallback(
@@ -461,6 +472,16 @@ const App: React.FC = () => {
     )
   }
 
+  // Single app mode - render only the app viewport
+  if (singleAppMode) {
+    return (
+      <div className="vr-app vr-single-app-mode">
+        <div ref={appRootRef} className="app-viewport" />
+      </div>
+    )
+  }
+
+  // Normal mode - render full interface
   return (
     <div className="vr-app">
       <header id="vr-header">
