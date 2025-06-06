@@ -2,9 +2,7 @@ import React, { useRef, useCallback } from "react"
 import { TabService } from "../services/TabService"
 import { OpenTab, RunnerConfig, FileInput } from "../types"
 
-export const useTabService = (
-  appRootRef: React.RefObject<HTMLDivElement>
-) => {
+export const useTabService = (appRootRef: React.RefObject<HTMLDivElement>) => {
   const tabServiceRef = useRef<TabService | null>(null)
 
   // Initialize the TabService if not already initialized
@@ -98,7 +96,6 @@ export const useTabService = (
   const openAppInNewTab = useCallback(
     (
       runner: RunnerConfig,
-      loadApp: (runnerId: string) => Promise<any>,
       openTabs: OpenTab[],
       activeTabId: string,
       setOpenTabs: (updater: (prev: OpenTab[]) => OpenTab[]) => void,
@@ -111,7 +108,6 @@ export const useTabService = (
     ) => {
       return tabService.openAppInNewTab(
         runner,
-        loadApp,
         openTabs,
         activeTabId,
         setOpenTabs,

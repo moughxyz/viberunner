@@ -3,6 +3,7 @@ import "./RunnersGrid.css"
 import UiButton from "./UiButton"
 import ConfirmDialog from "./ConfirmDialog"
 import { runnerService } from "../services/RunnerService"
+import { macService } from "../services/MacService"
 
 interface RunnerConfig {
   id: string
@@ -38,6 +39,7 @@ interface OptionsMenuProps {
   onToggle: (runnerId: string) => void
   onEdit: (runnerId: string, editType: 'agent' | 'cursor') => void
   onDelete: (runnerId: string) => void
+  onAddToDock: (runnerId: string) => void
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
   className?: string
@@ -49,6 +51,7 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
   onToggle,
   onEdit,
   onDelete,
+  onAddToDock,
   onEditRunner,
   onEditRunnerWithCursor,
   className = "options-menu"
@@ -70,6 +73,17 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
       </UiButton>
       {isActive && (
         <div className="options-menu-dropdown">
+          {process.platform === 'darwin' && (
+            <button
+              className="options-menu-item"
+              onClick={(e) => {
+                e.stopPropagation()
+                onAddToDock(runnerId)
+              }}
+            >
+              Add to macOS Dock
+            </button>
+          )}
           {onEditRunner && (
             <button
               className="options-menu-item"
@@ -140,6 +154,19 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
   const handleDeleteRunner = (runnerId: string) => {
     setActiveDropdown(null)
     setIsDeleting(runnerId)
+  }
+
+  const handleAddToDock = async (runnerId: string) => {
+    setActiveDropdown(null)
+    try {
+      const runner = runners.find(r => r.id === runnerId)
+      if (runner) {
+        await macService.addRunnerToDock(runner)
+      }
+    } catch (error) {
+      console.error('Failed to add runner to dock:', error)
+      alert(`Failed to add runner to dock: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
   const confirmDeleteRunner = async (runnerId: string) => {
@@ -277,6 +304,7 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                           onToggle={handleToggleDropdown}
                           onEdit={handleEditDropdown}
                           onDelete={handleDeleteRunner}
+                          onAddToDock={handleAddToDock}
                           onEditRunner={onEditRunner}
                           onEditRunnerWithCursor={onEditRunnerWithCursor}
                           className="footer-options-menu"
@@ -314,6 +342,7 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                           onToggle={handleToggleDropdown}
                           onEdit={handleEditDropdown}
                           onDelete={handleDeleteRunner}
+                          onAddToDock={handleAddToDock}
                           onEditRunner={onEditRunner}
                           onEditRunnerWithCursor={onEditRunnerWithCursor}
                           className="footer-options-menu"

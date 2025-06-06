@@ -4,7 +4,9 @@ import { RunnerConfig } from "../types"
 
 // Hook to use the RunnerService with automatic subscription management
 export function useRunnerService() {
-  const [state, setState] = useState<RunnerServiceState>(() => runnerService.getState())
+  const [state, setState] = useState<RunnerServiceState>(() =>
+    runnerService.getState()
+  )
 
   useEffect(() => {
     // Subscribe to changes
@@ -19,19 +21,20 @@ export function useRunnerService() {
     await runnerService.refresh()
   }, [])
 
-  // Memoized loadApp function
-  const loadApp = useCallback(async (id: string) => {
-    return await runnerService.loadApp(id)
-  }, [])
-
   // Memoized finder functions
-  const findRunner = useCallback((id: string) => {
-    return runnerService.findRunner(id)
-  }, [state.runners]) // Re-memoize when runners change
+  const findRunner = useCallback(
+    (id: string) => {
+      return runnerService.findRunner(id)
+    },
+    [state.runners]
+  ) // Re-memoize when runners change
 
-  const findRunners = useCallback((predicate: (runner: RunnerConfig) => boolean) => {
-    return runnerService.findRunners(predicate)
-  }, [state.runners])
+  const findRunners = useCallback(
+    (predicate: (runner: RunnerConfig) => boolean) => {
+      return runnerService.findRunners(predicate)
+    },
+    [state.runners]
+  )
 
   const getStandaloneRunners = useCallback(() => {
     return runnerService.getStandaloneRunners()
@@ -42,9 +45,12 @@ export function useRunnerService() {
   }, [state.runners])
 
   // Memoized icon functions
-  const getAppIcon = useCallback((runner: RunnerConfig) => {
-    return runnerService.getAppIcon(runner)
-  }, [state.runnerIcons])
+  const getAppIcon = useCallback(
+    (runner: RunnerConfig) => {
+      return runnerService.getAppIcon(runner)
+    },
+    [state.runnerIcons]
+  )
 
   return {
     // State
@@ -56,7 +62,6 @@ export function useRunnerService() {
 
     // Actions
     refresh,
-    loadApp,
 
     // Finders
     findRunner,

@@ -69,7 +69,6 @@ const App: React.FC = () => {
     runners,
     isLoading: isLoadingRunners,
     startupRunners,
-    loadApp,
     getAppIcon,
     runnerIcons,
   } = useRunnerService()
@@ -280,7 +279,6 @@ const App: React.FC = () => {
   ) => {
     await tabService.openAppInNewTab(
       runner,
-      loadApp,
       openTabs,
       activeTabId,
       setOpenTabs,

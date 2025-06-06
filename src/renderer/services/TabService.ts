@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client"
 import { OpenTab, RunnerConfig, FileInput, RunnerProps } from "../types"
 import { createRunnerLoader, getRunnerUserDataDirectory } from "../util"
 import AIAgentInterface from "../components/AIAgentInterface"
+import { RunnerService } from "./RunnerService"
 
 const fs = require("fs")
 
@@ -193,7 +194,7 @@ export class TabService {
       return false
     }
 
-    console.log("Creating app container for tab:", tab.id)
+    // console.log("Creating app container for tab:", tab.id)
 
     // Create DOM container
     const container = document.createElement("div")
@@ -539,7 +540,6 @@ export class TabService {
   // Open app in new tab
   async openAppInNewTab(
     runner: RunnerConfig,
-    loadApp: (runnerId: string) => Promise<any>,
     openTabs: OpenTab[],
     activeTabId: string,
     setOpenTabs: (updater: (prev: OpenTab[]) => OpenTab[]) => void,
@@ -558,7 +558,7 @@ export class TabService {
 
     // Load app data
     try {
-      appData = await loadApp(runner.id)
+      appData = await RunnerService.getInstance().loadApp(runner.id)
     } catch (error) {
       console.error("Failed to load app data:", error)
       alert(`Failed to load ${runner.name}: ${error}`)
