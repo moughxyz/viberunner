@@ -138,19 +138,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     formatted = formatted.replace(
       /(<RunnerArtifact[^>]*>)([\s\S]*?)(<\/RunnerArtifact>|$)/g,
       (match, openTag, content, closeTag) => {
-        const isComplete = closeTag === '</RunnerArtifact>'
-        const className = isComplete ? 'streaming-artifact complete' : 'streaming-artifact partial'
-        return `<div class="${className}">${openTag}${content}${closeTag}</div>`
+        const isComplete = closeTag === "</RunnerArtifact>"
+        const className = isComplete
+          ? "streaming-artifact complete"
+          : "streaming-artifact partial"
+        // Preserve whitespace in the content by wrapping in pre tags
+        const preservedContent = `<pre class="artifact-content">${content}</pre>`
+        return `<div class="${className}">${openTag}${preservedContent}${closeTag}</div>`
       }
     )
 
     // Highlight partial or complete RunnerCommand tags
+    // During streaming, commands are always shown as partial until actually executed
     formatted = formatted.replace(
       /(<RunnerCommand>)([\s\S]*?)(<\/RunnerCommand>|$)/g,
       (match, openTag, content, closeTag) => {
-        const isComplete = closeTag === '</RunnerCommand>'
-        const className = isComplete ? 'streaming-command complete' : 'streaming-command partial'
-        return `<div class="${className}">${openTag}${content}${closeTag}</div>`
+        // Always show as partial during streaming since execution happens later
+        const className = "streaming-command partial"
+        // Preserve whitespace in the content by wrapping in pre tags
+        const preservedContent = `<pre class="command-content">${content}</pre>`
+        return `<div class="${className}">${openTag}${preservedContent}${closeTag}</div>`
       }
     )
 
@@ -400,13 +407,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             __html: formatStreamingMessage(streamingMessage),
                           }}
                         />
-                        <div className="streaming-cursor">|</div>
                       </div>
 
                       {/* Timestamp */}
-                      <div className="message-timestamp">
-                        Streaming...
-                      </div>
+                      <div className="message-timestamp">Creating...</div>
                     </div>
                   </div>
                 </div>

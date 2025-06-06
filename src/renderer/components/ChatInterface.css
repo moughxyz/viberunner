@@ -28,7 +28,7 @@
 .runner-name-input {
   width: 100%;
   height: 2.25rem;
-  background-color: #0A0A0A;
+  background-color: #0a0a0a;
   border: 1px solid #333333;
   border-radius: 0.375rem;
   padding: 0 0.75rem;
@@ -43,8 +43,8 @@
 
 .runner-name-input:focus {
   outline: none;
-  border-color: #1D1D1D;
-  box-shadow: 0 0 0 1px #1D1D1D;
+  border-color: #1d1d1d;
+  box-shadow: 0 0 0 1px #1d1d1d;
 }
 
 .runner-name-input:hover {
@@ -87,14 +87,14 @@
   font-weight: 500;
   border-radius: 0.375rem;
   transition: all 0.15s ease;
-  background-color: #1D1D1D;
+  background-color: #1d1d1d;
   color: rgba(255, 255, 255, 0.8);
   border: 1px solid #333333;
   cursor: pointer;
 }
 
 .discard-button:hover:not(:disabled) {
-  background-color: #2D2D2D;
+  background-color: #2d2d2d;
 }
 
 .discard-button:disabled {
@@ -129,7 +129,7 @@
 .empty-state-icon {
   width: 3rem;
   height: 3rem;
-  background-color: #1D1D1D;
+  background-color: #1d1d1d;
   border-radius: 0.5rem;
   display: flex;
   align-items: center;
@@ -166,7 +166,7 @@
   text-align: left;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.8);
-  background-color: #1D1D1D;
+  background-color: #1d1d1d;
   border: none;
   border-radius: 0.375rem;
   transition: background-color 0.15s ease;
@@ -174,7 +174,7 @@
 }
 
 .prompt-button:hover {
-  background-color: #2D2D2D;
+  background-color: #2d2d2d;
 }
 
 .messages-list {
@@ -209,7 +209,7 @@
   justify-content: center;
   font-size: 13px;
   font-weight: 500;
-  background-color: #1D1D1D;
+  background-color: #1d1d1d;
   color: rgba(255, 255, 255, 0.8);
 }
 
@@ -226,7 +226,7 @@
   display: inline-block;
   padding: 1rem;
   border-radius: 0.5rem;
-  background-color: #1D1D1D;
+  background-color: #1d1d1d;
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -247,7 +247,7 @@
 
 .file-changes-container {
   margin-top: 0.75rem;
-  background-color: #1D1D1D;
+  background-color: #1d1d1d;
   border: 1px solid #333333;
   border-radius: 0.5rem;
   overflow: hidden;
@@ -292,7 +292,8 @@
 }
 
 .file-path {
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
   font-size: 12px;
   background-color: rgba(0, 0, 0, 0.2);
   color: rgba(255, 255, 255, 0.7);
@@ -302,7 +303,7 @@
 
 .commands-container {
   margin-top: 0.75rem;
-  background-color: #1D1D1D;
+  background-color: #1d1d1d;
   border: 1px solid #333333;
   border-radius: 0.5rem;
   overflow: hidden;
@@ -335,7 +336,8 @@
 
 .command-item {
   display: block;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
   font-size: 12px;
   background-color: rgba(0, 0, 0, 0.2);
   color: rgba(255, 255, 255, 0.7);
@@ -364,7 +366,7 @@
   display: inline-block;
   padding: 1rem;
   border-radius: 0.5rem;
-  background-color: #1D1D1D;
+  background-color: #1d1d1d;
 }
 
 .loading-dots {
@@ -390,7 +392,9 @@
 }
 
 @keyframes bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0);
   }
   40% {
@@ -415,7 +419,7 @@
   width: 100%;
   resize: none;
   border-radius: 0.5rem;
-  background-color: #0A0A0A;
+  background-color: #0a0a0a;
   border: 1px solid #333333;
   padding: 0.75rem 1rem;
   padding-right: 3rem;
@@ -432,8 +436,8 @@
 
 .input-textarea:focus {
   outline: none;
-  border-color: #1D1D1D;
-  box-shadow: 0 0 0 1px #1D1D1D;
+  border-color: #1d1d1d;
+  box-shadow: 0 0 0 1px #1d1d1d;
 }
 
 .input-textarea:hover:not(:disabled) {
@@ -457,7 +461,7 @@
   width: 2rem;
   height: 2rem;
   border-radius: 0.375rem;
-  background-color: #1D1D1D;
+  background-color: #1d1d1d;
   color: rgba(255, 255, 255, 0.8);
   border: none;
   cursor: pointer;
@@ -465,7 +469,7 @@
 }
 
 .submit-button:hover:not(:disabled) {
-  background-color: #2D2D2D;
+  background-color: #2d2d2d;
 }
 
 .submit-button:disabled {
@@ -482,27 +486,28 @@
   animation: spin 1s linear infinite;
 }
 
-
 /* Message content styles */
 .message-content .inline-code {
-  background: rgb(15 23 42);
+  background: rgb(20 20 20);
   color: rgb(226 232 240);
   padding: 0.125rem 0.375rem;
   border-radius: 0.375rem;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
   font-size: 0.875em;
   font-weight: 500;
-  border: 1px solid rgb(51 65 85);
+  border: 1px solid rgb(60 60 60);
 }
 
 .message-content .code-block {
-  background: rgb(15 23 42);
-  border: 1px solid rgb(51 65 85);
+  background: rgb(20 20 20);
+  border: 1px solid rgb(60 60 60);
   border-radius: 0.5rem;
   padding: 1rem;
   margin: 1rem 0;
   overflow-x: auto;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+    "Liberation Mono", Menlo, monospace;
 }
 
 .message-content .code-block code {
@@ -553,7 +558,7 @@
 }
 
 .model-change-button:hover {
-  color: #CCCCCC;
+  color: #cccccc;
 }
 
 /* Streaming message styles */
@@ -567,21 +572,13 @@
   background-color: rgba(23, 23, 23, 0.8);
 }
 
-.streaming-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  background-color: #ffffff;
-  margin-left: 2px;
-  animation: blink 1s infinite;
-  vertical-align: text-bottom;
-}
-
 @keyframes blink {
-  0%, 50% {
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+  51%,
+  100% {
     opacity: 0;
   }
 }
@@ -592,7 +589,7 @@
   margin: 8px 0;
   padding: 8px 12px;
   border-radius: 6px;
-  font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+  font-family: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
   font-size: 12px;
   line-height: 1.4;
   position: relative;
@@ -634,10 +631,26 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.7;
   }
   50% {
     opacity: 1;
   }
+}
+
+/* Preserve whitespace in streaming artifacts and commands */
+.artifact-content,
+.command-content {
+  margin: 0;
+  padding: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-x: auto;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: transparent;
 }
