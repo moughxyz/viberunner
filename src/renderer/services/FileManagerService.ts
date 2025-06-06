@@ -3,15 +3,18 @@ import { FileChange } from "../components/AIAgentInterface"
 import { getCursorPrompt } from "../prompts/cursorPrompt"
 import readmeContent from "../../../README.md?raw"
 import { runnerService } from "./RunnerService"
+import { CommandExecutorService } from "./CommandExecutorService"
 
 const fs = require("fs")
 const path = require("path")
 
 export class FileManagerService {
   private runnersDir: string
+  private commandExecutor: CommandExecutorService
 
   constructor() {
     this.runnersDir = getRunnersDirectory()
+    this.commandExecutor = new CommandExecutorService()
 
     // Ensure the runners directory exists
     if (!fs.existsSync(this.runnersDir)) {
@@ -472,8 +475,6 @@ export default defineConfig({
   // Create a runner for Cursor development
   async createRunnerForCursor(): Promise<string> {
     try {
-      const { spawn } = require("child_process")
-
       // Generate a temporary runner name
       const timestamp = Date.now()
       const tempRunnerName = `cursor-runner-${timestamp}`
@@ -540,49 +541,31 @@ export default MyRunner
 
       // Run npm install in the runner directory
       console.log("Running npm install...")
-      const npmProcess = spawn("npm", ["install"], {
-        cwd: runnerPath,
-        stdio: "inherit",
-      })
+      const installResult = await this.commandExecutor.executeCommand("npm install", runnerName)
 
-      npmProcess.on("close", (code: number | null) => {
-        if (code === 0) {
-          console.log("npm install completed successfully")
+      if (installResult.success) {
+        console.log("npm install completed successfully")
+        console.log(installResult.output)
 
-          // Run npm run build in background after install completes
-          console.log("Running npm run build...")
-          const buildProcess = spawn("npm", ["run", "build"], {
-            cwd: runnerPath,
-            stdio: "inherit",
-          })
+        // Run npm run build after install completes
+        console.log("Running npm run build...")
+        const buildResult = await this.commandExecutor.executeCommand("npm run build", runnerName)
 
-          buildProcess.on("close", (buildCode: number | null) => {
-            if (buildCode === 0) {
-              console.log("npm run build completed successfully")
-            } else {
-              console.error(`npm run build failed with code ${buildCode}`)
-            }
-          })
-
-          buildProcess.on("error", (buildError: Error) => {
-            console.error("npm run build error:", buildError)
-          })
+        if (buildResult.success) {
+          console.log("npm run build completed successfully")
+          console.log(buildResult.output)
         } else {
-          console.error(`npm install failed with code ${code}`)
+          console.error("npm run build failed:", buildResult.error)
         }
-      })
-
-      npmProcess.on("error", (error: Error) => {
-        console.error("npm install error:", error)
-      })
+      } else {
+        console.error("npm install failed:", installResult.error)
+      }
 
       // Open directory with Cursor
-      const cursorProcess = spawn("cursor", [runnerPath], {
-        detached: true,
-        stdio: "ignore",
-      })
-
-      cursorProcess.unref()
+      const cursorResult = await this.commandExecutor.executeCommand(`cursor "${runnerPath}"`)
+      if (!cursorResult.success) {
+        console.warn("Could not open with Cursor:", cursorResult.error)
+      }
 
       console.log(`Opened ${runnerPath} with Cursor`)
 
@@ -600,7 +583,6 @@ export default MyRunner
   // Edit an existing runner with Cursor
   async editRunnerWithCursor(runnerName: string): Promise<void> {
     try {
-      const { spawn } = require("child_process")
       const runnerPath = path.join(this.runnersDir, runnerName)
 
       // Check if runner exists
@@ -621,69 +603,43 @@ export default MyRunner
       const nodeModulesPath = path.join(runnerPath, "node_modules")
       if (!fs.existsSync(nodeModulesPath)) {
         console.log("Running npm install...")
-        const npmProcess = spawn("npm", ["install"], {
-          cwd: runnerPath,
-          stdio: "inherit",
-        })
+        const installResult = await this.commandExecutor.executeCommand("npm install", runnerName)
 
-        npmProcess.on("close", (code: number | null) => {
-          if (code === 0) {
-            console.log("npm install completed successfully")
+        if (installResult.success) {
+          console.log("npm install completed successfully")
+          console.log(installResult.output)
 
-            // Run npm run build in background after install completes
-            console.log("Running npm run build...")
-            const buildProcess = spawn("npm", ["run", "build"], {
-              cwd: runnerPath,
-              stdio: "inherit",
-            })
+          // Run npm run build after install completes
+          console.log("Running npm run build...")
+          const buildResult = await this.commandExecutor.executeCommand("npm run build", runnerName)
 
-            buildProcess.on("close", (buildCode: number | null) => {
-              if (buildCode === 0) {
-                console.log("npm run build completed successfully")
-              } else {
-                console.error(`npm run build failed with code ${buildCode}`)
-              }
-            })
-
-            buildProcess.on("error", (buildError: Error) => {
-              console.error("npm run build error:", buildError)
-            })
+          if (buildResult.success) {
+            console.log("npm run build completed successfully")
+            console.log(buildResult.output)
           } else {
-            console.error(`npm install failed with code ${code}`)
+            console.error("npm run build failed:", buildResult.error)
           }
-        })
-
-        npmProcess.on("error", (error: Error) => {
-          console.error("npm install error:", error)
-        })
+        } else {
+          console.error("npm install failed:", installResult.error)
+        }
       } else {
         // Node modules exist, just run build
         console.log("Running npm run build...")
-        const buildProcess = spawn("npm", ["run", "build"], {
-          cwd: runnerPath,
-          stdio: "inherit",
-        })
+        const buildResult = await this.commandExecutor.executeCommand("npm run build", runnerName)
 
-        buildProcess.on("close", (buildCode: number | null) => {
-          if (buildCode === 0) {
-            console.log("npm run build completed successfully")
-          } else {
-            console.error(`npm run build failed with code ${buildCode}`)
-          }
-        })
-
-        buildProcess.on("error", (buildError: Error) => {
-          console.error("npm run build error:", buildError)
-        })
+        if (buildResult.success) {
+          console.log("npm run build completed successfully")
+          console.log(buildResult.output)
+        } else {
+          console.error("npm run build failed:", buildResult.error)
+        }
       }
 
       // Open directory with Cursor
-      const cursorProcess = spawn("cursor", [runnerPath], {
-        detached: true,
-        stdio: "ignore",
-      })
-
-      cursorProcess.unref()
+      const cursorResult = await this.commandExecutor.executeCommand(`cursor "${runnerPath}"`)
+      if (!cursorResult.success) {
+        console.warn("Could not open with Cursor:", cursorResult.error)
+      }
 
       console.log(`Opened ${runnerPath} with Cursor for editing`)
 

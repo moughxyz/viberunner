@@ -113,10 +113,8 @@ function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {
 
     case "file-size": {
       const size = fileAnalysis.size
-      if (matcher.minSize !== undefined && size < matcher.minSize)
-        return false
-      if (matcher.maxSize !== undefined && size > matcher.maxSize)
-        return false
+      if (matcher.minSize !== undefined && size < matcher.minSize) return false
+      if (matcher.maxSize !== undefined && size > matcher.maxSize) return false
       return true
     }
 
@@ -173,7 +171,7 @@ export class RunnerService {
 
   // Notify all listeners of state changes
   private notifyListeners(): void {
-    this.listeners.forEach(listener => {
+    this.listeners.forEach((listener) => {
       try {
         listener(this.state)
       } catch (error) {
@@ -209,12 +207,17 @@ export class RunnerService {
   }
 
   // Get startup runners
-  public getStartupRunners(): Record<string, { enabled: boolean; tabOrder: number }> {
+  public getStartupRunners(): Record<
+    string,
+    { enabled: boolean; tabOrder: number }
+  > {
     return { ...this.state.startupRunners }
   }
 
   // Load startup runner preferences
-  private async loadStartupRunners(): Promise<Record<string, { enabled: boolean; tabOrder: number }>> {
+  private async loadStartupRunners(): Promise<
+    Record<string, { enabled: boolean; tabOrder: number }>
+  > {
     try {
       const { app } = require("@electron/remote")
       const prefsPath = path.join(app.getPath("userData"), "preferences.json")
@@ -248,7 +251,7 @@ export class RunnerService {
       }
 
       // Update startup runners
-      (prefs as any).startupRunners = startupRunners
+      ;(prefs as any).startupRunners = startupRunners
 
       // Save back to file
       fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2), "utf8")
@@ -262,7 +265,10 @@ export class RunnerService {
   }
 
   // Toggle startup runner enabled state
-  public async toggleStartupRunner(runnerId: string, enabled: boolean): Promise<void> {
+  public async toggleStartupRunner(
+    runnerId: string,
+    enabled: boolean
+  ): Promise<void> {
     try {
       const newStartupRunners = { ...this.state.startupRunners }
 
@@ -275,7 +281,9 @@ export class RunnerService {
         if (!currentConfig.tabOrder) {
           const maxTabOrder = Math.max(
             0,
-            ...Object.values(this.state.startupRunners).map((runner) => runner.tabOrder)
+            ...Object.values(this.state.startupRunners).map(
+              (runner) => runner.tabOrder
+            )
           )
           currentConfig.tabOrder = maxTabOrder + 1
         }
@@ -340,17 +348,22 @@ export class RunnerService {
       }
 
       // Remove from runners array
-      const newRunners = this.state.runners.filter(runner => runner.id !== runnerId)
+      const newRunners = this.state.runners.filter(
+        (runner) => runner.id !== runnerId
+      )
 
       // Update state
       this.setState({
         runners: newRunners,
-        runnerIcons: newRunnerIcons
+        runnerIcons: newRunnerIcons,
       })
 
       console.log(`RunnerService: Successfully deleted runner '${runnerId}'`)
     } catch (error) {
-      console.error(`RunnerService: Error deleting runner '${runnerId}':`, error)
+      console.error(
+        `RunnerService: Error deleting runner '${runnerId}':`,
+        error
+      )
       throw error
     }
   }
@@ -368,21 +381,17 @@ export class RunnerService {
 
     try {
       const dirContents = fs.readdirSync(RUNNERS_DIR)
-      console.log("RunnerService: Directory contents:", dirContents)
 
       const directories = dirContents.filter((dir: string) => {
         const fullPath = path.join(RUNNERS_DIR, dir)
         const isDir = fs.statSync(fullPath).isDirectory()
-        console.log(`RunnerService: ${dir} is directory: ${isDir}`)
         return isDir
       })
-      console.log("RunnerService: Found directories:", directories)
 
       const runners = directories
         .map((dir: string) => {
           const runnerPath = path.join(RUNNERS_DIR, dir)
           const packageJsonPath = path.join(runnerPath, "package.json")
-          console.log(`RunnerService: Checking for metadata at: ${packageJsonPath}`)
 
           if (!fs.existsSync(packageJsonPath)) {
             console.log(`RunnerService: No package.json found for ${dir}`)
@@ -392,10 +401,6 @@ export class RunnerService {
           try {
             const metadataContent = fs.readFileSync(packageJsonPath, "utf-8")
             const metadata = JSON.parse(metadataContent).viberunner
-            console.log(
-              `RunnerService: Successfully loaded metadata for ${dir}:`,
-              metadata
-            )
             return {
               ...metadata,
               id: dir,
@@ -407,7 +412,6 @@ export class RunnerService {
         })
         .filter(Boolean) as RunnerConfig[]
 
-      console.log("RunnerService: Final runners array:", runners)
       return runners
     } catch (error) {
       console.error("Error in RunnerService loadRunners function:", error)
@@ -446,7 +450,9 @@ export class RunnerService {
       // Read the icon file as base64
       const iconBuffer = fs.readFileSync(fullIconPath)
       const mimeType = mime.lookup(fullIconPath) || "application/octet-stream"
-      const iconData = `data:${mimeType};base64,${iconBuffer.toString("base64")}`
+      const iconData = `data:${mimeType};base64,${iconBuffer.toString(
+        "base64"
+      )}`
 
       // Update state with new icon
       this.setState({
@@ -468,8 +474,8 @@ export class RunnerService {
   private async loadAllRunnerIcons(): Promise<void> {
     const runners = this.state.runners
     const iconPromises = runners
-      .filter(runner => runner.icon && !this.state.runnerIcons[runner.id])
-      .map(runner => this.loadRunnerIcon(runner))
+      .filter((runner) => runner.icon && !this.state.runnerIcons[runner.id])
+      .map((runner) => this.loadRunnerIcon(runner))
 
     try {
       await Promise.all(iconPromises)
@@ -503,18 +509,21 @@ export class RunnerService {
       this.setState({
         runners,
         isLoading: false,
-        error: null
+        error: null,
       })
-      console.log(`RunnerService: Successfully refreshed ${runners.length} runners`)
+      console.log(
+        `RunnerService: Successfully refreshed ${runners.length} runners`
+      )
 
       // Load icons for all runners after loading runners
       await this.loadAllRunnerIcons()
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error"
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error"
       console.error("RunnerService: Failed to refresh runners:", error)
       this.setState({
         isLoading: false,
-        error: errorMessage
+        error: errorMessage,
       })
     }
   }
@@ -530,7 +539,9 @@ export class RunnerService {
   }
 
   // Load a specific app bundle and config
-  public async loadApp(id: string): Promise<{ bundleContent: string; config: any }> {
+  public async loadApp(
+    id: string
+  ): Promise<{ bundleContent: string; config: any }> {
     const RUNNERS_DIR = getRunnersDirectory()
     const runnerPath = path.join(RUNNERS_DIR, id)
     const bundlePath = path.join(runnerPath, "dist", "bundle.iife.js")
@@ -554,22 +565,24 @@ export class RunnerService {
 
   // Find a runner by ID
   public findRunner(id: string): RunnerConfig | undefined {
-    return this.state.runners.find(runner => runner.id === id)
+    return this.state.runners.find((runner) => runner.id === id)
   }
 
   // Find runners by criteria
-  public findRunners(predicate: (runner: RunnerConfig) => boolean): RunnerConfig[] {
+  public findRunners(
+    predicate: (runner: RunnerConfig) => boolean
+  ): RunnerConfig[] {
     return this.state.runners.filter(predicate)
   }
 
   // Get standalone runners
   public getStandaloneRunners(): RunnerConfig[] {
-    return this.state.runners.filter(runner => runner.standalone)
+    return this.state.runners.filter((runner) => runner.standalone)
   }
 
   // Get contextual runners (non-standalone)
   public getContextualRunners(): RunnerConfig[] {
-    return this.state.runners.filter(runner => !runner.standalone)
+    return this.state.runners.filter((runner) => !runner.standalone)
   }
 
   // Find matching runners for a file

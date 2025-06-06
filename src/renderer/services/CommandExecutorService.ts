@@ -9,13 +9,14 @@ const os = require("os")
 export class CommandExecutorService {
   private runnersDir: string
   private systemPaths: string[] = []
-  private pathsInitialized: boolean = false
+  private initializationPromise: Promise<void>
 
   constructor() {
     this.runnersDir = getRunnersDirectory()
-    // Initialize paths synchronously first, then async
+    console.log('is packaged', this.isPackaged())
+    // Initialize paths synchronously first, then store async promise
     this.initializeSystemPathsSync()
-    this.initializeSystemPaths()
+    this.initializationPromise = this.initializeSystemPaths()
   }
 
   private isPackaged(): boolean {
@@ -83,14 +84,10 @@ export class CommandExecutorService {
     if (this.isPackaged()) {
       try {
         await this.getUserPath()
-        this.pathsInitialized = true
         console.log("Finalized system paths:", this.systemPaths)
       } catch (error) {
         console.warn("Could not get user PATH:", error)
-        this.pathsInitialized = true
       }
-    } else {
-      this.pathsInitialized = true
     }
   }
 
@@ -307,7 +304,6 @@ export class CommandExecutorService {
           cwd,
           isPackaged: this.isPackaged(),
           pathCount: this.systemPaths.length,
-          pathsInitialized: this.pathsInitialized,
         })
 
         // For packaged apps, always use shell for npm/node commands to avoid path issues
@@ -404,14 +400,14 @@ export class CommandExecutorService {
         })
       }
 
-      // Check if paths are initialized, if not wait a bit
-      if (this.pathsInitialized) {
+      // Wait for initialization to complete, then execute
+      this.initializationPromise.then(() => {
         executeWhenReady()
-      } else {
-        setTimeout(() => {
-          executeWhenReady()
-        }, 100)
-      }
+      }).catch((error) => {
+        console.error("Initialization failed:", error)
+        // Execute anyway with basic paths
+        executeWhenReady()
+      })
     })
   }
 
