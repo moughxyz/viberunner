@@ -149,6 +149,7 @@ const runnerProcesses = new Map<string, any>()
 
 // Keep track of tray icons for menu bar management
 const runnerTrays = new Map<string, Tray>()
+const runnerPopups = new Map<string, BrowserWindow>()
 
 // Create a tray icon for a runner in the menu bar
 const createRunnerTray = async (runnerId: string, runnerName: string, iconPath?: string): Promise<void> => {
@@ -184,26 +185,21 @@ const createRunnerTray = async (runnerId: string, runnerName: string, iconPath?:
     // Set tooltip
     tray.setToolTip(`${runnerName} - Click to open`)
 
-    // Handle click - create single app window
-    tray.on('click', () => {
-      createRunnerWindow(runnerId)
+    // Handle click - toggle popup visibility
+    tray.on('click', (event, bounds) => {
+      toggleRunnerPopup(runnerId, runnerName, bounds)
     })
 
-    // Set context menu
-    const contextMenu = Menu.buildFromTemplate([
-      {
-        label: `Open ${runnerName}`,
-        click: () => createRunnerWindow(runnerId)
-      },
-      {
-        type: 'separator'
-      },
-      {
-        label: 'Remove from Menu Bar',
-        click: () => removeRunnerFromTray(runnerId)
-      }
-    ])
-    tray.setContextMenu(contextMenu)
+    // Handle right-click separately for context menu
+    tray.on('right-click', () => {
+      const contextMenu = Menu.buildFromTemplate([
+        {
+          label: 'Remove from Menu Bar',
+          click: () => removeRunnerFromTray(runnerId)
+        }
+      ])
+      tray.popUpContextMenu(contextMenu)
+    })
 
     // Store tray reference
     runnerTrays.set(runnerId, tray)
@@ -218,6 +214,14 @@ const createRunnerTray = async (runnerId: string, runnerName: string, iconPath?:
 // Remove a runner from the menu bar
 const removeRunnerFromTray = (runnerId: string): void => {
   try {
+    // Close popup if open
+    const popup = runnerPopups.get(runnerId)
+    if (popup && !popup.isDestroyed()) {
+      popup.close()
+    }
+    runnerPopups.delete(runnerId)
+
+    // Remove tray icon
     const tray = runnerTrays.get(runnerId)
     if (tray) {
       tray.destroy()
@@ -229,53 +233,93 @@ const removeRunnerFromTray = (runnerId: string): void => {
   }
 }
 
-// Create a single window for a runner (for menu bar clicks)
-const createRunnerWindow = (runnerId: string): void => {
+// Toggle popup visibility for a runner
+const toggleRunnerPopup = (runnerId: string, runnerName: string, bounds: Electron.Rectangle): void => {
   try {
-    console.log(`Creating single app window for runner: ${runnerId}`)
+    const existingPopup = runnerPopups.get(runnerId)
 
-    // Create a new window specifically for this runner
-    const runnerWindow = new BrowserWindow({
-      width: 900,
-      height: 700,
-      title: runnerId,
+    if (existingPopup && !existingPopup.isDestroyed()) {
+      if (existingPopup.isVisible()) {
+        // Hide existing popup
+        existingPopup.hide()
+        return
+      } else {
+        // Show existing popup and reposition it
+        const windowBounds = existingPopup.getBounds()
+        const x = Math.round(bounds.x + (bounds.width / 2) - (windowBounds.width / 2))
+        const y = Math.round(bounds.y + bounds.height + 4) // 4px gap below tray
+
+        existingPopup.setPosition(x, y, false)
+        existingPopup.show()
+        return
+      }
+    }
+
+    console.log(`Creating popup for runner: ${runnerName}`)
+
+    // Create popup window
+    const popupWindow = new BrowserWindow({
+      width: 400,
+      height: 600,
+      show: false,
+      frame: false,
+      alwaysOnTop: true,
+      resizable: false,
+      skipTaskbar: true,
       webPreferences: {
         nodeIntegration: true,
         contextIsolation: false,
         webSecurity: true,
       },
-      titleBarStyle: "hiddenInset",
       vibrancy: "under-window",
       backgroundColor: "#1a1a1a",
-      show: false,
     })
 
-    // Show window once ready
-    runnerWindow.once('ready-to-show', () => {
-      runnerWindow.show()
-      runnerWindow.focus()
+    // Position popup under tray icon
+    const windowBounds = popupWindow.getBounds()
+    const x = Math.round(bounds.x + (bounds.width / 2) - (windowBounds.width / 2))
+    const y = Math.round(bounds.y + bounds.height + 4) // 4px gap below tray
+
+    popupWindow.setPosition(x, y, false)
+
+    // Store popup reference
+    runnerPopups.set(runnerId, popupWindow)
+
+    // Handle popup losing focus - hide it
+    popupWindow.on('blur', () => {
+      popupWindow.hide()
+    })
+
+    // Clean up when closed
+    popupWindow.on('closed', () => {
+      runnerPopups.delete(runnerId)
     })
 
     // Enable remote module
-    remoteMain.enable(runnerWindow.webContents)
+    remoteMain.enable(popupWindow.webContents)
 
     // Load the app with the runner ID
-    const queryParams = `?runnerId=${encodeURIComponent(runnerId)}`
+    const queryParams = `?runnerId=${encodeURIComponent(runnerId)}&popup=true`
 
     if (process.env.VITE_DEV_SERVER_URL) {
-      runnerWindow.loadURL(process.env.VITE_DEV_SERVER_URL + queryParams)
+      popupWindow.loadURL(process.env.VITE_DEV_SERVER_URL + queryParams)
     } else {
       const isDev = process.env.NODE_ENV === "development"
       const rendererPath = isDev
         ? path.join(__dirname, `../renderer/${process.env.VITE_DEV_NAME}/index.html`)
         : path.join(__dirname, "../dist/index.html")
 
-      runnerWindow.loadFile(rendererPath, { query: { runnerId } })
+      popupWindow.loadFile(rendererPath, { query: { runnerId, popup: 'true' } })
     }
 
-    console.log(`Successfully created single app window for runner: ${runnerId}`)
+    // Show popup once ready
+    popupWindow.once('ready-to-show', () => {
+      popupWindow.show()
+    })
+
+    console.log(`Successfully created popup for runner: ${runnerName}`)
   } catch (error) {
-    console.error(`Failed to create single app window for runner ${runnerId}:`, error)
+    console.error(`Failed to create popup for runner ${runnerId}:`, error)
   }
 }
 

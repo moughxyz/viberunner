@@ -95,12 +95,14 @@ const App: React.FC = () => {
   // Initialize TabService
   const tabService = useTabService(appRootRef)
 
-  // Read runnerId from URL parameters on component mount
+  // Read runnerId and popup mode from URL parameters on component mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
     const runnerIdParam = urlParams.get('runnerId')
+    const isPopupMode = urlParams.get('popup') === 'true'
+
     if (runnerIdParam) {
-      console.log('Received runnerId from URL:', runnerIdParam)
+      console.log('Received runnerId from URL:', runnerIdParam, 'popup mode:', isPopupMode)
       setRunnerId(runnerIdParam)
       setSingleAppMode(true)
     }
