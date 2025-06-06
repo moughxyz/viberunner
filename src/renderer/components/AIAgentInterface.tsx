@@ -126,7 +126,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
           const welcomeMessage: Message = {
             id: Date.now().toString(),
             role: "assistant",
-            content: `✏️ Editing runner "${existingRunnerName}". I've loaded ${fileKeys.length} files. How can I help you improve this runner?`,
+            content: `<strong>Editing runner</strong> <em>"${existingRunnerName}"</em>. I've loaded ${fileKeys.length} files. How can I help you improve this runner?`,
             timestamp: new Date(),
           }
           setMessages([welcomeMessage])
