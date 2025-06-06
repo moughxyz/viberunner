@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from "electron"
 import { autoUpdater } from "electron-updater"
+import { spawn } from "child_process"
 import path from "path"
 
 // Enable remote module for renderer access to app.getPath
@@ -143,23 +144,63 @@ const createMenuBar = (): void => {
   Menu.setApplicationMenu(menu)
 }
 
-// Keep track of runner windows for dock management
-const runnerWindows = new Map<string, BrowserWindow>()
+// Keep track of runner processes for dock management
+const runnerProcesses = new Map<string, any>()
+
+// Create a separate Electron process for a runner (separate dock icon)
+const createRunnerProcess = async (runnerId: string): Promise<void> => {
+  try {
+    // Check if process already exists
+    if (runnerProcesses.has(runnerId)) {
+      console.log(`Runner process already exists for: ${runnerId}`)
+      return
+    }
+
+    // Get the current executable path
+    const electronPath = process.execPath
+    const appPath = app.getAppPath()
+
+    console.log(`Creating separate Electron process for runner: ${runnerId}`)
+    console.log(`Electron path: ${electronPath}`)
+    console.log(`App path: ${appPath}`)
+
+    // Spawn new Electron process with runner ID as argument
+    const runnerProcess = spawn(electronPath, [
+      appPath,
+      '--runner-id',
+      runnerId
+    ], {
+      detached: true,
+      stdio: 'ignore'
+    })
+
+    // Store process reference
+    runnerProcesses.set(runnerId, runnerProcess)
+
+    // Handle process exit
+    runnerProcess.on('exit', (code) => {
+      console.log(`Runner process exited: ${runnerId} (code: ${code})`)
+      runnerProcesses.delete(runnerId)
+    })
+
+    // Detach the process so it runs independently
+    runnerProcess.unref()
+
+    console.log(`Successfully spawned runner process: ${runnerId} (PID: ${runnerProcess.pid})`)
+  } catch (error) {
+    console.error(`Failed to create runner process for ${runnerId}:`, error)
+    throw error
+  }
+}
 
 const createWindow = (runnerId?: string): BrowserWindow => {
-  // Determine window title and position offset for runner windows
-  const isRunnerWindow = !!runnerId
-  const windowTitle = isRunnerWindow ? `${runnerId}` : "Viberunner"
-
-  // Offset runner windows to make them visually distinct
-  const positionOffset = isRunnerWindow ? Math.random() * 100 + 50 : 0
+  // Determine window title
+  const windowTitle = runnerId ? `${runnerId}` : "Viberunner"
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     height: 1000,
     width: 1600,
-    x: positionOffset,
-    y: positionOffset,
     title: windowTitle,
     webPreferences: {
       nodeIntegration: true,
@@ -168,34 +209,20 @@ const createWindow = (runnerId?: string): BrowserWindow => {
       // sandbox: false,
       // nodeIntegrationInSubFrames: true,
     },
-    titleBarStyle: isRunnerWindow ? "default" : "hiddenInset",
+    titleBarStyle: "hiddenInset",
     vibrancy: "under-window",
     backgroundColor: "#1a1a1a",
     show: false, // Don't show immediately
   })
 
-  // Store runner window reference
-  if (isRunnerWindow && runnerId) {
-    runnerWindows.set(runnerId, mainWindow)
-
-    // Clean up when window closes
-    mainWindow.on('closed', () => {
-      runnerWindows.delete(runnerId)
-      console.log(`Runner window closed: ${runnerId}`)
-    })
-  }
-
   // Show window once ready to prevent flash
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
-    if (isRunnerWindow) {
-      // Focus the runner window to make it clear it's separate
+    if (runnerId) {
       mainWindow.focus()
       console.log(`Runner window ready and focused: ${runnerId}`)
     }
   })
-
-  return mainWindow
 
   // Enable remote module for this window
   remoteMain.enable(mainWindow.webContents)
@@ -228,6 +255,18 @@ const createWindow = (runnerId?: string): BrowserWindow => {
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools();
+
+  return mainWindow
+}
+
+// Check if this is a runner process launched with command line args
+const getRunnerIdFromArgs = (): string | null => {
+  const args = process.argv
+  const runnerIdIndex = args.indexOf('--runner-id')
+  if (runnerIdIndex !== -1 && runnerIdIndex + 1 < args.length) {
+    return args[runnerIdIndex + 1]
+  }
+  return null
 }
 
 // This method will be called when Electron has finished
@@ -239,7 +278,15 @@ app.whenReady().then(async () => {
   // Create menu bar
   createMenuBar()
 
-  createWindow()
+  // Check if this is a runner process
+  const runnerIdFromArgs = getRunnerIdFromArgs()
+  if (runnerIdFromArgs) {
+    console.log(`Starting as runner process for: ${runnerIdFromArgs}`)
+    createWindow(runnerIdFromArgs)
+  } else {
+    console.log(`Starting as main Viberunner process`)
+    createWindow()
+  }
 })
 
 // Quit when all windows are closed, except on macOS.
@@ -335,23 +382,18 @@ function registerIpcHandlers() {
     }
   })
 
-  // Handle creating new window for runner
+    // Handle creating new runner process (separate dock icon)
   ipcMain.handle("create-runner-window", async (event, runnerId: string) => {
     try {
-      const currentWindowCount = BrowserWindow.getAllWindows().length
-      console.log(`Creating new window for runner: ${runnerId}`)
-      console.log(`Current window count: ${currentWindowCount}`)
+      console.log(`Creating separate Electron process for runner: ${runnerId}`)
 
-      createWindow(runnerId)
+      await createRunnerProcess(runnerId)
 
-      // Verify new window was created
-      const newWindowCount = BrowserWindow.getAllWindows().length
-      console.log(`New window count: ${newWindowCount}`)
-      console.log(`Successfully created separate window for runner: ${runnerId}`)
+      console.log(`Successfully created separate process for runner: ${runnerId}`)
 
       return { success: true }
     } catch (error) {
-      console.error("Error creating runner window:", error)
+      console.error("Error creating runner process:", error)
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
