@@ -188,14 +188,21 @@ const App: React.FC = () => {
     }
   }
 
-  // Auto-launch startup runners when runners are loaded
+  // Auto-launch startup runners when runners are loaded (but not in single app mode)
   useEffect(() => {
     console.log("Auto-launch useEffect triggered:", {
       runnersLength: runners.length,
       startupRunnersCount: Object.keys(startupRunners).length,
       hasLaunched: hasLaunchedStartupRunners.current,
+      singleAppMode,
       startupRunners,
     })
+
+    // Don't auto-launch startup runners in single app mode
+    if (singleAppMode) {
+      console.log("Skipping auto-launch in single app mode")
+      return
+    }
 
     if (
       runners.length > 0 &&
@@ -264,7 +271,7 @@ const App: React.FC = () => {
       }
       hasLaunchedStartupRunners.current = true
     }
-  }, [runners, startupRunners])
+  }, [runners, startupRunners, singleAppMode])
 
   // Keyboard shortcuts for tab/window management
   useEffect(() => {
