@@ -1,0 +1,503 @@
+/* RunnersGrid Component Styles */
+
+/* Utility runners section */
+.utility-section {
+  margin-bottom: var(--space-8);
+}
+
+.utility-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+/* Responsive breakpoints for utility cards */
+@media (max-width: 1024px) {
+  .utility-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .utility-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Card containers */
+.utility-card-container,
+.contextual-card-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* Remove gap to connect borders */
+  height: 100%;
+}
+
+.utility-card-container .utility-card,
+.contextual-card-container .app-info-card {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+}
+
+.utility-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  flex: 1;
+}
+
+.utility-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  transform: none;
+  box-shadow: none;
+}
+
+.utility-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  color: var(--accent);
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.utility-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.utility-title {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-1) 0;
+}
+
+.utility-description {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.utility-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.utility-edit-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.utility-edit-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+/* Options menu styles */
+.utility-options-menu,
+.app-info-options-menu,
+.options-menu,
+.footer-options-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.options-menu-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-secondary);
+}
+
+.options-menu-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.options-menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1000;
+  min-width: 140px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: var(--space-1);
+  margin-top: 2px;
+}
+
+.options-menu-item {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.options-menu-item:hover {
+  background: var(--accent-light);
+  color: var(--surface);
+}
+
+.options-menu-item.delete-item {
+  color: var(--danger);
+}
+
+.options-menu-item.delete-item:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.utility-action {
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-3);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.utility-card:hover .utility-action {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  filter: brightness(0.85);
+  transform: translateY(-1px) scale(1.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Card footer styles */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) var(--space-3);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.startup-toggle {
+  margin-bottom: var(--space-2);
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.toggle-checkbox {
+  display: none;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.toggle-slider::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.toggle-checkbox:checked + .toggle-slider {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.toggle-checkbox:checked + .toggle-slider::before {
+  transform: translateX(16px);
+  background: white;
+}
+
+.toggle-text {
+  font-weight: 500;
+}
+
+.tab-order-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tab-order-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.tab-order-input {
+  width: 60px;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.tab-order-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+/* Unified runners section */
+.unified-runners-section {
+  margin-bottom: var(--space-8);
+}
+
+.unified-runners-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+/* Responsive breakpoints for unified runners grid */
+@media (max-width: 1024px) {
+  .unified-runners-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .unified-runners-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* File-based runners section */
+.runners-section {
+  margin-bottom: var(--space-8);
+}
+
+.runners-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+/* Responsive breakpoints for runners grid */
+@media (max-width: 1024px) {
+  .runners-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .runners-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* App info cards for contextual runners */
+.app-info-card {
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.15s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-info-card:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+.app-info-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-2);
+}
+
+.app-info-title {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.app-info-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+.app-info-description {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+  margin-bottom: var(--space-2);
+  flex: 1;
+}
+
+.app-info-formats {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+/* Loading state */
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  padding: var(--space-4) 0;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* Section common components used by RunnersGrid */
+.section-card {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  transition: none;
+}
+
+.section-card:hover {
+  background: none;
+  border-color: transparent;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: var(--space-4);
+}
+
+.section-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.section-count {
+  background: var(--accent-light);
+  color: var(--accent-foreground);
+  padding: var(--space-1) var(--space-2);
+  margin-left: var(--space-2);
+  border-radius: var(--radius);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+}
+
+/* Two-column layout specific styles for RunnersGrid components */
+.two-column-layout .utility-cards .utility-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.two-column-layout .runners-grid .app-info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+}

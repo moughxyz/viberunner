@@ -1,0 +1,35 @@
+# Dependencies
+node_modules
+**/node_modules
+
+# Build outputs
+out
+dist
+**/dist
+dist-electron
+
+# OS files
+.DS_Store
+**/.DS_Store
+
+# IDE files
+.cursor
+**/.cursor
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Icon source files (keep generated icons, ignore sources)
+**/source-icon.*
+**/icon-source.*
+**/original-icon.*
+
+.DS_Store

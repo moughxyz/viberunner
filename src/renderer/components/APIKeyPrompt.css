@@ -1,0 +1,146 @@
+.api-key-prompt {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+}
+
+.api-key-form {
+  padding: 32px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.api-key-title {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.api-key-heading {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--foreground);
+}
+
+.api-key-gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.api-key-description {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.api-key-input-container {
+  margin-bottom: 24px;
+}
+
+.api-key-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input);
+  color: var(--foreground);
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.api-key-input:focus {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.api-key-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.api-key-continue-btn {
+  flex: 1;
+  padding: 12px 24px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.api-key-continue-btn:hover:not(:disabled) {
+  background: var(--primary)/90;
+}
+
+.api-key-continue-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.api-key-cancel-btn {
+  flex: 1;
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.api-key-cancel-btn:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.api-key-footer {
+  text-align: center;
+}
+
+.api-key-footer-text {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  margin: 0;
+}
+
+.anthropic-console-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.anthropic-console-link:hover {
+  text-decoration: underline;
+}
+
+.model-selector-container {
+  margin-top: 16px;
+}
+
+.model-selector-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--foreground);
+}
