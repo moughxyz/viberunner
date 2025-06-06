@@ -69,6 +69,10 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     getLastSelectedModel()
   )
 
+  // Streaming state
+  const [streamingMessage, setStreamingMessage] = useState("")
+  const [isStreaming, setIsStreaming] = useState(false)
+
   const claudeService = useRef<ClaudeAPIService | null>(null)
   const fileManager = useRef<FileManagerService | null>(null)
   const commandExecutor = useRef<CommandExecutorService | null>(null)
@@ -273,6 +277,36 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     }
   }
 
+      // Helper function to extract only complete tags
+  const extractCompleteTags = (content: string) => {
+    const fileChanges: FileChange[] = []
+    const commands: string[] = []
+
+    // Extract complete RunnerArtifact tags only
+    const artifactRegex = /<RunnerArtifact name="([^"]+)">([\s\S]*?)<\/RunnerArtifact>/g
+    let match
+    while ((match = artifactRegex.exec(content)) !== null) {
+      const filePath = match[1]
+      const fileContent = match[2].trim()
+      const language = getLanguageFromPath(filePath)
+
+      fileChanges.push({
+        path: filePath,
+        content: fileContent,
+        language,
+      })
+    }
+
+    // Extract complete RunnerCommand tags only
+    const commandRegex = /<RunnerCommand>([\s\S]*?)<\/RunnerCommand>/g
+    while ((match = commandRegex.exec(content)) !== null) {
+      const command = match[1].trim()
+      commands.push(command)
+    }
+
+    return { fileChanges, commands }
+  }
+
   const handleSendMessage = useCallback(
     async (content: string) => {
       if (!claudeService.current) {
@@ -289,15 +323,60 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
 
       setMessages((prev) => [...prev, userMessage])
       setIsLoading(true)
+      setIsStreaming(true)
+      setStreamingMessage("")
 
       try {
-        const response = await claudeService.current.sendMessage(
+        let fullStreamContent = ""
+        let processedArtifacts = new Set<string>()
+
+        const response = await claudeService.current.sendMessageStream(
           content,
           messages,
-          currentFiles
+          currentFiles,
+          (chunk) => {
+            if (chunk.type === 'text' && chunk.text) {
+              fullStreamContent += chunk.text
+              setStreamingMessage(fullStreamContent)
+
+              // Check for complete artifacts and commands during streaming
+              const { fileChanges } = extractCompleteTags(fullStreamContent)
+
+              // Process new complete artifacts
+              if (fileChanges.length > 0) {
+                const newFiles = { ...currentFiles }
+                let hasNewFiles = false
+
+                fileChanges.forEach((change) => {
+                  const fileKey = `${change.path}:${change.content.length}`
+                  if (!processedArtifacts.has(fileKey)) {
+                    processedArtifacts.add(fileKey)
+                    newFiles[change.path] = change
+                    hasNewFiles = true
+                  }
+                })
+
+                if (hasNewFiles) {
+                  setCurrentFiles(newFiles)
+
+                  // Set the first file as active if none is selected
+                  if (!activeFile && fileChanges.length > 0) {
+                    setActiveFile(fileChanges[0].path)
+                  }
+                }
+              }
+
+              // Process new complete commands (but don't execute during streaming for safety)
+              // We'll execute them after streaming is complete
+            } else if (chunk.type === 'done') {
+              // Streaming is complete
+            } else if (chunk.type === 'error') {
+              console.error('Streaming error:', chunk.error)
+            }
+          }
         )
 
-        // Parse the response for file changes and commands
+        // Parse the final response for file changes and commands
         const { parsedContent, fileChanges, commands } = parseAssistantResponse(
           response.content
         )
@@ -313,7 +392,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
 
         setMessages((prev) => [...prev, assistantMessage])
 
-        // Update current files with any changes
+        // Update current files with any final changes
         if (fileChanges && fileChanges.length > 0) {
           const newFiles = { ...currentFiles }
           fileChanges.forEach((change) => {
@@ -382,7 +461,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
               // Refresh the main UI runners list
               await refreshRunners()
 
-              // Execute commands immediately after saving files
+              // Execute commands immediately after saving files (only complete ones)
               if (commands && commands.length > 0) {
                 for (const command of commands) {
                   try {
@@ -458,6 +537,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
         setMessages((prev) => [...prev, errorMessage])
       } finally {
         setIsLoading(false)
+        setIsStreaming(false)
+        setStreamingMessage("")
       }
     },
     [
@@ -670,6 +751,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
             hasFiles={Object.keys(currentFiles).length > 0}
             selectedModel={selectedModel}
             onModelChange={handleModelChange}
+            streamingMessage={streamingMessage}
+            isStreaming={isStreaming}
           />
           <div id="preview-panel" className="preview-panel">
             <Tabs

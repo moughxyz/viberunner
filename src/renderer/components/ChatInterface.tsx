@@ -20,6 +20,8 @@ interface ChatInterfaceProps {
   hasFiles: boolean
   selectedModel?: ClaudeModelId
   onModelChange?: (model: ClaudeModelId) => void
+  streamingMessage?: string
+  isStreaming?: boolean
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -34,6 +36,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   hasFiles,
   selectedModel: propSelectedModel,
   onModelChange,
+  streamingMessage = "",
+  isStreaming = false,
 }) => {
   const [inputValue, setInputValue] = useState("")
   const [selectedModel, setSelectedModel] = useState<ClaudeModelId>(
@@ -57,7 +61,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     requestAnimationFrame(() => {
       scrollToBottom()
     })
-  }, [messages])
+  }, [messages, streamingMessage])
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -70,7 +74,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (inputValue.trim() && !isLoading) {
+    if (inputValue.trim() && !isLoading && !isStreaming) {
       onSendMessage(inputValue.trim())
       setInputValue("")
       // Reset textarea height
@@ -126,6 +130,33 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return paragraphs.join("")
   }
 
+  // Format streaming message with visual indicators for partial tags
+  const formatStreamingMessage = (content: string) => {
+    let formatted = content
+
+    // Highlight partial or complete RunnerArtifact tags
+    formatted = formatted.replace(
+      /(<RunnerArtifact[^>]*>)([\s\S]*?)(<\/RunnerArtifact>|$)/g,
+      (match, openTag, content, closeTag) => {
+        const isComplete = closeTag === '</RunnerArtifact>'
+        const className = isComplete ? 'streaming-artifact complete' : 'streaming-artifact partial'
+        return `<div class="${className}">${openTag}${content}${closeTag}</div>`
+      }
+    )
+
+    // Highlight partial or complete RunnerCommand tags
+    formatted = formatted.replace(
+      /(<RunnerCommand>)([\s\S]*?)(<\/RunnerCommand>|$)/g,
+      (match, openTag, content, closeTag) => {
+        const isComplete = closeTag === '</RunnerCommand>'
+        const className = isComplete ? 'streaming-command complete' : 'streaming-command partial'
+        return `<div class="${className}">${openTag}${content}${closeTag}</div>`
+      }
+    )
+
+    return formatMessage(formatted)
+  }
+
   const formatTimestamp = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
@@ -170,7 +201,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {/* Messages Container */}
         <div className="messages-container">
           <div className="messages-content">
-            {messages.length === 0 && (
+            {messages.length === 0 && !isStreaming && (
               <div className="empty-state">
                 <div className="empty-state-icon">
                   <svg
@@ -342,8 +373,47 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
               ))}
 
+              {/* Streaming Message */}
+              {isStreaming && streamingMessage && (
+                <div className="message-group streaming">
+                  <div className="message-wrapper">
+                    {/* Avatar */}
+                    <div className="message-avatar">
+                      <div className="avatar">
+                        <img
+                          src="../../assets/viberunner-logo.svg"
+                          alt="Viberunner"
+                          width="16"
+                          height="16"
+                          style={{ filter: "brightness(0) invert(1)" }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="message-content-wrapper">
+                      {/* Message bubble */}
+                      <div className="message-bubble streaming">
+                        <div
+                          className="message-content"
+                          dangerouslySetInnerHTML={{
+                            __html: formatStreamingMessage(streamingMessage),
+                          }}
+                        />
+                        <div className="streaming-cursor">|</div>
+                      </div>
+
+                      {/* Timestamp */}
+                      <div className="message-timestamp">
+                        Streaming...
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Loading State */}
-              {isLoading && (
+              {isLoading && !isStreaming && (
                 <div className="chat-loading-container">
                   <div className="loading-wrapper">
                     <div className="message-avatar">
@@ -385,17 +455,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Describe what you want to build..."
-                disabled={isLoading}
+                disabled={isLoading || isStreaming}
                 rows={1}
                 className="input-textarea"
                 style={{ minHeight: "44px", maxHeight: "120px" }}
               />
               <button
                 type="submit"
-                disabled={!inputValue.trim() || isLoading}
+                disabled={!inputValue.trim() || isLoading || isStreaming}
                 className="submit-button"
               >
-                {isLoading ? (
+                {isLoading || isStreaming ? (
                   <svg className="spinner" fill="none" viewBox="0 0 24 24">
                     <circle
                       className="opacity-25"
