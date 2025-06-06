@@ -207,6 +207,37 @@ export class CommandExecutorService {
     return null
   }
 
+  private commandNeedsShell(command: string): boolean {
+    // Commands that definitely need shell parsing
+    const shellFeatures = [
+      '"', "'",           // Quoted arguments
+      '|', '&&', '||',    // Pipes and logical operators
+      '>', '<', '>>',     // Redirects
+      '$', '`',           // Variables and command substitution
+      '*', '?', '[',      // Glob patterns
+      ';',                // Command chaining
+      '~',                // Home directory expansion
+    ]
+
+    // Check if command contains shell features
+    if (shellFeatures.some(feature => command.includes(feature))) {
+      return true
+    }
+
+    // Commands that commonly need shell treatment
+    const shellCommands = [
+      'npm', 'node', 'cursor', 'code', 'git',
+      'python', 'pip', 'conda', 'poetry',
+      'yarn', 'pnpm', 'bun',
+      'docker', 'kubectl',
+      'cargo', 'go', 'rustc',
+      'java', 'javac', 'gradle', 'maven',
+    ]
+
+    const executable = command.trim().split(' ')[0]
+    return shellCommands.includes(executable)
+  }
+
   private createEnvironment(): Record<string, string> {
     const env: Record<string, string> = {}
 
@@ -306,11 +337,11 @@ export class CommandExecutorService {
           pathCount: this.systemPaths.length,
         })
 
-        // For packaged apps, always use shell for npm/node commands to avoid path issues
+        // Determine if we should use shell mode
+        const needsShellParsing = this.commandNeedsShell(command)
         const useShell = !this.isPackaged() ||
                         process.platform === "win32" ||
-                        executable === "npm" ||
-                        executable === "node"
+                        needsShellParsing
 
         const spawnOptions: any = {
           cwd,
