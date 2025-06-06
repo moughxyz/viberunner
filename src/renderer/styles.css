@@ -262,7 +262,8 @@ body {
   height: 100%;
   background: var(--background);
   z-index: 10;
-  overflow: hidden; /* Remove auto scrolling from outer container */
+  overflow-y: auto; /* Allow vertical scrolling when needed */
+  overflow-x: hidden; /* Prevent horizontal overflow */
   /* Ensure no sub-pixel rendering issues */
   transform: translateZ(0);
 }

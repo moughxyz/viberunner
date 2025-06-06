@@ -4,9 +4,10 @@
   min-height: 100vh;
   background-color: #0a0a0a;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 0 1.5rem;
+  padding: 2rem 1.5rem;
+  overflow-y: auto;
 }
 
 .build-prompt-condensed {
@@ -67,6 +68,7 @@
   font-size: 3.75rem;
   font-weight: 300;
   color: white;
+  margin-top: 100px;
   margin-bottom: 1.5rem;
   letter-spacing: -0.025em;
   line-height: 1;
