@@ -137,7 +137,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // Highlight partial or complete RunnerArtifact tags
     formatted = formatted.replace(
       /(<RunnerArtifact[^>]*>)([\s\S]*?)(<\/RunnerArtifact>|$)/g,
-      (match, openTag, content, closeTag) => {
+      (_match, openTag, content, closeTag) => {
         const isComplete = closeTag === "</RunnerArtifact>"
         const className = isComplete
           ? "streaming-artifact complete"
@@ -152,7 +152,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // During streaming, commands are always shown as partial until actually executed
     formatted = formatted.replace(
       /(<RunnerCommand>)([\s\S]*?)(<\/RunnerCommand>|$)/g,
-      (match, openTag, content, closeTag) => {
+      (_match, openTag, content, closeTag) => {
         // Always show as partial during streaming since execution happens later
         const className = "streaming-command partial"
         // Preserve whitespace in the content by wrapping in pre tags
