@@ -1,9 +1,10 @@
 import { getRunnersDirectory } from "../util"
-import * as fs from "fs"
-import * as path from "path"
-import { spawn, exec } from "child_process"
-import * as os from "os"
 import type { App } from "electron"
+
+const fs = require("fs")
+const path = require("path")
+const { spawn, exec } = require("child_process")
+const os = require("os")
 
 export class CommandExecutorService {
   private runnersDir: string
