@@ -233,7 +233,7 @@ For CI/CD and publishing:
 
 ```bash
 # GitHub token for publishing
-export GITHUB_TOKEN=your_github_token
+export GH_TOKEN=your_github_token
 
 # Code signing (macOS)
 export APPLE_ID=your_apple_id
