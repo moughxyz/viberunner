@@ -143,7 +143,7 @@ const createMenuBar = (): void => {
   Menu.setApplicationMenu(menu)
 }
 
-const createWindow = (): void => {
+const createWindow = (runnerId?: string): void => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     height: 1000,
@@ -163,10 +163,13 @@ const createWindow = (): void => {
   // Enable remote module for this window
   remoteMain.enable(mainWindow.webContents)
 
+  // Build query parameters if runnerId is provided
+  const queryParams = runnerId ? `?runnerId=${encodeURIComponent(runnerId)}` : ""
+
   // and load the index.html of the app.
   if (process.env.VITE_DEV_SERVER_URL) {
     // Development mode - load from Vite dev server
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL)
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL + queryParams)
   } else {
     // Production mode - load from packaged files
     // In packaged mode, the renderer files are in the app.asar
@@ -178,7 +181,12 @@ const createWindow = (): void => {
         )
       : path.join(__dirname, "../dist/index.html")
 
-    mainWindow.loadFile(rendererPath)
+    if (runnerId) {
+      // For file URLs, we need to handle query parameters differently
+      mainWindow.loadFile(rendererPath, { query: { runnerId } })
+    } else {
+      mainWindow.loadFile(rendererPath)
+    }
   }
 
   // Open the DevTools.

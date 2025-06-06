@@ -64,6 +64,9 @@ const api = {
 // Runner loading is now handled by RunnerService
 
 const App: React.FC = () => {
+  // Read runnerId from URL parameters
+  const [runnerId, setRunnerId] = useState<string | null>(null)
+
   // Use RunnerService instead of local state
   const {
     runners,
@@ -90,6 +93,24 @@ const App: React.FC = () => {
 
   // Initialize TabService
   const tabService = useTabService(appRootRef)
+
+  // Read runnerId from URL parameters on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const runnerIdParam = urlParams.get('runnerId')
+    if (runnerIdParam) {
+      console.log('Received runnerId from URL:', runnerIdParam)
+      setRunnerId(runnerIdParam)
+    }
+  }, [])
+
+  // Log runnerId when it changes (for debugging/future use)
+  useEffect(() => {
+    if (runnerId) {
+      console.log('App initialized with runnerId:', runnerId)
+      // TODO: Add logic to handle specific runner initialization
+    }
+  }, [runnerId])
 
   // Handle editing an existing runner
   const handleEditRunner = useCallback(
