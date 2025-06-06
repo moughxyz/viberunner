@@ -6,7 +6,7 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     name: 'Viberunner',
-    executableName: 'viberunner',
+    executableName: 'Viberunner',
     appBundleId: 'me.viberunner.mac',
     appCategoryType: 'public.app-category.productivity',
     icon: './assets/icon', // Electron-forge will auto-select .ico/.icns/.png based on platform
