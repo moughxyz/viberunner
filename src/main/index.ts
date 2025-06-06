@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from "electron"
+import { app, BrowserWindow, ipcMain, dialog, Menu, shell, Tray, nativeImage } from "electron"
 import { autoUpdater } from "electron-updater"
 import { spawn } from "child_process"
 import path from "path"
@@ -146,6 +146,138 @@ const createMenuBar = (): void => {
 
 // Keep track of runner processes for dock management
 const runnerProcesses = new Map<string, any>()
+
+// Keep track of tray icons for menu bar management
+const runnerTrays = new Map<string, Tray>()
+
+// Create a tray icon for a runner in the menu bar
+const createRunnerTray = async (runnerId: string, runnerName: string, iconPath?: string): Promise<void> => {
+  try {
+    // Check if tray already exists
+    if (runnerTrays.has(runnerId)) {
+      console.log(`Tray already exists for runner: ${runnerId}`)
+      return
+    }
+
+    // Use provided icon or default Viberunner icon
+    let trayIcon
+    if (iconPath) {
+      try {
+        trayIcon = nativeImage.createFromPath(iconPath)
+        if (trayIcon.isEmpty()) {
+          throw new Error('Icon is empty')
+        }
+      } catch (error) {
+        console.warn(`Failed to load runner icon, using default: ${error}`)
+        trayIcon = nativeImage.createFromPath(path.join(__dirname, '../assets/icon.png'))
+      }
+    } else {
+      trayIcon = nativeImage.createFromPath(path.join(__dirname, '../assets/icon.png'))
+    }
+
+    // Resize icon for menu bar (16x16 on macOS)
+    trayIcon = trayIcon.resize({ width: 16, height: 16 })
+
+    // Create tray
+    const tray = new Tray(trayIcon)
+
+    // Set tooltip
+    tray.setToolTip(`${runnerName} - Click to open`)
+
+    // Handle click - create single app window
+    tray.on('click', () => {
+      createRunnerWindow(runnerId)
+    })
+
+    // Set context menu
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: `Open ${runnerName}`,
+        click: () => createRunnerWindow(runnerId)
+      },
+      {
+        type: 'separator'
+      },
+      {
+        label: 'Remove from Menu Bar',
+        click: () => removeRunnerFromTray(runnerId)
+      }
+    ])
+    tray.setContextMenu(contextMenu)
+
+    // Store tray reference
+    runnerTrays.set(runnerId, tray)
+
+    console.log(`Successfully created tray icon for runner: ${runnerName}`)
+  } catch (error) {
+    console.error(`Failed to create tray for runner ${runnerId}:`, error)
+    throw error
+  }
+}
+
+// Remove a runner from the menu bar
+const removeRunnerFromTray = (runnerId: string): void => {
+  try {
+    const tray = runnerTrays.get(runnerId)
+    if (tray) {
+      tray.destroy()
+      runnerTrays.delete(runnerId)
+      console.log(`Removed tray icon for runner: ${runnerId}`)
+    }
+  } catch (error) {
+    console.error(`Failed to remove tray for runner ${runnerId}:`, error)
+  }
+}
+
+// Create a single window for a runner (for menu bar clicks)
+const createRunnerWindow = (runnerId: string): void => {
+  try {
+    console.log(`Creating single app window for runner: ${runnerId}`)
+
+    // Create a new window specifically for this runner
+    const runnerWindow = new BrowserWindow({
+      width: 900,
+      height: 700,
+      title: runnerId,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+        webSecurity: true,
+      },
+      titleBarStyle: "hiddenInset",
+      vibrancy: "under-window",
+      backgroundColor: "#1a1a1a",
+      show: false,
+    })
+
+    // Show window once ready
+    runnerWindow.once('ready-to-show', () => {
+      runnerWindow.show()
+      runnerWindow.focus()
+    })
+
+    // Enable remote module
+    remoteMain.enable(runnerWindow.webContents)
+
+    // Load the app with the runner ID
+    const queryParams = `?runnerId=${encodeURIComponent(runnerId)}`
+
+    if (process.env.VITE_DEV_SERVER_URL) {
+      runnerWindow.loadURL(process.env.VITE_DEV_SERVER_URL + queryParams)
+    } else {
+      const isDev = process.env.NODE_ENV === "development"
+      const rendererPath = isDev
+        ? path.join(__dirname, `../renderer/${process.env.VITE_DEV_NAME}/index.html`)
+        : path.join(__dirname, "../dist/index.html")
+
+      runnerWindow.loadFile(rendererPath, { query: { runnerId } })
+    }
+
+    console.log(`Successfully created single app window for runner: ${runnerId}`)
+  } catch (error) {
+    console.error(`Failed to create single app window for runner ${runnerId}:`, error)
+  }
+}
 
 // Create a separate Electron process for a runner (separate dock icon)
 const createRunnerProcess = async (runnerId: string): Promise<void> => {
@@ -394,6 +526,44 @@ function registerIpcHandlers() {
       return { success: true }
     } catch (error) {
       console.error("Error creating runner process:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
+    }
+  })
+
+  // Handle adding runner to menu bar (tray)
+  ipcMain.handle("add-runner-to-menubar", async (event, runnerId: string, runnerName: string, iconPath?: string) => {
+    try {
+      console.log(`Adding runner to menu bar: ${runnerName} (${runnerId})`)
+
+      await createRunnerTray(runnerId, runnerName, iconPath)
+
+      console.log(`Successfully added runner to menu bar: ${runnerName}`)
+
+      return { success: true }
+    } catch (error) {
+      console.error("Error adding runner to menu bar:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
+    }
+  })
+
+  // Handle removing runner from menu bar
+  ipcMain.handle("remove-runner-from-menubar", async (event, runnerId: string) => {
+    try {
+      console.log(`Removing runner from menu bar: ${runnerId}`)
+
+      removeRunnerFromTray(runnerId)
+
+      console.log(`Successfully removed runner from menu bar: ${runnerId}`)
+
+      return { success: true }
+    } catch (error) {
+      console.error("Error removing runner from menu bar:", error)
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",

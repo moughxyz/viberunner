@@ -117,6 +117,51 @@ export class MacService {
     const window = this.state.runnerWindows.get(runnerId)
     return window && !window.isDestroyed()
   }
+
+  /**
+   * Adds a runner to the macOS menu bar as a tray icon
+   * When clicked, opens a new window with only that runner in single app mode
+   */
+  public async addRunnerToMenuBar(runner: RunnerConfig): Promise<void> {
+    try {
+      console.log(`Adding runner to menu bar: "${runner.name}" (ID: ${runner.id})`)
+
+      // Get the runner's icon path if available
+      const iconPath = runner.icon ? runner.icon : undefined
+
+      // Use IPC to communicate with main process to create tray icon
+      const result = await ipcRenderer.invoke("add-runner-to-menubar", runner.id, runner.name, iconPath)
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to add runner to menu bar")
+      }
+
+      console.log(`Successfully added runner "${runner.name}" to menu bar`)
+    } catch (error) {
+      console.error(`Failed to add runner "${runner.name}" to menu bar:`, error)
+      throw error
+    }
+  }
+
+  /**
+   * Removes a runner from the macOS menu bar
+   */
+  public async removeRunnerFromMenuBar(runnerId: string): Promise<void> {
+    try {
+      console.log(`Removing runner from menu bar: ${runnerId}`)
+
+      const result = await ipcRenderer.invoke("remove-runner-from-menubar", runnerId)
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to remove runner from menu bar")
+      }
+
+      console.log(`Successfully removed runner from menu bar: ${runnerId}`)
+    } catch (error) {
+      console.error(`Failed to remove runner from menu bar:`, error)
+      throw error
+    }
+  }
 }
 
 // Export singleton instance

@@ -40,6 +40,7 @@ interface OptionsMenuProps {
   onEdit: (runnerId: string, editType: 'agent' | 'cursor') => void
   onDelete: (runnerId: string) => void
   onAddToDock: (runnerId: string) => void
+  onAddToMenuBar: (runnerId: string) => void
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
   className?: string
@@ -52,6 +53,7 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
   onEdit,
   onDelete,
   onAddToDock,
+  onAddToMenuBar,
   onEditRunner,
   onEditRunnerWithCursor,
   className = "options-menu"
@@ -82,6 +84,17 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
               }}
             >
               Add to macOS Dock
+            </button>
+          )}
+          {process.platform === 'darwin' && (
+            <button
+              className="options-menu-item"
+              onClick={(e) => {
+                e.stopPropagation()
+                onAddToMenuBar(runnerId)
+              }}
+            >
+              Add to macOS Menu Bar
             </button>
           )}
           {onEditRunner && (
@@ -166,6 +179,19 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
     } catch (error) {
       console.error('Failed to add runner to dock:', error)
       alert(`Failed to add runner to dock: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const handleAddToMenuBar = async (runnerId: string) => {
+    setActiveDropdown(null)
+    try {
+      const runner = runners.find(r => r.id === runnerId)
+      if (runner) {
+        await macService.addRunnerToMenuBar(runner)
+      }
+    } catch (error) {
+      console.error('Failed to add runner to menu bar:', error)
+      alert(`Failed to add runner to menu bar: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -305,6 +331,7 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                           onEdit={handleEditDropdown}
                           onDelete={handleDeleteRunner}
                           onAddToDock={handleAddToDock}
+                          onAddToMenuBar={handleAddToMenuBar}
                           onEditRunner={onEditRunner}
                           onEditRunnerWithCursor={onEditRunnerWithCursor}
                           className="footer-options-menu"
@@ -343,6 +370,7 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                           onEdit={handleEditDropdown}
                           onDelete={handleDeleteRunner}
                           onAddToDock={handleAddToDock}
+                          onAddToMenuBar={handleAddToMenuBar}
                           onEditRunner={onEditRunner}
                           onEditRunnerWithCursor={onEditRunnerWithCursor}
                           className="footer-options-menu"
