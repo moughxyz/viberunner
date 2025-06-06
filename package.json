@@ -1,5 +1,5 @@
 {
-  "name": "viberunner",
+  "name": "Viberunner",
   "version": "1.0.0",
   "description": "Vibe app desktop manager",
   "main": "dist-electron/index.js",
