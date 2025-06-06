@@ -16,7 +16,7 @@ import {
   updateRunnerPreference,
   removeRunnerPreference,
   setRunnerPreferences,
-} from "./preferences"
+} from "./runnerPreferences"
 import { getViberunnerLogoPath } from "./util"
 import { useRunnerService } from "./hooks/useRunnerService"
 import { useTabService } from "./hooks/useTabService"

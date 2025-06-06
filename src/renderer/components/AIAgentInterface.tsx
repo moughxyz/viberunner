@@ -13,6 +13,7 @@ import { FileManagerService } from "../services/FileManagerService"
 import { CommandExecutorService } from "../services/CommandExecutorService"
 import { useRunnerRefresh } from "../hooks/useRunnerService"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import appPreferences from "../appPreferences"
 
 import "./AIAgentInterface.css"
 import { PreviewPanel } from "./PreviewPanel"
@@ -80,7 +81,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
 
   useEffect(() => {
     // Check if API key is already stored
-    const storedKey = localStorage.getItem("claude-api-key")
+    const storedKey = appPreferences.getItem("claude-api-key")
     const lastSelectedModel = getLastSelectedModel()
 
     // Update the selected model to the last selected one
@@ -149,7 +150,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   }, [existingRunnerName])
 
   const handleSetApiKey = (key: string) => {
-    localStorage.setItem("claude-api-key", key)
+    appPreferences.setItem("claude-api-key", key)
     claudeService.current = new ClaudeAPIService(key, selectedModel)
     setShowApiKeyPrompt(false)
 

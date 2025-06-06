@@ -1,6 +1,7 @@
 import { getNewRunnerPrompt } from '../prompts/newRunner'
 import { Message, FileChange } from '../components/AIAgentInterface'
 import Anthropic from '@anthropic-ai/sdk'
+import appPreferences from '../appPreferences'
 
 export interface ClaudeMessage {
   role: 'user' | 'assistant'
@@ -38,15 +39,15 @@ export type ClaudeModelId = keyof typeof CLAUDE_MODELS
 // Default model to use (Claude 4)
 export const DEFAULT_MODEL: ClaudeModelId = 'claude-sonnet-4-20250514'
 
-// Get the last selected model from localStorage, or use default
+// Get the last selected model from appPreferences, or use default
 export const getLastSelectedModel = (): ClaudeModelId => {
-  const stored = localStorage.getItem('last-selected-model') as ClaudeModelId
+  const stored = appPreferences.getItem('last-selected-model') as ClaudeModelId
   return stored && Object.keys(CLAUDE_MODELS).includes(stored) ? stored : DEFAULT_MODEL
 }
 
-// Save the selected model to localStorage
+// Save the selected model to appPreferences
 export const saveSelectedModel = (model: ClaudeModelId): void => {
-  localStorage.setItem('last-selected-model', model)
+  appPreferences.setItem('last-selected-model', model)
 }
 
 // Get the appropriate max_tokens for each model
