@@ -143,11 +143,24 @@ const createMenuBar = (): void => {
   Menu.setApplicationMenu(menu)
 }
 
-const createWindow = (runnerId?: string): void => {
+// Keep track of runner windows for dock management
+const runnerWindows = new Map<string, BrowserWindow>()
+
+const createWindow = (runnerId?: string): BrowserWindow => {
+  // Determine window title and position offset for runner windows
+  const isRunnerWindow = !!runnerId
+  const windowTitle = isRunnerWindow ? `${runnerId}` : "Viberunner"
+
+  // Offset runner windows to make them visually distinct
+  const positionOffset = isRunnerWindow ? Math.random() * 100 + 50 : 0
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     height: 1000,
     width: 1600,
+    x: positionOffset,
+    y: positionOffset,
+    title: windowTitle,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -155,10 +168,34 @@ const createWindow = (runnerId?: string): void => {
       // sandbox: false,
       // nodeIntegrationInSubFrames: true,
     },
-    titleBarStyle: "hiddenInset",
+    titleBarStyle: isRunnerWindow ? "default" : "hiddenInset",
     vibrancy: "under-window",
     backgroundColor: "#1a1a1a",
+    show: false, // Don't show immediately
   })
+
+  // Store runner window reference
+  if (isRunnerWindow && runnerId) {
+    runnerWindows.set(runnerId, mainWindow)
+
+    // Clean up when window closes
+    mainWindow.on('closed', () => {
+      runnerWindows.delete(runnerId)
+      console.log(`Runner window closed: ${runnerId}`)
+    })
+  }
+
+  // Show window once ready to prevent flash
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show()
+    if (isRunnerWindow) {
+      // Focus the runner window to make it clear it's separate
+      mainWindow.focus()
+      console.log(`Runner window ready and focused: ${runnerId}`)
+    }
+  })
+
+  return mainWindow
 
   // Enable remote module for this window
   remoteMain.enable(mainWindow.webContents)
@@ -295,6 +332,30 @@ function registerIpcHandlers() {
     return {
       success: true,
       version: app.getVersion(),
+    }
+  })
+
+  // Handle creating new window for runner
+  ipcMain.handle("create-runner-window", async (event, runnerId: string) => {
+    try {
+      const currentWindowCount = BrowserWindow.getAllWindows().length
+      console.log(`Creating new window for runner: ${runnerId}`)
+      console.log(`Current window count: ${currentWindowCount}`)
+
+      createWindow(runnerId)
+
+      // Verify new window was created
+      const newWindowCount = BrowserWindow.getAllWindows().length
+      console.log(`New window count: ${newWindowCount}`)
+      console.log(`Successfully created separate window for runner: ${runnerId}`)
+
+      return { success: true }
+    } catch (error) {
+      console.error("Error creating runner window:", error)
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
     }
   })
 
