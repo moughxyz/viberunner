@@ -12,10 +12,8 @@ import {
 import { FileManagerService } from "../services/FileManagerService"
 import { CommandExecutorService } from "../services/CommandExecutorService"
 import { useRunnerRefresh } from "../hooks/useRunnerService"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Card, CardHeader, CardTitle } from "@/components/ui/card"
+
 import "./AIAgentInterface.css"
 import { PreviewPanel } from "./PreviewPanel"
 
@@ -277,13 +275,14 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     }
   }
 
-      // Helper function to extract only complete tags
+  // Helper function to extract only complete tags
   const extractCompleteTags = (content: string) => {
     const fileChanges: FileChange[] = []
     const commands: string[] = []
 
     // Extract complete RunnerArtifact tags only
-    const artifactRegex = /<RunnerArtifact name="([^"]+)">([\s\S]*?)<\/RunnerArtifact>/g
+    const artifactRegex =
+      /<RunnerArtifact name="([^"]+)">([\s\S]*?)<\/RunnerArtifact>/g
     let match
     while ((match = artifactRegex.exec(content)) !== null) {
       const filePath = match[1]
@@ -335,7 +334,7 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
           messages,
           currentFiles,
           (chunk) => {
-            if (chunk.type === 'text' && chunk.text) {
+            if (chunk.type === "text" && chunk.text) {
               fullStreamContent += chunk.text
               setStreamingMessage(fullStreamContent)
 
@@ -368,10 +367,10 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
 
               // Process new complete commands (but don't execute during streaming for safety)
               // We'll execute them after streaming is complete
-            } else if (chunk.type === 'done') {
+            } else if (chunk.type === "done") {
               // Streaming is complete
-            } else if (chunk.type === 'error') {
-              console.error('Streaming error:', chunk.error)
+            } else if (chunk.type === "error") {
+              console.error("Streaming error:", chunk.error)
             }
           }
         )
@@ -679,65 +678,6 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
       className={`ai-agent-interface ${inTab ? "in-tab" : ""}`}
     >
       <div id="ai-agent-content" className="ai-agent-content">
-        {!inTab && (
-          <Card className="header-card">
-            <CardHeader className="header-card-content">
-              <div className="header-left">
-                <CardTitle className="header-title">
-                  {isNewRunner
-                    ? "AI Runner Builder"
-                    : `Editing Runner: ${runnerName}`}
-                </CardTitle>
-                <Input
-                  id="runner-name-input"
-                  type="text"
-                  placeholder={
-                    isNewRunner ? "Runner name (optional)" : "Runner name"
-                  }
-                  value={runnerName}
-                  onChange={(e) => setRunnerName(e.target.value)}
-                  className="runner-name-input"
-                  disabled={!isNewRunner}
-                />
-              </div>
-              <div className="header-buttons">
-                <Button
-                  onClick={handleSaveRunner}
-                  disabled={
-                    Object.keys(currentFiles).length === 0 || isDiscarding
-                  }
-                  className="header-btn header-btn-primary"
-                >
-                  {isNewRunner ? "Done" : "Save Changes"}
-                </Button>
-                {Object.keys(currentFiles).length > 0 && (
-                  <Button
-                    variant="secondary"
-                    onClick={handleDiscard}
-                    disabled={isDiscarding}
-                    className="header-btn header-btn-secondary"
-                  >
-                    {isDiscarding
-                      ? isNewRunner
-                        ? "Discarding..."
-                        : "Reverting..."
-                      : isNewRunner
-                      ? "Discard"
-                      : "Revert Changes"}
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                  className="header-btn header-btn-outline"
-                >
-                  ✕
-                </Button>
-              </div>
-            </CardHeader>
-          </Card>
-        )}
-
         <div className="main-layout">
           <ChatInterface
             messages={messages}
