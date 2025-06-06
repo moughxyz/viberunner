@@ -123,6 +123,12 @@ function evaluateMatcher(matcher: any, fileAnalysis: FileAnalysis): boolean {
   }
 }
 
+// Preferences interface
+interface Preferences {
+  startupRunners?: Record<string, { enabled: boolean; tabOrder: number }>
+  [key: string]: any // Allow other preference keys
+}
+
 export interface RunnerServiceState {
   runners: RunnerConfig[]
   isLoading: boolean
@@ -244,14 +250,14 @@ export class RunnerService {
       const prefsPath = path.join(app.getPath("userData"), "preferences.json")
 
       // Load existing preferences
-      let prefs = {}
+      let prefs: Preferences = {}
       if (fs.existsSync(prefsPath)) {
         const prefsContent = fs.readFileSync(prefsPath, "utf8")
         prefs = JSON.parse(prefsContent)
       }
 
       // Update startup runners
-      ;(prefs as any).startupRunners = startupRunners
+      prefs.startupRunners = startupRunners
 
       // Save back to file
       fs.writeFileSync(prefsPath, JSON.stringify(prefs, null, 2), "utf8")
