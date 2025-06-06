@@ -127,12 +127,17 @@ export const getNewRunnerPrompt = (
     - When needing to execute a command, use the window.api.executeCommand API.
 
   Design Guidelines:
-    - Make the UI clean, minimal, and modern—with generous whitespace, subtle shadows, and rounded corners.
-    - Make the typography sharp and legible, using bold sans-serif fonts for headings and lighter weights for body text.
-    - Favor a grayscale palette with occasional accent colors, creating a focused and elegant UI that feels both technical and high-end.
-    - Make the UI in the style of a modern desktop app, like Linear, Cursor, or Vercel.
-    - Avoid emojis in headers and buttons.
-    - Use a dark theme.
+    - Use shadcn/ui for basic components (eg. \`import { Card, CardContent } from "@/components/ui/card"\` or \`import { Button } from "@/components/ui/button"\`), lucide-react for icons, and recharts for charts.
+    - Code should be production-ready with a minimal, clean aesthetic.
+    - Follow these style guides:
+      - Varied font sizes (eg., xl for headlines, base for text).
+      - Framer Motion for animations.
+      - Grid-based layouts to avoid clutter.
+      - 2xl rounded corners, soft shadows for cards/buttons.
+      - Adequate padding (at least p-2).
+      - Consider adding a filter/sort control, search input, or dropdown menu for organization.
+      - Avoid emojis in headers and buttons.
+      - Use a dark theme.
     - Create a styles object that contains all the styles for the app, and use it in the React component.
       - For example, const styles = {
         container: {

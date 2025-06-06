@@ -98,11 +98,16 @@ const App: React.FC = () => {
   // Read runnerId and popup mode from URL parameters on component mount
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
-    const runnerIdParam = urlParams.get('runnerId')
-    const isPopupMode = urlParams.get('popup') === 'true'
+    const runnerIdParam = urlParams.get("runnerId")
+    const isPopupMode = urlParams.get("popup") === "true"
 
     if (runnerIdParam) {
-      console.log('Received runnerId from URL:', runnerIdParam, 'popup mode:', isPopupMode)
+      console.log(
+        "Received runnerId from URL:",
+        runnerIdParam,
+        "popup mode:",
+        isPopupMode
+      )
       setRunnerId(runnerIdParam)
       setSingleAppMode(true)
     }
@@ -111,16 +116,16 @@ const App: React.FC = () => {
   // Handle single app mode - launch the specific runner
   useEffect(() => {
     if (runnerId && singleAppMode && runners.length > 0) {
-      console.log('Single app mode: launching runner', runnerId)
+      console.log("Single app mode: launching runner", runnerId)
 
       // Find the runner by ID
-      const runner = runners.find(r => r.id === runnerId)
+      const runner = runners.find((r) => r.id === runnerId)
       if (runner) {
-        console.log('Found runner for single app mode:', runner.name)
+        console.log("Found runner for single app mode:", runner.name)
         // Launch the runner in single app mode
         openAppInNewTab(runner, undefined, true, true)
       } else {
-        console.error('Runner not found for ID:', runnerId)
+        console.error("Runner not found for ID:", runnerId)
       }
     }
   }, [runnerId, singleAppMode, runners])
