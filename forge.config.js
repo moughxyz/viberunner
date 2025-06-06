@@ -6,7 +6,10 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     name: 'Viberunner',
-    executableName: 'Viberunner',
+    // Platform-specific executable naming to fix two issues:
+    // 1. macOS: capitalized name gives "Viberunner.app" instead of "viberunner.app" in DMG
+    // 2. Linux: lowercase name matches the "bin" config in deb/rpm makers to prevent build errors
+    executableName: process.platform === 'darwin' ? 'Viberunner' : 'viberunner',
     appBundleId: 'me.viberunner.mac',
     appCategoryType: 'public.app-category.productivity',
     icon: './assets/icon', // Electron-forge will auto-select .ico/.icns/.png based on platform
