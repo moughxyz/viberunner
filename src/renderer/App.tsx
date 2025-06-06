@@ -22,6 +22,7 @@ import { useRunnerService } from "./hooks/useRunnerService"
 import { useTabService } from "./hooks/useTabService"
 import { runnerService } from "./services/RunnerService"
 import { FileManagerService } from "./services/FileManagerService"
+import { CommandExecutorService } from "./services/CommandExecutorService"
 import { getSupportedFormats } from "../lib/utils"
 
 // Direct Node.js access with full integration
@@ -34,6 +35,9 @@ const mime = require("mime-types")
 ;(window as any).React = React
 ;(window as any).ReactDOM = { createRoot }
 
+// Create command executor service instance for runners
+const commandExecutorService = new CommandExecutorService()
+
 // Simplified API - only direct operations, no IPC
 const api = {
   // User Preferences API for runners
@@ -42,6 +46,14 @@ const api = {
   updateRunnerPreference: updateRunnerPreference,
   removeRunnerPreference: removeRunnerPreference,
   getRunnerPreference: getRunnerPreference,
+
+  // Command execution API for runners
+  executeCommand: async (command: string) => {
+    return await commandExecutorService.executeCommand(command)
+  },
+  executeCommandWithArgs: async (executable: string, args: string[] = []) => {
+    return await commandExecutorService.executeCommandWithArgs(executable, args)
+  },
 }
 
 // Make API available globally for runners

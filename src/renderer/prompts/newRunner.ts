@@ -2,14 +2,6 @@ import readmeContent from "../../../README.md?raw"
 import templateRunnerContent from "../../../TemplateRunner/TEMPLATE_RUNNER.md?raw"
 import { FileChange } from "../components/AIAgentInterface"
 
-const getReadmeContent = () => {
-  return readmeContent
-}
-
-const getTemplateRunnerContent = () => {
-  return templateRunnerContent
-}
-
 export const getNewRunnerPrompt = (
   userPrompt: string,
   currentFiles?: Record<string, FileChange>
@@ -132,6 +124,7 @@ export const getNewRunnerPrompt = (
       - If ESM, use import statements.
       - If CommonJS, use require statements.
     - If you need to store user data, use the passed in dataDirectory prop. You can create files and folders in this directory.
+    - When needing to execute a command, use the window.api.executeCommand API.
 
   Design Guidelines:
     - Make the UI clean, minimal, and modern—with generous whitespace, subtle shadows, and rounded corners.
@@ -156,10 +149,10 @@ export const getNewRunnerPrompt = (
   Here are the contents of the promised attachments:
 
   README.md for Viberunner:
-  ${getReadmeContent()}
+  ${readmeContent}
 
   Template runner content:
-  ${getTemplateRunnerContent()}
+  ${templateRunnerContent}
 
   ${filesContext}
 

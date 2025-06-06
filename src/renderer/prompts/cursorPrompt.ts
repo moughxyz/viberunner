@@ -11,6 +11,7 @@ export const getCursorPrompt = () => {
  * This is a runner for Viberunner. It is built with React and Vite.
  *
  * Runners have full access to the file system, clipboard history, and other system APIs using Node.js.
+ * Runners also have access to safe command execution APIs that work in both development and packaged apps.
  *
  * Runners are just React apps but focused on system utilities and single-purpose productivity flows.
 
@@ -26,6 +27,18 @@ export const getCursorPrompt = () => {
  *   }
  *  tabId: string
  * }
+ *
+ * AVAILABLE APIs via window.api:
+ *
+ * // Execute shell commands safely (works in packaged apps)
+ * const result = await window.api.executeCommand('git status')
+ * const result = await window.api.executeCommandWithArgs('git', ['add', '.'])
+ *
+ * // Returns: { success: boolean, output: string, error?: string }
+ *
+ * // User preferences
+ * window.api.getRunnerPreference(runnerId, key)
+ * window.api.updateRunnerPreference(runnerId, key, value)
  *
  * See VIBERUNNER.md for more details.
  *

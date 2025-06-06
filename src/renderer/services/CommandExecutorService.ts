@@ -293,6 +293,35 @@ export class CommandExecutorService {
     }
   }
 
+  async executeCommandWithArgs(
+    executable: string,
+    args: string[] = [],
+    runnerName?: string
+  ): Promise<{ success: boolean; output: string; error?: string }> {
+    try {
+      console.log("Executing command with args:", executable, args)
+
+      // Build command string for shell execution
+      const quotedArgs = args.map(arg => {
+        // Quote arguments that contain spaces or special characters
+        if (arg.includes(' ') || arg.includes('"') || arg.includes("'")) {
+          return `"${arg.replace(/"/g, '\\"')}"`
+        }
+        return arg
+      })
+      const command = [executable, ...quotedArgs].join(' ')
+
+      return await this.executeShellCommand(command, runnerName)
+    } catch (error) {
+      console.error("Error executing command with args:", error)
+      return {
+        success: false,
+        output: "",
+        error: error instanceof Error ? error.message : "Unknown error",
+      }
+    }
+  }
+
   private executeShellCommand(
     command: string,
     runnerName?: string

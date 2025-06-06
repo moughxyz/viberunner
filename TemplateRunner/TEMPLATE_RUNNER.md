@@ -17,6 +17,17 @@ declare global {
   interface Window {
     registerCleanup: (tabId: string, cleanupFn: () => void) => void
     __RENDER_RUNNER__: (app: React.ComponentType<any>) => void
+    api: {
+      // Command execution
+      executeCommand: (command: string) => Promise<{ success: boolean; output: string; error?: string }>
+      executeCommandWithArgs: (executable: string, args?: string[]) => Promise<{ success: boolean; output: string; error?: string }>
+      // User preferences
+      getRunnerPreference: (runnerId: string, key: string) => any
+      updateRunnerPreference: (runnerId: string, key: string, value: any) => boolean
+      setRunnerPreferences: (runnerId: string, preferences: Record<string, any>) => boolean
+      getRunnerPreferences: (runnerId: string) => Record<string, any>
+      removeRunnerPreference: (runnerId: string, key: string) => boolean
+    }
   }
 }
 
@@ -31,11 +42,26 @@ interface RunnerProps {
 const TemplateRunner: React.FC<RunnerProps> = ({
   tabId,
 }: RunnerProps) => {
+  const [commandOutput, setCommandOutput] = React.useState<string>("")
+
   useEffect(() => {
     window.registerCleanup(tabId, () => {
       // Cleanup timers, listeners, etc.
     })
-  })
+  }, [tabId])
+
+  const runExampleCommand = async () => {
+    try {
+      const result = await window.api.executeCommand('echo "Hello from command!"')
+      if (result.success) {
+        setCommandOutput(result.output)
+      } else {
+        setCommandOutput(`Error: ${result.error}`)
+      }
+    } catch (error) {
+      setCommandOutput(`Failed to execute: ${error}`)
+    }
+  }
 
   return (
     <div
@@ -48,6 +74,14 @@ const TemplateRunner: React.FC<RunnerProps> = ({
       }}
     >
       <div>Hello World</div>
+      <button onClick={runExampleCommand} style={{ margin: "10px 0", padding: "8px 16px" }}>
+        Run Example Command
+      </button>
+      {commandOutput && (
+        <pre style={{ background: "#1a1a1a", padding: "10px", marginTop: "10px" }}>
+          {commandOutput}
+        </pre>
+      )}
     </div>
   )
 }
