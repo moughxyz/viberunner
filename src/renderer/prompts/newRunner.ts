@@ -149,6 +149,10 @@ export const getNewRunnerPrompt = (
         },
       }
 
+  Response Guidelines:
+    - When you generate a summary when you finish creating the app, keep it short. Like a paragraph. No need
+      to essentially generate a very detailed runthrough of what you did.
+
   Here are the contents of the promised attachments:
 
   README.md for Viberunner:
