@@ -110,7 +110,12 @@ jobs:
         VR_APPLE_ID: ${{ matrix.os == 'macos-latest' && secrets.VR_APPLE_ID || '' }}
         VR_APPLE_PASSWORD: ${{ matrix.os == 'macos-latest' && secrets.VR_APPLE_PASSWORD || '' }}
         VR_APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.VR_APPLE_TEAM_ID || '' }}
-      run: npm run make
+      run: |
+        if [ "${{ matrix.os }}" = "macos-latest" ]; then
+          npm run make -- --arch=universal --platform=darwin
+        else
+          npm run make
+        fi
 
     - name: Test packaged app exists
       shell: bash
