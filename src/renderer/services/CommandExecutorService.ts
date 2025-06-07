@@ -1,10 +1,67 @@
 import { getRunnersDirectory } from "../util"
 import type { App } from "electron"
-import { fixRendererPath } from "../util/shellPathFix"
 
 const fs = require("fs")
 const path = require("path")
-const { spawn } = require("child_process")
+const { spawn, execSync } = require("child_process")
+const { userInfo } = require("os")
+
+// Simple shell environment detection for renderer process
+function getShellPath(): string | undefined {
+  if (process.platform === "win32") {
+    return process.env.PATH
+  }
+
+  try {
+    // Get user's shell
+    const defaultShell = (() => {
+      try {
+        const { shell } = userInfo()
+        if (shell) return shell
+      } catch {
+        // Ignore userInfo errors
+      }
+      if (process.platform === "darwin") {
+        return process.env.SHELL ?? "/bin/zsh"
+      }
+      return process.env.SHELL ?? "/bin/sh"
+    })()
+
+    console.log("🐚 Using shell for PATH detection:", defaultShell)
+
+    // Execute shell to get PATH
+    const result = execSync(`${defaultShell} -ilc 'echo $PATH'`, {
+      encoding: "utf8",
+      timeout: 5000,
+      env: { DISABLE_AUTO_UPDATE: "true" },
+    })
+
+    const shellPath = result.toString().trim()
+    console.log("🐚 Shell PATH detected:", shellPath.substring(0, 100) + "...")
+    return shellPath
+  } catch (error) {
+    console.warn("🐚 Failed to get shell PATH:", error)
+    return process.env.PATH
+  }
+}
+
+/**
+ * This function can run in the renderer process, but only if fixPath() is run in the main process.
+ * So be sure to keep both.
+ */
+function fixRendererPath(): void {
+  if (process.platform === "win32") {
+    return
+  }
+
+  const shellPath = getShellPath()
+  if (shellPath && shellPath !== process.env.PATH) {
+    console.log("🔧 Fixing renderer PATH...")
+    console.log("🔧 Before:", process.env.PATH)
+    process.env.PATH = shellPath
+    console.log("🔧 After:", process.env.PATH?.substring(0, 100) + "...")
+  }
+}
 
 export class CommandExecutorService {
   private runnersDir: string
@@ -17,6 +74,15 @@ export class CommandExecutorService {
 
     // Initialize user environment
     this.initializationPromise = this.initializeUserEnvironment()
+
+    // Test npm after initialization
+    this.initializationPromise
+      .then(() => {
+        this.testNpm()
+      })
+      .catch((error) => {
+        console.error("Environment initialization failed:", error)
+      })
   }
 
   private isPackaged(): boolean {
@@ -36,6 +102,8 @@ export class CommandExecutorService {
     console.log("Initializing user environment...")
 
     try {
+      console.log("🔍 PATH before fix:", process.env.PATH)
+
       // Fix PATH in renderer process
       fixRendererPath()
 
@@ -47,7 +115,8 @@ export class CommandExecutorService {
         }
       })
 
-      console.log("🔍 Renderer PATH:", this.userEnvironment.PATH)
+      console.log("✅ User environment initialized with shell environment")
+      console.log("🔍 Final PATH:", this.userEnvironment.PATH)
     } catch (error) {
       console.warn(
         "⚠️ Failed to get shell environment, using process.env:",
@@ -71,6 +140,95 @@ export class CommandExecutorService {
       "First few PATH entries:",
       this.userEnvironment.PATH?.split(path.delimiter).slice(0, 3) || "not set"
     )
+  }
+
+  private async testNpm(): Promise<void> {
+    console.log("=== Testing npm functionality ===")
+
+    try {
+      // Test where node is located
+      const whichNodeResult = await this.executeShellCommand(
+        "which node",
+        undefined
+      )
+      if (whichNodeResult.success) {
+        console.log("✅ which node succeeded:", whichNodeResult.output.trim())
+      } else {
+        console.log("❌ which node failed:", whichNodeResult.error)
+      }
+
+      // Test where npm is located
+      const whichNpmResult = await this.executeShellCommand(
+        "which npm",
+        undefined
+      )
+      if (whichNpmResult.success) {
+        console.log("✅ which npm succeeded:", whichNpmResult.output.trim())
+      } else {
+        console.log("❌ which npm failed:", whichNpmResult.error)
+      }
+
+      // Check if nvm is being used
+      const nvmResult = await this.executeShellCommand(
+        "command -v nvm",
+        undefined
+      )
+      if (nvmResult.success) {
+        console.log("✅ nvm detected:", nvmResult.output.trim())
+
+        // Try to get nvm current version
+        const nvmCurrentResult = await this.executeShellCommand(
+          "nvm current",
+          undefined
+        )
+        if (nvmCurrentResult.success) {
+          console.log("✅ nvm current version:", nvmCurrentResult.output.trim())
+        }
+      } else {
+        console.log("ℹ️ nvm not detected (this is fine if not using nvm)")
+      }
+
+      // Test basic npm command
+      const result = await this.executeShellCommand("npm --version", undefined)
+
+      if (result.success) {
+        console.log("✅ npm --version succeeded:", result.output.trim())
+      } else {
+        console.log("❌ npm --version failed:", result.error)
+      }
+
+      // Test npm help command
+      const helpResult = await this.executeShellCommand("npm help", undefined)
+
+      if (helpResult.success) {
+        console.log("✅ npm help succeeded")
+      } else {
+        console.log("❌ npm help failed:", helpResult.error)
+      }
+
+      // Show environment info
+      console.log("🔍 Environment info:")
+      console.log(
+        "- PATH length:",
+        this.userEnvironment.PATH?.split(path.delimiter).length || 0
+      )
+      console.log(
+        "- PATH directories:",
+        this.userEnvironment.PATH?.split(path.delimiter).slice(0, 5) ||
+          "not set"
+      )
+      console.log("- NODE env var:", this.userEnvironment.NODE || "not set")
+      console.log(
+        "- npm_node_execpath:",
+        this.userEnvironment.npm_node_execpath || "not set"
+      )
+      console.log("- SHELL:", this.userEnvironment.SHELL || "not set")
+      console.log("- NVM_DIR:", this.userEnvironment.NVM_DIR || "not set")
+    } catch (error) {
+      console.log("❌ npm test failed with exception:", error)
+    }
+
+    console.log("=== npm test completed ===")
   }
 
   async executeCommand(
@@ -289,95 +447,5 @@ export class CommandExecutorService {
       console.error("Error getting available runners:", error)
       return []
     }
-  }
-
-  /** For debugging purposes */
-  async testNpm(): Promise<void> {
-    console.log("=== Testing npm functionality ===")
-
-    try {
-      // Test where node is located
-      const whichNodeResult = await this.executeShellCommand(
-        "which node",
-        undefined
-      )
-      if (whichNodeResult.success) {
-        console.log("✅ which node succeeded:", whichNodeResult.output.trim())
-      } else {
-        console.log("❌ which node failed:", whichNodeResult.error)
-      }
-
-      // Test where npm is located
-      const whichNpmResult = await this.executeShellCommand(
-        "which npm",
-        undefined
-      )
-      if (whichNpmResult.success) {
-        console.log("✅ which npm succeeded:", whichNpmResult.output.trim())
-      } else {
-        console.log("❌ which npm failed:", whichNpmResult.error)
-      }
-
-      // Check if nvm is being used
-      const nvmResult = await this.executeShellCommand(
-        "command -v nvm",
-        undefined
-      )
-      if (nvmResult.success) {
-        console.log("✅ nvm detected:", nvmResult.output.trim())
-
-        // Try to get nvm current version
-        const nvmCurrentResult = await this.executeShellCommand(
-          "nvm current",
-          undefined
-        )
-        if (nvmCurrentResult.success) {
-          console.log("✅ nvm current version:", nvmCurrentResult.output.trim())
-        }
-      } else {
-        console.log("ℹ️ nvm not detected (this is fine if not using nvm)")
-      }
-
-      // Test basic npm command
-      const result = await this.executeShellCommand("npm --version", undefined)
-
-      if (result.success) {
-        console.log("✅ npm --version succeeded:", result.output.trim())
-      } else {
-        console.log("❌ npm --version failed:", result.error)
-      }
-
-      // Test npm help command
-      const helpResult = await this.executeShellCommand("npm help", undefined)
-
-      if (helpResult.success) {
-        console.log("✅ npm help succeeded")
-      } else {
-        console.log("❌ npm help failed:", helpResult.error)
-      }
-
-      // Show environment info
-      console.log("🔍 Environment info:")
-      console.log(
-        "- PATH length:",
-        this.userEnvironment.PATH?.split(path.delimiter).length || 0
-      )
-      console.log(
-        "- PATH directories:",
-        this.userEnvironment.PATH?.split(path.delimiter).slice(0, 5) ||
-          "not set"
-      )
-      console.log("- NODE env var:", this.userEnvironment.NODE || "not set")
-      console.log(
-        "- npm_node_execpath:",
-        this.userEnvironment.npm_node_execpath || "not set"
-      )
-      console.log("- SHELL:", this.userEnvironment.SHELL || "not set")
-      console.log("- NVM_DIR:", this.userEnvironment.NVM_DIR || "not set")
-    } catch (error) {
-      console.log("❌ npm test failed with exception:", error)
-    }
-
-    console.log("=== npm test completed ===")
   }
 }
