@@ -14,6 +14,11 @@ interface OptionsMenuProps {
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
   className?: string
+  // Startup controls props
+  isUtility?: boolean
+  startupConfig?: { enabled: boolean; tabOrder: number }
+  toggleStartupApp?: (runnerId: string, enabled: boolean) => Promise<void>
+  updateStartupAppTabOrder?: (runnerId: string, tabOrder: number) => Promise<void>
 }
 
 const OptionsMenu: React.FC<OptionsMenuProps> = ({
@@ -27,10 +32,17 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
   onEditRunner,
   onEditRunnerWithCursor,
   className = "options-menu",
+  isUtility = false,
+  startupConfig,
+  toggleStartupApp,
+  updateStartupAppTabOrder,
 }) => {
   if (!onEditRunner && !onEditRunnerWithCursor) {
     return null
   }
+
+  const isStartupEnabled = startupConfig?.enabled || false
+  const tabOrder = startupConfig?.tabOrder || 1
 
   return (
     <div className={className}>
@@ -66,6 +78,49 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
             >
               Add to macOS Menu Bar
             </button>
+          )}
+          {isUtility && toggleStartupApp && (
+            <div className="options-menu-item startup-controls">
+              <div className="startup-toggle-option">
+                <label
+                  className="toggle-label"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isStartupEnabled}
+                    onChange={(e) =>
+                      toggleStartupApp(runnerId, e.target.checked)
+                    }
+                    onClick={(e) => e.stopPropagation()}
+                    className="toggle-checkbox"
+                  />
+                  <span className="toggle-slider"></span>
+                  <span className="toggle-text">Start on launch</span>
+                </label>
+              </div>
+              {isStartupEnabled && updateStartupAppTabOrder && (
+                <div className="tab-order-control-option">
+                  <label className="tab-order-label">
+                    Tab order:
+                    <input
+                      type="number"
+                      min="1"
+                      max="99"
+                      value={tabOrder}
+                      onChange={(e) =>
+                        updateStartupAppTabOrder(
+                          runnerId,
+                          parseInt(e.target.value) || 1
+                        )
+                      }
+                      onClick={(e) => e.stopPropagation()}
+                      className="tab-order-input"
+                    />
+                  </label>
+                </div>
+              )}
+            </div>
           )}
           {onEditRunner && (
             <button
@@ -143,11 +198,9 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
   onEditRunnerWithCursor,
 }) => {
   const isUtility = runner.standalone
-  const isStartupEnabled = startupConfig?.enabled || false
-  const tabOrder = startupConfig?.tabOrder || 1
 
   if (isUtility) {
-    // Render utility runner with launch and startup controls
+    // Render utility runner with launch control only
     return (
       <div className="utility-card-container">
         <div
@@ -174,49 +227,10 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
           </div>
         </div>
 
-        {/* Card footer with startup controls and options */}
+        {/* Card footer with options only */}
         <div className="card-footer">
           <div className="footer-left">
-            <div className="startup-toggle">
-              <label
-                className="toggle-label"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <input
-                  type="checkbox"
-                  checked={isStartupEnabled}
-                  onChange={(e) =>
-                    toggleStartupApp(runner.id, e.target.checked)
-                  }
-                  onClick={(e) => e.stopPropagation()}
-                  className="toggle-checkbox"
-                />
-                <span className="toggle-slider"></span>
-                <span className="toggle-text">Start on launch</span>
-              </label>
-            </div>
-
-            {isStartupEnabled && (
-              <div className="tab-order-control">
-                <label className="tab-order-label">
-                  Tab order:
-                  <input
-                    type="number"
-                    min="1"
-                    max="99"
-                    value={tabOrder}
-                    onChange={(e) =>
-                      updateStartupAppTabOrder(
-                        runner.id,
-                        parseInt(e.target.value) || 1
-                      )
-                    }
-                    onClick={(e) => e.stopPropagation()}
-                    className="tab-order-input"
-                  />
-                </label>
-              </div>
-            )}
+            {/* Startup controls moved to options menu */}
           </div>
 
           <div className="footer-right">
@@ -231,6 +245,10 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
               onEditRunner={onEditRunner}
               onEditRunnerWithCursor={onEditRunnerWithCursor}
               className="footer-options-menu"
+              isUtility={isUtility}
+              startupConfig={startupConfig}
+              toggleStartupApp={toggleStartupApp}
+              updateStartupAppTabOrder={updateStartupAppTabOrder}
             />
           </div>
         </div>
