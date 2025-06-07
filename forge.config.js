@@ -32,8 +32,8 @@ module.exports = {
     extraResource: [
       './assets'
     ],
-    // Ensure proper architecture handling
-    arch: process.env.TARGET_ARCH || process.arch,
+    // Create universal builds on macOS, otherwise use current architecture
+    arch: process.platform === 'darwin' ? 'universal' : (process.env.TARGET_ARCH || process.arch),
     osxSign: {
       // Add your Apple Developer info when ready for distribution
       identity: process.env.OSX_SIGN_IDENTITY,

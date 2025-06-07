@@ -14,7 +14,7 @@ jobs:
         include:
           - os: macos-latest
             platform: darwin
-            arch: x64
+            arch: universal
           - os: ubuntu-latest
             platform: linux
             arch: x64
@@ -71,18 +71,18 @@ jobs:
           test -d "out/Viberunner-win32-x64" || test -d "out/make"
           echo "✅ Windows package created successfully"
         elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-          test -d "out/Viberunner-darwin-x64" || test -d "out/Viberunner-darwin-arm64" || test -d "out/make"
-          echo "✅ macOS package created successfully"
+          test -d "out/Viberunner-darwin-universal" || test -d "out/make"
+          echo "✅ macOS universal package created successfully"
           # Show package contents for debugging
           ls -la out/ || true
           find out/ -name "*.dmg" -exec ls -lh {} \; || true
           find out/ -name "*.app" -exec ls -lh {} \; || true
-          # Verify code signing (if signed)
-          if [ -d "out/Viberunner-darwin-arm64/Viberunner.app" ]; then
-            codesign --verify --deep --strict --verbose=2 out/Viberunner-darwin-arm64/Viberunner.app || echo "⚠️ Code signing verification failed or app is unsigned"
-          fi
-          if [ -d "out/Viberunner-darwin-x64/Viberunner.app" ]; then
-            codesign --verify --deep --strict --verbose=2 out/Viberunner-darwin-x64/Viberunner.app || echo "⚠️ Code signing verification failed or app is unsigned"
+          # Verify code signing and universal binary (if signed)
+          if [ -d "out/Viberunner-darwin-universal/Viberunner.app" ]; then
+            codesign --verify --deep --strict --verbose=2 out/Viberunner-darwin-universal/Viberunner.app || echo "⚠️ Code signing verification failed or app is unsigned"
+            # Check if it's actually a universal binary
+            file out/Viberunner-darwin-universal/Viberunner.app/Contents/MacOS/Viberunner || echo "⚠️ Could not check binary architecture"
+            lipo -info out/Viberunner-darwin-universal/Viberunner.app/Contents/MacOS/Viberunner || echo "⚠️ Could not get architecture info"
           fi
         else
           test -d "out/Viberunner-linux-x64" || test -d "out/make"
