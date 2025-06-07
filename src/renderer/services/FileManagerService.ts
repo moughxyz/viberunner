@@ -2,9 +2,9 @@ import { getRunnersDirectory } from "../util"
 import { FileChange } from "../components/AIAgentInterface"
 import { getCursorPrompt } from "../prompts/cursorPrompt"
 import readmeContent from "../../../README.md?raw"
-import templateRunnerContent from "../../../TemplateRunner/TEMPLATE_RUNNER.md?raw"
 import { runnerService } from "./RunnerService"
 import { CommandExecutorService } from "./CommandExecutorService"
+import { templateRunnerBuilder } from "./TemplateRunnerBuilder"
 
 const fs = require("fs")
 const path = require("path")
@@ -40,26 +40,8 @@ export class FileManagerService {
       const srcPath = path.join(runnerPath, "src")
       fs.mkdirSync(srcPath, { recursive: true })
 
-      // Import foundation files from template
-      // Base configuration files
-      const baseTemplateFiles = [
-        "package.json",
-        "tsconfig.json",
-        "tsconfig.node.json",
-        "vite.config.ts"
-      ]
-
-      // Get all files from src/components/** and lib/** directories using patterns
-      const directoryPatterns = [
-        "src/components/**",
-        "lib/**"
-      ]
-      const directoryFiles = this.getTemplateFilesByPatterns(directoryPatterns)
-
-      // Combine base files with directory files
-      const allTemplateFiles = [...baseTemplateFiles, ...directoryFiles]
-
-      await this.importTemplateFiles(runnerPath, allTemplateFiles)
+            // Import all template files as foundation - LLM will overwrite as needed
+      await templateRunnerBuilder.importAllTemplateFiles(runnerPath)
 
       // Write all files
       for (const [filePath, fileData] of Object.entries(files)) {
@@ -503,7 +485,7 @@ export default defineConfig({
     return `${timestamp}${randomPart}`
   }
 
-  /**
+    /**
    * Import static files from the template runner into a runner directory
    * @param runnerName - The name of the runner to import files into
    * @param filePaths - Array of file paths to extract from the template
@@ -520,97 +502,14 @@ export default defineConfig({
         throw new Error(`Runner "${runnerName}" does not exist`)
       }
 
-      await this.importTemplateFiles(runnerPath, filePaths)
+      await templateRunnerBuilder.importTemplateFiles(runnerPath, filePaths)
     } catch (error) {
       console.error("Error importing static files from template:", error)
       throw error
     }
   }
 
-    /**
-   * Get all available template files from TEMPLATE_RUNNER.md
-   * @returns Record of filename to content for all template files
-   */
-  private getAvailableTemplateFiles(): Record<string, string> {
-    // Regular expression to match RunnerArtifact sections
-    const artifactRegex = /<RunnerArtifact name="([^"]+)">\s*([\s\S]*?)\s*<\/RunnerArtifact>/g;
 
-    let match;
-    const extractedFiles: Record<string, string> = {};
-
-    // Extract all artifacts from the template
-    while ((match = artifactRegex.exec(templateRunnerContent)) !== null) {
-      const fileName = match[1];
-      const fileContent = match[2];
-      extractedFiles[fileName] = fileContent;
-    }
-
-    return extractedFiles;
-  }
-
-  /**
-   * Get template files that match directory patterns (supports ** glob)
-   * @param patterns - Array of patterns like "src/components/**", "lib/**"
-   * @returns Array of matching file paths
-   */
-  private getTemplateFilesByPatterns(patterns: string[]): string[] {
-    const availableFiles = Object.keys(this.getAvailableTemplateFiles());
-    const matchingFiles: string[] = [];
-
-    for (const pattern of patterns) {
-      if (pattern.includes("**")) {
-        // Handle glob patterns
-        const baseDir = pattern.replace("/**", "");
-        const matchingPattern = availableFiles.filter(file =>
-          file.startsWith(baseDir + "/")
-        );
-        matchingFiles.push(...matchingPattern);
-      } else {
-        // Handle exact file paths
-        if (availableFiles.includes(pattern)) {
-          matchingFiles.push(pattern);
-        }
-      }
-    }
-
-    return [...new Set(matchingFiles)]; // Remove duplicates
-  }
-
-  /**
-   * Internal helper to import static files from the template runner into a directory
-   * @param runnerPath - The path to the runner directory
-   * @param filePaths - Array of file paths to extract from the template
-   */
-  private async importTemplateFiles(
-    runnerPath: string,
-    filePaths: string[]
-  ): Promise<void> {
-    try {
-      const extractedFiles = this.getAvailableTemplateFiles();
-
-      // Filter and write only the requested files
-      for (const filePath of filePaths) {
-        if (extractedFiles[filePath]) {
-          const fullFilePath = path.join(runnerPath, filePath);
-
-          // Ensure directory exists for this file
-          const fileDir = path.dirname(fullFilePath);
-          if (!fs.existsSync(fileDir)) {
-            fs.mkdirSync(fileDir, { recursive: true });
-          }
-
-          // Write file content
-          fs.writeFileSync(fullFilePath, extractedFiles[filePath], "utf8");
-          console.log(`Imported template file: ${filePath}`);
-        } else {
-          console.warn(`Template file not found: ${filePath}`);
-        }
-      }
-    } catch (error) {
-      console.error("Error importing static files from template:", error);
-      throw error;
-    }
-  }
 
   // List all runners
   async listRunners(): Promise<string[]> {

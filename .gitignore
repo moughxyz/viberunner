@@ -29,3 +29,5 @@ npm-debug.log*
 **/original-icon.*
 
 .DS_Store
+
+TemplateRunner/generated
