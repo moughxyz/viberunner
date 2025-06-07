@@ -6,14 +6,14 @@ on:
     paths:
       - 'packages/app/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'package-lock.json'
       - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'packages/app/**'
       - 'package.json'
-      - 'yarn.lock'
+      - 'package-lock.json'
       - '.github/workflows/ci.yml'
 
 concurrency:
@@ -32,13 +32,13 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'yarn'
+        cache: 'npm'
 
     - name: Install dependencies
-      run: yarn install --frozen-lockfile
+      run: npm ci
 
     - name: Run ESLint
-      run: yarn lint
+      run: npm run lint
 
     - name: TypeScript compilation check
       run: npx tsc --noEmit
@@ -59,10 +59,10 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'yarn'
+        cache: 'npm'
 
     - name: Install dependencies
-      run: yarn install --frozen-lockfile
+      run: npm ci
 
     - name: Restore certificate into a temp keychain
       if: matrix.os == 'macos-latest'
@@ -83,10 +83,10 @@ jobs:
 
     # Force rebuild native modules for the target platform
     - name: Rebuild native modules
-      run: yarn rebuild
+      run: npm rebuild
 
     - name: Build renderer
-      run: yarn build
+      run: npm run build
 
     # Clear electron cache to ensure fresh build
     - name: Clear Electron cache
@@ -123,9 +123,9 @@ jobs:
         VR_APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.VR_APPLE_TEAM_ID || '' }}
       run: |
         if [ "${{ matrix.os }}" = "macos-latest" ]; then
-          yarn make -- --arch=universal --platform=darwin
+          npm run make -- --arch=universal --platform=darwin
         else
-          yarn make
+          npm run make
         fi
 
     - name: Test packaged app exists
