@@ -1,0 +1,11 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+- Do not use semicolons in JS
+- In this Electron app, nodeIntegration is enabled, and the renderer has access to Node. No need to use IPCs for the most part.
+- DO NOT RUN THE APP YOURSELF. I WILL DO THIS SEPARATELY.
+- Pay attention to whether you are asked *HOW* to do something, compared with actually doing something. For example, if I ask, "How do I revert my last commit?", DO NOT REVERT THE LAST COMMIT. I am only asking how, not for you to do it. If I want you to do it, I will say "Revert the last commit."
+- Don't use emoji as UI elements
+- Do not use inline styles. Use CSS files.

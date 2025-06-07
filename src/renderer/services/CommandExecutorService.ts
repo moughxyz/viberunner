@@ -4,19 +4,25 @@ import type { App } from "electron"
 const fs = require("fs")
 const path = require("path")
 const { spawn, exec } = require("child_process")
-const os = require("os")
 
 export class CommandExecutorService {
   private runnersDir: string
-  private systemPaths: string[] = []
+  private userEnvironment: Record<string, string> = {}
   private initializationPromise: Promise<void>
 
   constructor() {
     this.runnersDir = getRunnersDirectory()
     console.log('is packaged', this.isPackaged())
-    // Initialize paths synchronously first, then store async promise
-    this.initializeSystemPathsSync()
-    this.initializationPromise = this.initializeSystemPaths()
+
+    // Initialize user environment
+    this.initializationPromise = this.initializeUserEnvironment()
+
+    // Test npm after initialization
+    this.initializationPromise.then(() => {
+      this.testNpm()
+    }).catch((error) => {
+      console.error("Environment initialization failed:", error)
+    })
   }
 
   private isPackaged(): boolean {
@@ -32,275 +38,88 @@ export class CommandExecutorService {
     }
   }
 
-  private initializeSystemPathsSync(): void {
-    // Initialize with common paths synchronously
-    const commonPaths = [
-      "/usr/local/bin",
-      "/usr/bin",
-      "/bin",
-      "/opt/homebrew/bin", // Apple Silicon Homebrew
-      "/usr/local/sbin",
-      "/usr/sbin",
-      "/sbin",
-    ]
+  private async initializeUserEnvironment(): Promise<void> {
+    console.log("Initializing user environment...")
 
-    if (process.platform === "darwin") {
-      // macOS specific paths
-      commonPaths.push(
-        "/System/Library/Frameworks/Python.framework/Versions/Current/bin",
-        "/Library/Frameworks/Python.framework/Versions/Current/bin",
-        "/opt/local/bin", // MacPorts
-        "/usr/local/go/bin",
-        path.join(os.homedir(), ".cargo/bin"), // Rust
-        path.join(os.homedir(), "go/bin"), // Go
-        path.join(os.homedir(), ".local/bin"), // Local binaries
-        path.join(os.homedir(), "bin")
-      )
-    } else if (process.platform === "win32") {
-      // Windows paths
-      commonPaths.push(
-        "C:\\Windows\\System32",
-        "C:\\Windows",
-        "C:\\Program Files\\Git\\bin",
-        "C:\\Program Files\\nodejs",
-        "C:\\Program Files (x86)\\Git\\bin"
-      )
-    }
-
-    // Filter to only existing paths
-    this.systemPaths = commonPaths.filter((p) => {
-      try {
-        return fs.existsSync(p)
-      } catch {
-        return false
-      }
-    })
-
-    console.log("Initial system paths:", this.systemPaths)
-  }
-
-  private async initializeSystemPaths(): Promise<void> {
-    // Try to get the actual user PATH if possible
-    if (this.isPackaged()) {
-      try {
-        await this.getUserPath()
-        console.log("Finalized system paths:", this.systemPaths)
-      } catch (error) {
-        console.warn("Could not get user PATH:", error)
-      }
-    }
-  }
-
-  private async getUserPath(): Promise<void> {
-    return new Promise((resolve) => {
-      // Try to get the user's actual PATH by running their shell
-      const shell = process.env.SHELL || "/bin/bash"
-
-      exec(
-        `${shell} -l -c 'echo $PATH'`,
-        (error: any, stdout: any, _stderr: any) => {
-          if (!error && stdout) {
-            const userPaths = stdout
-              .trim()
-              .split(":")
-              .filter((p: any) => p && fs.existsSync(p))
-            // Merge with our discovered paths, user paths take priority
-            this.systemPaths = [...new Set([...userPaths, ...this.systemPaths])]
-            console.log("Discovered user PATH:", this.systemPaths)
-          }
-          resolve()
-        }
-      )
-    })
-  }
-
-  private findExecutable(command: string): string {
-    console.log(`Finding executable for: ${command}`)
-
-    // If it's an absolute path, use it directly
-    if (path.isAbsolute(command)) {
-      return fs.existsSync(command) ? command : command
-    }
-
-    // Special handling for common commands first
-    if (command === "npm" || command === "node") {
-      const nodeResult = this.findNodeExecutable(command)
-      if (nodeResult) {
-        console.log(`Found via Node.js detection: ${nodeResult}`)
-        return nodeResult
-      }
-    }
-
-    // If not packaged, try the command as-is first
-    if (!this.isPackaged()) {
-      return command
-    }
-
-    // Search in our known paths
-    for (const searchPath of this.systemPaths) {
-      const fullPath = path.join(searchPath, command)
-      if (fs.existsSync(fullPath)) {
-        console.log(`Found executable: ${fullPath}`)
-        return fullPath
-      }
-
-      // Also try with common extensions on Windows
-      if (process.platform === "win32") {
-        for (const ext of [".exe", ".cmd", ".bat"]) {
-          const fullPathWithExt = fullPath + ext
-          if (fs.existsSync(fullPathWithExt)) {
-            console.log(`Found executable: ${fullPathWithExt}`)
-            return fullPathWithExt
-          }
-        }
-      }
-    }
-
-    // If we can't find it, return original command and let spawn handle it
-    console.warn(`Could not find executable for: ${command}, system paths:`, this.systemPaths)
-    return command
-  }
-
-  private findNodeExecutable(command: string): string | null {
-    const nodePath = process.execPath
-    const nodeDir = path.dirname(nodePath)
-
-    console.log(`Looking for ${command}, Node.js at: ${nodePath}`)
-
-    if (command === "node") {
-      return nodePath
-    }
-
-    if (command === "npm") {
-      // In packaged apps, prioritize using the bundled Node.js with npm
-      if (this.isPackaged()) {
-        // Look for npm-cli.js first (this is the actual npm script)
-        const npmCliLocations = [
-          // Bundled npm
-          path.join(nodeDir, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js"),
-          path.join(nodeDir, "node_modules", "npm", "bin", "npm-cli.js"),
-          // Check if there's a Resources directory (common in macOS apps)
-          path.join(nodeDir, "..", "..", "Resources", "app", "node_modules", "npm", "bin", "npm-cli.js"),
-          path.join(nodeDir, "..", "..", "Resources", "node_modules", "npm", "bin", "npm-cli.js"),
-        ]
-
-        for (const npmCliPath of npmCliLocations) {
-          if (fs.existsSync(npmCliPath)) {
-            console.log(`Found bundled npm-cli.js at: ${npmCliPath}`)
-            return `"${nodePath}" "${npmCliPath}"`
-          }
-        }
-      }
-
-      // Look for npm in various locations
-      const npmLocations = [
-        // Standard locations relative to Node.js
-        path.join(nodeDir, "npm"),
-        path.join(nodeDir, "npm.cmd"),
-        path.join(nodeDir, "npm.exe"),
-        // Global npm installations
-        path.join(nodeDir, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js"),
-        path.join(nodeDir, "node_modules", "npm", "bin", "npm-cli.js"),
-        // System locations (only for non-packaged or as fallback)
-        ...(!this.isPackaged() ? [
-          "/opt/homebrew/bin/npm",
-          "/usr/local/bin/npm",
-          ...this.systemPaths.map(p => path.join(p, "npm")),
-        ] : [])
-      ]
-
-      console.log(`Searching for npm in:`, npmLocations)
-
-      for (const npmPath of npmLocations) {
-        if (fs.existsSync(npmPath)) {
-          console.log(`Found npm at: ${npmPath}`)
-          // If it's the JS file, we need to run it through Node
-          if (npmPath.endsWith(".js")) {
-            return `"${nodePath}" "${npmPath}"`
-          }
-
-          // For packaged apps, if we find a system npm, use it with explicit node path
-          if (this.isPackaged() && !npmPath.includes(nodeDir)) {
-            // This ensures the system npm can find our bundled node
-            return npmPath
-          }
-
-          return npmPath
-        }
-      }
-
-      console.warn("npm not found in any expected locations")
-    }
-
-    return null
-  }
-
-  private commandNeedsShell(command: string): boolean {
-    // Commands that definitely need shell parsing
-    const shellFeatures = [
-      '"', "'",           // Quoted arguments
-      '|', '&&', '||',    // Pipes and logical operators
-      '>', '<', '>>',     // Redirects
-      '$', '`',           // Variables and command substitution
-      '*', '?', '[',      // Glob patterns
-      ';',                // Command chaining
-      '~',                // Home directory expansion
-    ]
-
-    // Check if command contains shell features
-    if (shellFeatures.some(feature => command.includes(feature))) {
-      return true
-    }
-
-    // Commands that commonly need shell treatment
-    const shellCommands = [
-      'npm', 'node', 'cursor', 'code', 'git',
-      'python', 'pip', 'conda', 'poetry',
-      'yarn', 'pnpm', 'bun',
-      'docker', 'kubectl',
-      'cargo', 'go', 'rustc',
-      'java', 'javac', 'gradle', 'maven',
-    ]
-
-    const executable = command.trim().split(' ')[0]
-    return shellCommands.includes(executable)
-  }
-
-  private createEnvironment(): Record<string, string> {
-    const env: Record<string, string> = {}
-
-    // Copy process.env, filtering out undefined values
+    // Start with current process environment
     Object.keys(process.env).forEach((key) => {
       const value = process.env[key]
       if (value !== undefined) {
-        env[key] = value
+        this.userEnvironment[key] = value
       }
     })
 
-    if (this.isPackaged() && this.systemPaths.length > 0) {
-      // Include the bundled Node.js directory in PATH so npm can find node
-      const nodeDir = path.dirname(process.execPath)
-      const pathSeparator = process.platform === "win32" ? ";" : ":"
-      const pathsToInclude = [nodeDir, ...this.systemPaths]
-
-      // Restore a more complete PATH in packaged apps
-      env.PATH = pathsToInclude.join(pathSeparator)
-
-      // Add some helpful environment variables
-      env.NODE_PATH = path.join(nodeDir, "node_modules")
-
-      // Ensure we have a HOME directory
-      if (!env.HOME && process.platform !== "win32") {
-        env.HOME = os.homedir()
-      }
-
-      // Set NODE_ENV if not already set
-      if (!env.NODE_ENV) {
-        env.NODE_ENV = "development"
+    // For packaged apps, try to get the user's actual shell environment
+    if (this.isPackaged()) {
+      try {
+        await this.getUserShellEnvironment()
+      } catch (error) {
+        console.warn("Could not get user shell environment:", error)
       }
     }
 
-    return env
+    console.log("User environment initialized. PATH length:", this.userEnvironment.PATH?.split(path.delimiter).length || 0)
+  }
+
+  private async getUserShellEnvironment(): Promise<void> {
+    return new Promise((resolve) => {
+      const shell = process.env.SHELL || "/bin/bash"
+
+      // Get both PATH and other important environment variables from user's shell
+      const envCommand = `${shell} -l -c 'env'`
+
+      exec(envCommand, (error: any, stdout: any, _stderr: any) => {
+        if (!error && stdout) {
+          // Parse environment variables from shell output
+          const envLines = stdout.trim().split('\n')
+          for (const line of envLines) {
+            const [key, ...valueParts] = line.split('=')
+            if (key && valueParts.length > 0) {
+              const value = valueParts.join('=')
+              this.userEnvironment[key] = value
+            }
+          }
+          console.log("Loaded user shell environment")
+        }
+        resolve()
+      })
+    })
+  }
+
+  private async testNpm(): Promise<void> {
+    console.log("=== Testing npm functionality ===")
+
+    try {
+      // Test basic npm command
+      const result = await this.executeShellCommand("npm --version", undefined)
+
+      if (result.success) {
+        console.log("✅ npm --version succeeded:", result.output.trim())
+      } else {
+        console.log("❌ npm --version failed:", result.error)
+      }
+
+      // Test npm help command
+      const helpResult = await this.executeShellCommand("npm help", undefined)
+
+      if (helpResult.success) {
+        console.log("✅ npm help succeeded")
+      } else {
+        console.log("❌ npm help failed:", helpResult.error)
+      }
+
+      // Show environment info
+      console.log("🔍 Environment info:")
+      console.log("- PATH length:", this.userEnvironment.PATH?.split(path.delimiter).length || 0)
+      console.log("- NODE env var:", this.userEnvironment.NODE || "not set")
+      console.log("- npm_node_execpath:", this.userEnvironment.npm_node_execpath || "not set")
+      console.log("- SHELL:", this.userEnvironment.SHELL || "not set")
+
+    } catch (error) {
+      console.log("❌ npm test failed with exception:", error)
+    }
+
+    console.log("=== npm test completed ===")
   }
 
   async executeCommand(
@@ -310,7 +129,6 @@ export class CommandExecutorService {
     try {
       console.log("Executing command:", command)
 
-      // Parse the command
       const trimmedCommand = command.trim()
 
       if (trimmedCommand.startsWith("npm run build")) {
@@ -318,7 +136,6 @@ export class CommandExecutorService {
       } else if (trimmedCommand.startsWith("npm install")) {
         return await this.executeInstallCommand(runnerName)
       } else {
-        // For other commands, execute them with our enhanced shell command
         return await this.executeShellCommand(trimmedCommand, runnerName)
       }
     } catch (error) {
@@ -341,7 +158,6 @@ export class CommandExecutorService {
 
       // Build command string for shell execution
       const quotedArgs = args.map(arg => {
-        // Quote arguments that contain spaces or special characters
         if (arg.includes(' ') || arg.includes('"') || arg.includes("'")) {
           return `"${arg.replace(/"/g, '\\"')}"`
         }
@@ -365,63 +181,27 @@ export class CommandExecutorService {
     runnerName?: string
   ): Promise<{ success: boolean; output: string; error?: string }> {
     return new Promise((resolve) => {
-      // Wait for paths to be initialized if still in progress
+      // Wait for environment initialization
       const executeWhenReady = () => {
         const cwd = runnerName
           ? path.join(this.runnersDir, runnerName)
           : this.runnersDir
 
-        // Enhanced command parsing and execution
-        const parts = command.split(" ")
-        const executable = parts[0]
-        const args = parts.slice(1)
-
-        // Find the actual executable
-        const resolvedExecutable = this.findExecutable(executable)
-
-        // Handle special case where we returned a compound command (like "node npm-cli.js")
-        let finalCommand: string
-        let finalArgs: string[]
-
-        if (resolvedExecutable.includes(" ")) {
-          const compoundParts = resolvedExecutable.split(" ")
-          finalCommand = compoundParts[0]
-          finalArgs = [...compoundParts.slice(1), ...args]
-        } else {
-          finalCommand = resolvedExecutable
-          finalArgs = args
-        }
-
-        const env = this.createEnvironment()
-
         console.log("Executing shell command:", {
-          originalCommand: command,
-          resolvedExecutable,
-          finalCommand,
-          finalArgs,
+          command,
           cwd,
           isPackaged: this.isPackaged(),
-          pathCount: this.systemPaths.length,
         })
 
-        // Determine if we should use shell mode
-        const needsShellParsing = this.commandNeedsShell(command)
-        const useShell = !this.isPackaged() ||
-                        process.platform === "win32" ||
-                        needsShellParsing
-
-        const spawnOptions: any = {
+        // Always use shell execution for consistent behavior
+        const spawnOptions = {
           cwd,
+          shell: true,
           stdio: ["pipe", "pipe", "pipe"] as const,
-          env,
-          shell: useShell,
+          env: this.userEnvironment,
         }
 
-        // If using shell and it's a packaged app, use the original command
-        const commandToRun = useShell && this.isPackaged() ? command : finalCommand
-        const argsToUse = useShell && this.isPackaged() ? [] : finalArgs
-
-        const child = spawn(commandToRun, argsToUse, spawnOptions)
+        const child = spawn(command, [], spawnOptions)
 
         let stdout = ""
         let stderr = ""
@@ -446,64 +226,19 @@ export class CommandExecutorService {
         })
 
         child.on("error", (error: Error) => {
-          // If we get ENOENT, try one more time with shell
-          if (error.message.includes("ENOENT") && !useShell) {
-            console.log("Retrying with shell due to ENOENT")
-
-            const retryChild = spawn(command, [], {
-              cwd,
-              shell: true,
-              stdio: ["pipe", "pipe", "pipe"],
-              env,
-            })
-
-            let retryStdout = ""
-            let retryStderr = ""
-
-            retryChild.stdout.on("data", (data: Buffer) => {
-              retryStdout += data.toString()
-            })
-
-            retryChild.stderr.on("data", (data: Buffer) => {
-              retryStderr += data.toString()
-            })
-
-            retryChild.on("close", (retryCode: number) => {
-              const retrySuccess = retryCode === 0
-              resolve({
-                success: retrySuccess,
-                output:
-                  retryStdout ||
-                  (retrySuccess ? "Command completed successfully" : ""),
-                error: retrySuccess
-                  ? undefined
-                  : retryStderr || `Command exited with code ${retryCode}`,
-              })
-            })
-
-            retryChild.on("error", (retryError: Error) => {
-              resolve({
-                success: false,
-                output: "",
-                error: `Failed to execute command: ${retryError.message}`,
-              })
-            })
-          } else {
-            resolve({
-              success: false,
-              output: "",
-              error: `Failed to execute command: ${error.message}`,
-            })
-          }
+          resolve({
+            success: false,
+            output: "",
+            error: `Failed to execute command: ${error.message}`,
+          })
         })
       }
 
-      // Wait for initialization to complete, then execute
+      // Wait for initialization to complete
       this.initializationPromise.then(() => {
         executeWhenReady()
       }).catch((error) => {
         console.error("Initialization failed:", error)
-        // Execute anyway with basic paths
         executeWhenReady()
       })
     })
@@ -531,7 +266,6 @@ export class CommandExecutorService {
         }
       }
 
-      // Check if package.json exists
       const packageJsonPath = path.join(runnerPath, "package.json")
       if (!fs.existsSync(packageJsonPath)) {
         return {
@@ -541,9 +275,7 @@ export class CommandExecutorService {
         }
       }
 
-      // Execute build command using Node.js child_process
-      const result = await this.executeShellCommand("npm run build", runnerName)
-      return result
+      return await this.executeShellCommand("npm run build", runnerName)
     } catch (error) {
       return {
         success: false,
@@ -577,9 +309,7 @@ export class CommandExecutorService {
         }
       }
 
-      // Execute install command using Node.js child_process
-      const result = await this.executeShellCommand("npm install", runnerName)
-      return result
+      return await this.executeShellCommand("npm install", runnerName)
     } catch (error) {
       return {
         success: false,
@@ -591,7 +321,6 @@ export class CommandExecutorService {
     }
   }
 
-  // Get available runners for building
   async getAvailableRunners(): Promise<string[]> {
     try {
       if (!fs.existsSync(this.runnersDir)) {

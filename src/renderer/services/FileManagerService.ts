@@ -274,6 +274,8 @@ export class FileManagerService {
       case ".yml":
       case ".yaml":
         return "yaml"
+      case ".svg":
+        return "svg"
       case ".xml":
         return "xml"
       default:

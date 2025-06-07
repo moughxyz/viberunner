@@ -606,6 +606,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
         return "html"
       case "md":
         return "markdown"
+      case "svg":
+        return "svg"
       default:
         return "text"
     }
