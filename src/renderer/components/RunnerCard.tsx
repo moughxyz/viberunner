@@ -1,18 +1,7 @@
 import React from "react"
+import { RunnerConfig } from "../types"
 import "./RunnerCard.css"
 import UiButton from "./UiButton"
-
-interface RunnerConfig {
-  id: string
-  name: string
-  description: string
-  version: string
-  mimetypes: string[]
-  author: string
-  standalone?: boolean
-  icon?: string
-  userPreferences?: Record<string, any>
-}
 
 interface OptionsMenuProps {
   runnerId: string

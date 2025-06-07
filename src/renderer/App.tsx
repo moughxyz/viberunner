@@ -71,7 +71,6 @@ const App: React.FC = () => {
   // Use RunnerService instead of local state
   const {
     runners,
-    isLoading: isLoadingRunners,
     startupRunners,
     getAppIcon,
     runnerIcons,
@@ -167,26 +166,7 @@ const App: React.FC = () => {
   // Get the currently active tab
   const activeTab = openTabs.find((tab) => tab.id === activeTabId)
 
-  // Toggle startup runner enabled state
-  const toggleStartupApp = async (runnerId: string, enabled: boolean) => {
-    try {
-      await runnerService.toggleStartupRunner(runnerId, enabled)
-    } catch (error) {
-      console.error("Error toggling startup runner:", error)
-    }
-  }
 
-  // Update tab order for startup runner
-  const updateStartupAppTabOrder = async (
-    runnerId: string,
-    tabOrder: number
-  ) => {
-    try {
-      await runnerService.updateStartupRunnerTabOrder(runnerId, tabOrder)
-    } catch (error) {
-      console.error("Error updating startup runner tab order:", error)
-    }
-  }
 
   // Auto-launch startup runners when runners are loaded (but not in single app mode)
   useEffect(() => {
@@ -571,13 +551,7 @@ const App: React.FC = () => {
 
                     <RunnersGrid
                       runners={runners}
-                      isLoadingRunners={isLoadingRunners}
-                      startupRunners={startupRunners}
-                      getAppIcon={getAppIcon}
-                      getSupportedFormats={getSupportedFormats}
                       launchStandaloneApp={launchStandaloneApp}
-                      toggleStartupApp={toggleStartupApp}
-                      updateStartupAppTabOrder={updateStartupAppTabOrder}
                       onEditRunner={handleEditRunner}
                       onEditRunnerWithCursor={handleEditRunnerWithCursor}
                     />

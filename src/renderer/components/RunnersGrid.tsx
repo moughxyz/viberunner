@@ -4,57 +4,71 @@ import ConfirmDialog from "./ConfirmDialog"
 import RunnerCard from "./RunnerCard"
 import { runnerService } from "../services/RunnerService"
 import { macService } from "../services/MacService"
-
-interface RunnerConfig {
-  id: string
-  name: string
-  description: string
-  version: string
-  mimetypes: string[]
-  author: string
-  standalone?: boolean
-  icon?: string
-  userPreferences?: Record<string, any>
-}
+import { useRunnerService } from "../hooks/useRunnerService"
+import { getSupportedFormats } from "../../lib/utils"
+import { RunnerConfig } from "../types"
 
 interface RunnersGridProps {
   runners: RunnerConfig[]
-  isLoadingRunners: boolean
-  startupRunners: Record<string, { enabled: boolean; tabOrder: number }>
-  getAppIcon: (runner: RunnerConfig) => string
-  getSupportedFormats: (runner: RunnerConfig) => string
-  launchStandaloneApp: (runner: RunnerConfig) => Promise<void>
-  toggleStartupApp: (runnerId: string, enabled: boolean) => Promise<void>
-  updateStartupAppTabOrder: (
-    runnerId: string,
-    tabOrder: number
-  ) => Promise<void>
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
+  launchStandaloneApp?: (runner: RunnerConfig) => Promise<void>
 }
 
 const RunnersGrid: React.FC<RunnersGridProps> = ({
   runners,
-  isLoadingRunners,
-  startupRunners,
-  getAppIcon,
-  getSupportedFormats,
-  launchStandaloneApp,
-  toggleStartupApp,
-  updateStartupAppTabOrder,
   onEditRunner,
   onEditRunnerWithCursor,
+  launchStandaloneApp,
 }) => {
   const [activeDropdown, setActiveDropdown] = React.useState<string | null>(
     null
   )
   const [isDeleting, setIsDeleting] = React.useState<string | null>(null)
 
+  // Use the runner service hook to get state and functions
+  const {
+    isLoading: isLoadingRunners,
+    startupRunners,
+    getAppIcon,
+  } = useRunnerService()
+
   const utilityRunners = runners.filter((a) => a.standalone)
   const contextualRunners = runners.filter((f) => !f.standalone)
 
   // Combine all runners with utility runners first
   const allRunners = [...utilityRunners, ...contextualRunners]
+
+  // Service functions accessed directly
+  const toggleStartupApp = async (runnerId: string, enabled: boolean) => {
+    try {
+      await runnerService.toggleStartupRunner(runnerId, enabled)
+    } catch (error) {
+      console.error("Error toggling startup runner:", error)
+    }
+  }
+
+  const updateStartupAppTabOrder = async (
+    runnerId: string,
+    tabOrder: number
+  ) => {
+    try {
+      await runnerService.updateStartupRunnerTabOrder(runnerId, tabOrder)
+    } catch (error) {
+      console.error("Error updating startup runner tab order:", error)
+    }
+  }
+
+  const handleLaunchStandaloneApp = async (runner: RunnerConfig) => {
+    if (launchStandaloneApp) {
+      try {
+        await launchStandaloneApp(runner)
+      } catch (error) {
+        console.error("Failed to launch standalone app:", error)
+        alert(`Failed to launch ${runner.name}: ${error}`)
+      }
+    }
+  }
 
   const handleEditDropdown = (
     runnerId: string,
@@ -164,7 +178,7 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                 startupConfig={startupRunners[runner.id]}
                 getAppIcon={getAppIcon}
                 getSupportedFormats={getSupportedFormats}
-                launchStandaloneApp={launchStandaloneApp}
+                launchStandaloneApp={handleLaunchStandaloneApp}
                 toggleStartupApp={toggleStartupApp}
                 updateStartupAppTabOrder={updateStartupAppTabOrder}
                 activeDropdown={activeDropdown}
