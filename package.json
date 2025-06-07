@@ -22,7 +22,8 @@
     "build:apps": "cd ExampleApps && for dir in */; do if [ -f \"$dir/package.json\" ]; then echo \"Building $dir...\" && cd \"$dir\" && npm run build && cd ..; fi; done",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives",
     "preview": "vite preview",
-    "convert-icon": "node scripts/convert-icon.js assets/source-icon.png"
+    "convert-icon": "node scripts/convert-icon.js assets/source-icon.png",
+    "release": "node scripts/release.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
