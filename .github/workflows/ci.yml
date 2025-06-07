@@ -104,6 +104,7 @@ jobs:
         npx @electron/rebuild --version=$ELECTRON_VERSION --force
 
     - name: Create distributables
+      shell: bash
       env:
         # Pass GitHub secrets as environment variables for macOS code signing
         OSX_SIGN_IDENTITY: ${{ matrix.os == 'macos-latest' && secrets.OSX_SIGN_IDENTITY || '' }}
