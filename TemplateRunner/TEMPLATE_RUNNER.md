@@ -110,7 +110,8 @@ export default TemplateRunner
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "lucide-react": "^0.511.0",
   },
   "devDependencies": {
     "@types/node": "^22.15.29",

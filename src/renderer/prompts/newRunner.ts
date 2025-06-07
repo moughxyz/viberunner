@@ -47,51 +47,7 @@ export const getNewRunnerPrompt = (
   Let's get started.
 
   <RunnerArtifact name="src/App.tsx">
-    import React, { useEffect } from "react"
-
-    declare global {
-      interface Window {
-        registerCleanup: (tabId: string, cleanupFn: () => void) => void
-        __RENDER_RUNNER__: (app: React.ComponentType<any>) => void
-      }
-    }
-
-    interface ClipboardManagerRunnerProps {
-      dataDirectory: string
-      fileInput?: {
-        path: string
-        mimetype: string
-      }
-      tabId: string
-    }
-
-    const ClipboardManagerRunner: React.FC<ClipboardManagerRunnerProps> = ({
-      tabId,
-    }: ClipboardManagerRunnerProps) => {
-      useEffect(() => {
-        window.registerCleanup(tabId, () => {
-          // Cleanup timers, listeners, etc.
-        })
-      })
-
-      return (
-        <div
-          style={{
-            padding: "20px",
-            background: "#0a0a0a",
-            color: "#ffffff",
-            minHeight: "100vh",
-            fontFamily: "system-ui, -apple-system, sans-serif",
-          }}
-        >
-          <div>Hello World</div>
-        </div>
-      )
-    }
-
-    window.__RENDER_RUNNER__(ClipboardManagerRunner)
-
-    export default ClipboardManagerRunner
+    ${appTsxTemplate}
   </RunnerArtifact>
 
   <RunnerArtifact name="vite.config.json">
@@ -111,12 +67,13 @@ export const getNewRunnerPrompt = (
 
   Our system will read this tag and execute the commands for you.
 
-  IMPORTANT:
+  <important-guidelines>
    - When you first create the project, always run npm install and then npm run build.
    - On every subsequent change, run npm install if you added or modified a package entry in package.json.
    - Always run npm run build after making changes to the project, no matter the nature of the change.
+  </important-guidelines>
 
-  Design Principles and Rules:
+  <architecture-guidelines>
     - Prefer Node API over Web APIs (for file system access, clipboard history, etc)
     - Prefer relying on native system APIs over installing third party packages.
       - For example, for a clipboard manager, use execSync with pbpaste, powershell Get-Clipboard, or xclip -selection clipboard -o, depending on the platform.
@@ -125,8 +82,9 @@ export const getNewRunnerPrompt = (
       - If CommonJS, use require statements.
     - If you need to store user data, use the passed in dataDirectory prop. You can create files and folders in this directory.
     - When needing to execute a command, use the window.api.executeCommand API.
+  </architecture-guidelines>
 
-  Design Guidelines:
+  <design-guidelines>
     - Use shadcn/ui for basic components (eg. \`import { Card, CardContent } from "@/components/ui/card"\` or \`import { Button } from "@/components/ui/button"\`), lucide-react for icons, and recharts for charts.
     - Code should be production-ready with a minimal, clean aesthetic.
     - Follow these style guides:
@@ -146,10 +104,12 @@ export const getNewRunnerPrompt = (
           color: "#ffffff",
         },
       }
+  </design-guidelines>
 
-  Response Guidelines:
+  <response-guidelines>
     - When you generate a summary when you finish creating the app, keep it short. Like a paragraph. No need
       to essentially generate a very detailed runthrough of what you did.
+  </response-guidelines>
 
   Here are the contents of the promised attachments:
 
@@ -165,3 +125,83 @@ export const getNewRunnerPrompt = (
   ${userPrompt}
   `
 }
+
+const appTsxTemplate = `import React, { useEffect } from "react"
+    import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+    import { Button } from "@/components/ui/button"
+    import { Sparkles, Zap } from "lucide-react"
+
+    declare global {
+      interface Window {
+        registerCleanup: (tabId: string, cleanupFn: () => void) => void
+        __RENDER_RUNNER__: (app: React.ComponentType<any>) => void
+      }
+    }
+
+    interface RunnerProps {
+      dataDirectory: string
+      fileInput?: {
+        path: string
+        mimetype: string
+      }
+      tabId: string
+    }
+
+    const styles = {
+      container: {
+        padding: "20px",
+        background: "#0a0a0a",
+        color: "#ffffff",
+        minHeight: "100vh",
+        fontFamily: "system-ui, -apple-system, sans-serif",
+      },
+      header: {
+        fontSize: "1.5rem",
+        fontWeight: "600",
+        marginBottom: "1rem",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.5rem",
+      }
+    }
+
+    const Runner: React.FC<RunnerProps> = ({
+      tabId,
+      dataDirectory,
+    }: RunnerProps) => {
+      useEffect(() => {
+        window.registerCleanup(tabId, () => {
+          // Cleanup timers, listeners, etc.
+        })
+      }, [tabId])
+
+      return (
+        <div style={styles.container}>
+          <div style={styles.header}>
+            <Sparkles className="w-6 h-6" />
+            Your New Runner
+          </div>
+
+          <Card className="bg-gray-900 border-gray-800">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="w-5 h-5" />
+                Welcome to your new runner!
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-300 mb-4">
+                This is your starting template. Customize it to build your desired functionality.
+              </p>
+              <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
+                Get Started
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )
+    }
+
+    window.__RENDER_RUNNER__(Runner)
+
+    export default Runner`
