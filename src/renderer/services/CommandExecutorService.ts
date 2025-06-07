@@ -3,7 +3,61 @@ import type { App } from "electron"
 
 const fs = require("fs")
 const path = require("path")
-const { spawn, exec } = require("child_process")
+const { spawn, execSync } = require("child_process")
+const { userInfo } = require("os")
+
+// Simple shell environment detection for renderer process
+function getShellPath(): string | undefined {
+  if (process.platform === "win32") {
+    return process.env.PATH
+  }
+
+  try {
+    // Get user's shell
+    const defaultShell = (() => {
+      try {
+        const { shell } = userInfo()
+        if (shell) return shell
+      } catch {
+        // Ignore userInfo errors
+      }
+      if (process.platform === "darwin") {
+        return process.env.SHELL ?? "/bin/zsh"
+      }
+      return process.env.SHELL ?? "/bin/sh"
+    })()
+
+    console.log("🐚 Using shell for PATH detection:", defaultShell)
+
+    // Execute shell to get PATH
+    const result = execSync(`${defaultShell} -ilc 'echo $PATH'`, {
+      encoding: 'utf8',
+      timeout: 5000,
+      env: { DISABLE_AUTO_UPDATE: 'true' }
+    })
+
+    const shellPath = result.toString().trim()
+    console.log("🐚 Shell PATH detected:", shellPath.substring(0, 100) + "...")
+    return shellPath
+  } catch (error) {
+    console.warn("🐚 Failed to get shell PATH:", error)
+    return process.env.PATH
+  }
+}
+
+function fixRendererPath(): void {
+  if (process.platform === "win32") {
+    return
+  }
+
+  const shellPath = getShellPath()
+  if (shellPath && shellPath !== process.env.PATH) {
+    console.log("🔧 Fixing renderer PATH...")
+    console.log("🔧 Before:", process.env.PATH)
+    process.env.PATH = shellPath
+    console.log("🔧 After:", process.env.PATH?.substring(0, 100) + "...")
+  }
+}
 
 export class CommandExecutorService {
   private runnersDir: string
@@ -12,17 +66,19 @@ export class CommandExecutorService {
 
   constructor() {
     this.runnersDir = getRunnersDirectory()
-    console.log('is packaged', this.isPackaged())
+    console.log("is packaged", this.isPackaged())
 
     // Initialize user environment
     this.initializationPromise = this.initializeUserEnvironment()
 
     // Test npm after initialization
-    this.initializationPromise.then(() => {
-      this.testNpm()
-    }).catch((error) => {
-      console.error("Environment initialization failed:", error)
-    })
+    this.initializationPromise
+      .then(() => {
+        this.testNpm()
+      })
+      .catch((error) => {
+        console.error("Environment initialization failed:", error)
+      })
   }
 
   private isPackaged(): boolean {
@@ -41,55 +97,93 @@ export class CommandExecutorService {
   private async initializeUserEnvironment(): Promise<void> {
     console.log("Initializing user environment...")
 
-    // Start with current process environment
-    Object.keys(process.env).forEach((key) => {
-      const value = process.env[key]
-      if (value !== undefined) {
-        this.userEnvironment[key] = value
-      }
-    })
+    try {
+      console.log("🔍 PATH before fix:", process.env.PATH)
 
-    // For packaged apps, try to get the user's actual shell environment
-    if (this.isPackaged()) {
-      try {
-        await this.getUserShellEnvironment()
-      } catch (error) {
-        console.warn("Could not get user shell environment:", error)
-      }
+      // Fix PATH in renderer process
+      fixRendererPath()
+
+      // Use the (now fixed) process environment
+      Object.keys(process.env).forEach((key) => {
+        const value = process.env[key]
+        if (value !== undefined) {
+          this.userEnvironment[key] = value
+        }
+      })
+
+      console.log("✅ User environment initialized with shell environment")
+      console.log("🔍 Final PATH:", this.userEnvironment.PATH)
+    } catch (error) {
+      console.warn(
+        "⚠️ Failed to get shell environment, using process.env:",
+        error
+      )
+
+      // Fallback to copying process.env
+      Object.keys(process.env).forEach((key) => {
+        const value = process.env[key]
+        if (value !== undefined) {
+          this.userEnvironment[key] = value
+        }
+      })
     }
 
-    console.log("User environment initialized. PATH length:", this.userEnvironment.PATH?.split(path.delimiter).length || 0)
-  }
-
-  private async getUserShellEnvironment(): Promise<void> {
-    return new Promise((resolve) => {
-      const shell = process.env.SHELL || "/bin/bash"
-
-      // Get both PATH and other important environment variables from user's shell
-      const envCommand = `${shell} -l -c 'env'`
-
-      exec(envCommand, (error: any, stdout: any, _stderr: any) => {
-        if (!error && stdout) {
-          // Parse environment variables from shell output
-          const envLines = stdout.trim().split('\n')
-          for (const line of envLines) {
-            const [key, ...valueParts] = line.split('=')
-            if (key && valueParts.length > 0) {
-              const value = valueParts.join('=')
-              this.userEnvironment[key] = value
-            }
-          }
-          console.log("Loaded user shell environment")
-        }
-        resolve()
-      })
-    })
+    console.log(
+      "User environment initialized. PATH length:",
+      this.userEnvironment.PATH?.split(path.delimiter).length || 0
+    )
+    console.log(
+      "First few PATH entries:",
+      this.userEnvironment.PATH?.split(path.delimiter).slice(0, 3) || "not set"
+    )
   }
 
   private async testNpm(): Promise<void> {
     console.log("=== Testing npm functionality ===")
 
     try {
+      // Test where node is located
+      const whichNodeResult = await this.executeShellCommand(
+        "which node",
+        undefined
+      )
+      if (whichNodeResult.success) {
+        console.log("✅ which node succeeded:", whichNodeResult.output.trim())
+      } else {
+        console.log("❌ which node failed:", whichNodeResult.error)
+      }
+
+      // Test where npm is located
+      const whichNpmResult = await this.executeShellCommand(
+        "which npm",
+        undefined
+      )
+      if (whichNpmResult.success) {
+        console.log("✅ which npm succeeded:", whichNpmResult.output.trim())
+      } else {
+        console.log("❌ which npm failed:", whichNpmResult.error)
+      }
+
+      // Check if nvm is being used
+      const nvmResult = await this.executeShellCommand(
+        "command -v nvm",
+        undefined
+      )
+      if (nvmResult.success) {
+        console.log("✅ nvm detected:", nvmResult.output.trim())
+
+        // Try to get nvm current version
+        const nvmCurrentResult = await this.executeShellCommand(
+          "nvm current",
+          undefined
+        )
+        if (nvmCurrentResult.success) {
+          console.log("✅ nvm current version:", nvmCurrentResult.output.trim())
+        }
+      } else {
+        console.log("ℹ️ nvm not detected (this is fine if not using nvm)")
+      }
+
       // Test basic npm command
       const result = await this.executeShellCommand("npm --version", undefined)
 
@@ -110,11 +204,22 @@ export class CommandExecutorService {
 
       // Show environment info
       console.log("🔍 Environment info:")
-      console.log("- PATH length:", this.userEnvironment.PATH?.split(path.delimiter).length || 0)
+      console.log(
+        "- PATH length:",
+        this.userEnvironment.PATH?.split(path.delimiter).length || 0
+      )
+      console.log(
+        "- PATH directories:",
+        this.userEnvironment.PATH?.split(path.delimiter).slice(0, 5) ||
+          "not set"
+      )
       console.log("- NODE env var:", this.userEnvironment.NODE || "not set")
-      console.log("- npm_node_execpath:", this.userEnvironment.npm_node_execpath || "not set")
+      console.log(
+        "- npm_node_execpath:",
+        this.userEnvironment.npm_node_execpath || "not set"
+      )
       console.log("- SHELL:", this.userEnvironment.SHELL || "not set")
-
+      console.log("- NVM_DIR:", this.userEnvironment.NVM_DIR || "not set")
     } catch (error) {
       console.log("❌ npm test failed with exception:", error)
     }
@@ -157,13 +262,13 @@ export class CommandExecutorService {
       console.log("Executing command with args:", executable, args)
 
       // Build command string for shell execution
-      const quotedArgs = args.map(arg => {
-        if (arg.includes(' ') || arg.includes('"') || arg.includes("'")) {
+      const quotedArgs = args.map((arg) => {
+        if (arg.includes(" ") || arg.includes('"') || arg.includes("'")) {
           return `"${arg.replace(/"/g, '\\"')}"`
         }
         return arg
       })
-      const command = [executable, ...quotedArgs].join(' ')
+      const command = [executable, ...quotedArgs].join(" ")
 
       return await this.executeShellCommand(command, runnerName)
     } catch (error) {
@@ -235,12 +340,14 @@ export class CommandExecutorService {
       }
 
       // Wait for initialization to complete
-      this.initializationPromise.then(() => {
-        executeWhenReady()
-      }).catch((error) => {
-        console.error("Initialization failed:", error)
-        executeWhenReady()
-      })
+      this.initializationPromise
+        .then(() => {
+          executeWhenReady()
+        })
+        .catch((error) => {
+          console.error("Initialization failed:", error)
+          executeWhenReady()
+        })
     })
   }
 

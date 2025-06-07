@@ -34,13 +34,16 @@
     "@tailwindcss/vite": "^4.1.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-log": "^5.4.0",
     "electron-squirrel-startup": "^1.0.0",
     "electron-updater": "^6.6.2",
+    "fix-path": "^4.0.0",
     "lucide-react": "^0.511.0",
     "mime-types": "^2.1.35",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",
+    "strip-ansi": "^7.1.0",
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {

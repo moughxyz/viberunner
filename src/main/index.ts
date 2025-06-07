@@ -11,6 +11,17 @@ import {
 import { autoUpdater } from "electron-updater"
 import { spawn } from "child_process"
 import path from "path"
+import fixPath from "fix-path"
+import log from "electron-log"
+
+// Configure logging
+log.transports.file.level = "debug"
+log.transports.console.level = "debug"
+
+log.info("Path before fix-path", process.env.PATH)
+// Initialize fix-path
+fixPath()
+log.info("Path after fix-path", process.env.PATH)
 
 // Enable remote module for renderer access to app.getPath
 import "@electron/remote/main"
