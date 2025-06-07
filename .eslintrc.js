@@ -16,7 +16,8 @@ module.exports = {
     '.eslintrc.js',
     'forge.config.js',
     'vite.config.ts',
-    'ExampleApps/**/*'
+    'ExampleApps/**/*',
+    'TemplateRunner/**/*'
   ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
