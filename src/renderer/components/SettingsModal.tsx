@@ -1,16 +1,13 @@
 import React from "react"
-import { UpdateNotificationRef } from "./UpdateNotification"
 
 interface SettingsModalProps {
   isVisible: boolean
   onClose: () => void
-  updateNotificationRef: React.RefObject<UpdateNotificationRef>
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({
   isVisible,
   onClose,
-  updateNotificationRef,
 }) => {
   if (!isVisible) return null
 
@@ -24,22 +21,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
         <div className="settings-content">
-          <div className="setting-group">
-            <label>Updates</label>
-            <p className="setting-description">
-              Check for the latest version of Viberunner
-            </p>
-            <div className="setting-actions">
-              <button
-                className="btn btn-outline"
-                onClick={() =>
-                  updateNotificationRef.current?.checkForUpdates()
-                }
-              >
-                Check for Updates
-              </button>
-            </div>
-          </div>
+          <div className="setting-group"></div>
         </div>
       </div>
     </div>

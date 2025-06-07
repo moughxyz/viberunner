@@ -8,71 +8,25 @@ import {
   Tray,
   nativeImage,
 } from "electron"
-import { autoUpdater } from "electron-updater"
 import { spawn } from "child_process"
 import path from "path"
 import fixPath from "fix-path"
 import log from "electron-log"
+import { updateElectronApp } from "update-electron-app"
+
+updateElectronApp()
 
 // Configure logging
 log.transports.file.level = "debug"
 log.transports.console.level = "debug"
 
-log.info("Path before fix-path", process.env.PATH)
 // Initialize fix-path
 fixPath()
-log.info("Path after fix-path", process.env.PATH)
 
 // Enable remote module for renderer access to app.getPath
 import "@electron/remote/main"
 const remoteMain = require("@electron/remote/main")
 remoteMain.initialize()
-
-// Configure autoupdate
-autoUpdater.setFeedURL({
-  provider: "github",
-  owner: "moughxyz",
-  repo: "viberunner-releases",
-})
-autoUpdater.checkForUpdatesAndNotify()
-
-// Configure autoupdate
-autoUpdater.checkForUpdatesAndNotify()
-
-// Handle autoupdate events
-autoUpdater.on("checking-for-update", () => {
-  console.log("Checking for update...")
-})
-
-autoUpdater.on("update-available", (info) => {
-  console.log("Update available:", info)
-})
-
-autoUpdater.on("update-not-available", (info) => {
-  console.log("Update not available:", info)
-})
-
-autoUpdater.on("error", (err) => {
-  console.log("Error in auto-updater:", err)
-})
-
-autoUpdater.on("download-progress", (progressObj) => {
-  let log_message = "Download speed: " + progressObj.bytesPerSecond
-  log_message = log_message + " - Downloaded " + progressObj.percent + "%"
-  log_message =
-    log_message + " (" + progressObj.transferred + "/" + progressObj.total + ")"
-  console.log(log_message)
-})
-
-autoUpdater.on("update-downloaded", (info) => {
-  console.log("Update downloaded:", info)
-  autoUpdater.quitAndInstall()
-})
-
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require("electron-squirrel-startup")) {
-  app.quit()
-}
 
 // Create the application menu bar
 const createMenuBar = (): void => {
@@ -554,49 +508,6 @@ function registerIpcHandlers() {
     } catch (error) {
       console.error("Error closing window:", error)
       return { success: false, error: (error as Error).message }
-    }
-  })
-
-  // Autoupdate handlers
-  ipcMain.handle("check-for-updates", async () => {
-    try {
-      const updateInfo = await autoUpdater.checkForUpdates()
-      return {
-        success: true,
-        updateInfo,
-      }
-    } catch (error) {
-      console.error("Error checking for updates:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      }
-    }
-  })
-
-  ipcMain.handle("download-update", async () => {
-    try {
-      await autoUpdater.downloadUpdate()
-      return { success: true }
-    } catch (error) {
-      console.error("Error downloading update:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      }
-    }
-  })
-
-  ipcMain.handle("quit-and-install", async () => {
-    try {
-      autoUpdater.quitAndInstall()
-      return { success: true }
-    } catch (error) {
-      console.error("Error installing update:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
-      }
     }
   })
 

@@ -1,8 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react"
 import { createRoot } from "react-dom/client"
-import UpdateNotification, {
-  UpdateNotificationRef,
-} from "./components/UpdateNotification"
 import BuildPrompt from "./components/BuildPrompt"
 import RunnersGrid from "./components/RunnersGrid"
 import AppSelection from "./components/AppSelection"
@@ -54,17 +51,6 @@ const api = {
   executeCommandWithArgs: async (executable: string, args: string[] = []) => {
     return await commandExecutorService.executeCommandWithArgs(executable, args)
   },
-
-  // Autoupdate methods via IPC
-  checkForUpdates: async () => {
-    return await ipcRenderer.invoke("check-for-updates")
-  },
-  downloadUpdate: async () => {
-    return await ipcRenderer.invoke("download-update")
-  },
-  quitAndInstall: async () => {
-    return await ipcRenderer.invoke("quit-and-install")
-  },
   getAppVersion: async () => {
     return await ipcRenderer.invoke("get-app-version")
   },
@@ -88,12 +74,8 @@ const App: React.FC = () => {
   const [singleAppMode, setSingleAppMode] = useState<boolean>(false)
 
   // Use RunnerService instead of local state
-  const {
-    runners,
-    startupRunners,
-    getAppIcon,
-    runnerIcons,
-  } = useRunnerService()
+  const { runners, startupRunners, getAppIcon, runnerIcons } =
+    useRunnerService()
 
   // Tab-related state
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([
@@ -179,13 +161,8 @@ const App: React.FC = () => {
     }
   }, [])
 
-  // Ref for update notification component
-  const updateNotificationRef = useRef<UpdateNotificationRef>(null)
-
   // Get the currently active tab
   const activeTab = openTabs.find((tab) => tab.id === activeTabId)
-
-
 
   // Auto-launch startup runners when runners are loaded (but not in single app mode)
   useEffect(() => {
@@ -582,7 +559,6 @@ const App: React.FC = () => {
             <SettingsModal
               isVisible={showSettings}
               onClose={() => setShowSettings(false)}
-              updateNotificationRef={updateNotificationRef}
             />
 
             {/* Settings Icon */}
@@ -597,9 +573,6 @@ const App: React.FC = () => {
             )}
           </div>
         </main>
-
-        {/* Update Notification Component */}
-        <UpdateNotification ref={updateNotificationRef} />
       </div>
     </div>
   )

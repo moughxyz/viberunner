@@ -104,7 +104,6 @@ api.updateRunnerPreference(runnerId, key, value)
 1. Vite builds the renderer process to `dist/`
 2. TypeScript compiles main process to `dist-electron/`
 3. Electron Forge packages everything using the build hook in `forge.config.js`
-4. Final distributables support auto-update via `electron-updater`
 
 ### Runner Development Flow
 1. User describes desired functionality to AI agent
