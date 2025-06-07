@@ -40,13 +40,13 @@ module.exports = {
       singleArchFiles: '**/node_modules/**/*{arm64,x64,darwin-arm64,darwin-x64}*/**',
       x64ArchFiles: '**/node_modules/**/*{arm64,x64,darwin-arm64,darwin-x64}*/**'
     },
-    osxSign: {
+    osxSign: process.env.SKIP_OSX_SIGNING === 'true' ? false : {
       // Add your Apple Developer info when ready for distribution
       identity: process.env.OSX_SIGN_IDENTITY,
       keychain: process.env.CI ? 'build.keychain' : undefined, // Use temp keychain in CI
       type: 'distribution',
     },
-    osxNotarize: {
+    osxNotarize: process.env.SKIP_OSX_SIGNING === 'true' ? false : {
       // Add your Apple ID info when ready for distribution
       tool: 'notarytool',
       appleId: process.env.VR_APPLE_ID,
