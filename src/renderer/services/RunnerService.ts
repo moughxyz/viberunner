@@ -531,7 +531,7 @@ export class RunnerService {
 
       return iconData
     } catch (error) {
-      console.error(`Failed to load icon for ${runner.name}:`, error)
+      console.warn(`Failed to load icon for ${runner.name}:`, error)
     }
 
     return null

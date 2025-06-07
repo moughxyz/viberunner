@@ -106,6 +106,10 @@ export const getNewRunnerPrompt = (
       }
   </design-guidelines>
 
+  <icon-guidelines>
+    - Create an appropriate svg icon for the runner in icon.svg.
+  </icon-guidelines>
+
   <response-guidelines>
     - When you generate a summary when you finish creating the app, keep it short. Like a paragraph. No need
       to essentially generate a very detailed runthrough of what you did.

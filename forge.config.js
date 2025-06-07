@@ -70,7 +70,7 @@ module.exports = {
       config: {
         options: {
           maintainer: 'Viberunner Team',
-          homepage: 'https://github.com/yourusername/viberunner',
+          homepage: 'https://github.com/moughxyz/viberunner-releases',
           name: 'viberunner',
           bin: 'viberunner'
         }
@@ -81,7 +81,7 @@ module.exports = {
       config: {
         options: {
           maintainer: 'Viberunner Team',
-          homepage: 'https://github.com/yourusername/viberunner',
+          homepage: 'https://github.com/moughxyz/viberunner-releases',
           name: 'viberunner',
           bin: 'viberunner'
         }
@@ -118,8 +118,8 @@ module.exports = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: 'yourusername', // Replace with your actual GitHub username
-          name: 'viberunner'      // Replace with your actual repo name
+          owner: 'moughxyz', // Replace with your actual GitHub username
+          name: 'viberunner-releases'      // Replace with your actual repo name
         },
         prerelease: false,
         draft: false, // Set to false for autoupdate to work

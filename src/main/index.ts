@@ -18,6 +18,14 @@ const remoteMain = require("@electron/remote/main")
 remoteMain.initialize()
 
 // Configure autoupdate
+autoUpdater.setFeedURL({
+  provider: "github",
+  owner: "moughxyz",
+  repo: "viberunner-releases",
+})
+autoUpdater.checkForUpdatesAndNotify()
+
+// Configure autoupdate
 autoUpdater.checkForUpdatesAndNotify()
 
 // Handle autoupdate events

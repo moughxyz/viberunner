@@ -166,6 +166,7 @@ export default TemplateRunner
     "name": "Viberunner Template Runner",
     "description": "A simple viberunner template runner",
     "version": "1.0.0",
+    "icon": "icon.svg",
     "standalone": true,
     "launchMode": "newTab"
   },
@@ -198,6 +199,12 @@ export default TemplateRunner
   }
 }
 
+</RunnerArtifact>
+
+<RunnerArtifact name="icon.svg">
+<svg width="24" height="24" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <path d="M5 50 H25 L35 20 L50 80 L65 20 L75 50 H95" stroke="white" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
 </RunnerArtifact>
 
 <RunnerArtifact name="tsconfig.json">
