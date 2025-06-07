@@ -12,10 +12,6 @@ dist-electron
 .DS_Store
 **/.DS_Store
 
-# IDE files
-.cursor
-**/.cursor
-
 # Logs
 *.log
 npm-debug.log*
