@@ -14,7 +14,10 @@ import fixPath from "fix-path"
 import log from "electron-log"
 import { updateElectronApp } from "update-electron-app"
 
-updateElectronApp()
+// By default your repository URL is found in your app's package.json file, repository entry.
+updateElectronApp({
+  logger: log,
+})
 
 // Configure logging
 log.transports.file.level = "debug"
