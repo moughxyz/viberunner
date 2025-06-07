@@ -45,6 +45,7 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 - **🚀 Standalone Runners**: Create utility apps that don't require file input
 - **🔒 Runner Isolation**: Perfect CSS and JavaScript isolation between tabs
 - **🎭 Custom Runner Icons**: Personalize your apps with custom icons
+- **🚀 Flexible Launch Modes**: Run apps as tabs, dock windows, or menu bar items
 
 ## 📚 Table of Contents
 
@@ -57,13 +58,14 @@ Viberunner is free during public alpha, but may be monetized in the future to su
 7. [Creating Your First Runner](#-creating-your-first-runner)
 8. [Configuration Reference](#-configuration-reference)
 9. [Custom Runner Icons](#-custom-app-icons)
-10. [Component Development](#-component-development)
-11. [File Analysis & APIs](#-file-analysis--apis)
-12. [Advanced Examples](#-advanced-examples)
-13. [Build & Distribution](#-build--distribution)
-14. [Best Practices](#-best-practices)
-15. [Troubleshooting](#-troubleshooting)
-16. [Runner Cleanup API](#app-cleanup-api)
+10. [Launch Modes](#-launch-modes)
+11. [Component Development](#-component-development)
+12. [File Analysis & APIs](#-file-analysis--apis)
+13. [Advanced Examples](#-advanced-examples)
+14. [Build & Distribution](#-build--distribution)
+15. [Best Practices](#-best-practices)
+16. [Troubleshooting](#-troubleshooting)
+17. [Runner Cleanup API](#app-cleanup-api)
 
 ## 🎨 Custom Runner Icons
 
@@ -109,6 +111,109 @@ Custom icons are displayed in:
 ### Fallback Behavior
 
 If no custom icon is provided, Viberunner uses the Viberunner logo as the default icon for all apps. This provides a consistent and professional appearance while maintaining visual distinction through custom icons when available.
+
+## 🚀 Launch Modes
+
+### Overview
+
+Viberunner supports three different launch modes that control how and where your runners appear when launched. This gives you flexibility in creating different types of applications that integrate with macOS in various ways.
+
+### Available Launch Modes
+
+#### 1. **New Tab** (`"newTab"`) - Default
+
+- **Behavior**: Runner launches as a new tab in the main Viberunner window
+- **Use Case**: Most common mode for file processors, viewers, and general utilities
+- **Integration**: Fully integrated with Viberunner's tabbed interface
+- **Examples**: JSON formatter, image viewer, text editor
+
+#### 2. **Mac Dock** (`"macDock"`)
+
+- **Behavior**: Launches as a separate window with its own dock icon
+- **Use Case**: Independent applications that need to run alongside other apps
+- **Integration**: Separate from main Viberunner window, appears in dock
+- **Examples**: System monitor, standalone utilities, productivity apps
+
+#### 3. **Mac Menu Bar** (`"macMenuBar"`)
+
+- **Behavior**: Launches as an icon in the macOS system menu bar
+- **Use Case**: Background utilities, system monitors, quick-access tools
+- **Integration**: Minimal footprint, always accessible from menu bar
+- **Examples**: Clipboard manager, system stats, quick notes
+
+### Configuration
+
+Set the launch mode in your runner's `package.json`:
+
+```json
+{
+  "name": "My Runner",
+  "description": "Example runner",
+  "viberunner": {
+    "launchMode": "newTab",
+    "matchers": [
+      {
+        "type": "mimetype",
+        "mimetype": "application/json",
+        "priority": 60
+      }
+    ]
+  }
+}
+```
+
+### Launch Mode Examples
+
+#### Tab-Based JSON Formatter
+
+```json
+{
+  "name": "JSON Formatter",
+  "description": "Format and validate JSON files",
+  "viberunner": {
+    "launchMode": "newTab",
+    "matchers": [
+      {
+        "type": "mimetype",
+        "mimetype": "application/json",
+        "priority": 60
+      }
+    ]
+  }
+}
+```
+
+#### Dock-Based System Monitor
+
+```json
+{
+  "name": "System Monitor",
+  "description": "Real-time system performance monitoring",
+  "viberunner": {
+    "launchMode": "macDock",
+    "standalone": true
+  }
+}
+```
+
+#### Menu Bar Clipboard Manager
+
+```json
+{
+  "name": "Clipboard Manager",
+  "description": "Track and manage clipboard history",
+  "viberunner": {
+    "launchMode": "macMenuBar",
+    "standalone": true
+  }
+}
+```
+
+### Best Practices
+
+1. **New Tab**: Use for file-based runners and utilities that benefit from tabbed organization
+2. **Mac Dock**: Use for standalone applications that need persistent access and window management
+3. **Mac Menu Bar**: Use for lightweight utilities that run in the background and need quick access
 
 ## 🚀 Quick Start
 
@@ -647,6 +752,7 @@ Let's create a **JSON Formatter** runner step by step:
   "version": "1.0.0",
   "author": "Your Name",
   "viberunner": {
+    "launchMode": "newTab",
     "icon": "icon.png",
     "matchers": [
       {
@@ -897,6 +1003,9 @@ This creates `dist/bundle.iife.js` that Viberunner can load.
 
 ```json
 {
+  // Launch mode - controls how the runner appears (required)
+  "launchMode": "newTab | macDock | macMenuBar",
+
   "matchers": [
     {
       "type": "mimetype | filename | filename-contains | path-pattern | content-json | content-regex | file-size | combined",

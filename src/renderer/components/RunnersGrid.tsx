@@ -33,8 +33,6 @@ interface RunnersGridProps {
   onEditRunnerWithCursor?: (runnerName: string) => void
 }
 
-
-
 const RunnersGrid: React.FC<RunnersGridProps> = ({
   runners,
   isLoadingRunners,

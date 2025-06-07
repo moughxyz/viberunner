@@ -13,6 +13,7 @@ export interface RunnerConfig {
   standalone?: boolean // Optional standalone property
   icon?: string // Custom icon path
   userPreferences?: Record<string, any> // User preferences storage
+  launchMode: "newTab" | "macDock" | "macMenuBar" // Launch mode with default "newTab"
   matchers?: Array<{
     type: string
     mimetype?: string

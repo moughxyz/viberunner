@@ -326,6 +326,67 @@ export class RunnerService {
     }
   }
 
+  // Change a runner's launch mode
+  public async changeRunnerLaunchMode(
+    runnerId: string,
+    newLaunchMode: "newTab" | "macDock" | "macMenuBar"
+  ): Promise<void> {
+    try {
+      const RUNNERS_DIR = getRunnersDirectory()
+      const runnerPath = path.join(RUNNERS_DIR, runnerId)
+      const packageJsonPath = path.join(runnerPath, "package.json")
+
+      // Check if runner exists
+      if (!fs.existsSync(runnerPath)) {
+        throw new Error(`Runner with ID '${runnerId}' not found`)
+      }
+
+      if (!fs.existsSync(packageJsonPath)) {
+        throw new Error(`package.json not found for runner '${runnerId}'`)
+      }
+
+      // Read the current package.json
+      const packageJsonContent = fs.readFileSync(packageJsonPath, "utf8")
+      const packageJson = JSON.parse(packageJsonContent)
+
+      // Ensure viberunner section exists
+      if (!packageJson.viberunner) {
+        packageJson.viberunner = {}
+      }
+
+      // Update the launch mode
+      packageJson.viberunner.launchMode = newLaunchMode
+
+      // Write the updated package.json back to file
+      fs.writeFileSync(
+        packageJsonPath,
+        JSON.stringify(packageJson, null, 2),
+        "utf8"
+      )
+
+      // Update the in-memory runner config
+      const updatedRunners = this.state.runners.map((runner) => {
+        if (runner.id === runnerId) {
+          return { ...runner, launchMode: newLaunchMode }
+        }
+        return runner
+      })
+
+      // Update state
+      this.setState({ runners: updatedRunners })
+
+      console.log(
+        `RunnerService: Successfully changed launch mode for '${runnerId}' to '${newLaunchMode}'`
+      )
+    } catch (error) {
+      console.error(
+        `RunnerService: Error changing launch mode for runner '${runnerId}':`,
+        error
+      )
+      throw error
+    }
+  }
+
   // Delete a runner
   public async deleteRunner(runnerId: string): Promise<void> {
     try {

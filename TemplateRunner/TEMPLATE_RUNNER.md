@@ -101,7 +101,8 @@ export default TemplateRunner
     "name": "Viberunner Template Runner",
     "description": "A simple viberunner template runner",
     "version": "1.0.0",
-    "standalone": true
+    "standalone": true,
+    "launchMode": "newTab"
   },
   "scripts": {
     "build": "vite build",

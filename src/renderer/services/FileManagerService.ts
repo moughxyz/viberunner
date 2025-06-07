@@ -308,6 +308,7 @@ export class FileManagerService {
           version: "1.0.0",
           standalone: true,
           author: "AI Assistant",
+          launchMode: "newTab"
         }
 
         fs.writeFileSync(
