@@ -188,6 +188,57 @@
   gap: var(--space-2);
 }
 
+/* Launch mode control styles */
+.launch-mode-control {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.launch-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: var(--text-secondary);
+  border-right: 1px solid var(--border);
+  min-width: 32px;
+  height: 32px;
+}
+
+.launch-mode-btn:last-child {
+  border-right: none;
+}
+
+.launch-mode-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.launch-mode-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.launch-mode-btn.active:hover {
+  background: var(--accent);
+  filter: brightness(0.9);
+}
+
+.launch-mode-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Startup toggle styles */
 .startup-toggle {
   margin-bottom: var(--space-2);

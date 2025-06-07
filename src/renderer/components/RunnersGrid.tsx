@@ -144,6 +144,22 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
     setActiveDropdown(activeDropdown === runnerId ? null : runnerId)
   }
 
+  const handleLaunchModeChange = async (
+    runnerId: string,
+    launchMode: "newTab" | "macDock" | "macMenuBar"
+  ) => {
+    try {
+      await runnerService.changeRunnerLaunchMode(runnerId, launchMode)
+    } catch (error) {
+      console.error("Failed to change launch mode:", error)
+      alert(
+        `Failed to change launch mode: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      )
+    }
+  }
+
   // Close dropdown when clicking outside
   React.useEffect(() => {
     const handleClickOutside = () => {
@@ -189,6 +205,7 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                 onAddToMenuBar={handleAddToMenuBar}
                 onEditRunner={onEditRunner}
                 onEditRunnerWithCursor={onEditRunnerWithCursor}
+                onLaunchModeChange={handleLaunchModeChange}
               />
             ))}
           </div>

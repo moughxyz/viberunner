@@ -2,6 +2,7 @@ import React from "react"
 import { RunnerConfig } from "../types"
 import "./RunnerCard.css"
 import UiButton from "./UiButton"
+import { Monitor, Dock, Menu } from "lucide-react"
 
 interface OptionsMenuProps {
   runnerId: string
@@ -9,8 +10,6 @@ interface OptionsMenuProps {
   onToggle: (runnerId: string) => void
   onEdit: (runnerId: string, editType: "agent" | "cursor") => void
   onDelete: (runnerId: string) => void
-  onAddToDock: (runnerId: string) => void
-  onAddToMenuBar: (runnerId: string) => void
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
   className?: string
@@ -27,8 +26,6 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
   onToggle,
   onEdit,
   onDelete,
-  onAddToDock,
-  onAddToMenuBar,
   onEditRunner,
   onEditRunnerWithCursor,
   className = "options-menu",
@@ -57,28 +54,6 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
       </UiButton>
       {isActive && (
         <div className="options-menu-dropdown">
-          {process.platform === "darwin" && (
-            <button
-              className="options-menu-item"
-              onClick={(e) => {
-                e.stopPropagation()
-                onAddToDock(runnerId)
-              }}
-            >
-              Add to macOS Dock
-            </button>
-          )}
-          {process.platform === "darwin" && (
-            <button
-              className="options-menu-item"
-              onClick={(e) => {
-                e.stopPropagation()
-                onAddToMenuBar(runnerId)
-              }}
-            >
-              Add to macOS Menu Bar
-            </button>
-          )}
           {isUtility && toggleStartupApp && (
             <div className="options-menu-item startup-controls">
               <div className="startup-toggle-option">
@@ -159,6 +134,48 @@ const OptionsMenu: React.FC<OptionsMenuProps> = ({
   )
 }
 
+interface LaunchModeControlProps {
+  currentLaunchMode?: "newTab" | "macDock" | "macMenuBar"
+  runnerId: string
+  onLaunchModeChange?: (runnerId: string, launchMode: "newTab" | "macDock" | "macMenuBar") => void
+}
+
+const LaunchModeControl: React.FC<LaunchModeControlProps> = ({
+  currentLaunchMode = "newTab",
+  runnerId,
+  onLaunchModeChange,
+}) => {
+  const handleLaunchModeChange = (launchMode: "newTab" | "macDock" | "macMenuBar") => {
+    onLaunchModeChange?.(runnerId, launchMode)
+  }
+
+  return (
+    <div className="launch-mode-control">
+      <button
+        className={`launch-mode-btn ${currentLaunchMode === "newTab" ? "active" : ""}`}
+        onClick={() => handleLaunchModeChange("newTab")}
+        title="Launch in New Tab"
+      >
+        <Monitor size={16} className="launch-mode-icon" />
+      </button>
+      <button
+        className={`launch-mode-btn ${currentLaunchMode === "macDock" ? "active" : ""}`}
+        onClick={() => handleLaunchModeChange("macDock")}
+        title="Launch in macOS Dock"
+      >
+        <Dock size={16} className="launch-mode-icon" />
+      </button>
+      <button
+        className={`launch-mode-btn ${currentLaunchMode === "macMenuBar" ? "active" : ""}`}
+        onClick={() => handleLaunchModeChange("macMenuBar")}
+        title="Launch in macOS Menu Bar"
+      >
+        <Menu size={16} className="launch-mode-icon" />
+      </button>
+    </div>
+  )
+}
+
 interface RunnerCardProps {
   runner: RunnerConfig
   startupConfig?: { enabled: boolean; tabOrder: number }
@@ -174,10 +191,9 @@ interface RunnerCardProps {
   onToggleDropdown: (runnerId: string) => void
   onEditDropdown: (runnerId: string, editType: "agent" | "cursor") => void
   onDeleteRunner: (runnerId: string) => void
-  onAddToDock: (runnerId: string) => void
-  onAddToMenuBar: (runnerId: string) => void
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
+  onLaunchModeChange: (runnerId: string, launchMode: "newTab" | "macDock" | "macMenuBar") => void
 }
 
 const RunnerCard: React.FC<RunnerCardProps> = ({
@@ -192,10 +208,9 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
   onToggleDropdown,
   onEditDropdown,
   onDeleteRunner,
-  onAddToDock,
-  onAddToMenuBar,
   onEditRunner,
   onEditRunnerWithCursor,
+  onLaunchModeChange,
 }) => {
   const isUtility = runner.standalone
 
@@ -227,10 +242,14 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
           </div>
         </div>
 
-        {/* Card footer with options only */}
+        {/* Card footer with launch mode control and options */}
         <div className="card-footer">
           <div className="footer-left">
-            {/* Startup controls moved to options menu */}
+            <LaunchModeControl
+              currentLaunchMode={runner.launchMode}
+              runnerId={runner.id}
+              onLaunchModeChange={onLaunchModeChange}
+            />
           </div>
 
           <div className="footer-right">
@@ -240,8 +259,6 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
               onToggle={onToggleDropdown}
               onEdit={onEditDropdown}
               onDelete={onDeleteRunner}
-              onAddToDock={onAddToDock}
-              onAddToMenuBar={onAddToMenuBar}
               onEditRunner={onEditRunner}
               onEditRunnerWithCursor={onEditRunnerWithCursor}
               className="footer-options-menu"
@@ -268,9 +285,14 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
           <p className="app-info-description">{runner.description}</p>
         </div>
 
-        {/* Card footer with formats and options */}
+        {/* Card footer with launch mode control and options */}
         <div className="card-footer">
           <div className="footer-left">
+            <LaunchModeControl
+              currentLaunchMode={runner.launchMode}
+              runnerId={runner.id}
+              onLaunchModeChange={onLaunchModeChange}
+            />
             <div className="app-info-formats">
               {getSupportedFormats(runner)}
             </div>
@@ -283,8 +305,6 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
               onToggle={onToggleDropdown}
               onEdit={onEditDropdown}
               onDelete={onDeleteRunner}
-              onAddToDock={onAddToDock}
-              onAddToMenuBar={onAddToMenuBar}
               onEditRunner={onEditRunner}
               onEditRunnerWithCursor={onEditRunnerWithCursor}
               className="footer-options-menu"
