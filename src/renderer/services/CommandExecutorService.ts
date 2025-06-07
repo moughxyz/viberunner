@@ -172,20 +172,41 @@ export class CommandExecutorService {
     }
 
     if (command === "npm") {
-      // Look for npm in various locations relative to Node.js
+      // In packaged apps, prioritize using the bundled Node.js with npm
+      if (this.isPackaged()) {
+        // Look for npm-cli.js first (this is the actual npm script)
+        const npmCliLocations = [
+          // Bundled npm
+          path.join(nodeDir, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js"),
+          path.join(nodeDir, "node_modules", "npm", "bin", "npm-cli.js"),
+          // Check if there's a Resources directory (common in macOS apps)
+          path.join(nodeDir, "..", "..", "Resources", "app", "node_modules", "npm", "bin", "npm-cli.js"),
+          path.join(nodeDir, "..", "..", "Resources", "node_modules", "npm", "bin", "npm-cli.js"),
+        ]
+
+        for (const npmCliPath of npmCliLocations) {
+          if (fs.existsSync(npmCliPath)) {
+            console.log(`Found bundled npm-cli.js at: ${npmCliPath}`)
+            return `"${nodePath}" "${npmCliPath}"`
+          }
+        }
+      }
+
+      // Look for npm in various locations
       const npmLocations = [
-        // Standard locations
+        // Standard locations relative to Node.js
         path.join(nodeDir, "npm"),
         path.join(nodeDir, "npm.cmd"),
         path.join(nodeDir, "npm.exe"),
         // Global npm installations
         path.join(nodeDir, "..", "lib", "node_modules", "npm", "bin", "npm-cli.js"),
         path.join(nodeDir, "node_modules", "npm", "bin", "npm-cli.js"),
-        // Homebrew locations
-        "/opt/homebrew/bin/npm",
-        "/usr/local/bin/npm",
-        // Try to find npm in system paths
-        ...this.systemPaths.map(p => path.join(p, "npm")),
+        // System locations (only for non-packaged or as fallback)
+        ...(!this.isPackaged() ? [
+          "/opt/homebrew/bin/npm",
+          "/usr/local/bin/npm",
+          ...this.systemPaths.map(p => path.join(p, "npm")),
+        ] : [])
       ]
 
       console.log(`Searching for npm in:`, npmLocations)
@@ -197,6 +218,13 @@ export class CommandExecutorService {
           if (npmPath.endsWith(".js")) {
             return `"${nodePath}" "${npmPath}"`
           }
+
+          // For packaged apps, if we find a system npm, use it with explicit node path
+          if (this.isPackaged() && !npmPath.includes(nodeDir)) {
+            // This ensures the system npm can find our bundled node
+            return npmPath
+          }
+
           return npmPath
         }
       }
@@ -250,15 +278,25 @@ export class CommandExecutorService {
     })
 
     if (this.isPackaged() && this.systemPaths.length > 0) {
+      // Include the bundled Node.js directory in PATH so npm can find node
+      const nodeDir = path.dirname(process.execPath)
+      const pathSeparator = process.platform === "win32" ? ";" : ":"
+      const pathsToInclude = [nodeDir, ...this.systemPaths]
+
       // Restore a more complete PATH in packaged apps
-      env.PATH = this.systemPaths.join(process.platform === "win32" ? ";" : ":")
+      env.PATH = pathsToInclude.join(pathSeparator)
 
       // Add some helpful environment variables
-      env.NODE_PATH = path.join(path.dirname(process.execPath), "node_modules")
+      env.NODE_PATH = path.join(nodeDir, "node_modules")
 
       // Ensure we have a HOME directory
       if (!env.HOME && process.platform !== "win32") {
         env.HOME = os.homedir()
+      }
+
+      // Set NODE_ENV if not already set
+      if (!env.NODE_ENV) {
+        env.NODE_ENV = "development"
       }
     }
 
