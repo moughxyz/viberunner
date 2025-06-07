@@ -54,6 +54,25 @@ const api = {
   executeCommandWithArgs: async (executable: string, args: string[] = []) => {
     return await commandExecutorService.executeCommandWithArgs(executable, args)
   },
+
+  // Autoupdate methods via IPC
+  checkForUpdates: async () => {
+    return await ipcRenderer.invoke("check-for-updates")
+  },
+  downloadUpdate: async () => {
+    return await ipcRenderer.invoke("download-update")
+  },
+  quitAndInstall: async () => {
+    return await ipcRenderer.invoke("quit-and-install")
+  },
+  getAppVersion: async () => {
+    return await ipcRenderer.invoke("get-app-version")
+  },
+
+  // Generic invoke method
+  invoke: async (channel: string, ...args: any[]) => {
+    return await ipcRenderer.invoke(channel, ...args)
+  },
 }
 
 // Make API available globally for runners
