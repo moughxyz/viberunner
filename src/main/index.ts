@@ -1,4 +1,13 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu, shell, Tray, nativeImage } from "electron"
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+  Menu,
+  shell,
+  Tray,
+  nativeImage,
+} from "electron"
 import { autoUpdater } from "electron-updater"
 import { spawn } from "child_process"
 import path from "path"
@@ -152,7 +161,11 @@ const runnerTrays = new Map<string, Tray>()
 const runnerPopups = new Map<string, BrowserWindow>()
 
 // Create a tray icon for a runner in the menu bar
-const createRunnerTray = async (runnerId: string, runnerName: string, iconPath?: string): Promise<void> => {
+const createRunnerTray = async (
+  runnerId: string,
+  runnerName: string,
+  iconPath?: string
+): Promise<void> => {
   try {
     // Check if tray already exists
     if (runnerTrays.has(runnerId)) {
@@ -166,14 +179,18 @@ const createRunnerTray = async (runnerId: string, runnerName: string, iconPath?:
       try {
         trayIcon = nativeImage.createFromPath(iconPath)
         if (trayIcon.isEmpty()) {
-          throw new Error('Icon is empty')
+          throw new Error("Icon is empty")
         }
       } catch (error) {
         console.warn(`Failed to load runner icon, using default: ${error}`)
-        trayIcon = nativeImage.createFromPath(path.join(__dirname, '../assets/icon.png'))
+        trayIcon = nativeImage.createFromPath(
+          path.join(__dirname, "../assets/icon.png")
+        )
       }
     } else {
-      trayIcon = nativeImage.createFromPath(path.join(__dirname, '../assets/icon.png'))
+      trayIcon = nativeImage.createFromPath(
+        path.join(__dirname, "../assets/icon.png")
+      )
     }
 
     // Resize icon for menu bar (16x16 on macOS)
@@ -186,17 +203,17 @@ const createRunnerTray = async (runnerId: string, runnerName: string, iconPath?:
     tray.setToolTip(`${runnerName} - Click to open`)
 
     // Handle click - toggle popup visibility
-    tray.on('click', (event, bounds) => {
+    tray.on("click", (_event, bounds) => {
       toggleRunnerPopup(runnerId, runnerName, bounds)
     })
 
     // Handle right-click separately for context menu
-    tray.on('right-click', () => {
+    tray.on("right-click", () => {
       const contextMenu = Menu.buildFromTemplate([
         {
-          label: 'Remove from Menu Bar',
-          click: () => removeRunnerFromTray(runnerId)
-        }
+          label: "Remove from Menu Bar",
+          click: () => removeRunnerFromTray(runnerId),
+        },
       ])
       tray.popUpContextMenu(contextMenu)
     })
@@ -234,7 +251,11 @@ const removeRunnerFromTray = (runnerId: string): void => {
 }
 
 // Toggle popup visibility for a runner
-const toggleRunnerPopup = (runnerId: string, runnerName: string, bounds: Electron.Rectangle): void => {
+const toggleRunnerPopup = (
+  runnerId: string,
+  runnerName: string,
+  bounds: Electron.Rectangle
+): void => {
   try {
     const existingPopup = runnerPopups.get(runnerId)
 
@@ -246,7 +267,9 @@ const toggleRunnerPopup = (runnerId: string, runnerName: string, bounds: Electro
       } else {
         // Show existing popup and reposition it
         const windowBounds = existingPopup.getBounds()
-        const x = Math.round(bounds.x + (bounds.width / 2) - (windowBounds.width / 2))
+        const x = Math.round(
+          bounds.x + bounds.width / 2 - windowBounds.width / 2
+        )
         const y = Math.round(bounds.y + bounds.height + 4) // 4px gap below tray
 
         existingPopup.setPosition(x, y, false)
@@ -277,7 +300,7 @@ const toggleRunnerPopup = (runnerId: string, runnerName: string, bounds: Electro
 
     // Position popup under tray icon
     const windowBounds = popupWindow.getBounds()
-    const x = Math.round(bounds.x + (bounds.width / 2) - (windowBounds.width / 2))
+    const x = Math.round(bounds.x + bounds.width / 2 - windowBounds.width / 2)
     const y = Math.round(bounds.y + bounds.height + 4) // 4px gap below tray
 
     popupWindow.setPosition(x, y, false)
@@ -286,12 +309,12 @@ const toggleRunnerPopup = (runnerId: string, runnerName: string, bounds: Electro
     runnerPopups.set(runnerId, popupWindow)
 
     // Handle popup losing focus - hide it
-    popupWindow.on('blur', () => {
+    popupWindow.on("blur", () => {
       popupWindow.hide()
     })
 
     // Clean up when closed
-    popupWindow.on('closed', () => {
+    popupWindow.on("closed", () => {
       runnerPopups.delete(runnerId)
     })
 
@@ -306,14 +329,17 @@ const toggleRunnerPopup = (runnerId: string, runnerName: string, bounds: Electro
     } else {
       const isDev = process.env.NODE_ENV === "development"
       const rendererPath = isDev
-        ? path.join(__dirname, `../renderer/${process.env.VITE_DEV_NAME}/index.html`)
+        ? path.join(
+            __dirname,
+            `../renderer/${process.env.VITE_DEV_NAME}/index.html`
+          )
         : path.join(__dirname, "../dist/index.html")
 
-      popupWindow.loadFile(rendererPath, { query: { runnerId, popup: 'true' } })
+      popupWindow.loadFile(rendererPath, { query: { runnerId, popup: "true" } })
     }
 
     // Show popup once ready
-    popupWindow.once('ready-to-show', () => {
+    popupWindow.once("ready-to-show", () => {
       popupWindow.show()
     })
 
@@ -341,20 +367,20 @@ const createRunnerProcess = async (runnerId: string): Promise<void> => {
     console.log(`App path: ${appPath}`)
 
     // Spawn new Electron process with runner ID as argument
-    const runnerProcess = spawn(electronPath, [
-      appPath,
-      '--runner-id',
-      runnerId
-    ], {
-      detached: true,
-      stdio: 'ignore'
-    })
+    const runnerProcess = spawn(
+      electronPath,
+      [appPath, "--runner-id", runnerId],
+      {
+        detached: true,
+        stdio: "ignore",
+      }
+    )
 
     // Store process reference
     runnerProcesses.set(runnerId, runnerProcess)
 
     // Handle process exit
-    runnerProcess.on('exit', (code) => {
+    runnerProcess.on("exit", (code) => {
       console.log(`Runner process exited: ${runnerId} (code: ${code})`)
       runnerProcesses.delete(runnerId)
     })
@@ -362,7 +388,9 @@ const createRunnerProcess = async (runnerId: string): Promise<void> => {
     // Detach the process so it runs independently
     runnerProcess.unref()
 
-    console.log(`Successfully spawned runner process: ${runnerId} (PID: ${runnerProcess.pid})`)
+    console.log(
+      `Successfully spawned runner process: ${runnerId} (PID: ${runnerProcess.pid})`
+    )
   } catch (error) {
     console.error(`Failed to create runner process for ${runnerId}:`, error)
     throw error
@@ -392,7 +420,7 @@ const createWindow = (runnerId?: string): BrowserWindow => {
   })
 
   // Show window once ready to prevent flash
-  mainWindow.once('ready-to-show', () => {
+  mainWindow.once("ready-to-show", () => {
     mainWindow.show()
     if (runnerId) {
       mainWindow.focus()
@@ -404,7 +432,9 @@ const createWindow = (runnerId?: string): BrowserWindow => {
   remoteMain.enable(mainWindow.webContents)
 
   // Build query parameters if runnerId is provided
-  const queryParams = runnerId ? `?runnerId=${encodeURIComponent(runnerId)}` : ""
+  const queryParams = runnerId
+    ? `?runnerId=${encodeURIComponent(runnerId)}`
+    : ""
 
   // and load the index.html of the app.
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -438,7 +468,7 @@ const createWindow = (runnerId?: string): BrowserWindow => {
 // Check if this is a runner process launched with command line args
 const getRunnerIdFromArgs = (): string | null => {
   const args = process.argv
-  const runnerIdIndex = args.indexOf('--runner-id')
+  const runnerIdIndex = args.indexOf("--runner-id")
   if (runnerIdIndex !== -1 && runnerIdIndex + 1 < args.length) {
     return args[runnerIdIndex + 1]
   }
@@ -558,14 +588,16 @@ function registerIpcHandlers() {
     }
   })
 
-    // Handle creating new runner process (separate dock icon)
-  ipcMain.handle("create-runner-window", async (event, runnerId: string) => {
+  // Handle creating new runner process (separate dock icon)
+  ipcMain.handle("create-runner-window", async (_event, runnerId: string) => {
     try {
       console.log(`Creating separate Electron process for runner: ${runnerId}`)
 
       await createRunnerProcess(runnerId)
 
-      console.log(`Successfully created separate process for runner: ${runnerId}`)
+      console.log(
+        `Successfully created separate process for runner: ${runnerId}`
+      )
 
       return { success: true }
     } catch (error) {
@@ -578,42 +610,48 @@ function registerIpcHandlers() {
   })
 
   // Handle adding runner to menu bar (tray)
-  ipcMain.handle("add-runner-to-menubar", async (event, runnerId: string, runnerName: string, iconPath?: string) => {
-    try {
-      console.log(`Adding runner to menu bar: ${runnerName} (${runnerId})`)
+  ipcMain.handle(
+    "add-runner-to-menubar",
+    async (_event, runnerId: string, runnerName: string, iconPath?: string) => {
+      try {
+        console.log(`Adding runner to menu bar: ${runnerName} (${runnerId})`)
 
-      await createRunnerTray(runnerId, runnerName, iconPath)
+        await createRunnerTray(runnerId, runnerName, iconPath)
 
-      console.log(`Successfully added runner to menu bar: ${runnerName}`)
+        console.log(`Successfully added runner to menu bar: ${runnerName}`)
 
-      return { success: true }
-    } catch (error) {
-      console.error("Error adding runner to menu bar:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        return { success: true }
+      } catch (error) {
+        console.error("Error adding runner to menu bar:", error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        }
       }
     }
-  })
+  )
 
   // Handle removing runner from menu bar
-  ipcMain.handle("remove-runner-from-menubar", async (event, runnerId: string) => {
-    try {
-      console.log(`Removing runner from menu bar: ${runnerId}`)
+  ipcMain.handle(
+    "remove-runner-from-menubar",
+    async (_event, runnerId: string) => {
+      try {
+        console.log(`Removing runner from menu bar: ${runnerId}`)
 
-      removeRunnerFromTray(runnerId)
+        removeRunnerFromTray(runnerId)
 
-      console.log(`Successfully removed runner from menu bar: ${runnerId}`)
+        console.log(`Successfully removed runner from menu bar: ${runnerId}`)
 
-      return { success: true }
-    } catch (error) {
-      console.error("Error removing runner from menu bar:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        return { success: true }
+      } catch (error) {
+        console.error("Error removing runner from menu bar:", error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        }
       }
     }
-  })
+  )
 
   console.log("All IPC handlers registered successfully")
 }
