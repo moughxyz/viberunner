@@ -551,7 +551,7 @@ const App: React.FC = () => {
 
                     <RunnersGrid
                       runners={runners}
-                      launchStandaloneApp={launchStandaloneApp}
+                      launchApp={launchStandaloneApp}
                       onEditRunner={handleEditRunner}
                       onEditRunnerWithCursor={handleEditRunnerWithCursor}
                     />

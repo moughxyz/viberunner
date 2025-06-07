@@ -181,7 +181,7 @@ interface RunnerCardProps {
   startupConfig?: { enabled: boolean; tabOrder: number }
   getAppIcon: (runner: RunnerConfig) => string
   getSupportedFormats: (runner: RunnerConfig) => string
-  launchStandaloneApp: (runner: RunnerConfig) => Promise<void>
+  launchApp: (runner: RunnerConfig) => Promise<void>
   toggleStartupApp: (runnerId: string, enabled: boolean) => Promise<void>
   updateStartupAppTabOrder: (
     runnerId: string,
@@ -201,7 +201,7 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
   startupConfig,
   getAppIcon,
   getSupportedFormats,
-  launchStandaloneApp,
+  launchApp,
   toggleStartupApp,
   updateStartupAppTabOrder,
   activeDropdown,
@@ -220,7 +220,7 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
       <div className="utility-card-container">
         <div
           className="utility-card"
-          onClick={() => launchStandaloneApp(runner)}
+          onClick={() => launchApp(runner)}
         >
           <div className="utility-icon">
             <img
@@ -285,14 +285,9 @@ const RunnerCard: React.FC<RunnerCardProps> = ({
           <p className="app-info-description">{runner.description}</p>
         </div>
 
-        {/* Card footer with launch mode control and options */}
+        {/* Card footer with supported formats and options */}
         <div className="card-footer">
           <div className="footer-left">
-            <LaunchModeControl
-              currentLaunchMode={runner.launchMode}
-              runnerId={runner.id}
-              onLaunchModeChange={onLaunchModeChange}
-            />
             <div className="app-info-formats">
               {getSupportedFormats(runner)}
             </div>

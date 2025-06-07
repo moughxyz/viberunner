@@ -12,14 +12,14 @@ interface RunnersGridProps {
   runners: RunnerConfig[]
   onEditRunner?: (runnerName: string) => void
   onEditRunnerWithCursor?: (runnerName: string) => void
-  launchStandaloneApp?: (runner: RunnerConfig) => Promise<void>
+  launchApp?: (runner: RunnerConfig) => Promise<void>
 }
 
 const RunnersGrid: React.FC<RunnersGridProps> = ({
   runners,
   onEditRunner,
   onEditRunnerWithCursor,
-  launchStandaloneApp,
+  launchApp,
 }) => {
   const [activeDropdown, setActiveDropdown] = React.useState<string | null>(
     null
@@ -59,14 +59,27 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
     }
   }
 
-  const handleLaunchStandaloneApp = async (runner: RunnerConfig) => {
-    if (launchStandaloneApp) {
-      try {
-        await launchStandaloneApp(runner)
-      } catch (error) {
-        console.error("Failed to launch standalone app:", error)
-        alert(`Failed to launch ${runner.name}: ${error}`)
+  const handleLaunchApp = async (runner: RunnerConfig) => {
+    try {
+      // Check the runner's launch mode and call appropriate function
+      switch (runner.launchMode) {
+        case "macDock":
+          await handleAddToDock(runner.id)
+          break
+        case "macMenuBar":
+          await handleAddToMenuBar(runner.id)
+          break
+        case "newTab":
+        default:
+          // Default to new tab launch, or use the provided launchApp function
+          if (launchApp) {
+            await launchApp(runner)
+          }
+          break
       }
+    } catch (error) {
+      console.error("Failed to launch app:", error)
+      alert(`Failed to launch ${runner.name}: ${error}`)
     }
   }
 
@@ -194,15 +207,13 @@ const RunnersGrid: React.FC<RunnersGridProps> = ({
                 startupConfig={startupRunners[runner.id]}
                 getAppIcon={getAppIcon}
                 getSupportedFormats={getSupportedFormats}
-                launchStandaloneApp={handleLaunchStandaloneApp}
+                launchApp={handleLaunchApp}
                 toggleStartupApp={toggleStartupApp}
                 updateStartupAppTabOrder={updateStartupAppTabOrder}
                 activeDropdown={activeDropdown}
                 onToggleDropdown={handleToggleDropdown}
                 onEditDropdown={handleEditDropdown}
                 onDeleteRunner={handleDeleteRunner}
-                onAddToDock={handleAddToDock}
-                onAddToMenuBar={handleAddToMenuBar}
                 onEditRunner={onEditRunner}
                 onEditRunnerWithCursor={onEditRunnerWithCursor}
                 onLaunchModeChange={handleLaunchModeChange}
