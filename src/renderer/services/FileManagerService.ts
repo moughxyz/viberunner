@@ -2,6 +2,7 @@ import { getRunnersDirectory } from "../util"
 import { FileChange } from "../components/AIAgentInterface"
 import { getCursorPrompt } from "../prompts/cursorPrompt"
 import readmeContent from "../../../README.md?raw"
+import templateRunnerContent from "../../../TemplateRunner/TEMPLATE_RUNNER.md?raw"
 import { runnerService } from "./RunnerService"
 import { CommandExecutorService } from "./CommandExecutorService"
 
@@ -39,6 +40,27 @@ export class FileManagerService {
       const srcPath = path.join(runnerPath, "src")
       fs.mkdirSync(srcPath, { recursive: true })
 
+      // Import foundation files from template
+      // Base configuration files
+      const baseTemplateFiles = [
+        "package.json",
+        "tsconfig.json",
+        "tsconfig.node.json",
+        "vite.config.ts"
+      ]
+
+      // Get all files from src/components/** and lib/** directories using patterns
+      const directoryPatterns = [
+        "src/components/**",
+        "lib/**"
+      ]
+      const directoryFiles = this.getTemplateFilesByPatterns(directoryPatterns)
+
+      // Combine base files with directory files
+      const allTemplateFiles = [...baseTemplateFiles, ...directoryFiles]
+
+      await this.importTemplateFiles(runnerPath, allTemplateFiles)
+
       // Write all files
       for (const [filePath, fileData] of Object.entries(files)) {
         const fullFilePath = path.join(runnerPath, filePath)
@@ -53,6 +75,28 @@ export class FileManagerService {
         fs.writeFileSync(fullFilePath, fileData.content, "utf8")
         console.log(`Created file: ${fullFilePath}`)
       }
+
+      console.log(`Successfully created runner: ${uniqueName} at ${runnerPath}`)
+      return uniqueName
+    } catch (error) {
+      console.error("Error creating runner:", error)
+      throw error
+    }
+  }
+
+  async createTemplateRunner(runnerName: string): Promise<string> {
+    try {
+      // Sanitize runner name and ensure uniqueness
+      const sanitizedName = this.sanitizeRunnerName(runnerName)
+      const uniqueName = this.ensureUniqueRunnerName(sanitizedName)
+      const runnerPath = path.join(this.runnersDir, uniqueName)
+
+      // Create runner directory
+      fs.mkdirSync(runnerPath, { recursive: true })
+
+      // Create src directory if needed
+      const srcPath = path.join(runnerPath, "src")
+      fs.mkdirSync(srcPath, { recursive: true })
 
       // Ensure we have a package.json with viberunner metadata
       const packageJsonPath = path.join(runnerPath, "package.json")
@@ -113,24 +157,6 @@ export class FileManagerService {
         console.log(`Updated file: ${fullFilePath}`)
       }
 
-      // Ensure we have a package.json with viberunner metadata
-      const packageJsonPath = path.join(runnerPath, "package.json")
-      if (!fs.existsSync(packageJsonPath)) {
-        // Create default package.json if it doesn't exist
-        const defaultPackageJson = this.createDefaultPackageJson(runnerName)
-        fs.writeFileSync(
-          packageJsonPath,
-          JSON.stringify(defaultPackageJson, null, 2),
-          "utf8"
-        )
-      } else {
-        // Update existing package.json to ensure it has viberunner metadata
-        this.ensureViberunnerMetadata(packageJsonPath, runnerName)
-      }
-
-      // Create other required files if they don't exist
-      await this.ensureRequiredFiles(runnerPath, runnerName)
-
       console.log(`Successfully updated runner: ${runnerName} at ${runnerPath}`)
       return runnerName
     } catch (error) {
@@ -139,7 +165,9 @@ export class FileManagerService {
     }
   }
 
-  async loadRunnerFiles(runnerName: string): Promise<Record<string, FileChange>> {
+  async loadRunnerFiles(
+    runnerName: string
+  ): Promise<Record<string, FileChange>> {
     try {
       const runnerPath = path.join(this.runnersDir, runnerName)
 
@@ -151,7 +179,7 @@ export class FileManagerService {
       const files: Record<string, FileChange> = {}
 
       // Function to recursively read files
-      const readDirectory = (dirPath: string, basePath: string = '') => {
+      const readDirectory = (dirPath: string, basePath: string = "") => {
         const entries = fs.readdirSync(dirPath)
 
         for (const entry of entries) {
@@ -159,34 +187,61 @@ export class FileManagerService {
           const relativePath = basePath ? path.join(basePath, entry) : entry
           const stat = fs.statSync(entryPath)
 
-                    if (stat.isDirectory()) {
+          if (stat.isDirectory()) {
             // Skip node_modules, .git, dist, and other build directories
-            if (!['node_modules', '.git', 'dist', 'build', '.vscode', '.idea'].includes(entry)) {
+            if (
+              ![
+                "node_modules",
+                ".git",
+                "dist",
+                "build",
+                ".vscode",
+                ".idea",
+              ].includes(entry)
+            ) {
               readDirectory(entryPath, relativePath)
             }
           } else if (stat.isFile()) {
             // Files to exclude from loading
-            const excludeFiles = ['VIBERUNNER.md']
+            const excludeFiles = ["VIBERUNNER.md"]
 
             // Only include common source files
             const ext = path.extname(entry).toLowerCase()
-            const shouldInclude = [
-              '.ts', '.tsx', '.js', '.jsx',
-              '.json', '.css', '.scss', '.sass', '.less',
-              '.html', '.htm', '.md', '.txt',
-              '.yml', '.yaml', '.xml'
-            ].includes(ext) ||
-            ['package.json', 'tsconfig.json', 'vite.config.ts', 'README.md'].includes(entry)
+            const shouldInclude =
+              [
+                ".ts",
+                ".tsx",
+                ".js",
+                ".jsx",
+                ".json",
+                ".css",
+                ".scss",
+                ".sass",
+                ".less",
+                ".html",
+                ".htm",
+                ".md",
+                ".txt",
+                ".yml",
+                ".yaml",
+                ".xml",
+              ].includes(ext) ||
+              [
+                "package.json",
+                "tsconfig.json",
+                "vite.config.ts",
+                "README.md",
+              ].includes(entry)
 
             if (shouldInclude && !excludeFiles.includes(entry)) {
               try {
-                const content = fs.readFileSync(entryPath, 'utf8')
+                const content = fs.readFileSync(entryPath, "utf8")
                 const language = this.getLanguageFromExtension(relativePath)
 
                 files[relativePath] = {
                   path: relativePath,
                   content,
-                  language
+                  language,
                 }
               } catch (readError) {
                 console.warn(`Failed to read file ${relativePath}:`, readError)
@@ -196,9 +251,13 @@ export class FileManagerService {
         }
       }
 
-            readDirectory(runnerPath)
+      readDirectory(runnerPath)
 
-      console.log(`Successfully loaded ${Object.keys(files).length} files from runner: ${runnerName}`)
+      console.log(
+        `Successfully loaded ${
+          Object.keys(files).length
+        } files from runner: ${runnerName}`
+      )
       return files
     } catch (error) {
       console.error("Error loading runner files:", error)
@@ -209,34 +268,34 @@ export class FileManagerService {
   private getLanguageFromExtension(filePath: string): string {
     const ext = path.extname(filePath).toLowerCase()
     switch (ext) {
-      case '.tsx':
-      case '.jsx':
-        return 'typescript'
-      case '.ts':
-        return 'typescript'
-      case '.js':
-        return 'javascript'
-      case '.json':
-        return 'json'
-      case '.css':
-        return 'css'
-      case '.scss':
-      case '.sass':
-        return 'scss'
-      case '.less':
-        return 'less'
-      case '.html':
-      case '.htm':
-        return 'html'
-      case '.md':
-        return 'markdown'
-      case '.yml':
-      case '.yaml':
-        return 'yaml'
-      case '.xml':
-        return 'xml'
+      case ".tsx":
+      case ".jsx":
+        return "typescript"
+      case ".ts":
+        return "typescript"
+      case ".js":
+        return "javascript"
+      case ".json":
+        return "json"
+      case ".css":
+        return "css"
+      case ".scss":
+      case ".sass":
+        return "scss"
+      case ".less":
+        return "less"
+      case ".html":
+      case ".htm":
+        return "html"
+      case ".md":
+        return "markdown"
+      case ".yml":
+      case ".yaml":
+        return "yaml"
+      case ".xml":
+        return "xml"
       default:
-        return 'text'
+        return "text"
     }
   }
 
@@ -308,7 +367,6 @@ export class FileManagerService {
           version: "1.0.0",
           standalone: true,
           author: "AI Assistant",
-          launchMode: "newTab"
         }
 
         fs.writeFileSync(
@@ -445,6 +503,115 @@ export default defineConfig({
     return `${timestamp}${randomPart}`
   }
 
+  /**
+   * Import static files from the template runner into a runner directory
+   * @param runnerName - The name of the runner to import files into
+   * @param filePaths - Array of file paths to extract from the template
+   */
+  async importStaticFilesFromTemplate(
+    runnerName: string,
+    filePaths: string[]
+  ): Promise<void> {
+    try {
+      const runnerPath = path.join(this.runnersDir, runnerName)
+
+      // Check if runner exists
+      if (!fs.existsSync(runnerPath)) {
+        throw new Error(`Runner "${runnerName}" does not exist`)
+      }
+
+      await this.importTemplateFiles(runnerPath, filePaths)
+    } catch (error) {
+      console.error("Error importing static files from template:", error)
+      throw error
+    }
+  }
+
+    /**
+   * Get all available template files from TEMPLATE_RUNNER.md
+   * @returns Record of filename to content for all template files
+   */
+  private getAvailableTemplateFiles(): Record<string, string> {
+    // Regular expression to match RunnerArtifact sections
+    const artifactRegex = /<RunnerArtifact name="([^"]+)">\s*([\s\S]*?)\s*<\/RunnerArtifact>/g;
+
+    let match;
+    const extractedFiles: Record<string, string> = {};
+
+    // Extract all artifacts from the template
+    while ((match = artifactRegex.exec(templateRunnerContent)) !== null) {
+      const fileName = match[1];
+      const fileContent = match[2];
+      extractedFiles[fileName] = fileContent;
+    }
+
+    return extractedFiles;
+  }
+
+  /**
+   * Get template files that match directory patterns (supports ** glob)
+   * @param patterns - Array of patterns like "src/components/**", "lib/**"
+   * @returns Array of matching file paths
+   */
+  private getTemplateFilesByPatterns(patterns: string[]): string[] {
+    const availableFiles = Object.keys(this.getAvailableTemplateFiles());
+    const matchingFiles: string[] = [];
+
+    for (const pattern of patterns) {
+      if (pattern.includes("**")) {
+        // Handle glob patterns
+        const baseDir = pattern.replace("/**", "");
+        const matchingPattern = availableFiles.filter(file =>
+          file.startsWith(baseDir + "/")
+        );
+        matchingFiles.push(...matchingPattern);
+      } else {
+        // Handle exact file paths
+        if (availableFiles.includes(pattern)) {
+          matchingFiles.push(pattern);
+        }
+      }
+    }
+
+    return [...new Set(matchingFiles)]; // Remove duplicates
+  }
+
+  /**
+   * Internal helper to import static files from the template runner into a directory
+   * @param runnerPath - The path to the runner directory
+   * @param filePaths - Array of file paths to extract from the template
+   */
+  private async importTemplateFiles(
+    runnerPath: string,
+    filePaths: string[]
+  ): Promise<void> {
+    try {
+      const extractedFiles = this.getAvailableTemplateFiles();
+
+      // Filter and write only the requested files
+      for (const filePath of filePaths) {
+        if (extractedFiles[filePath]) {
+          const fullFilePath = path.join(runnerPath, filePath);
+
+          // Ensure directory exists for this file
+          const fileDir = path.dirname(fullFilePath);
+          if (!fs.existsSync(fileDir)) {
+            fs.mkdirSync(fileDir, { recursive: true });
+          }
+
+          // Write file content
+          fs.writeFileSync(fullFilePath, extractedFiles[filePath], "utf8");
+          console.log(`Imported template file: ${filePath}`);
+        } else {
+          console.warn(`Template file not found: ${filePath}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error importing static files from template:", error);
+      throw error;
+    }
+  }
+
   // List all runners
   async listRunners(): Promise<string[]> {
     try {
@@ -542,7 +709,10 @@ export default MyRunner
 
       // Run npm install in the runner directory
       console.log("Running npm install...")
-      const installResult = await this.commandExecutor.executeCommand("npm install", runnerName)
+      const installResult = await this.commandExecutor.executeCommand(
+        "npm install",
+        runnerName
+      )
 
       if (installResult.success) {
         console.log("npm install completed successfully")
@@ -550,7 +720,10 @@ export default MyRunner
 
         // Run npm run build after install completes
         console.log("Running npm run build...")
-        const buildResult = await this.commandExecutor.executeCommand("npm run build", runnerName)
+        const buildResult = await this.commandExecutor.executeCommand(
+          "npm run build",
+          runnerName
+        )
 
         if (buildResult.success) {
           console.log("npm run build completed successfully")
@@ -563,7 +736,9 @@ export default MyRunner
       }
 
       // Open directory with Cursor
-      const cursorResult = await this.commandExecutor.executeCommand(`cursor "${runnerPath}"`)
+      const cursorResult = await this.commandExecutor.executeCommand(
+        `cursor "${runnerPath}"`
+      )
       if (!cursorResult.success) {
         console.warn("Could not open with Cursor:", cursorResult.error)
       }
@@ -604,7 +779,10 @@ export default MyRunner
       const nodeModulesPath = path.join(runnerPath, "node_modules")
       if (!fs.existsSync(nodeModulesPath)) {
         console.log("Running npm install...")
-        const installResult = await this.commandExecutor.executeCommand("npm install", runnerName)
+        const installResult = await this.commandExecutor.executeCommand(
+          "npm install",
+          runnerName
+        )
 
         if (installResult.success) {
           console.log("npm install completed successfully")
@@ -612,7 +790,10 @@ export default MyRunner
 
           // Run npm run build after install completes
           console.log("Running npm run build...")
-          const buildResult = await this.commandExecutor.executeCommand("npm run build", runnerName)
+          const buildResult = await this.commandExecutor.executeCommand(
+            "npm run build",
+            runnerName
+          )
 
           if (buildResult.success) {
             console.log("npm run build completed successfully")
@@ -626,7 +807,10 @@ export default MyRunner
       } else {
         // Node modules exist, just run build
         console.log("Running npm run build...")
-        const buildResult = await this.commandExecutor.executeCommand("npm run build", runnerName)
+        const buildResult = await this.commandExecutor.executeCommand(
+          "npm run build",
+          runnerName
+        )
 
         if (buildResult.success) {
           console.log("npm run build completed successfully")
@@ -637,7 +821,9 @@ export default MyRunner
       }
 
       // Open directory with Cursor
-      const cursorResult = await this.commandExecutor.executeCommand(`cursor "${runnerPath}"`)
+      const cursorResult = await this.commandExecutor.executeCommand(
+        `cursor "${runnerPath}"`
+      )
       if (!cursorResult.success) {
         console.warn("Could not open with Cursor:", cursorResult.error)
       }
@@ -647,7 +833,6 @@ export default MyRunner
       // Refresh the runner service to ensure UI is up to date
       await runnerService.refresh()
       console.log("Refreshed runner service after opening runner for editing")
-
     } catch (error) {
       console.error("Error editing runner with Cursor:", error)
       throw error

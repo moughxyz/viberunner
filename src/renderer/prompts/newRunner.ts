@@ -47,7 +47,7 @@ export const getNewRunnerPrompt = (
   Let's get started.
 
   <RunnerArtifact name="src/App.tsx">
-    ${appTsxTemplate}
+    ...
   </RunnerArtifact>
 
   <RunnerArtifact name="vite.config.json">
@@ -125,83 +125,3 @@ export const getNewRunnerPrompt = (
   ${userPrompt}
   `
 }
-
-const appTsxTemplate = `import React, { useEffect } from "react"
-    import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-    import { Button } from "@/components/ui/button"
-    import { Sparkles, Zap } from "lucide-react"
-
-    declare global {
-      interface Window {
-        registerCleanup: (tabId: string, cleanupFn: () => void) => void
-        __RENDER_RUNNER__: (app: React.ComponentType<any>) => void
-      }
-    }
-
-    interface RunnerProps {
-      dataDirectory: string
-      fileInput?: {
-        path: string
-        mimetype: string
-      }
-      tabId: string
-    }
-
-    const styles = {
-      container: {
-        padding: "20px",
-        background: "#0a0a0a",
-        color: "#ffffff",
-        minHeight: "100vh",
-        fontFamily: "system-ui, -apple-system, sans-serif",
-      },
-      header: {
-        fontSize: "1.5rem",
-        fontWeight: "600",
-        marginBottom: "1rem",
-        display: "flex",
-        alignItems: "center",
-        gap: "0.5rem",
-      }
-    }
-
-    const Runner: React.FC<RunnerProps> = ({
-      tabId,
-      dataDirectory,
-    }: RunnerProps) => {
-      useEffect(() => {
-        window.registerCleanup(tabId, () => {
-          // Cleanup timers, listeners, etc.
-        })
-      }, [tabId])
-
-      return (
-        <div style={styles.container}>
-          <div style={styles.header}>
-            <Sparkles className="w-6 h-6" />
-            Your New Runner
-          </div>
-
-          <Card className="bg-gray-900 border-gray-800">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="w-5 h-5" />
-                Welcome to your new runner!
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-300 mb-4">
-                This is your starting template. Customize it to build your desired functionality.
-              </p>
-              <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
-                Get Started
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )
-    }
-
-    window.__RENDER_RUNNER__(Runner)
-
-    export default Runner`
