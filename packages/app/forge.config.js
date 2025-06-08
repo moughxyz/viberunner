@@ -17,6 +17,9 @@ module.exports = {
       // Configure asar to handle native modules properly
       unpack: "*.{node,dll,dylib,so}",
     },
+    // Generic solution: follow symlinks during packaging
+    // This resolves workspace symlinks by copying their contents
+    derefSymlinks: true,
     // Point to the main entry in dist-electron (built by vite-plugin-electron)
     out: "out",
     ignore: [
