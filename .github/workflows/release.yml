@@ -127,35 +127,7 @@ jobs:
         echo "Build artifacts in out/make:"
         find ./out/make -type f -name "*.zip" -o -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" | sort
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: viberunner-${{ matrix.platform }}-${{ matrix.arch }}
-        path: |
-          packages/app/out/make/**/*
-        retention-days: 1
-
-  create-release:
-    needs: build-and-release
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
-
-    - name: Display structure of downloaded files
-      run: |
-        echo "Downloaded artifacts:"
-        ls -la artifacts/
-        find artifacts/ -type f -name "*.zip" -o -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" | sort
-
-    - name: Create Release and Upload Assets
+    - name: Upload to Release
       uses: softprops/action-gh-release@v1
       with:
         repository: ${{ github.repository_owner }}/viberunner-releases
@@ -167,15 +139,15 @@ jobs:
         body: |
           ## Viberunner ${{ github.ref_name }}
 
-          🎉 **New Release Available!**
+          **New Release Available**
 
           This release includes builds for all major platforms:
 
-          ### 📥 Download Instructions
+          ### Download Instructions
 
-          - **🍎 macOS**: Download the `.dmg` file for easy installation, or the `.zip` for portable use
-          - **🪟 Windows**: Download the Setup `.exe` file for installation
-          - **🐧 Linux**: Choose from `.deb` (Ubuntu/Debian), `.rpm` (RHEL/Fedora), or `.zip` for portable use
+          - **macOS**: Download the `.dmg` file for easy installation, or the `.zip` for portable use
+          - **Windows**: Download the Setup `.exe` file for installation
+          - **Linux**: Choose from `.deb` (Ubuntu/Debian), `.rpm` (RHEL/Fedora), or `.zip` for portable use
 
           ### 🔧 Installation Notes
 
@@ -187,11 +159,11 @@ jobs:
 
           **Full Changelog**: [${{ github.event.before }}...${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }})
         files: |
-          artifacts/**/*.dmg
-          artifacts/**/*.zip
-          artifacts/**/*.exe
-          artifacts/**/*.deb
-          artifacts/**/*.rpm
-          artifacts/**/*.AppImage
+          packages/app/out/make/**/*.dmg
+          packages/app/out/make/**/*.zip
+          packages/app/out/make/**/*.exe
+          packages/app/out/make/**/*.deb
+          packages/app/out/make/**/*.rpm
+          packages/app/out/make/**/*.AppImage
       env:
         GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
