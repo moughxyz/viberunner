@@ -281,11 +281,11 @@ const App: React.FC = () => {
             closeTab(activeTabId)
           }
         } else {
-          // Only a new tab remains or no tabs, close the window
+          // Only a new tab remains or no tabs, hide the window
           try {
-            ipcRenderer.invoke("close-window")
+            ipcRenderer.invoke("hide-window")
           } catch (error) {
-            console.error("Failed to close window:", error)
+            console.error("Failed to hide window:", error)
             // Fallback: try to close via window object
             window.close()
           }
