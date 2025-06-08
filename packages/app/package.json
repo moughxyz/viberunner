@@ -33,6 +33,7 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@sentry/react": "^9.27.0",
     "@tailwindcss/vite": "^4.1.8",
+    "@viberunner/common": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron-log": "^5.4.0",
