@@ -6,16 +6,11 @@ import react from '@astrojs/react';
 export default defineConfig({
   integrations: [react()],
 
-  // Ensure static output for GitHub Pages
+  // Ensure static output for deployment
   output: 'static',
 
-  // Configure for GitHub Pages deployment
-  // The site URL will be automatically set by GitHub Actions
-  site: process.env.CI ? `https://${process.env.GITHUB_REPOSITORY_OWNER}.github.io` : 'http://localhost:4321',
-
-  // Base path will be automatically injected by GitHub Actions
-  // but we can set it manually if needed
-  base: process.env.CI ? `/${process.env.GITHUB_REPOSITORY?.split('/')[1] || ''}` : undefined,
+  // Configure for deployment to vibetime.ai root
+  site: 'https://vibetime.ai',
 
   // Build configuration
   build: {
