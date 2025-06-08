@@ -65,7 +65,7 @@ const Hero: React.FC = () => {
             Download for {platform}
           </a>
           <p className="download-note">
-            Free and open source • Available for Windows, macOS, and Linux
+            Available for Windows, macOS, and Linux
           </p>
         </div>
       </section>
