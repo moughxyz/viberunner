@@ -10,7 +10,7 @@ const AboutContent: React.FC = () => {
           About <span className="gradient">{product.productName}</span>
         </h1>
         <p className="about-subtitle">
-          Democratizing desktop app development, one vibe at a time
+          Democratizing desktop app development for all
         </p>
       </section>
 

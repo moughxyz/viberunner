@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
               <span className="gradient">{product.productName}</span>
             </h3>
             <p className="footer-description">
-              Build personal desktop apps in seconds. Democratizing desktop app development, one vibe at a time.
+              Build personal desktop apps in seconds. Democratizing desktop app development for all.
             </p>
           </div>
 
