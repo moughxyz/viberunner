@@ -1,6 +1,6 @@
 {
   "name": "viberunner",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Vibe app desktop manager.",
   "main": "dist-electron/index.js",
   "homepage": "https://github.com/moughxyz/viberunner-releases",
