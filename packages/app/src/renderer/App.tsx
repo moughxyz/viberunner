@@ -263,6 +263,18 @@ const App: React.FC = () => {
       if ((event.metaKey || event.ctrlKey) && event.key === "w") {
         event.preventDefault()
 
+        // In single app mode, hide the window instead of closing it (no tabs to manage)
+        if (singleAppMode) {
+          try {
+            ipcRenderer.invoke("hide-window")
+          } catch (error) {
+            console.error("Failed to hide window:", error)
+            // Fallback: try to close via window object
+            window.close()
+          }
+          return
+        }
+
         // If multiple tabs or active tab is not a new tab, close the active tab
         if (openTabs.length > 1 || (activeTab && activeTab.type !== "newtab")) {
           if (activeTabId) {
@@ -286,7 +298,7 @@ const App: React.FC = () => {
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [openTabs, activeTabId, activeTab])
+  }, [openTabs, activeTabId, activeTab, singleAppMode])
 
   // Initialize RunnerService on component mount
   useEffect(() => {

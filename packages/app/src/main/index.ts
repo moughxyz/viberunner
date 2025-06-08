@@ -541,8 +541,30 @@ app.on("window-all-closed", () => {
 app.on("activate", () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
+  const allWindows = BrowserWindow.getAllWindows()
+  const visibleWindows = allWindows.filter(window => window.isVisible())
+
+  if (visibleWindows.length === 0) {
+    // Check if there are hidden windows we can show
+    if (allWindows.length > 0) {
+      // Show the first hidden window
+      const hiddenWindow = allWindows[0]
+      hiddenWindow.show()
+      hiddenWindow.focus()
+      console.log("Showed existing hidden window")
+    } else {
+      // No windows exist - create a new one
+      // Check if this process was launched as a runner process
+      const runnerArgs = getRunnerArgsFromCommandLine()
+      if (runnerArgs.runnerId) {
+        // This is a runner process - create the runner window
+        console.log(`Creating runner window for: ${runnerArgs.runnerName || runnerArgs.runnerId}`)
+        createWindow(runnerArgs.runnerId, runnerArgs.runnerName || undefined, runnerArgs.iconPath || undefined)
+      } else {
+        // This is the main process - create a generic window
+        createWindow()
+      }
+    }
   }
 })
 
@@ -570,6 +592,21 @@ function registerIpcHandlers() {
       return { success: false, error: "No focused window found" }
     } catch (error) {
       console.error("Error closing window:", error)
+      return { success: false, error: (error as Error).message }
+    }
+  })
+
+  // Hide window handler for single app mode
+  ipcMain.handle("hide-window", async () => {
+    try {
+      const focusedWindow = BrowserWindow.getFocusedWindow()
+      if (focusedWindow) {
+        focusedWindow.hide()
+        return { success: true }
+      }
+      return { success: false, error: "No focused window found" }
+    } catch (error) {
+      console.error("Error hiding window:", error)
       return { success: false, error: (error as Error).message }
     }
   })
