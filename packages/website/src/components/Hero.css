@@ -47,6 +47,45 @@
 	font-style: italic;
 }
 
+/* Download Section */
+.download-section {
+	margin-top: 3rem;
+	text-align: center;
+}
+
+.download-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+	color: white;
+	text-decoration: none;
+	padding: 1rem 2rem;
+	border-radius: 12px;
+	font-size: 1.1rem;
+	font-weight: 600;
+	transition: all 0.3s ease;
+	box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.download-button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+	text-decoration: none;
+	color: white;
+}
+
+.download-icon {
+	font-size: 1.2rem;
+}
+
+.download-note {
+	margin-top: 1rem;
+	font-size: 0.9rem;
+	color: #808080;
+}
+
 /* How It Works Section */
 .how-it-works {
 	margin-bottom: 5rem;

@@ -60,6 +60,44 @@ function writePackageJson(packageData) {
   }
 }
 
+function writeReleaseJson(version) {
+  const releasePath = path.resolve(process.cwd(), 'packages/common/src/release.json');
+  const releaseDir = path.dirname(releasePath);
+
+  // Create directory if it doesn't exist
+  try {
+    if (!fs.existsSync(releaseDir)) {
+      fs.mkdirSync(releaseDir, { recursive: true });
+    }
+  } catch (error) {
+    log(`❌ Error creating directory ${releaseDir}: ${error.message}`, 'red');
+    process.exit(1);
+  }
+
+  const releaseData = {
+    production: `v${version}`,
+    downloads: {
+      windows: `https://github.com/moughxyz/viberunner/releases/download/v${version}/Viberunner-${version}.Setup.exe`,
+      macOS: {
+        dmg: `https://github.com/moughxyz/viberunner/releases/download/v${version}/Viberunner.dmg`,
+        arm64: `https://github.com/moughxyz/viberunner/releases/download/v${version}/Viberunner-darwin-arm64-${version}.zip`
+      },
+      linux: {
+        deb: `https://github.com/moughxyz/viberunner/releases/download/v${version}/viberunner_${version}_amd64.deb`,
+        rpm: `https://github.com/moughxyz/viberunner/releases/download/v${version}/viberunner-${version}-1.x86_64.rpm`
+      }
+    }
+  };
+
+  try {
+    fs.writeFileSync(releasePath, JSON.stringify(releaseData, null, 2) + '\n');
+    log(`✅ Updated release.json`, 'green');
+  } catch (error) {
+    log(`❌ Error writing release.json: ${error.message}`, 'red');
+    process.exit(1);
+  }
+}
+
 function parseVersion(version) {
   const parts = version.split('.').map(Number);
   if (parts.length !== 3 || parts.some(isNaN)) {
@@ -213,8 +251,11 @@ async function main() {
   packageData.version = newVersion;
   writePackageJson(packageData);
 
+  // Update release.json
+  writeReleaseJson(newVersion);
+
   // Git operations
-  executeCommand('git add package.json', 'Adding package.json to git');
+  executeCommand('git add package.json packages/common/src/release.json', 'Adding package.json and release.json to git');
   executeCommand(`git commit -m "chore: bump version to ${newVersion}"`, 'Committing version bump');
   executeCommand(`git tag -a v${newVersion} -m "Release v${newVersion}"`, 'Creating git tag');
   executeCommand('git push origin main', 'Pushing commits to remote');

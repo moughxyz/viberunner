@@ -1,8 +1,55 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { product } from '@viberunner/common'
 import './Hero.css'
 
 const Hero: React.FC = () => {
+  const [downloadUrl, setDownloadUrl] = useState<string>('')
+  const [platform, setPlatform] = useState<string>('')
+
+    useEffect(() => {
+    const fetchReleaseData = async () => {
+      try {
+        // Fetch the release.json file from the common package dist
+        const response = await fetch('/node_modules/@viberunner/common/dist/release.json')
+        if (!response.ok) {
+          throw new Error('Failed to fetch release data')
+        }
+        const releaseData = await response.json()
+
+        // Detect platform
+        const userAgent = navigator.userAgent.toLowerCase()
+        let detectedPlatform = ''
+        let url = ''
+
+        if (userAgent.includes('win')) {
+          detectedPlatform = 'Windows'
+          url = releaseData.downloads.windows
+        } else if (userAgent.includes('mac')) {
+          detectedPlatform = 'macOS'
+          // Prefer ARM64 for newer Macs, fallback to DMG
+          url = userAgent.includes('arm') || userAgent.includes('apple')
+            ? releaseData.downloads.macOS.arm64
+            : releaseData.downloads.macOS.dmg
+        } else if (userAgent.includes('linux')) {
+          detectedPlatform = 'Linux'
+          url = releaseData.downloads.linux.deb
+        } else {
+          detectedPlatform = 'Download'
+          url = `https://github.com/moughxyz/viberunner/releases/latest`
+        }
+
+        setPlatform(detectedPlatform)
+        setDownloadUrl(url)
+      } catch (error) {
+        console.error('Failed to load release data:', error)
+        // Fallback to GitHub releases page
+        setPlatform('Download')
+        setDownloadUrl('https://github.com/moughxyz/viberunner/releases/latest')
+      }
+    }
+
+    fetchReleaseData()
+  }, [])
   return (
     <div className="hero">
       <section className="hero-main">
@@ -18,6 +65,20 @@ const Hero: React.FC = () => {
         <p className="vision">
           {product.productName} is a new paradigm - a powerful runtime that lets you build and run personal desktop applications with nothing more than a simple description of what you want.
         </p>
+        <div className="download-section">
+          <a
+            href={downloadUrl}
+            className="download-button"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="download-icon">⬇️</span>
+            Download for {platform}
+          </a>
+          <p className="download-note">
+            Free and open source • Available for Windows, macOS, and Linux
+          </p>
+        </div>
       </section>
 
       <section className="how-it-works">
