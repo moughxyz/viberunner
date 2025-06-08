@@ -1,7 +1,9 @@
 import { RunnerConfig } from "../types"
+import { getRunnersDirectory } from "../util"
 
 // Direct Node.js access with full integration
 const { ipcRenderer } = require("electron")
+const path = require("path")
 
 export interface MacServiceState {
   // TODO: Add Mac-specific state properties as needed
@@ -70,7 +72,9 @@ export class MacService {
    */
   public async addRunnerToDock(runner: RunnerConfig): Promise<void> {
     try {
-      console.log(`Creating new Electron window for runner: "${runner.name}" (ID: ${runner.id})`)
+      console.log(
+        `Creating new Electron window for runner: "${runner.name}" (ID: ${runner.id})`
+      )
 
       // Use IPC to communicate with main process to create new window
       const result = await ipcRenderer.invoke("create-runner-window", runner.id)
@@ -124,13 +128,29 @@ export class MacService {
    */
   public async addRunnerToMenuBar(runner: RunnerConfig): Promise<void> {
     try {
-      console.log(`Adding runner to menu bar: "${runner.name}" (ID: ${runner.id})`)
+      console.log(
+        `Adding runner to menu bar: "${runner.name}" (ID: ${runner.id})`
+      )
 
-      // Get the runner's icon path if available
-      const iconPath = runner.icon ? runner.icon : undefined
+      // Get the runner's icon path if available and convert to absolute path
+      let iconPath: string | undefined = undefined
+      if (runner.icon) {
+        const runnersDir = getRunnersDirectory()
+        const runnerDir = path.join(runnersDir, runner.id)
+        iconPath = path.join(runnerDir, runner.icon)
+
+        console.log(
+          `Converted runner icon path from "${runner.icon}" to "${iconPath}"`
+        )
+      }
 
       // Use IPC to communicate with main process to create tray icon
-      const result = await ipcRenderer.invoke("add-runner-to-menubar", runner.id, runner.name, iconPath)
+      const result = await ipcRenderer.invoke(
+        "add-runner-to-menubar",
+        runner.id,
+        runner.name,
+        iconPath
+      )
 
       if (!result.success) {
         throw new Error(result.error || "Failed to add runner to menu bar")
@@ -150,7 +170,10 @@ export class MacService {
     try {
       console.log(`Removing runner from menu bar: ${runnerId}`)
 
-      const result = await ipcRenderer.invoke("remove-runner-from-menubar", runnerId)
+      const result = await ipcRenderer.invoke(
+        "remove-runner-from-menubar",
+        runnerId
+      )
 
       if (!result.success) {
         throw new Error(result.error || "Failed to remove runner from menu bar")

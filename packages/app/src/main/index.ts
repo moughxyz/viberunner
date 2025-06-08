@@ -8,6 +8,7 @@ import {
   Tray,
   nativeImage,
 } from "electron"
+import { loadIconAsNativeImage } from "../lib/iconUtils"
 import { spawn } from "child_process"
 import path from "path"
 import fixPath from "fix-path"
@@ -136,6 +137,8 @@ const runnerProcesses = new Map<string, any>()
 const runnerTrays = new Map<string, Tray>()
 const runnerPopups = new Map<string, BrowserWindow>()
 
+
+
 // Create a tray icon for a runner in the menu bar
 const createRunnerTray = async (
   runnerId: string,
@@ -149,28 +152,43 @@ const createRunnerTray = async (
       return
     }
 
-    // Use provided icon or default Viberunner icon
+        // Use provided runner icon or default Viberunner icon
     let trayIcon
     if (iconPath) {
       try {
-        trayIcon = nativeImage.createFromPath(iconPath)
-        if (trayIcon.isEmpty()) {
-          throw new Error("Icon is empty")
-        }
+        trayIcon = await loadIconAsNativeImage(iconPath)
       } catch (error) {
-        console.warn(`Failed to load runner icon, using default: ${error}`)
+        console.warn(
+          `Failed to load runner icon from "${iconPath}", using default: ${error}`
+        )
+        // Fallback to default icon
         trayIcon = nativeImage.createFromPath(
           path.join(__dirname, "../assets/icon.png")
         )
       }
     } else {
+      console.log(`No runner icon provided, using default Viberunner icon`)
       trayIcon = nativeImage.createFromPath(
         path.join(__dirname, "../assets/icon.png")
       )
     }
 
-    // Resize icon for menu bar (16x16 on macOS)
-    trayIcon = trayIcon.resize({ width: 16, height: 16 })
+    // Ensure we have a valid icon before proceeding
+    if (trayIcon.isEmpty()) {
+      console.warn("Default icon is also empty, creating a basic fallback")
+      // Create a simple fallback icon if even the default fails
+      trayIcon = nativeImage.createEmpty()
+    }
+
+    // Resize icon appropriately for the platform's menu bar/system tray
+    // Note: SVG icons are already sized correctly by the loadIconAsNativeImage utility
+    if (!trayIcon.isEmpty() && !iconPath?.toLowerCase().endsWith('.svg')) {
+      const iconSize = process.platform === "darwin" ? 16 : 24 // 16px for macOS, 24px for others
+      trayIcon = trayIcon.resize({ width: iconSize, height: iconSize })
+      console.log(
+        `Resized tray icon to ${iconSize}x${iconSize} for platform: ${process.platform}`
+      )
+    }
 
     // Create tray
     const tray = new Tray(trayIcon)
@@ -547,7 +565,9 @@ function registerIpcHandlers() {
     "add-runner-to-menubar",
     async (_event, runnerId: string, runnerName: string, iconPath?: string) => {
       try {
-        console.log(`Adding runner to menu bar: ${runnerName} (${runnerId})`)
+        console.log(
+          `Adding runner to menu bar: ${runnerName} (${runnerId}) with icon: ${iconPath}`
+        )
 
         await createRunnerTray(runnerId, runnerName, iconPath)
 
