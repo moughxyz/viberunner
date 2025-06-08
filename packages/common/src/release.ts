@@ -2,14 +2,14 @@
 export const release = {
   production: "v0.0.18",
   downloads: {
-    windows: "https://github.com/moughxyz/viberunner/releases/download/v0.0.18/Viberunner-0.0.18.Setup.exe",
+    windows: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.18/Viberunner-0.0.18.Setup.exe",
     macOS: {
-      dmg: "https://github.com/moughxyz/viberunner/releases/download/v0.0.18/Viberunner.dmg",
-      arm64: "https://github.com/moughxyz/viberunner/releases/download/v0.0.18/Viberunner-darwin-arm64-0.0.18.zip"
+      dmg: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.18/Viberunner.dmg",
+      arm64: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.18/Viberunner-darwin-arm64-0.0.18.zip"
     },
     linux: {
-      deb: "https://github.com/moughxyz/viberunner/releases/download/v0.0.18/viberunner_0.0.18_amd64.deb",
-      rpm: "https://github.com/moughxyz/viberunner/releases/download/v0.0.18/viberunner-0.0.18-1.x86_64.rpm"
+      deb: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.18/viberunner_0.0.18_amd64.deb",
+      rpm: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.18/viberunner-0.0.18-1.x86_64.rpm"
     }
   }
 }
