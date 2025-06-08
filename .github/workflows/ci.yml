@@ -191,7 +191,7 @@ jobs:
         name: viberunner-package-${{ matrix.os }}-${{ github.sha }}
         path: |
           packages/app/out/make/**/*
-        retention-days: 3
+        retention-days: 1
 
   build-status:
     runs-on: ubuntu-latest

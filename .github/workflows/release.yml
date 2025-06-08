@@ -133,7 +133,7 @@ jobs:
         name: viberunner-${{ matrix.platform }}-${{ matrix.arch }}
         path: |
           packages/app/out/make/**/*
-        retention-days: 30
+        retention-days: 1
 
   create-release:
     needs: build-and-release

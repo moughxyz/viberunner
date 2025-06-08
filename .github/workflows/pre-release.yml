@@ -70,7 +70,7 @@ jobs:
         name: viberunner-${{ matrix.platform }}-${{ matrix.arch }}-prerelease
         path: |
           packages/app/out/make/**/*
-        retention-days: 14
+        retention-days: 1
 
   create-prerelease:
     needs: build-and-prerelease

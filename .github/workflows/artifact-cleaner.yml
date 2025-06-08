@@ -1,0 +1,25 @@
+name: Delete All Artifacts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete-artifacts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install GitHub CLI
+        uses: cli/cli-action@v2
+
+      - name: Delete all artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          artifacts=$(gh api repos/${{ github.repository }}/actions/artifacts | jq '.artifacts')
+
+          for row in $(echo "$artifacts" | jq -r '.[] | @base64'); do
+            artifact_id=$(echo "$row" | base64 --decode | jq -r '.id')
+            name=$(echo "$row" | base64 --decode | jq -r '.name')
+            echo "Deleting artifact: $name ($artifact_id)"
+            gh api -X DELETE repos/${{ github.repository }}/actions/artifacts/$artifact_id
+          done
