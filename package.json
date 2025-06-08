@@ -10,7 +10,8 @@
     "build": "yarn workspaces foreach run build",
     "dev": "yarn workspaces foreach run dev",
     "lint": "yarn workspaces foreach run lint",
-    "make": "yarn workspace viberunner run make"
+    "make": "yarn workspace viberunner run make",
+    "release": "yarn workspace viberunner run release"
   },
   "engines": {
     "node": ">=16.0.0",
