@@ -1,31 +1,33 @@
-# ⚡ Viberunner - Desktop Vibe App Manager
+# Viberunner - Build personal desktop apps in seconds
+
+Viberunner is a new and unique way to experience your desktop. Instead of searching, sifting, and purchasing single-purpose desktop apps for every use case, you can now dream up your own collection of personal desktop apps in seconds!
+
+You can make anything from your own personal note-taking app, to system utilities that let you manage your desktop and resources.
+
+With Viberunner, you can dream and run apps like this in seconds:
+
+- A personal note-taking app which saves every note to a file
+- A todo tracker organized by day
+- A realtime clipboard manager
+- A mouse jiggler that moves your mouse every X seconds
+- An image redactor that allows you to draw over an image to redact sensitive information
+- ...and anything else you can dream up!
 
 Viberunner is a powerful runtime container for your vibe-coded apps. It allows you to manage and run several React-based utilities and apps on your desktop, with powerful matchers to select the right app based on the context.
 
-Viberunner is a single-player utility meant to be used by one person on their own computer. It's not a way to ship your React product to your users. Rather, it allows you to easily manage, organize, and create vibe-coded system utilities that can do just about anything, including:
-
-**Standalone utilities:**
-
-- Realtime clipboard watcher and history
-- Dotfile editor to edit your most common global dotfiles (.bashrc, .vimprofile, .zshrc, etc)
-- Mouse jiggler that moves your mouse every X seconds
-- Port sniffer that shows open ports and associated processes
-
-**Contextual apps:**
-
-- Image redactor: drag and drop an image and draw to redact certain areas
-- YouTube Thumbnail Preview: drag a thumbnail and preview how it would look on YouTube with ability to set title and channel name.
-- Package upgrader: drag and drop a package.json file and check which packages need upgrading, and upgrade them with one click.
+Viberunner is a single-player playground meant to be used by one person on their own computer. It's not a way to ship your product to your users.
 
 ## How it works
 
-1. When you launch Viberunner, you'll be asked to choose a directory of where your apps are located.
-2. Viberunner apps are just regular React apps which have deep system access (Node, Python; anything a terminal can do, your Viberunner apps can do).
-3. You build a new Viberunner app using your LLM agent of choice (Cursor, for example), by feeding it this README file and instructing it to create a new "app" based on your requirements.
-4. Save your app in the apps directory you set in step 1, and launch Viberunner.
-5. You can now run your new app with one click!
+1. When you launch Viberunner, you'll see a prompt asking you what you want to build. Say as little or as much as possible. You can just say "stopwatch" and Viberunner will run with it.
+2. Viberunner apps ("runners") are just regular React apps which have deep system access (Node, Python; anything a terminal can do, your runner can do).
+3. You can choose to launch a runner in one of three ways:
+   1. As a new tab in the main Viberunner app
+   2. As a separate app with its own dock icon
+   3. As a menu bar application (system menu bar/tray where your clock and wifi icon are)
+4. Just click Launch!
 
-**Important:** Because Viberunner gives unrestricted system access to your apps (it's the only way to build a powerful utility), you should never run untrusted code. See the Security section at the end of this readme.
+**Important:** Viberunner gives unrestricted system access to your apps. You should be comfortable with AI/LLM input before using Viberunner.
 
 ## Pricing
 
