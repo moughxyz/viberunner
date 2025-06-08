@@ -169,6 +169,7 @@ jobs:
       uses: actions/checkout@v4
       with:
         token: ${{ secrets.GH_TOKEN || github.token }}
+        ref: main  # Checkout main branch instead of the tag
 
     - name: Extract version from tag
       id: version
@@ -200,4 +201,4 @@ jobs:
         git config --local user.name "GitHub Action"
         git add packages/common/src/release.ts
         git commit -m "chore: update release.ts with v${{ steps.version.outputs.version }} download links"
-        git push
+        git push origin main
