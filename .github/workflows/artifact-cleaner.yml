@@ -8,9 +8,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install GitHub CLI
-        uses: cli/cli-action@v2
-
       - name: Delete all artifacts
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
