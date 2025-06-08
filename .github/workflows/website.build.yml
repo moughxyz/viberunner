@@ -7,8 +7,8 @@ on:
     paths:
       - "packages/website/**"
       - "packages/common/**"
-      - ".github/workflows/build-website.yml"
-      - ".github/workflows/deploy-website.yml"
+      - ".github/workflows/website.build.yml"
+      - ".github/workflows/website.deploy.yml"
 
   # Also run on pushes to branches other than main
   push:
@@ -16,8 +16,8 @@ on:
     paths:
       - "packages/website/**"
       - "packages/common/**"
-      - ".github/workflows/build-website.yml"
-      - ".github/workflows/deploy-website.yml"
+      - ".github/workflows/website.build.yml"
+      - ".github/workflows/website.deploy.yml"
 
 jobs:
   build:

@@ -7,7 +7,7 @@ on:
     paths:
       - "packages/website/**"
       - "packages/common/**"
-      - ".github/workflows/deploy-website.yml"
+      - ".github/workflows/website.deploy.yml"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
