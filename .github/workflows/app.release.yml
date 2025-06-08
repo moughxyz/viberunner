@@ -182,14 +182,14 @@ jobs:
         export const release = {
           production: "v${{ steps.version.outputs.version }}",
           downloads: {
-            windows: "https://github.com/moughxyz/viberunner/releases/download/v${{ steps.version.outputs.version }}/Viberunner-${{ steps.version.outputs.version }}.Setup.exe",
+            windows: "https://github.com/moughxyz/viberunner-releases/releases/download/v${{ steps.version.outputs.version }}/Viberunner-${{ steps.version.outputs.version }}.Setup.exe",
             macOS: {
-              dmg: "https://github.com/moughxyz/viberunner/releases/download/v${{ steps.version.outputs.version }}/Viberunner.dmg",
-              arm64: "https://github.com/moughxyz/viberunner/releases/download/v${{ steps.version.outputs.version }}/Viberunner-darwin-arm64-${{ steps.version.outputs.version }}.zip"
+              dmg: "https://github.com/moughxyz/viberunner-releases/releases/download/v${{ steps.version.outputs.version }}/Viberunner.dmg",
+              arm64: "https://github.com/moughxyz/viberunner-releases/releases/download/v${{ steps.version.outputs.version }}/Viberunner-darwin-arm64-${{ steps.version.outputs.version }}.zip"
             },
             linux: {
-              deb: "https://github.com/moughxyz/viberunner/releases/download/v${{ steps.version.outputs.version }}/viberunner_${{ steps.version.outputs.version }}_amd64.deb",
-              rpm: "https://github.com/moughxyz/viberunner/releases/download/v${{ steps.version.outputs.version }}/viberunner-${{ steps.version.outputs.version }}-1.x86_64.rpm"
+              deb: "https://github.com/moughxyz/viberunner-releases/releases/download/v${{ steps.version.outputs.version }}/viberunner_${{ steps.version.outputs.version }}_amd64.deb",
+              rpm: "https://github.com/moughxyz/viberunner-releases/releases/download/v${{ steps.version.outputs.version }}/viberunner-${{ steps.version.outputs.version }}-1.x86_64.rpm"
             }
           }
         }
