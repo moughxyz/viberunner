@@ -23,12 +23,6 @@ jobs:
           - os: macos-latest
             platform: darwin
             arch: arm64
-          - os: ubuntu-latest
-            platform: linux
-            arch: x64
-          - os: windows-latest
-            platform: win32
-            arch: x64
 
     steps:
     - name: Checkout code
@@ -149,15 +143,11 @@ jobs:
           - **Windows**: Download the Setup `.exe` file for installation
           - **Linux**: Choose from `.deb` (Ubuntu/Debian), `.rpm` (RHEL/Fedora), or `.zip` for portable use
 
-          ### 🔧 Installation Notes
+          ### Installation Notes
 
           - **macOS**: You may need to allow the app in System Preferences > Security & Privacy
           - **Windows**: The app is not signed, so Windows Defender may show a warning
           - **Linux**: Install the package using your package manager or extract the zip file
-
-          ---
-
-          **Full Changelog**: [${{ github.event.before }}...${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }})
         files: |
           packages/app/out/make/**/*.dmg
           packages/app/out/make/**/*.zip
