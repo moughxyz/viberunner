@@ -22,7 +22,7 @@ jobs:
         include:
           - os: macos-latest
             platform: darwin
-            arch: arm64
+            arch: universal
 
     steps:
     - name: Checkout code

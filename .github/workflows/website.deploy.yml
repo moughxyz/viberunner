@@ -49,9 +49,6 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Build common package
-        run: yarn workspace @viberunner/common run build
-
       - name: Build website
         run: yarn workspace website run build
 
