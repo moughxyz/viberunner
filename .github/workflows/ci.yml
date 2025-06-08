@@ -39,9 +39,11 @@ jobs:
 
     - name: Run ESLint
       run: npm run lint
+      working-directory: packages/app
 
     - name: TypeScript compilation check
       run: npx tsc --noEmit
+      working-directory: packages/app
 
   build-test:
     runs-on: ${{ matrix.os }}
@@ -84,9 +86,11 @@ jobs:
     # Force rebuild native modules for the target platform
     - name: Rebuild native modules
       run: npm rebuild
+      working-directory: packages/app
 
     - name: Build renderer
       run: npm run build
+      working-directory: packages/app
 
     # Clear electron cache to ensure fresh build
     - name: Clear Electron cache
@@ -115,6 +119,7 @@ jobs:
 
     - name: Create distributables
       shell: bash
+      working-directory: packages/app
       env:
         # Pass GitHub secrets as environment variables for macOS code signing
         OSX_SIGN_IDENTITY: ${{ matrix.os == 'macos-latest' && secrets.OSX_SIGN_IDENTITY || '' }}
@@ -130,6 +135,7 @@ jobs:
 
     - name: Test packaged app exists
       shell: bash
+      working-directory: packages/app
       run: |
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
           test -d "out/Viberunner-win32-x64" || test -d "out/make"
@@ -158,7 +164,7 @@ jobs:
       with:
         name: viberunner-package-${{ matrix.os }}-${{ github.sha }}
         path: |
-          out/make/**/*
+          packages/app/out/make/**/*
         retention-days: 3
 
   build-status:

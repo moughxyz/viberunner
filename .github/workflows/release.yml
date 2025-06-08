@@ -62,9 +62,11 @@ jobs:
 
     - name: Build renderer
       run: npm run build
+      working-directory: packages/app
 
     - name: Create distributables
       shell: bash
+      working-directory: packages/app
       env:
         # Pass GitHub secrets as environment variables for macOS code signing
         OSX_SIGN_IDENTITY: ${{ matrix.os == 'macos-latest' && secrets.OSX_SIGN_IDENTITY || '' }}
@@ -80,6 +82,7 @@ jobs:
 
     - name: Test packaged app exists
       shell: bash
+      working-directory: packages/app
       run: |
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
           test -d "out/Viberunner-win32-x64" || test -d "out/make"
@@ -105,6 +108,7 @@ jobs:
 
     - name: List build artifacts
       shell: bash
+      working-directory: packages/app
       run: |
         echo "Build artifacts in out/make:"
         find ./out/make -type f -name "*.zip" -o -name "*.dmg" -o -name "*.exe" -o -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" | sort
@@ -114,7 +118,7 @@ jobs:
       with:
         name: viberunner-${{ matrix.platform }}-${{ matrix.arch }}
         path: |
-          out/make/**/*
+          packages/app/out/make/**/*
         retention-days: 30
 
   create-release:
