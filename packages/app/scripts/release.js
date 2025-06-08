@@ -61,7 +61,9 @@ function writePackageJson(packageData) {
 }
 
 function writeReleaseJson(version) {
-  const releasePath = path.resolve(process.cwd(), 'packages/common/src/release.json');
+  // Go up to workspace root, then down to packages/common/src
+  const workspaceRoot = path.resolve(process.cwd(), '../../');
+  const releasePath = path.resolve(workspaceRoot, 'packages/common/src/release.json');
   const releaseDir = path.dirname(releasePath);
 
   // Create directory if it doesn't exist
@@ -255,7 +257,7 @@ async function main() {
   writeReleaseJson(newVersion);
 
   // Git operations
-  executeCommand('git add package.json packages/common/src/release.json', 'Adding package.json and release.json to git');
+  executeCommand('git add package.json ../../packages/common/src/release.json', 'Adding package.json and release.json to git');
   executeCommand(`git commit -m "chore: bump version to ${newVersion}"`, 'Committing version bump');
   executeCommand(`git tag -a v${newVersion} -m "Release v${newVersion}"`, 'Creating git tag');
   executeCommand('git push origin main', 'Pushing commits to remote');
