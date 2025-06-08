@@ -58,7 +58,9 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: |
+        npm ci
+        npm ci --workspace=packages/app
 
     - name: Build renderer
       run: npm run build

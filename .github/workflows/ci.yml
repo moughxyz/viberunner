@@ -35,7 +35,9 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: |
+        npm ci
+        npm ci --workspace=packages/app
 
     - name: Run ESLint
       run: npm run lint
@@ -64,7 +66,9 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: |
+        npm ci
+        npm ci --workspace=packages/app
 
     - name: Restore certificate into a temp keychain
       if: matrix.os == 'macos-latest'
