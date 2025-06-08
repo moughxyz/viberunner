@@ -7,14 +7,14 @@ on:
       - 'packages/app/**'
       - 'package.json'
       - 'yarn.lock'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/app.ci.yml'
   pull_request:
     branches: [ main, develop ]
     paths:
       - 'packages/app/**'
       - 'package.json'
       - 'yarn.lock'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/app.ci.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

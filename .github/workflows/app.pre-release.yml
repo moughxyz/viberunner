@@ -10,7 +10,7 @@ on:
       - 'packages/app/**'
       - 'package.json'
       - 'yarn.lock'
-      - '.github/workflows/pre-release.yml'
+      - '.github/workflows/app.pre-release.yml'
 
 jobs:
   build-and-prerelease:

@@ -8,7 +8,7 @@ on:
       - 'packages/app/**'
       - 'package.json'
       - 'yarn.lock'
-      - '.github/workflows/release.yml'
+      - '.github/workflows/app.release.yml'
 
 permissions:
   contents: write
