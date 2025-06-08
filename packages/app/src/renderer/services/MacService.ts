@@ -76,8 +76,20 @@ export class MacService {
         `Creating new Electron window for runner: "${runner.name}" (ID: ${runner.id})`
       )
 
+      // Get the runner's icon path if available and convert to absolute path
+      let iconPath: string | undefined = undefined
+      if (runner.icon) {
+        const runnersDir = getRunnersDirectory()
+        const runnerDir = path.join(runnersDir, runner.id)
+        iconPath = path.join(runnerDir, runner.icon)
+
+        console.log(
+          `Converted runner icon path from "${runner.icon}" to "${iconPath}"`
+        )
+      }
+
       // Use IPC to communicate with main process to create new window
-      const result = await ipcRenderer.invoke("create-runner-window", runner.id)
+      const result = await ipcRenderer.invoke("create-runner-window", runner.id, runner.name, iconPath)
 
       if (!result.success) {
         throw new Error(result.error || "Failed to create runner window")

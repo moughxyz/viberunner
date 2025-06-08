@@ -6,11 +6,13 @@ import * as fs from "fs"
  * Handles SVG files by converting them to PNG using Sharp for better compatibility
  *
  * @param iconPath - Absolute path to the icon file
+ * @param usage - The intended usage of the icon ("dock" | "menubar"), affects size
  * @returns Promise<Electron.NativeImage> - The loaded native image
  * @throws Error if the icon cannot be loaded
  */
 export const loadIconAsNativeImage = async (
-  iconPath: string
+  iconPath: string,
+  usage: "dock" | "menubar" = "menubar"
 ): Promise<Electron.NativeImage> => {
   try {
     console.log(`Attempting to load icon from: ${iconPath}`)
@@ -50,11 +52,21 @@ export const loadIconAsNativeImage = async (
           const sharp = require("sharp")
           const svgBuffer = fs.readFileSync(iconPath)
 
-          // Determine appropriate size for the platform
-          const iconSize = process.platform === "darwin" ? 16 : 24
+          // Determine appropriate size based on usage and platform
+          const getIconSize = (usage: "dock" | "menubar", platform: string): number => {
+            if (usage === "dock") {
+              // Dock icons should be larger for better quality
+              return platform === "darwin" ? 128 : 64
+            } else {
+              // Menu bar icons should be small
+              return platform === "darwin" ? 16 : 24
+            }
+          }
+
+          const iconSize = getIconSize(usage, process.platform)
 
           console.log(
-            `Converting SVG to PNG at ${iconSize}x${iconSize} using Sharp...`
+            `Converting SVG to PNG at ${iconSize}x${iconSize} for ${usage} using Sharp...`
           )
 
           // Convert SVG to PNG using Sharp

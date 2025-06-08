@@ -137,8 +137,6 @@ const runnerProcesses = new Map<string, any>()
 const runnerTrays = new Map<string, Tray>()
 const runnerPopups = new Map<string, BrowserWindow>()
 
-
-
 // Create a tray icon for a runner in the menu bar
 const createRunnerTray = async (
   runnerId: string,
@@ -152,11 +150,11 @@ const createRunnerTray = async (
       return
     }
 
-        // Use provided runner icon or default Viberunner icon
+    // Use provided runner icon or default Viberunner icon
     let trayIcon
     if (iconPath) {
       try {
-        trayIcon = await loadIconAsNativeImage(iconPath)
+        trayIcon = await loadIconAsNativeImage(iconPath, "menubar")
       } catch (error) {
         console.warn(
           `Failed to load runner icon from "${iconPath}", using default: ${error}`
@@ -178,16 +176,6 @@ const createRunnerTray = async (
       console.warn("Default icon is also empty, creating a basic fallback")
       // Create a simple fallback icon if even the default fails
       trayIcon = nativeImage.createEmpty()
-    }
-
-    // Resize icon appropriately for the platform's menu bar/system tray
-    // Note: SVG icons are already sized correctly by the loadIconAsNativeImage utility
-    if (!trayIcon.isEmpty() && !iconPath?.toLowerCase().endsWith('.svg')) {
-      const iconSize = process.platform === "darwin" ? 16 : 24 // 16px for macOS, 24px for others
-      trayIcon = trayIcon.resize({ width: iconSize, height: iconSize })
-      console.log(
-        `Resized tray icon to ${iconSize}x${iconSize} for platform: ${process.platform}`
-      )
     }
 
     // Create tray
@@ -343,8 +331,29 @@ const toggleRunnerPopup = (
   }
 }
 
+// Set dock icon for runner window
+const setDockIconForRunner = async (iconPath: string): Promise<void> => {
+  try {
+    console.log(`Setting dock icon to runner icon: ${iconPath}`)
+
+    // Load the runner icon as native image for dock usage
+    const runnerIcon = await loadIconAsNativeImage(iconPath, "dock")
+
+    // Set the dock icon (macOS only)
+    if (app.dock && !runnerIcon.isEmpty()) {
+      app.dock.setIcon(runnerIcon)
+      console.log(`Successfully set dock icon to: ${iconPath}`)
+    } else {
+      console.warn("Could not set dock icon - either not macOS or icon is empty")
+    }
+  } catch (error) {
+    console.error(`Failed to set dock icon for runner:`, error)
+    // Don't throw - this is not critical functionality
+  }
+}
+
 // Create a separate Electron process for a runner (separate dock icon)
-const createRunnerProcess = async (runnerId: string): Promise<void> => {
+const createRunnerProcess = async (runnerId: string, runnerName: string, iconPath?: string): Promise<void> => {
   try {
     // Check if process already exists
     if (runnerProcesses.has(runnerId)) {
@@ -356,14 +365,19 @@ const createRunnerProcess = async (runnerId: string): Promise<void> => {
     const electronPath = process.execPath
     const appPath = app.getAppPath()
 
-    console.log(`Creating separate Electron process for runner: ${runnerId}`)
+    console.log(`Creating separate Electron process for runner: ${runnerName} (${runnerId})`)
     console.log(`Electron path: ${electronPath}`)
     console.log(`App path: ${appPath}`)
 
-    // Spawn new Electron process with runner ID as argument
+    // Spawn new Electron process with runner ID, name, and optional icon path as arguments
+    const args = [appPath, "--runner-id", runnerId, "--runner-name", runnerName]
+    if (iconPath) {
+      args.push("--icon-path", iconPath)
+    }
+
     const runnerProcess = spawn(
       electronPath,
-      [appPath, "--runner-id", runnerId],
+      args,
       {
         detached: true,
         stdio: "ignore",
@@ -383,7 +397,7 @@ const createRunnerProcess = async (runnerId: string): Promise<void> => {
     runnerProcess.unref()
 
     console.log(
-      `Successfully spawned runner process: ${runnerId} (PID: ${runnerProcess.pid})`
+      `Successfully spawned runner process: ${runnerName} (${runnerId}, PID: ${runnerProcess.pid})`
     )
   } catch (error) {
     console.error(`Failed to create runner process for ${runnerId}:`, error)
@@ -391,9 +405,16 @@ const createRunnerProcess = async (runnerId: string): Promise<void> => {
   }
 }
 
-const createWindow = (runnerId?: string): BrowserWindow => {
-  // Determine window title
-  const windowTitle = runnerId ? `${runnerId}` : "Viberunner"
+const createWindow = (runnerId?: string, runnerName?: string, iconPath?: string): BrowserWindow => {
+  // Determine window title and app name
+  const displayName = runnerName || runnerId || "Viberunner"
+  const windowTitle = runnerId ? displayName : "Viberunner"
+
+  // Set app name for dock display if this is a runner window
+  if (runnerId) {
+    app.setName(displayName)
+    console.log(`Set app name to: ${displayName}`)
+  }
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -412,6 +433,11 @@ const createWindow = (runnerId?: string): BrowserWindow => {
     backgroundColor: "#1a1a1a",
     show: false, // Don't show immediately
   })
+
+  // Set dock icon if this is a runner window with custom icon
+  if (runnerId && iconPath && process.platform === "darwin") {
+    setDockIconForRunner(iconPath)
+  }
 
   // Show window once ready to prevent flash
   mainWindow.once("ready-to-show", () => {
@@ -460,13 +486,28 @@ const createWindow = (runnerId?: string): BrowserWindow => {
 }
 
 // Check if this is a runner process launched with command line args
-const getRunnerIdFromArgs = (): string | null => {
+const getRunnerArgsFromCommandLine = (): { runnerId: string | null; runnerName: string | null; iconPath: string | null } => {
   const args = process.argv
+
+  // Get runner ID
   const runnerIdIndex = args.indexOf("--runner-id")
-  if (runnerIdIndex !== -1 && runnerIdIndex + 1 < args.length) {
-    return args[runnerIdIndex + 1]
-  }
-  return null
+  const runnerId = runnerIdIndex !== -1 && runnerIdIndex + 1 < args.length
+    ? args[runnerIdIndex + 1]
+    : null
+
+  // Get runner name
+  const runnerNameIndex = args.indexOf("--runner-name")
+  const runnerName = runnerNameIndex !== -1 && runnerNameIndex + 1 < args.length
+    ? args[runnerNameIndex + 1]
+    : null
+
+  // Get icon path
+  const iconPathIndex = args.indexOf("--icon-path")
+  const iconPath = iconPathIndex !== -1 && iconPathIndex + 1 < args.length
+    ? args[iconPathIndex + 1]
+    : null
+
+  return { runnerId, runnerName, iconPath }
 }
 
 // This method will be called when Electron has finished
@@ -479,10 +520,11 @@ app.whenReady().then(async () => {
   createMenuBar()
 
   // Check if this is a runner process
-  const runnerIdFromArgs = getRunnerIdFromArgs()
-  if (runnerIdFromArgs) {
-    console.log(`Starting as runner process for: ${runnerIdFromArgs}`)
-    createWindow(runnerIdFromArgs)
+  const runnerArgs = getRunnerArgsFromCommandLine()
+  console.log(' app.whenReady > runnerArgs:', runnerArgs)
+  if (runnerArgs.runnerId) {
+    console.log(`Starting as runner process for: ${runnerArgs.runnerName || runnerArgs.runnerId}`)
+    createWindow(runnerArgs.runnerId, runnerArgs.runnerName || undefined, runnerArgs.iconPath || undefined)
   } else {
     console.log(`Starting as main Viberunner process`)
     createWindow()
@@ -540,14 +582,14 @@ function registerIpcHandlers() {
   })
 
   // Handle creating new runner process (separate dock icon)
-  ipcMain.handle("create-runner-window", async (_event, runnerId: string) => {
+  ipcMain.handle("create-runner-window", async (_event, runnerId: string, runnerName: string, iconPath?: string) => {
     try {
-      console.log(`Creating separate Electron process for runner: ${runnerId}`)
+      console.log(`Creating separate Electron process for runner: ${runnerName} (${runnerId})`)
 
-      await createRunnerProcess(runnerId)
+      await createRunnerProcess(runnerId, runnerName, iconPath)
 
       console.log(
-        `Successfully created separate process for runner: ${runnerId}`
+        `Successfully created separate process for runner: ${runnerName} (${runnerId})`
       )
 
       return { success: true }
