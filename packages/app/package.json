@@ -1,5 +1,5 @@
 {
-  "name": "Viberunner",
+  "name": "viberunner",
   "version": "0.0.8",
   "description": "Vibe app desktop manager.",
   "main": "dist-electron/index.js",
@@ -28,6 +28,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
     "@electron/remote": "^2.1.2",
+    "@radix-ui/react-compose-refs": "^1.1.2",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",
     "@sentry/react": "^9.27.0",

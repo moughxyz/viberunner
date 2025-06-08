@@ -7,7 +7,7 @@ on:
     paths:
       - 'packages/app/**'
       - 'package.json'
-      - 'package-lock.json'
+      - 'yarn.lock'
       - '.github/workflows/release.yml'
 
 permissions:
@@ -55,20 +55,32 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      shell: bash
+      run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+    - name: Cache yarn dependencies
+      uses: actions/cache@v4
+      id: yarn-cache
+      with:
+        path: |
+          ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          node_modules
+          packages/*/node_modules
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
 
     - name: Install dependencies
-      run: |
-        npm ci
-        npm ci --workspace=packages/app
+      run: yarn install --immutable
 
     - name: Build renderer
-      run: npm run build
-      working-directory: packages/app
+      run: yarn workspace viberunner run build
 
     - name: Create distributables
       shell: bash
-      working-directory: packages/app
       env:
         # Pass GitHub secrets as environment variables for macOS code signing
         OSX_SIGN_IDENTITY: ${{ matrix.os == 'macos-latest' && secrets.OSX_SIGN_IDENTITY || '' }}
@@ -77,9 +89,9 @@ jobs:
         VR_APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.VR_APPLE_TEAM_ID || '' }}
       run: |
         if [ "${{ matrix.os }}" = "macos-latest" ]; then
-          npm run make -- --arch=universal --platform=darwin
+          yarn workspace viberunner run make -- --arch=universal --platform=darwin
         else
-          npm run make
+          yarn workspace viberunner run make
         fi
 
     - name: Test packaged app exists
@@ -87,24 +99,24 @@ jobs:
       working-directory: packages/app
       run: |
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          test -d "out/Viberunner-win32-x64" || test -d "out/make"
+          test -d "out/viberunner-win32-x64" || test -d "out/make"
           echo "✅ Windows package created successfully"
         elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-          test -d "out/Viberunner-darwin-universal" || test -d "out/make"
+          test -d "out/viberunner-darwin-universal" || test -d "out/make"
           echo "✅ macOS universal package created successfully"
           # Show package contents for debugging
           ls -la out/ || true
           find out/ -name "*.dmg" -exec ls -lh {} \; || true
           find out/ -name "*.app" -exec ls -lh {} \; || true
           # Verify code signing and universal binary (if signed)
-          if [ -d "out/Viberunner-darwin-universal/Viberunner.app" ]; then
-            codesign --verify --deep --strict --verbose=2 out/Viberunner-darwin-universal/Viberunner.app || echo "⚠️ Code signing verification failed or app is unsigned"
+          if [ -d "out/viberunner-darwin-universal/viberunner.app" ]; then
+            codesign --verify --deep --strict --verbose=2 out/viberunner-darwin-universal/viberunner.app || echo "⚠️ Code signing verification failed or app is unsigned"
             # Check if it's actually a universal binary
-            file out/Viberunner-darwin-universal/Viberunner.app/Contents/MacOS/Viberunner || echo "⚠️ Could not check binary architecture"
-            lipo -info out/Viberunner-darwin-universal/Viberunner.app/Contents/MacOS/Viberunner || echo "⚠️ Could not get architecture info"
+            file out/viberunner-darwin-universal/viberunner.app/Contents/MacOS/viberunner || echo "⚠️ Could not check binary architecture"
+            lipo -info out/viberunner-darwin-universal/viberunner.app/Contents/MacOS/viberunner || echo "⚠️ Could not get architecture info"
           fi
         else
-          test -d "out/Viberunner-linux-x64" || test -d "out/make"
+          test -d "out/viberunner-linux-x64" || test -d "out/make"
           echo "✅ Linux package created successfully"
         fi
 

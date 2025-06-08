@@ -6,14 +6,14 @@
     "packages/*"
   ],
   "scripts": {
-    "clean": "npm run clean --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
-    "dev": "npm run dev --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "make": "npm run make --workspace=packages/app"
+    "clean": "yarn workspaces foreach run clean",
+    "build": "yarn workspaces foreach run build",
+    "dev": "yarn workspaces foreach run dev",
+    "lint": "yarn workspaces foreach run lint",
+    "make": "yarn workspace viberunner run make"
   },
   "engines": {
     "node": ">=16.0.0",
-    "npm": ">=7.0.0"
+    "yarn": ">=4.0.0"
   }
 }

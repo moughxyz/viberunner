@@ -9,7 +9,7 @@ on:
     paths:
       - 'packages/app/**'
       - 'package.json'
-      - 'package-lock.json'
+      - 'yarn.lock'
       - '.github/workflows/pre-release.yml'
 
 jobs:
@@ -37,20 +37,32 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
+
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      shell: bash
+      run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+    - name: Cache yarn dependencies
+      uses: actions/cache@v4
+      id: yarn-cache
+      with:
+        path: |
+          ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          node_modules
+          packages/*/node_modules
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
 
     - name: Install dependencies
-      run: |
-        npm ci
-        npm ci --workspace=packages/app
+      run: yarn install --immutable
 
     - name: Build renderer
-      run: npm run build
-      working-directory: packages/app
+      run: yarn workspace viberunner run build
 
     - name: Make distributables
-      run: npm run make
-      working-directory: packages/app
+      run: yarn workspace viberunner run make
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
