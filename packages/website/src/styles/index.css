@@ -1,0 +1,35 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+	background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+	color: #ffffff;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+.container {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 6rem 2rem 2rem;
+	flex: 1;
+}
+
+/* Global utility classes */
+.gradient {
+	background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	background-clip: text;
+}
+
+@media (max-width: 768px) {
+	.container {
+		padding: 5rem 1rem 1rem;
+	}
+}
