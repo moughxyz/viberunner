@@ -1,54 +1,43 @@
 import React, { useState, useEffect } from 'react'
-import { product } from '@viberunner/common'
+import { product, release } from '@viberunner/common'
 import './Hero.css'
 
 const Hero: React.FC = () => {
   const [downloadUrl, setDownloadUrl] = useState<string>('')
   const [platform, setPlatform] = useState<string>('')
 
-    useEffect(() => {
-    const fetchReleaseData = async () => {
-      try {
-        // Fetch the release.json file from the common package dist
-        const response = await fetch('/node_modules/@viberunner/common/dist/release.json')
-        if (!response.ok) {
-          throw new Error('Failed to fetch release data')
-        }
-        const releaseData = await response.json()
+  useEffect(() => {
+    try {
+      // Detect platform
+      const userAgent = navigator.userAgent.toLowerCase()
+      let detectedPlatform = ''
+      let url = ''
 
-        // Detect platform
-        const userAgent = navigator.userAgent.toLowerCase()
-        let detectedPlatform = ''
-        let url = ''
-
-        if (userAgent.includes('win')) {
-          detectedPlatform = 'Windows'
-          url = releaseData.downloads.windows
-        } else if (userAgent.includes('mac')) {
-          detectedPlatform = 'macOS'
-          // Prefer ARM64 for newer Macs, fallback to DMG
-          url = userAgent.includes('arm') || userAgent.includes('apple')
-            ? releaseData.downloads.macOS.arm64
-            : releaseData.downloads.macOS.dmg
-        } else if (userAgent.includes('linux')) {
-          detectedPlatform = 'Linux'
-          url = releaseData.downloads.linux.deb
-        } else {
-          detectedPlatform = 'Download'
-          url = `https://github.com/moughxyz/viberunner/releases/latest`
-        }
-
-        setPlatform(detectedPlatform)
-        setDownloadUrl(url)
-      } catch (error) {
-        console.error('Failed to load release data:', error)
-        // Fallback to GitHub releases page
-        setPlatform('Download')
-        setDownloadUrl('https://github.com/moughxyz/viberunner/releases/latest')
+      if (userAgent.includes('win')) {
+        detectedPlatform = 'Windows'
+        url = release.downloads.windows
+      } else if (userAgent.includes('mac')) {
+        detectedPlatform = 'macOS'
+        // Prefer ARM64 for newer Macs, fallback to DMG
+        url = userAgent.includes('arm') || userAgent.includes('apple')
+          ? release.downloads.macOS.arm64
+          : release.downloads.macOS.dmg
+      } else if (userAgent.includes('linux')) {
+        detectedPlatform = 'Linux'
+        url = release.downloads.linux.deb
+      } else {
+        detectedPlatform = 'Download'
+        url = `https://github.com/moughxyz/viberunner/releases/latest`
       }
-    }
 
-    fetchReleaseData()
+      setPlatform(detectedPlatform)
+      setDownloadUrl(url)
+    } catch (error) {
+      console.error('Failed to load release data:', error)
+      // Fallback to GitHub releases page
+      setPlatform('Download')
+      setDownloadUrl('https://github.com/moughxyz/viberunner/releases/latest')
+    }
   }, [])
   return (
     <div className="hero">
