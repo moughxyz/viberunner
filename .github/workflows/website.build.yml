@@ -1,0 +1,48 @@
+name: Build Website
+
+on:
+  # Runs on pull requests targeting the default branch
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "packages/website/**"
+      - "packages/common/**"
+      - ".github/workflows/build-website.yml"
+      - ".github/workflows/deploy-website.yml"
+
+  # Also run on pushes to branches other than main
+  push:
+    branches-ignore: ["main"]
+    paths:
+      - "packages/website/**"
+      - "packages/common/**"
+      - ".github/workflows/build-website.yml"
+      - ".github/workflows/deploy-website.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Build website
+        run: yarn workspace website run build
+
+      - name: Check build output
+        run: |
+          if [ ! -d "./packages/website/dist" ]; then
+            echo "Build failed: dist directory not found"
+            exit 1
+          fi
+          echo "Build successful: dist directory created"
+          ls -la ./packages/website/dist
