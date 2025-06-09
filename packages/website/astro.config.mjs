@@ -9,8 +9,8 @@ export default defineConfig({
   // Ensure static output for deployment
   output: 'static',
 
-  // Configure for deployment to vibetime.ai root
-  site: 'https://vibetime.ai',
+  // Configure for deployment to viberunner.me root
+  site: 'https://viberunner.me',
 
   // Build configuration
   build: {

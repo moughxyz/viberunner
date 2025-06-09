@@ -1,3 +1,3 @@
 export const product = {
-  productName: "Vibetime"
+  productName: "Viberunner"
 } as const
