@@ -72,6 +72,9 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
   const [streamingMessage, setStreamingMessage] = useState("")
   const [isStreaming, setIsStreaming] = useState(false)
 
+  // Debug mode - prevents messages from being cleared
+  const [debugMode, setDebugMode] = useState(false)
+
   const claudeService = useRef<ClaudeAPIService | null>(null)
   const fileManager = useRef<FileManagerService | null>(null)
   const commandExecutor = useRef<CommandExecutorService | null>(null)
@@ -538,7 +541,10 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
       } finally {
         setIsLoading(false)
         setIsStreaming(false)
-        setStreamingMessage("")
+        // In debug mode, keep the streaming message visible for debugging
+        if (!debugMode) {
+          setStreamingMessage("")
+        }
       }
     },
     [
@@ -696,6 +702,8 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
             onModelChange={handleModelChange}
             streamingMessage={streamingMessage}
             isStreaming={isStreaming}
+            debugMode={debugMode}
+            onDebugModeChange={setDebugMode}
           />
           <div id="preview-panel" className="preview-panel">
             <Tabs

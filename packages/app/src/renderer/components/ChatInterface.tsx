@@ -22,6 +22,8 @@ interface ChatInterfaceProps {
   onModelChange?: (model: ClaudeModelId) => void
   streamingMessage?: string
   isStreaming?: boolean
+  debugMode?: boolean
+  onDebugModeChange?: (debug: boolean) => void
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -38,6 +40,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onModelChange,
   streamingMessage = "",
   isStreaming = false,
+  debugMode = false,
+  onDebugModeChange,
 }) => {
   const [inputValue, setInputValue] = useState("")
   const [selectedModel, setSelectedModel] = useState<ClaudeModelId>(
@@ -130,11 +134,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     return paragraphs.join("")
   }
 
+  // Helper function to escape HTML content
+  const escapeHtml = (text: string) => {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+  }
+
   // Format streaming message with visual indicators for partial tags
   const formatStreamingMessage = (content: string) => {
     let formatted = content
 
-    // Highlight partial or complete RunnerArtifact tags
+        // Highlight partial or complete RunnerArtifact tags
     formatted = formatted.replace(
       /(<RunnerArtifact[^>]*>)([\s\S]*?)(<\/RunnerArtifact>|$)/g,
       (_match, openTag, content, closeTag) => {
@@ -142,8 +156,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         const className = isComplete
           ? "streaming-artifact complete"
           : "streaming-artifact partial"
-        // Preserve whitespace in the content by wrapping in pre tags
-        const preservedContent = `<pre class="artifact-content">${content}</pre>`
+        // Escape HTML content and preserve whitespace in the content by wrapping in pre tags
+        const escapedContent = escapeHtml(content)
+        const preservedContent = `<pre class="artifact-content">${escapedContent}</pre>`
         return `<div class="${className}">${openTag}${preservedContent}${closeTag}</div>`
       }
     )
@@ -155,8 +170,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       (_match, openTag, content, closeTag) => {
         // Always show as partial during streaming since execution happens later
         const className = "streaming-command partial"
-        // Preserve whitespace in the content by wrapping in pre tags
-        const preservedContent = `<pre class="command-content">${content}</pre>`
+        // Escape HTML content and preserve whitespace in the content by wrapping in pre tags
+        const escapedContent = escapeHtml(content)
+        const preservedContent = `<pre class="command-content">${escapedContent}</pre>`
         return `<div class="${className}">${openTag}${preservedContent}${closeTag}</div>`
       }
     )
@@ -510,6 +526,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               >
                 Change
               </button>
+              {onDebugModeChange && (
+                <label className="debug-toggle">
+                  <input
+                    type="checkbox"
+                    checked={debugMode}
+                    onChange={(e) => onDebugModeChange(e.target.checked)}
+                  />
+                  Debug Mode
+                </label>
+              )}
             </div>
           </div>
         </div>
