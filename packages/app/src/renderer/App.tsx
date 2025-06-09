@@ -6,6 +6,7 @@ import AppSelection from "./components/AppSelection"
 import SettingsModal from "./components/SettingsModal"
 import TabBar from "./components/TabBar"
 import DropZone from "./components/DropZone"
+import ToastContainer from "./components/ToastContainer"
 import { FileInput, RunnerConfig, OpenTab } from "./types"
 import {
   getRunnerPreference,
@@ -20,6 +21,7 @@ import { useTabService } from "./hooks/useTabService"
 import { runnerService } from "./services/RunnerService"
 import { FileManagerService } from "./services/FileManagerService"
 import { CommandExecutorService } from "./services/CommandExecutorService"
+import { toastService } from "./services/ToastService"
 import { getSupportedFormats } from "../lib/utils"
 
 // Direct Node.js access with full integration
@@ -59,6 +61,9 @@ const api = {
   invoke: async (channel: string, ...args: any[]) => {
     return await ipcRenderer.invoke(channel, ...args)
   },
+
+  // Toast service for runners
+  toast: toastService,
 }
 
 // Make API available globally for runners
@@ -480,6 +485,7 @@ const App: React.FC = () => {
       <div className="vr-app vr-single-app-mode">
         <div className="vr-single-app-drag-area" />
         <div ref={appRootRef} className="app-viewport" />
+        <ToastContainer />
       </div>
     )
   }
@@ -586,6 +592,7 @@ const App: React.FC = () => {
           </div>
         </main>
       </div>
+      <ToastContainer />
     </div>
   )
 }
