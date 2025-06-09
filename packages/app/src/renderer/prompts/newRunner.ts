@@ -111,8 +111,8 @@ export const getNewRunnerPrompt = (
   </icon-guidelines>
 
   <response-guidelines>
-    - When you generate a summary when you finish creating the app, keep it short. Like a paragraph. No need
-      to essentially generate a very detailed runthrough of what you did.
+    - DO NOT generate a summary at the end of what you created. Do not even explain what you did. Do not say things like "Perfect, I've created bla bla bla." Just don't do it. It eats up too many tokens and takes too long.
+    The last thing in your response should be artifacts. No conclusion. No happy ending. No summary. Nothing.
   </response-guidelines>
 
   Here are the contents of the promised attachments:

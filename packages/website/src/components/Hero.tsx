@@ -48,6 +48,7 @@ const Hero: React.FC = () => {
           <span className="gradient">{product.productName}</span>
         </h1>
         <p className="subtitle">Build personal desktop apps in seconds</p>
+
         <p className="description">
           We believe everyone should have the power to create their own desktop
           tools. Instead of searching through app stores, buying expensive
@@ -75,6 +76,22 @@ const Hero: React.FC = () => {
           <p className="download-note">
             Available for macOS. Windows and Linux coming soon.
           </p>
+        </div>
+        <div className="how-it-works-screenshots">
+          <div className="screenshot-container">
+            <img
+              src="/screenshot-1.jpg"
+              alt="Step 1: Describing your app idea in Viberunner"
+              className="how-it-works-image"
+            />
+          </div>
+          <div className="screenshot-container">
+            <img
+              src="/screenshot-2.jpg"
+              alt="Step 2: AI generates your custom app"
+              className="how-it-works-image"
+            />
+          </div>
         </div>
       </section>
 

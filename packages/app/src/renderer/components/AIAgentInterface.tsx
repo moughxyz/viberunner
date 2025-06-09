@@ -639,6 +639,21 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
     setRefreshKey((prev) => prev + 1)
   }
 
+  const handleEditWithCursor = async () => {
+    if (!runnerName) {
+      alert("No runner to edit. Please save the runner first.")
+      return
+    }
+
+    try {
+      const fileManagerService = new FileManagerService()
+      await fileManagerService.editRunnerWithCursor(runnerName)
+    } catch (error) {
+      console.error("Error opening runner with Cursor:", error)
+      alert(`Failed to open runner "${runnerName}" with Cursor: ${error}`)
+    }
+  }
+
   // Track if we've already sent the initial prompt
   const initialPromptSentRef = useRef(false)
 
@@ -744,6 +759,15 @@ const AIAgentInterface: React.FC<AIAgentInterfaceProps> = ({
                       </div>
                     </TabsTrigger>
                   </TabsList>
+
+                  <button
+                    onClick={handleEditWithCursor}
+                    disabled={isLoading || !runnerName}
+                    className="preview-refresh-btn"
+                    title="Edit with Cursor"
+                  >
+                    Edit with Cursor
+                  </button>
 
                   <button
                     id="preview-refresh-btn"
