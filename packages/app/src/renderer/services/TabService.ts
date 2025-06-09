@@ -357,6 +357,18 @@ export class TabService {
           setOpenTabs((prev) => {
             const newTabTabs = prev.filter((tab) => tab.type === "newtab")
             const otherTabs = prev.filter((tab) => tab.type !== "newtab")
+
+            // If no "New Tab" exists after transformation, create one in the background
+            if (newTabTabs.length === 0) {
+              const newTabId = this.generateTabId()
+              const backgroundNewTab: OpenTab = {
+                id: newTabId,
+                title: "New Tab",
+                type: "newtab",
+              }
+              return [...otherTabs, backgroundNewTab]
+            }
+
             return [...otherTabs, ...newTabTabs]
           })
         }, 50) // Small delay to ensure tab is properly added first
@@ -392,6 +404,18 @@ export class TabService {
           setOpenTabs((prev) => {
             const newTabTabs = prev.filter((tab) => tab.type === "newtab")
             const otherTabs = prev.filter((tab) => tab.type !== "newtab")
+
+            // If no "New Tab" exists after transformation, create one in the background
+            if (newTabTabs.length === 0) {
+              const newTabId = this.generateTabId()
+              const backgroundNewTab: OpenTab = {
+                id: newTabId,
+                title: "New Tab",
+                type: "newtab",
+              }
+              return [...otherTabs, backgroundNewTab]
+            }
+
             return [...otherTabs, ...newTabTabs]
           })
         }, 50) // Small delay to ensure tab is properly added first

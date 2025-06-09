@@ -343,8 +343,8 @@ const App: React.FC = () => {
           break
         case "newTab":
         default:
-          // Default to new tab launch
-          await openAppInNewTab(runner, undefined, true, false)
+          // Default to new tab launch - keep focus on the runner tab
+          await openAppInNewTab(runner, undefined, true, true)
           break
       }
     } catch (error) {
