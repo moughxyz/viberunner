@@ -3,63 +3,73 @@ import type { App } from "electron"
 
 const fs = require("fs")
 const path = require("path")
-const { spawn, execSync } = require("child_process")
+const { spawn } = require("child_process")
 const { userInfo } = require("os")
 
 // Simple shell environment detection for renderer process
-function getShellPath(): string | undefined {
+async function getShellPath(): Promise<string | undefined> {
   if (process.platform === "win32") {
     return process.env.PATH
   }
 
-  try {
-    // Get user's shell
-    const defaultShell = (() => {
-      try {
-        const { shell } = userInfo()
-        if (shell) return shell
-      } catch {
-        // Ignore userInfo errors
-      }
-      if (process.platform === "darwin") {
-        return process.env.SHELL ?? "/bin/zsh"
-      }
-      return process.env.SHELL ?? "/bin/sh"
-    })()
+  return new Promise((resolve) => {
+    try {
+      // Get user's shell
+      const defaultShell = (() => {
+        try {
+          const { shell } = userInfo()
+          if (shell) return shell
+        } catch {
+          // Ignore userInfo errors
+        }
+        if (process.platform === "darwin") {
+          return process.env.SHELL ?? "/bin/zsh"
+        }
+        return process.env.SHELL ?? "/bin/sh"
+      })()
 
-    console.log("🐚 Using shell for PATH detection:", defaultShell)
+      console.log("🐚 Using shell for PATH detection:", defaultShell)
 
-    // Execute shell to get PATH
-    const result = execSync(`${defaultShell} -ilc 'echo $PATH'`, {
-      encoding: "utf8",
-      timeout: 5000,
-      env: { DISABLE_AUTO_UPDATE: "true" },
-    })
+      // Execute shell to get PATH asynchronously
+      const { exec } = require("child_process")
+      exec(
+        `${defaultShell} -ilc 'echo $PATH'`,
+        {
+          encoding: "utf8",
+          timeout: 5000,
+          env: { DISABLE_AUTO_UPDATE: "true" },
+        },
+        (error: any, stdout: string, _stderr: string) => {
+          if (error) {
+            console.warn("🐚 Failed to get shell PATH:", error)
+            resolve(process.env.PATH)
+            return
+          }
 
-    const shellPath = result.toString().trim()
-    console.log("🐚 Shell PATH detected:", shellPath.substring(0, 100) + "...")
-    return shellPath
-  } catch (error) {
-    console.warn("🐚 Failed to get shell PATH:", error)
-    return process.env.PATH
-  }
+          const shellPath = stdout.toString().trim()
+          console.log("🐚 Shell PATH detected:", shellPath.substring(0, 100) + "...")
+          resolve(shellPath)
+        }
+      )
+    } catch (error) {
+      console.warn("🐚 Failed to get shell PATH:", error)
+      resolve(process.env.PATH)
+    }
+  })
 }
 
 /**
  * This function can run in the renderer process, but only if fixPath() is run in the main process.
  * So be sure to keep both.
  */
-function fixRendererPath(): void {
+async function fixRendererPath(): Promise<void> {
   if (process.platform === "win32") {
     return
   }
 
-  const shellPath = getShellPath()
+  const shellPath = await getShellPath()
   if (shellPath && shellPath !== process.env.PATH) {
-    console.log("🔧 Fixing renderer PATH...")
-    console.log("🔧 Before:", process.env.PATH)
     process.env.PATH = shellPath
-    console.log("🔧 After:", process.env.PATH?.substring(0, 100) + "...")
   }
 }
 
@@ -95,7 +105,7 @@ export class CommandExecutorService {
     try {
       console.log("Fix render before", new Date().toISOString())
       // Fix PATH in renderer process
-      fixRendererPath()
+      await fixRendererPath()
       console.log("Fix render after", new Date().toISOString())
 
       // Use the (now fixed) process environment
