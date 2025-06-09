@@ -201,19 +201,36 @@ const createRunnerTray = async (
       return
     }
 
-    // Use provided runner icon or default Viberunner logo
+            // Use provided runner icon or default Viberunner logo
     let trayIcon
     if (iconPath) {
       try {
-        trayIcon = await loadIconAsNativeImage(iconPath)
+        console.log(`Loading custom icon for tray: ${iconPath}`)
+
+        // For tray icons, try the utility function with dock context to bypass menu bar restrictions
+        if (iconPath.toLowerCase().endsWith('.svg')) {
+          console.log(`SVG detected, using loadIconAsNativeImage with dock context`)
+          trayIcon = await loadIconAsNativeImage(iconPath, 'dock')
+        } else {
+          // For non-SVG files, use createFromPath directly
+          trayIcon = nativeImage.createFromPath(iconPath)
+        }
+
+        console.log(`Custom icon loaded. isEmpty: ${trayIcon.isEmpty()}, size: ${JSON.stringify(trayIcon.getSize())}`)
+
+        // Check if the loaded icon is actually valid
+        if (trayIcon.isEmpty()) {
+          console.warn(`Custom icon is empty, using fallback`)
+          trayIcon = await loadFallbackIcon()
+        }
       } catch (error) {
         console.warn(
-          `Failed to load runner icon from "${iconPath}", using default: ${error}`
+          `Failed to load runner icon from "${iconPath}", using fallback: ${error}`
         )
         trayIcon = await loadFallbackIcon()
       }
     } else {
-      console.log(`No runner icon provided, using default Viberunner logo`)
+      console.log(`No runner icon provided, using fallback icon`)
       trayIcon = await loadFallbackIcon()
     }
 
