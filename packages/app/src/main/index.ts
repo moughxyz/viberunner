@@ -235,8 +235,7 @@ const createRunnerTray = async (
     }
 
     // Resize icon appropriately for the platform's menu bar/system tray
-    // Note: SVG icons are already sized correctly by the loadIconAsNativeImage utility
-    if (!trayIcon.isEmpty() && !iconPath?.toLowerCase().endsWith(".svg")) {
+    if (!trayIcon.isEmpty()) {
       const iconSize = process.platform === "darwin" ? 16 : 24 // 16px for macOS, 24px for others
       trayIcon = trayIcon.resize({ width: iconSize, height: iconSize })
       console.log(
