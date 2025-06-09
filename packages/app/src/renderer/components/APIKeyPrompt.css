@@ -12,6 +12,15 @@
   z-index: 1000;
 }
 
+.api-key-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+}
+
 .api-key-form {
   padding: 32px;
   background: var(--background);
@@ -143,4 +152,31 @@
   font-size: 14px;
   font-weight: 500;
   color: var(--foreground);
+}
+
+.api-key-info-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 0;
+  padding: 16px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 28rem;
+}
+
+.api-key-info-icon {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.api-key-info-text {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 0;
+  flex: 1;
 }
