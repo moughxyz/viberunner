@@ -57,7 +57,7 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 0.5rem;
-	background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+	background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
 	color: white;
 	text-decoration: none;
 	padding: 1rem 2rem;
@@ -65,19 +65,85 @@
 	font-size: 1.1rem;
 	font-weight: 600;
 	transition: all 0.3s ease;
-	box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
-	border: 1px solid rgba(255, 255, 255, 0.1);
+	box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+	border: 2px solid #10b981;
+	position: relative;
+	overflow: hidden;
+	animation: celebration-glow 2s ease-in-out infinite alternate;
 }
 
 .download-button:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+	box-shadow: 0 15px 40px rgba(16, 185, 129, 0.6);
 	text-decoration: none;
 	color: white;
 }
 
+.download-button::before {
+	content: '';
+	position: absolute;
+	top: -50%;
+	left: -50%;
+	width: 200%;
+	height: 200%;
+	background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+	transform: rotate(45deg);
+	animation: celebration-shine 3s ease-in-out infinite;
+}
+
 .download-icon {
-	font-size: 1.2rem;
+	position: relative;
+	z-index: 1;
+}
+
+.download-text {
+	position: relative;
+	z-index: 1;
+}
+
+.download-footnote {
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #10b981;
+	margin-top: 0.75rem;
+	margin-bottom: 0.5rem;
+}
+
+.celebration-icon {
+	margin: 0 0.25rem;
+	display: inline-block;
+	animation: celebration-bounce 1.5s ease-in-out infinite alternate;
+	vertical-align: middle;
+}
+
+@keyframes celebration-glow {
+	0% {
+		box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+	}
+	100% {
+		box-shadow: 0 12px 36px rgba(16, 185, 129, 0.6);
+	}
+}
+
+@keyframes celebration-shine {
+	0% {
+		transform: translateX(-100%) translateY(-100%) rotate(45deg);
+	}
+	50% {
+		transform: translateX(100%) translateY(100%) rotate(45deg);
+	}
+	100% {
+		transform: translateX(-100%) translateY(-100%) rotate(45deg);
+	}
+}
+
+@keyframes celebration-bounce {
+	0% {
+		transform: scale(1);
+	}
+	100% {
+		transform: scale(1.05);
+	}
 }
 
 .download-note {

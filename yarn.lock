@@ -7064,6 +7064,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lucide-react@npm:^0.513.0":
+  version: 0.513.0
+  resolution: "lucide-react@npm:0.513.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/1e1cd19afe9478ac18f545d561a8681ab0f0f8421328060869634a76c80ff1dac5abd6704da015eef5a1ee7a0a02d478c1dcbe141e1967bbcd2d1c48212110fb
+  languageName: node
+  linkType: hard
+
 "macos-alias@npm:~0.2.5":
   version: 0.2.12
   resolution: "macos-alias@npm:0.2.12"
@@ -11047,6 +11056,7 @@ __metadata:
     "@types/react-dom": "npm:^19.1.6"
     "@viberunner/common": "workspace:*"
     astro: "npm:^5.9.1"
+    lucide-react: "npm:^0.513.0"
     react: "npm:^19.1.0"
     react-dom: "npm:^19.1.0"
   languageName: unknown

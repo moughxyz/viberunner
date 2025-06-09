@@ -20,6 +20,14 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage = 'home' }) => {
           <a href="/about" className={currentPage === 'about' ? 'active' : ''}>
             About
           </a>
+          <a
+            href="https://x.com/moughxyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="nav-social"
+          >
+            X/Twitter
+          </a>
         </div>
       </div>
     </nav>

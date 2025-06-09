@@ -14,6 +14,7 @@
     "@types/react-dom": "^19.1.6",
     "@viberunner/common": "workspace:*",
     "astro": "^5.9.1",
+    "lucide-react": "^0.513.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   }

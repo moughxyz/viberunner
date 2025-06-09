@@ -27,6 +27,7 @@
 .nav-links {
 	display: flex;
 	gap: 2rem;
+	align-items: center;
 }
 
 .nav-links a {
@@ -40,6 +41,20 @@
 	color: #ffffff;
 }
 
+.nav-social {
+	padding: 0.5rem 1rem;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	border-radius: 6px;
+	font-size: 0.875rem;
+	transition: all 0.3s ease;
+}
+
+.nav-social:hover {
+	background: rgba(255, 255, 255, 0.1);
+	border-color: rgba(255, 255, 255, 0.4);
+	color: #ffffff !important;
+}
+
 @media (max-width: 768px) {
 	.nav-container {
 		padding: 1rem;
@@ -47,5 +62,10 @@
 
 	.nav-links {
 		gap: 1rem;
+	}
+
+	.nav-social {
+		padding: 0.4rem 0.8rem;
+		font-size: 0.8rem;
 	}
 }
