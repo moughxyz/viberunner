@@ -22,8 +22,6 @@ interface ChatInterfaceProps {
   onModelChange?: (model: ClaudeModelId) => void
   streamingMessage?: string
   isStreaming?: boolean
-  debugMode?: boolean
-  onDebugModeChange?: (debug: boolean) => void
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -40,8 +38,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onModelChange,
   streamingMessage = "",
   isStreaming = false,
-  debugMode = false,
-  onDebugModeChange,
 }) => {
   const [inputValue, setInputValue] = useState("")
   const [selectedModel, setSelectedModel] = useState<ClaudeModelId>(
@@ -526,16 +522,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               >
                 Change
               </button>
-              {onDebugModeChange && (
-                <label className="debug-toggle">
-                  <input
-                    type="checkbox"
-                    checked={debugMode}
-                    onChange={(e) => onDebugModeChange(e.target.checked)}
-                  />
-                  Debug Mode
-                </label>
-              )}
             </div>
           </div>
         </div>

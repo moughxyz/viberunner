@@ -561,21 +561,6 @@
   color: #cccccc;
 }
 
-.debug-toggle {
-  margin-left: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #888888;
-  cursor: pointer;
-}
-
-.debug-toggle input[type="checkbox"] {
-  margin: 0;
-  cursor: pointer;
-}
-
 /* Streaming message styles */
 .message-group.streaming {
   opacity: 1;
