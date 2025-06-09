@@ -137,6 +137,57 @@ const runnerProcesses = new Map<string, any>()
 const runnerTrays = new Map<string, Tray>()
 const runnerPopups = new Map<string, BrowserWindow>()
 
+// Load fallback icon for menu bar
+const loadFallbackIcon = async (): Promise<Electron.NativeImage> => {
+  // Try multiple possible paths for the icon
+  const possiblePaths = [
+    path.join(__dirname, "../assets/icon.png"),
+    path.join(__dirname, "../../assets/icon.png"),
+    path.join(__dirname, "../../../packages/app/assets/icon.png"),
+    path.join(process.cwd(), "packages/app/assets/icon.png"),
+  ]
+
+  for (const iconPath of possiblePaths) {
+    try {
+      console.log(`Trying to load fallback icon from: ${iconPath}`)
+      const icon = nativeImage.createFromPath(iconPath)
+      if (!icon.isEmpty()) {
+        console.log(`Successfully loaded fallback icon from: ${iconPath}`)
+        return icon
+      }
+    } catch (error) {
+      console.warn(`Failed to load from ${iconPath}:`, error)
+    }
+  }
+
+  console.warn("All fallback icon paths failed, creating empty square fallback")
+  // Create a simple empty square as final fallback
+  const size = 16
+  const buffer = Buffer.alloc(size * size * 4)
+
+  // Create empty square with border
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const index = (y * size + x) * 4
+      const isBorder = x === 0 || x === size - 1 || y === 0 || y === size - 1
+
+      if (isBorder) {
+        buffer[index] = 128 // R - gray
+        buffer[index + 1] = 128 // G - gray
+        buffer[index + 2] = 128 // B - gray
+        buffer[index + 3] = 255 // A - opaque
+      } else {
+        buffer[index] = 0 // R - transparent
+        buffer[index + 1] = 0 // G - transparent
+        buffer[index + 2] = 0 // B - transparent
+        buffer[index + 3] = 0 // A - transparent
+      }
+    }
+  }
+
+  return nativeImage.createFromBuffer(buffer, { width: size, height: size })
+}
+
 // Create a tray icon for a runner in the menu bar
 const createRunnerTray = async (
   runnerId: string,
@@ -150,47 +201,56 @@ const createRunnerTray = async (
       return
     }
 
-    // Use provided runner icon or default Viberunner icon
+    // Use provided runner icon or default Viberunner logo
     let trayIcon
     if (iconPath) {
       try {
-        trayIcon = await loadIconAsNativeImage(iconPath, "menubar")
+        trayIcon = await loadIconAsNativeImage(iconPath)
       } catch (error) {
         console.warn(
           `Failed to load runner icon from "${iconPath}", using default: ${error}`
         )
-        // Fallback to default icon
-        trayIcon = nativeImage.createFromPath(
-          path.join(__dirname, "../assets/icon.png")
-        )
+        trayIcon = await loadFallbackIcon()
       }
     } else {
-      console.log(`No runner icon provided, using default Viberunner icon`)
-      trayIcon = nativeImage.createFromPath(
-        path.join(__dirname, "../assets/icon.png")
+      console.log(`No runner icon provided, using default Viberunner logo`)
+      trayIcon = await loadFallbackIcon()
+    }
+
+    // Resize icon appropriately for the platform's menu bar/system tray
+    // Note: SVG icons are already sized correctly by the loadIconAsNativeImage utility
+    if (!trayIcon.isEmpty() && !iconPath?.toLowerCase().endsWith(".svg")) {
+      const iconSize = process.platform === "darwin" ? 16 : 24 // 16px for macOS, 24px for others
+      trayIcon = trayIcon.resize({ width: iconSize, height: iconSize })
+      console.log(
+        `Resized tray icon to ${iconSize}x${iconSize} for platform: ${process.platform}`
       )
     }
 
-    // Ensure we have a valid icon before proceeding
-    if (trayIcon.isEmpty()) {
-      console.warn("Default icon is also empty, creating a basic fallback")
-      // Create a simple fallback icon if even the default fails
-      trayIcon = nativeImage.createEmpty()
-    }
+    console.log(
+      `Creating Tray with icon. Icon isEmpty: ${trayIcon.isEmpty()}, Icon size: ${JSON.stringify(
+        trayIcon.getSize()
+      )}`
+    )
 
     // Create tray
     const tray = new Tray(trayIcon)
 
+    console.log(`Tray created successfully. isDestroyed: ${tray.isDestroyed()}`)
+
     // Set tooltip
     tray.setToolTip(`${runnerName} - Click to open`)
+    console.log(`Tooltip set for tray: ${runnerName}`)
 
     // Handle click - toggle popup visibility
     tray.on("click", (_event, bounds) => {
+      console.log(`Tray clicked for runner: ${runnerName}`)
       toggleRunnerPopup(runnerId, runnerName, bounds)
     })
 
     // Handle right-click separately for context menu
     tray.on("right-click", () => {
+      console.log(`Tray right-clicked for runner: ${runnerName}`)
       const contextMenu = Menu.buildFromTemplate([
         {
           label: "Remove from Menu Bar",
@@ -203,7 +263,9 @@ const createRunnerTray = async (
     // Store tray reference
     runnerTrays.set(runnerId, tray)
 
-    console.log(`Successfully created tray icon for runner: ${runnerName}`)
+    console.log(
+      `Successfully created tray icon for runner: ${runnerName}. Total trays: ${runnerTrays.size}`
+    )
   } catch (error) {
     console.error(`Failed to create tray for runner ${runnerId}:`, error)
     throw error
@@ -344,7 +406,9 @@ const setDockIconForRunner = async (iconPath: string): Promise<void> => {
       app.dock.setIcon(runnerIcon)
       console.log(`Successfully set dock icon to: ${iconPath}`)
     } else {
-      console.warn("Could not set dock icon - either not macOS or icon is empty")
+      console.warn(
+        "Could not set dock icon - either not macOS or icon is empty"
+      )
     }
   } catch (error) {
     console.error(`Failed to set dock icon for runner:`, error)
@@ -353,7 +417,11 @@ const setDockIconForRunner = async (iconPath: string): Promise<void> => {
 }
 
 // Create a separate Electron process for a runner (separate dock icon)
-const createRunnerProcess = async (runnerId: string, runnerName: string, iconPath?: string): Promise<void> => {
+const createRunnerProcess = async (
+  runnerId: string,
+  runnerName: string,
+  iconPath?: string
+): Promise<void> => {
   try {
     // Check if process already exists
     if (runnerProcesses.has(runnerId)) {
@@ -365,7 +433,9 @@ const createRunnerProcess = async (runnerId: string, runnerName: string, iconPat
     const electronPath = process.execPath
     const appPath = app.getAppPath()
 
-    console.log(`Creating separate Electron process for runner: ${runnerName} (${runnerId})`)
+    console.log(
+      `Creating separate Electron process for runner: ${runnerName} (${runnerId})`
+    )
     console.log(`Electron path: ${electronPath}`)
     console.log(`App path: ${appPath}`)
 
@@ -375,14 +445,10 @@ const createRunnerProcess = async (runnerId: string, runnerName: string, iconPat
       args.push("--icon-path", iconPath)
     }
 
-    const runnerProcess = spawn(
-      electronPath,
-      args,
-      {
-        detached: true,
-        stdio: "ignore",
-      }
-    )
+    const runnerProcess = spawn(electronPath, args, {
+      detached: true,
+      stdio: "ignore",
+    })
 
     // Store process reference
     runnerProcesses.set(runnerId, runnerProcess)
@@ -405,7 +471,11 @@ const createRunnerProcess = async (runnerId: string, runnerName: string, iconPat
   }
 }
 
-const createWindow = (runnerId?: string, runnerName?: string, iconPath?: string): BrowserWindow => {
+const createWindow = (
+  runnerId?: string,
+  runnerName?: string,
+  iconPath?: string
+): BrowserWindow => {
   // Determine window title and app name
   const displayName = runnerName || runnerId || "Viberunner"
   const windowTitle = runnerId ? displayName : "Viberunner"
@@ -486,26 +556,33 @@ const createWindow = (runnerId?: string, runnerName?: string, iconPath?: string)
 }
 
 // Check if this is a runner process launched with command line args
-const getRunnerArgsFromCommandLine = (): { runnerId: string | null; runnerName: string | null; iconPath: string | null } => {
+const getRunnerArgsFromCommandLine = (): {
+  runnerId: string | null
+  runnerName: string | null
+  iconPath: string | null
+} => {
   const args = process.argv
 
   // Get runner ID
   const runnerIdIndex = args.indexOf("--runner-id")
-  const runnerId = runnerIdIndex !== -1 && runnerIdIndex + 1 < args.length
-    ? args[runnerIdIndex + 1]
-    : null
+  const runnerId =
+    runnerIdIndex !== -1 && runnerIdIndex + 1 < args.length
+      ? args[runnerIdIndex + 1]
+      : null
 
   // Get runner name
   const runnerNameIndex = args.indexOf("--runner-name")
-  const runnerName = runnerNameIndex !== -1 && runnerNameIndex + 1 < args.length
-    ? args[runnerNameIndex + 1]
-    : null
+  const runnerName =
+    runnerNameIndex !== -1 && runnerNameIndex + 1 < args.length
+      ? args[runnerNameIndex + 1]
+      : null
 
   // Get icon path
   const iconPathIndex = args.indexOf("--icon-path")
-  const iconPath = iconPathIndex !== -1 && iconPathIndex + 1 < args.length
-    ? args[iconPathIndex + 1]
-    : null
+  const iconPath =
+    iconPathIndex !== -1 && iconPathIndex + 1 < args.length
+      ? args[iconPathIndex + 1]
+      : null
 
   return { runnerId, runnerName, iconPath }
 }
@@ -521,10 +598,18 @@ app.whenReady().then(async () => {
 
   // Check if this is a runner process
   const runnerArgs = getRunnerArgsFromCommandLine()
-  console.log(' app.whenReady > runnerArgs:', runnerArgs)
+  console.log(" app.whenReady > runnerArgs:", runnerArgs)
   if (runnerArgs.runnerId) {
-    console.log(`Starting as runner process for: ${runnerArgs.runnerName || runnerArgs.runnerId}`)
-    createWindow(runnerArgs.runnerId, runnerArgs.runnerName || undefined, runnerArgs.iconPath || undefined)
+    console.log(
+      `Starting as runner process for: ${
+        runnerArgs.runnerName || runnerArgs.runnerId
+      }`
+    )
+    createWindow(
+      runnerArgs.runnerId,
+      runnerArgs.runnerName || undefined,
+      runnerArgs.iconPath || undefined
+    )
   } else {
     console.log(`Starting as main Viberunner process`)
     createWindow()
@@ -542,7 +627,7 @@ app.on("activate", () => {
   // On OS X it's common to re-create a window in the app when the
   // dock icon is clicked and there are no other windows open.
   const allWindows = BrowserWindow.getAllWindows()
-  const visibleWindows = allWindows.filter(window => window.isVisible())
+  const visibleWindows = allWindows.filter((window) => window.isVisible())
 
   if (visibleWindows.length === 0) {
     // Check if there are hidden windows we can show
@@ -558,8 +643,16 @@ app.on("activate", () => {
       const runnerArgs = getRunnerArgsFromCommandLine()
       if (runnerArgs.runnerId) {
         // This is a runner process - create the runner window
-        console.log(`Creating runner window for: ${runnerArgs.runnerName || runnerArgs.runnerId}`)
-        createWindow(runnerArgs.runnerId, runnerArgs.runnerName || undefined, runnerArgs.iconPath || undefined)
+        console.log(
+          `Creating runner window for: ${
+            runnerArgs.runnerName || runnerArgs.runnerId
+          }`
+        )
+        createWindow(
+          runnerArgs.runnerId,
+          runnerArgs.runnerName || undefined,
+          runnerArgs.iconPath || undefined
+        )
       } else {
         // This is the main process - create a generic window
         createWindow()
@@ -619,25 +712,30 @@ function registerIpcHandlers() {
   })
 
   // Handle creating new runner process (separate dock icon)
-  ipcMain.handle("create-runner-window", async (_event, runnerId: string, runnerName: string, iconPath?: string) => {
-    try {
-      console.log(`Creating separate Electron process for runner: ${runnerName} (${runnerId})`)
+  ipcMain.handle(
+    "create-runner-window",
+    async (_event, runnerId: string, runnerName: string, iconPath?: string) => {
+      try {
+        console.log(
+          `Creating separate Electron process for runner: ${runnerName} (${runnerId})`
+        )
 
-      await createRunnerProcess(runnerId, runnerName, iconPath)
+        await createRunnerProcess(runnerId, runnerName, iconPath)
 
-      console.log(
-        `Successfully created separate process for runner: ${runnerName} (${runnerId})`
-      )
+        console.log(
+          `Successfully created separate process for runner: ${runnerName} (${runnerId})`
+        )
 
-      return { success: true }
-    } catch (error) {
-      console.error("Error creating runner process:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        return { success: true }
+      } catch (error) {
+        console.error("Error creating runner process:", error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Unknown error",
+        }
       }
     }
-  })
+  )
 
   // Handle adding runner to menu bar (tray)
   ipcMain.handle(

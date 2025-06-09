@@ -29,24 +29,55 @@ export const loadIconAsNativeImage = async (
     const fileContent = fs.readFileSync(iconPath)
     console.log(`Successfully read ${fileContent.length} bytes from icon file`)
 
-    // For SVG files, validate content and use Sharp conversion
+        // For SVG files, validate content and handle differently for menu bar vs dock
     if (iconPath.toLowerCase().endsWith(".svg")) {
       const svgContent = fileContent.toString("utf8")
-      console.log(`Full SVG content:`)
-      console.log(svgContent)
+      console.log(`Loading SVG for ${usage} usage`)
+      console.log(`SVG content preview: ${svgContent.substring(0, 200)}...`)
 
       // Basic SVG validation
       if (!svgContent.includes("<svg") || !svgContent.includes("</svg>")) {
         throw new Error("SVG file appears to be malformed (missing svg tags)")
       }
 
-      // Try direct loading first
+      // For menu bar icons, prioritize vector rendering - skip PNG conversion entirely
+      if (usage === "menubar") {
+        console.log("Menu bar usage detected - trying SVG buffer methods first to avoid PNG conversion")
+
+        // Try SVG buffer first for better vector quality
+        try {
+          const trayIcon = nativeImage.createFromBuffer(fileContent)
+          if (!trayIcon.isEmpty()) {
+            console.log("Successfully created crisp menu bar icon from SVG buffer (no PNG conversion)")
+            return trayIcon
+          }
+        } catch (bufferError) {
+          console.warn("SVG buffer method failed:", bufferError)
+        }
+
+        // Try direct path loading as backup
+        try {
+          const trayIcon = nativeImage.createFromPath(iconPath)
+          if (!trayIcon.isEmpty()) {
+            console.log("Successfully loaded menu bar icon from SVG path (no PNG conversion)")
+            return trayIcon
+          }
+        } catch (pathError) {
+          console.warn("SVG path method failed:", pathError)
+        }
+
+        console.log("All vector SVG methods failed for menu bar, will skip PNG conversion and throw error")
+        throw new Error("Could not load SVG as vector for menu bar - refusing PNG conversion to maintain quality")
+      }
+
+      // For dock icons, try direct loading first
       let trayIcon = nativeImage.createFromPath(iconPath)
 
       if (trayIcon.isEmpty()) {
-        // Use Sharp to convert SVG to PNG
+
+        // Use Sharp to convert SVG to PNG (mainly for dock icons or fallback)
         console.log(
-          "SVG file returned empty image, using Sharp to convert to PNG..."
+          `SVG file returned empty image, using Sharp to convert to PNG for ${usage}...`
         )
         try {
           const sharp = require("sharp")
@@ -58,8 +89,8 @@ export const loadIconAsNativeImage = async (
               // Dock icons should be larger for better quality
               return platform === "darwin" ? 128 : 64
             } else {
-              // Menu bar icons should be small
-              return platform === "darwin" ? 16 : 24
+              // Menu bar icons - use higher resolution for Sharp conversion if needed
+              return platform === "darwin" ? 32 : 28
             }
           }
 

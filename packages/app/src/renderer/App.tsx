@@ -19,6 +19,7 @@ import { getViberunnerLogoPath } from "./util"
 import { useRunnerService } from "./hooks/useRunnerService"
 import { useTabService } from "./hooks/useTabService"
 import { runnerService } from "./services/RunnerService"
+import { macService } from "./services/MacService"
 import { FileManagerService } from "./services/FileManagerService"
 import { CommandExecutorService } from "./services/CommandExecutorService"
 import { toastService } from "./services/ToastService"
@@ -216,8 +217,8 @@ const App: React.FC = () => {
               )
 
               if (runner && runner.standalone) {
-                // Launch the runner but don't wait for tab switching
-                await openAppInNewTab(runner, undefined, true, false)
+                // Launch the runner according to its launch mode
+                await launchRunnerByMode(runner)
                 console.log(`Successfully launched startup runner: ${runnerId}`)
               } else {
                 console.warn(`Could not launch ${runnerId}:`, {
@@ -330,6 +331,28 @@ const App: React.FC = () => {
     )
   }
 
+    const launchRunnerByMode = async (runner: RunnerConfig) => {
+    try {
+      // Check the runner's launch mode and call appropriate function
+      switch (runner.launchMode) {
+        case "macDock":
+          await macService.addRunnerToDock(runner)
+          break
+        case "macMenuBar":
+          await macService.addRunnerToMenuBar(runner)
+          break
+        case "newTab":
+        default:
+          // Default to new tab launch
+          await openAppInNewTab(runner, undefined, true, false)
+          break
+      }
+    } catch (error) {
+      console.error(`Failed to launch runner ${runner.name}:`, error)
+      throw error
+    }
+  }
+
   const closeTab = (tabId: string) => {
     tabService.closeTab(
       tabId,
@@ -360,7 +383,7 @@ const App: React.FC = () => {
   const launchStandaloneApp = async (runner: RunnerConfig) => {
     try {
       console.log("Launching standalone app:", runner.name, runner.id)
-      await openAppInNewTab(runner)
+      await launchRunnerByMode(runner)
     } catch (error) {
       console.error("Failed to launch standalone app:", error)
       alert(`Failed to launch ${runner.name}: ${error}`)

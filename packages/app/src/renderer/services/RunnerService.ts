@@ -471,6 +471,9 @@ export class RunnerService {
             return {
               ...metadata,
               id: dir,
+              // Apply defaults for missing properties
+              launchMode: metadata.launchMode || "newTab",
+              standalone: metadata.standalone ?? false,
             }
           } catch (parseError) {
             console.error(`Error parsing metadata for ${dir}:`, parseError)
