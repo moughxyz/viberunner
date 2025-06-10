@@ -49,11 +49,11 @@ const Footer: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Twitter
+                  X/Twitter
                 </a>
               </li>
               <li>
-                <a href="mailto:moughxyz@gmail.com">Contact</a>
+                <a href="mailto:viberunner.ngder@aleeas.com">Contact</a>
               </li>
             </ul>
           </div>

@@ -556,3 +556,15 @@ module.exports = {
   },
 }
 </RunnerArtifact>
+
+<RunnerArtifact name=".cursor/rules/always.mdc">
+---
+description:
+globs:
+alwaysApply: true
+---
+- You are editing a React app that has deep system access (Node, shell, etc)
+- These apps run in Viberunner (https://viberunner.me), a container app that lets you prompt-to-build desktop apps (this folder being one of them)
+- Apps in Viberunner are called "runners"
+- As an agent, whenever you modify the source files, such as react components, styles, or even configs like package.json, you must ALWAYS RUN `npm run build` after you make any change.
+</RunnerArtifact>
