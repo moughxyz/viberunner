@@ -73,6 +73,7 @@ jobs:
     - name: Build renderer
       run: yarn workspace viberunner run build
 
+    # Yarn can't handle -- and doesn't pass params, so to run make, we use npm
     - name: Create distributables
       shell: bash
       env:
@@ -83,7 +84,7 @@ jobs:
         VR_APPLE_TEAM_ID: ${{ matrix.os == 'macos-latest' && secrets.VR_APPLE_TEAM_ID || '' }}
       run: |
         if [ "${{ matrix.os }}" = "macos-latest" ]; then
-          yarn workspace viberunner run make -- --arch=universal --platform=darwin
+          cd packages/app && npm run make -- --arch=universal --platform=darwin
         else
           yarn workspace viberunner run make
         fi
