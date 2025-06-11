@@ -38,10 +38,10 @@ module.exports = {
     // Configuration for universal builds
     osxUniversal: {
       mergeASARs: true,
-      singleArchFiles:
-        "**/node_modules/**/*{arm64,x64,darwin-arm64,darwin-x64}*/**",
-      x64ArchFiles:
-        "**/node_modules/**/*{arm64,x64,darwin-arm64,darwin-x64}*/**",
+      // Handle native modules that are architecture-specific
+      singleArchFiles: "**/node_modules/**/*{arm64,x64,darwin-arm64,darwin-x64}*/**",
+      // Files that should be taken from x64 build when they're identical
+      x64ArchFiles: "**/node_modules/**/*{arm64,x64,darwin-arm64,darwin-x64}*/**",
     },
     osxSign:
       process.env.SKIP_OSX_SIGNING === "true"
