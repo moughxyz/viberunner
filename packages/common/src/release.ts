@@ -3,10 +3,7 @@ export const release = {
   production: "v0.0.23",
   downloads: {
     windows: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.23/Viberunner-0.0.23.Setup.exe",
-    macOS: {
-      dmg: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.23/Viberunner.dmg",
-      arm64: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.23/Viberunner-darwin-arm64-0.0.23.zip"
-    },
+    macOS: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.22/Viberunner-darwin-universal-0.0.23.zip",
     linux: {
       deb: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.23/viberunner_0.0.23_amd64.deb",
       rpm: "https://github.com/moughxyz/viberunner-releases/releases/download/v0.0.23/viberunner-0.0.23-1.x86_64.rpm"

@@ -19,11 +19,7 @@ const Hero: React.FC = () => {
         url = release.downloads.windows
       } else if (userAgent.includes("mac")) {
         detectedPlatform = "macOS"
-        // Prefer ARM64 for newer Macs, fallback to DMG
-        url =
-          userAgent.includes("arm") || userAgent.includes("apple")
-            ? release.downloads.macOS.arm64
-            : release.downloads.macOS.dmg
+        url = release.downloads.macOS
       } else if (userAgent.includes("linux")) {
         detectedPlatform = "Linux"
         url = release.downloads.linux.deb
