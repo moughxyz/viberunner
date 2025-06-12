@@ -3,6 +3,13 @@ import { Download, Sparkles } from "lucide-react"
 import { product, release } from "@viberunner/common"
 import "./Hero.css"
 
+// Google Analytics gtag function type declaration
+declare const gtag: (
+  command: 'config' | 'event',
+  targetId: string,
+  config?: Record<string, any>
+) => void
+
 const Hero: React.FC = () => {
   const [downloadUrl, setDownloadUrl] = useState<string>("")
   const [platform, setPlatform] = useState<string>("")
@@ -62,6 +69,16 @@ const Hero: React.FC = () => {
             className="download-button"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => {
+              // Track download button click
+              if (typeof gtag !== 'undefined') {
+                gtag('event', 'download_click', {
+                  event_category: 'engagement',
+                  event_label: platform,
+                  value: 1
+                })
+              }
+            }}
           >
             <Download className="download-icon" size={20} />
             <span className="download-text">Download for {platform}</span>

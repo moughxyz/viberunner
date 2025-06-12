@@ -1,27 +1,16 @@
 ---
 import '../styles/index.css'
-import Navigation from '../components/Navigation'
+import Layout from '../components/Layout.astro'
 import Hero from '../components/Hero'
-import Footer from '../components/Footer'
 import { product } from '@viberunner/common'
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{product.productName} - Build personal desktop apps in seconds</title>
-		<meta name="description" content={`${product.productName} is a new and unique way to experience your desktop. Dream up your own collection of personal desktop apps in seconds!`} />
-	</head>
-	<body>
-		<Navigation currentPage="home" client:load />
-
-		<main class="container">
-			<Hero client:load />
-		</main>
-
-		<Footer client:load />
-	</body>
-</html>
+<Layout
+	title={`${product.productName} - Build personal desktop apps in seconds`}
+	description={`${product.productName} is a new and unique way to experience your desktop. Dream up your own collection of personal desktop apps in seconds!`}
+	currentPage="home"
+>
+	<main class="container">
+		<Hero client:load />
+	</main>
+</Layout>
